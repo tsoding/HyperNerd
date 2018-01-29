@@ -1,0 +1,42 @@
+* TODO Setup IRC library
+
+  - [X] [[https://github.com/dom96/simpleirc][GitHub - dom96/SimpleIRC: IRC Library for Haskell]]
+    - [X] DEADEND
+  - [X] [[https://github.com/barrucadu/irc-conduit][GitHub - barrucadu/irc-conduit: Streaming IRC message library using conduits.]]
+    - [X] DEADEND
+
+** DONE [[https://github.com/glguy/irc-core][GitHub - glguy/irc-core: Haskell IRC library and console client - Join us on ...]]
+
+    - [X] What is the hackage page?
+      - [X] [[https://hackage.haskell.org/package/irc-core][irc-core: IRC core library for glirc]]
+    - [X] How do you connect to the server using this library?
+      - [X] https://github.com/glguy/irc-core/blob/6dd03dfed4affe6ae8cdd63ede68c88d70af9aac/bot/src/Main.hs#L25
+        - [X] What is Hookup
+          - [X] We don't have Hookup in the Hackage page, but we do have it in the repo for some reason.
+            - [X] It's probably a third-party dependency, because they don't use stack.
+              - [X] [[https://hackage.haskell.org/package/hookup][hookup: Abstraction over creating network connections with SOCKS5 and TLS]]
+                - [X] It's in the same repo LUL
+    - [X] sendMsg
+      - [X] ircUser
+        - [X] https://hackage.haskell.org/package/irc-core-2.3.0/docs/Irc-Commands.html#v:ircUser
+    - [X] We gonna go with this library
+
+** TODO Connect to the Twitch server and say hi
+
+   - [X] Add irc-core and hookup to the deps
+     - [X] /home/streamer/Programming/tsoding/tsoder2/hookup/: getDirectoryContents:openDirStream: does not exist (No such file or directory
+       - [X] I think I've put deps in a wrong hole
+         - [X] Yes
+       - [X] Try to sepcify version from hackage
+         - [X] DEADEND
+     - [X] * Missing C libraries: crypto, ssl
+     - [X] <command line>: can't load .so/.DLL for: libcrypto.so (libcrypto.so: cannot open shared object file: No such file or directory)
+       - [X] Try to modify LD_LIBRARY_PATH in default.nix
+         - [X] ${openssl}/lib doesn't contain any libraries
+       - [X] Maybe we have to explicitly install libcrypto?
+         - [X] linuxPackages.cryptodev
+           - [X] I think it's not related to science
+       - [X] nixos.openssl_1_1_0
+   - [ ] Connect to netcat through Haskell REPL and Hookup
+     - [ ] What is Network.Socket.Types.PortNumber
+
