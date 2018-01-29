@@ -24,7 +24,7 @@ conParamsFromConfig config =
                      , cpSocks = Nothing
                      }
 
--- TODO: implement Main.configFromFile
+-- TODO(#7): implement Main.configFromFile
 configFromFile :: FilePath -> IO Config
 configFromFile = undefined
 
