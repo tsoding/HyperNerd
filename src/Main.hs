@@ -32,7 +32,7 @@ withConnection :: ConnectionParams -> (Connection -> IO a) -> IO a
 withConnection params body =
     bracket (connect params) close body
 
--- TODO: implement Main.ircTransport
+-- TODO(#8): implement Main.ircTransport
 ircTransport :: Bot s -> Config -> Connection -> IO ()
 ircTransport = undefined
 
