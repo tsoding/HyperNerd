@@ -17,18 +17,20 @@ import System.Environment
 -- TODO(#15): utilize rate limits
 -- See https://github.com/glguy/irc-core/blob/6dd03dfed4affe6ae8cdd63ede68c88d70af9aac/bot/src/Main.hs#L32
 
--- TODO(#16): add channel to the config
 data Config = Config { configNick :: T.Text
                      , configPass :: T.Text
+                     , configChannel :: T.Text
                      } deriving Show
 
 maxIrcMessage :: Int
 maxIrcMessage = 512
 
-config :: T.Text -> T.Text -> Config
-config nick password = Config { configNick = nick
-                              , configPass = password
-                              }
+config :: T.Text -> T.Text -> T.Text -> Config
+config nick password channel =
+    Config { configNick = nick
+           , configPass = password
+           , configChannel = T.concat [(T.pack "#"), channel]
+           }
 
 configFromFile :: FilePath -> IO Config
 configFromFile filePath =
@@ -36,7 +38,8 @@ configFromFile filePath =
        let lookup section key = ini >>= lookupValue (T.pack section) (T.pack key)
        let nick = lookup "User" "nick"
        let password = lookup "User" "password"
-       either (ioError . userError) return $ liftM2 config nick password
+       let channel = lookup "User" "channel"
+       either (ioError . userError) return $ liftM3 config nick password channel
 
 twitchConnectionParams :: ConnectionParams
 twitchConnectionParams =
@@ -59,7 +62,7 @@ authorize :: Config -> Connection -> IO ()
 authorize config conn =
     do sendMsg conn (ircPass $ configPass config)
        sendMsg conn (ircNick $ configNick config)
-       sendMsg conn (ircJoin (T.pack "#tsoding") Nothing)
+       sendMsg conn (ircJoin (configChannel config) Nothing)
 
 readIrcLine :: Connection -> IO (Maybe IrcMsg)
 readIrcLine conn =
@@ -72,15 +75,15 @@ readIrcLine conn =
 sendMsg :: Connection -> RawIrcMsg -> IO ()
 sendMsg conn msg = send conn (renderRawIrcMsg msg)
 
-applyEffect :: Bot s -> Connection -> Effect s -> IO ()
-applyEffect _ conn (Say text) =
-    sendMsg conn (ircPrivmsg (T.pack "#tsoding") text)
+applyEffect :: Bot s -> Config -> Connection -> Effect s -> IO ()
+applyEffect _ config conn (Say text) =
+    sendMsg conn (ircPrivmsg (configChannel config) text)
 
 ircTransport :: Bot s -> Config -> Connection -> IO ()
 ircTransport bot config conn =
     -- TODO(#17): check unsuccessful authorization
     do authorize config conn
-       applyEffect bot conn $ bot Join
+       applyEffect bot config conn $ bot Join
        eventLoop bot conn
 
 eventLoop :: Bot s -> Connection -> IO ()
