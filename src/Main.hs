@@ -26,8 +26,8 @@ configFromFile filePath =
        let password = lookup "User" "password"
        either (ioError . userError) return $ liftM2 config nick password
 
-conParamsFromConfig :: Config -> ConnectionParams
-conParamsFromConfig config =
+twitchConnectionParams :: ConnectionParams
+twitchConnectionParams =
     ConnectionParams { cpHost = "irc.chat.twitch.tv"
                      , cpPort = 443
                      , cpTls = Just TlsParams { tpClientCertificate = Nothing
@@ -50,7 +50,7 @@ ircTransport = undefined
 mainWithArgs :: [String] -> IO ()
 mainWithArgs [configPath] =
     do config <- configFromFile configPath
-       withConnection (conParamsFromConfig config) $ ircTransport bot config
+       withConnection twitchConnectionParams $ ircTransport bot config
 mainWithArgs _ = error "./HyperNerd <config-file>"
 
 main :: IO ()
