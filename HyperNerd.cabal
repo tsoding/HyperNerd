@@ -65,6 +65,7 @@ executable HyperNerd
                      , irc-core
                      , bytestring
                      , text
+                     , ini
   
   -- Directories containing source files.
   hs-source-dirs:      src
