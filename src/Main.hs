@@ -40,7 +40,7 @@ mainWithArgs :: [String] -> IO ()
 mainWithArgs [configPath] =
     do config <- configFromFile configPath
        withConnection (conParamsFromConfig config) $ ircTransport bot config
-mainWithArgs _ = error "./tsoder2 <config-file>"
+mainWithArgs _ = error "./HyperNerd <config-file>"
 
 main :: IO ()
 main = getArgs >>= mainWithArgs
