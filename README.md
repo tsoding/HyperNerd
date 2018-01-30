@@ -1,5 +1,7 @@
 # HyperNerd
 
+[![Build Status](https://travis-ci.org/tsoding/HyperNerd.svg?branch=master)](https://travis-ci.org/tsoding/HyperNerd)
+
 ![HyperNerd](https://i.imgur.com/07Ymbi6.png)
 
 Second iteration of [Tsoder][tsoder]. Chat bot for [Tsoding][tsoding] streams.
