@@ -78,7 +78,7 @@ applyEffect _ conn (Say text) =
 
 ircTransport :: Bot s -> Config -> Connection -> IO ()
 ircTransport bot config conn =
-    -- TODO: check unsuccessful authorization
+    -- TODO(#17): check unsuccessful authorization
     do authorize config conn
        applyEffect bot conn $ bot Join
        eventLoop bot conn
