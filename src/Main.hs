@@ -14,7 +14,7 @@ import Irc.RateLimit (RateLimit)
 import Irc.RawIrcMsg (RawIrcMsg, parseRawIrcMsg, asUtf8, renderRawIrcMsg)
 import System.Environment
 
--- TODO: utilize rate limits
+-- TODO(#15): utilize rate limits
 -- See https://github.com/glguy/irc-core/blob/6dd03dfed4affe6ae8cdd63ede68c88d70af9aac/bot/src/Main.hs#L32
 
 -- TODO: add channel to the config
