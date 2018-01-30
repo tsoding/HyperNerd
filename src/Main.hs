@@ -14,6 +14,9 @@ import Irc.RateLimit (RateLimit)
 import Irc.RawIrcMsg (RawIrcMsg, parseRawIrcMsg, asUtf8, renderRawIrcMsg)
 import System.Environment
 
+-- TODO: utilize rate limits
+-- See https://github.com/glguy/irc-core/blob/6dd03dfed4affe6ae8cdd63ede68c88d70af9aac/bot/src/Main.hs#L32
+
 -- TODO: add channel to the config
 data Config = Config { configNick :: T.Text
                      , configPass :: T.Text
@@ -69,10 +72,15 @@ readIrcLine conn =
 sendMsg :: Connection -> RawIrcMsg -> IO ()
 sendMsg conn msg = send conn (renderRawIrcMsg msg)
 
+applyEffect :: Bot s -> Connection -> Effect s -> IO ()
+applyEffect _ conn (Say text) =
+    sendMsg conn (ircPrivmsg (T.pack "#tsoding") text)
+
 ircTransport :: Bot s -> Config -> Connection -> IO ()
 ircTransport bot config conn =
+    -- TODO: check unsuccessful authorization
     do authorize config conn
-       sendMsg conn (ircPrivmsg (T.pack "#tsoding") (T.pack "Hi!"))
+       applyEffect bot conn $ bot Join
        eventLoop bot conn
 
 eventLoop :: Bot s -> Connection -> IO ()
