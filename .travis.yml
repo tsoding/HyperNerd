@@ -24,7 +24,7 @@ addons:
   apt:
     packages:
       - libgmp-dev
-      - libopenblas-dev
+      - openssl
 
 before_install:
 # Download and unpack the stack executable
