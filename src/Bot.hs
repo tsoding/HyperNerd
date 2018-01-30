@@ -20,6 +20,6 @@ bot (Msg text) = maybe None effectOfCommand $ textAsCommand text
 effectOfCommand :: Command T.Text -> Effect s
 effectOfCommand command =
     case T.unpack $ commandName command of
-      -- TODO: !russify command should mention the command invoker
+      -- TODO(#23): !russify command should mention the command invoker
       "russify" -> Say $ russify $ commandArgs command
       _ -> None
