@@ -10,4 +10,4 @@ data Effect s = None
               | Say T.Text
 
 bot :: Bot s
-bot Join = Say $ T.pack "Hi!"
+bot Join = Say $ T.pack "HyperNyard"
