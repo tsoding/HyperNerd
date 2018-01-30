@@ -20,6 +20,7 @@ $ stack exec HyperNerd secret.ini
 [User]
 nick = HyperNerd
 password = 12345
+channel = Tsoding
 ```
 
 ## Support
