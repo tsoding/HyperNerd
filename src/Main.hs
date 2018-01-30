@@ -9,7 +9,7 @@ import qualified Data.Text as T
 import Data.Traversable
 import Hookup
 import Irc.Commands (ircPong, ircNick, ircPass, ircJoin, ircPrivmsg)
-import Irc.Message (IrcMsg(Ping), cookIrcMsg)
+import Irc.Message (IrcMsg(Ping, Privmsg), cookIrcMsg)
 import Irc.RateLimit (RateLimit)
 import Irc.RawIrcMsg (RawIrcMsg, parseRawIrcMsg, asUtf8, renderRawIrcMsg)
 import System.Environment
@@ -75,26 +75,28 @@ readIrcLine conn =
 sendMsg :: Connection -> RawIrcMsg -> IO ()
 sendMsg conn msg = send conn (renderRawIrcMsg msg)
 
-applyEffect :: Bot s -> Config -> Connection -> Effect s -> IO ()
-applyEffect _ config conn (Say text) =
+applyEffect :: Config -> Connection -> Effect s -> IO ()
+applyEffect _ _ None = return ()
+applyEffect config conn (Say text) =
     sendMsg conn (ircPrivmsg (configChannel config) text)
 
 ircTransport :: Bot s -> Config -> Connection -> IO ()
 ircTransport bot config conn =
     -- TODO(#17): check unsuccessful authorization
     do authorize config conn
-       applyEffect bot config conn $ bot Join
-       eventLoop bot conn
+       applyEffect config conn $ bot Join
+       eventLoop bot config conn
 
-eventLoop :: Bot s -> Connection -> IO ()
-eventLoop bot conn =
+eventLoop :: Bot s -> Config -> Connection -> IO ()
+eventLoop bot config conn =
     do mb <- readIrcLine conn
        for_ mb $ \msg ->
            do print msg
               case msg of
                 Ping xs -> sendMsg conn (ircPong xs)
+                Privmsg _ _ msg -> applyEffect config conn (bot $ Msg msg)
                 _ -> return ()
-              eventLoop bot conn
+              eventLoop bot config conn
 
 mainWithArgs :: [String] -> IO ()
 mainWithArgs [configPath] =
