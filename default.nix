@@ -1,6 +1,6 @@
 with import <nixpkgs> {}; {
-    Tsoder2Env = stdenv.mkDerivation {
-        name = "Tsoder2Env";
+    HyperNerdEnv = stdenv.mkDerivation {
+        name = "HyperNerdEnv";
         buildInputs = [ ghc stack cabal-install openssl ];
         LD_LIBRARY_PATH="${openssl.out}/lib";
     };
