@@ -17,7 +17,7 @@ import System.Environment
 -- TODO(#15): utilize rate limits
 -- See https://github.com/glguy/irc-core/blob/6dd03dfed4affe6ae8cdd63ede68c88d70af9aac/bot/src/Main.hs#L32
 
--- TODO: add channel to the config
+-- TODO(#16): add channel to the config
 data Config = Config { configNick :: T.Text
                      , configPass :: T.Text
                      } deriving Show
