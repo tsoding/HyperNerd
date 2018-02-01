@@ -1,11 +1,14 @@
 module Command where
 
 import qualified Data.Text as T
+import Text.Regex
 
 data Command a = Command { commandName :: T.Text
                          , commandArgs :: a
-                         }
+                         } deriving Show
 
--- TODO(#24): implement Command.textAsCommand
 textAsCommand :: T.Text -> Maybe (Command T.Text)
-textAsCommand _ = Nothing
+textAsCommand text =
+    do [name, args] <- matchRegex (mkRegex "^!(\\w+)\\s*(.*)$") $ T.unpack text
+       return $ Command { commandName = T.pack name
+                        , commandArgs = T.pack args }
