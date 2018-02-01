@@ -64,11 +64,14 @@ executable HyperNerd
   
   -- Other library packages from which modules are imported.
   build-depends:       base >=4.9 && <4.10
-                     , hookup
-                     , irc-core
                      , bytestring
-                     , text
+                     , containers
+                     , file-embed
+                     , hookup
                      , ini
+                     , irc-core
+                     , aeson
+                     , text
   
   -- Directories containing source files.
   hs-source-dirs:      src
