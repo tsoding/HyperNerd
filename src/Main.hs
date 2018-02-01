@@ -9,6 +9,8 @@ import qualified Data.Text as T
 import Data.Traversable
 import Hookup
 import Irc.Commands (ircPong, ircNick, ircPass, ircJoin, ircPrivmsg)
+import Irc.Identifier (idText)
+import Irc.UserInfo (userNick)
 import Irc.Message (IrcMsg(Ping, Privmsg), cookIrcMsg)
 import Irc.RateLimit (RateLimit)
 import Irc.RawIrcMsg (RawIrcMsg, parseRawIrcMsg, asUtf8, renderRawIrcMsg)
@@ -94,7 +96,7 @@ eventLoop bot config conn =
            do print msg
               case msg of
                 Ping xs -> sendMsg conn (ircPong xs)
-                Privmsg _ _ msg -> applyEffect config conn (bot $ Msg msg)
+                Privmsg userInfo _ msg -> applyEffect config conn (bot $ Msg (idText $ userNick $ userInfo) msg)
                 _ -> return ()
               eventLoop bot config conn
 
