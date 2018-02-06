@@ -84,8 +84,6 @@ sendMsg conn msg = send conn (renderRawIrcMsg msg)
 
 applyEffect :: Config -> Connection -> Effect () -> IO ()
 applyEffect _ _ (Pure r) = return r
-applyEffect config conn (Free (Ok s)) =
-    applyEffect config conn s
 applyEffect config conn (Free (Say text s)) =
     do sendMsg conn (ircPrivmsg (configChannel config) text)
        applyEffect config conn s

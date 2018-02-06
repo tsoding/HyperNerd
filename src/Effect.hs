@@ -1,6 +1,5 @@
 module Effect ( Effect
               , EffectF (..)
-              , ok
               , say
               , saveEntity
               , getEntityById
@@ -12,14 +11,12 @@ import qualified Data.Text as T
 import Data.Time
 import Entity
 
-data EffectF s = Ok s
-               | Say T.Text s
+data EffectF s = Say T.Text s
                | SaveEntity Entity (Int -> s)
                | GetEntityById T.Text Int (Maybe Entity -> s)
                | Now (UTCTime -> s)
 
 instance Functor EffectF where
-    fmap f (Ok s)           = Ok (f s)
     fmap f (Say msg s)      = Say msg (f s)
     fmap f (SaveEntity entity h) =
         SaveEntity entity (f . h)
@@ -28,9 +25,6 @@ instance Functor EffectF where
     fmap f (Now h) = Now (f . h)
 
 type Effect = Free EffectF
-
-ok :: Effect ()
-ok = liftF $ Ok ()
 
 say :: T.Text -> Effect ()
 say msg = liftF $ Say msg ()
