@@ -39,7 +39,7 @@ effectOfCommand sender command =
                        replyToUser sender $ T.concat [ "Added the quote under the number "
                                                      , T.pack $ show entityId
                                                      ]
-      -- TODO: implement !quote command
+      -- TODO(#36): implement !quote command
       _ -> ok
 
 replyToUser :: T.Text -> T.Text -> Effect ()
