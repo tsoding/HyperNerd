@@ -3,17 +3,19 @@ module Main where
 import Bot
 import Control.Exception
 import Control.Monad
+import Control.Monad.Free
 import Data.Foldable
 import Data.Ini
 import qualified Data.Text as T
 import Data.Traversable
+import Effect
 import Hookup
 import Irc.Commands (ircPong, ircNick, ircPass, ircJoin, ircPrivmsg)
 import Irc.Identifier (idText)
-import Irc.UserInfo (userNick)
 import Irc.Message (IrcMsg(Ping, Privmsg), cookIrcMsg)
 import Irc.RateLimit (RateLimit)
 import Irc.RawIrcMsg (RawIrcMsg, parseRawIrcMsg, asUtf8, renderRawIrcMsg)
+import Irc.UserInfo (userNick)
 import System.Environment
 
 -- TODO(#15): utilize rate limits
@@ -77,19 +79,24 @@ readIrcLine conn =
 sendMsg :: Connection -> RawIrcMsg -> IO ()
 sendMsg conn msg = send conn (renderRawIrcMsg msg)
 
-applyEffect :: Config -> Connection -> Effect s -> IO ()
-applyEffect _ _ None = return ()
-applyEffect config conn (Say text) =
-    sendMsg conn (ircPrivmsg (configChannel config) text)
+applyEffect :: Config -> Connection -> Effect () -> IO ()
+applyEffect _ _ (Pure r) = return r
+applyEffect _ _ (Free Ok) = return ()
+applyEffect config conn (Free (ReportError logText userResponse)) =
+    do print logText
+       sendMsg conn (ircPrivmsg (configChannel config) userResponse)
+applyEffect config conn (Free (Say text s)) =
+    do sendMsg conn (ircPrivmsg (configChannel config) text)
+       applyEffect config conn s
 
-ircTransport :: Bot s -> Config -> Connection -> IO ()
+ircTransport :: Bot -> Config -> Connection -> IO ()
 ircTransport bot config conn =
     -- TODO(#17): check unsuccessful authorization
     do authorize config conn
        applyEffect config conn $ bot Join
        eventLoop bot config conn
 
-eventLoop :: Bot s -> Config -> Connection -> IO ()
+eventLoop :: Bot -> Config -> Connection -> IO ()
 eventLoop bot config conn =
     do mb <- readIrcLine conn
        for_ mb $ \msg ->

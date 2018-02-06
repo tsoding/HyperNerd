@@ -58,9 +58,10 @@ executable HyperNerd
   other-modules:       Bot
                      , Command
                      , Russify
+                     , Effect
   
   -- LANGUAGE extensions used by modules in this package.
-  -- other-extensions:    
+  other-extensions:    OverloadedStrings
   
   -- Other library packages from which modules are imported.
   build-depends:       base >=4.9 && <4.10
@@ -73,6 +74,7 @@ executable HyperNerd
                      , aeson
                      , text
                      , regex-compat
+                     , free
   
   -- Directories containing source files.
   hs-source-dirs:      src

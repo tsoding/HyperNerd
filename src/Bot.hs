@@ -1,32 +1,30 @@
-module Bot (Bot, bot, Event(..), Effect(..)) where
+module Bot (Bot, bot, Event(..)) where
 
 import Command
 import Data.Maybe
 import qualified Data.Text as T
+import Effect
 import Russify
-
-type Bot s = Event -> Effect s
 
 data Event = Join
            | Msg T.Text T.Text
 
-data Effect s = None
-              | Say T.Text
+type Bot = Event -> Effect ()
 
-bot :: Bot s
-bot Join = Say $ T.pack "HyperNyard"
-bot (Msg user text) = maybe None (effectOfCommand user) $ textAsCommand text
+bot :: Bot
+bot Join = say $ T.pack "HyperNyard"
+bot (Msg user text) = maybe ok (effectOfCommand user) $ textAsCommand text
 
-effectOfCommand :: T.Text -> Command T.Text -> Effect s
+effectOfCommand :: T.Text -> Command T.Text -> Effect ()
 effectOfCommand sender command =
     case T.unpack $ commandName command of
       "russify" -> replyToUser sender
                    $ russify
                    $ commandArgs command
-      _ -> None
+      _ -> ok
 
-replyToUser :: T.Text -> T.Text -> Effect s
-replyToUser user text = Say $ T.concat [ (T.pack "@")
+replyToUser :: T.Text -> T.Text -> Effect ()
+replyToUser user text = say $ T.concat [ (T.pack "@")
                                        , user
                                        , (T.pack " ")
                                        , text]
