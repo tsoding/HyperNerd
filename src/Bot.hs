@@ -20,6 +20,8 @@ bot (Msg user text) = maybe ok (effectOfCommand user) $ textAsCommand text
 
 effectOfCommand :: T.Text -> Command T.Text -> Effect ()
 effectOfCommand sender command =
+    -- TODO: refactor out case in effectOfCommand
+    -- Use function level pattern matching
     case T.unpack $ commandName command of
       "russify" -> replyToUser sender
                    $ russify
