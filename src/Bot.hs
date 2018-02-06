@@ -16,7 +16,7 @@ type Bot = Event -> Effect ()
 
 bot :: Bot
 bot Join = say $ T.pack "HyperNyard"
-bot (Msg user text) = maybe ok (effectOfCommand user) $ textAsCommand text
+bot (Msg user text) = maybe (return ()) (effectOfCommand user) $ textAsCommand text
 
 effectOfCommand :: T.Text -> Command T.Text -> Effect ()
 effectOfCommand sender command =
@@ -40,7 +40,7 @@ effectOfCommand sender command =
                                                      , T.pack $ show entityId
                                                      ]
       -- TODO(#36): implement !quote command
-      _ -> ok
+      _ -> return ()
 
 replyToUser :: T.Text -> T.Text -> Effect ()
 replyToUser user text = say $ T.concat [ (T.pack "@")
