@@ -94,7 +94,7 @@ applyEffect config conn (Free (Now s)) =
     do timestamp <- getCurrentTime
        applyEffect config conn (s timestamp)
 
--- TODO: Implement SaveEntity and GetEntityById effects
+-- TODO(#37): Implement SaveEntity and GetEntityById effects
 applyEffect config conn (Free (SaveEntity entity s)) =
     applyEffect config conn (s 42)
 applyEffect config conn (Free (GetEntityById name _ s)) =
