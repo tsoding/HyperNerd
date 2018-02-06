@@ -59,6 +59,7 @@ executable HyperNerd
                      , Command
                      , Russify
                      , Effect
+                     , Entity
   
   -- LANGUAGE extensions used by modules in this package.
   other-extensions:    OverloadedStrings
@@ -75,6 +76,7 @@ executable HyperNerd
                      , text
                      , regex-compat
                      , free
+                     , time
   
   -- Directories containing source files.
   hs-source-dirs:      src

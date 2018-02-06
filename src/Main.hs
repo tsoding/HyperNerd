@@ -6,9 +6,12 @@ import Control.Monad
 import Control.Monad.Free
 import Data.Foldable
 import Data.Ini
+import qualified Data.Map as M
 import qualified Data.Text as T
+import Data.Time
 import Data.Traversable
 import Effect
+import Entity
 import Hookup
 import Irc.Commands (ircPong, ircNick, ircPass, ircJoin, ircPrivmsg)
 import Irc.Identifier (idText)
@@ -86,6 +89,18 @@ applyEffect config conn (Free (Ok s)) =
 applyEffect config conn (Free (Say text s)) =
     do sendMsg conn (ircPrivmsg (configChannel config) text)
        applyEffect config conn s
+
+applyEffect config conn (Free (Now s)) =
+    do timestamp <- getCurrentTime
+       applyEffect config conn (s timestamp)
+
+-- TODO: Implement SaveEntity and GetEntityById effects
+applyEffect config conn (Free (SaveEntity entity s)) =
+    applyEffect config conn (s 42)
+applyEffect config conn (Free (GetEntityById name _ s)) =
+    applyEffect config conn (s $ Just $ Entity { entityName = name
+                                               , entityProperties = M.empty
+                                               })
 
 ircTransport :: Bot -> Config -> Connection -> IO ()
 ircTransport bot config conn =
