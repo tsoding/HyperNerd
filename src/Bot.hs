@@ -1,32 +1,49 @@
-module Bot (Bot, bot, Event(..), Effect(..)) where
+{-# LANGUAGE OverloadedStrings #-}
+module Bot (Bot, bot, Event(..)) where
 
 import Command
+import qualified Data.Map as M
 import Data.Maybe
 import qualified Data.Text as T
+import Effect
 import Russify
-
-type Bot s = Event -> Effect s
+import Entity
 
 data Event = Join
            | Msg T.Text T.Text
 
-data Effect s = None
-              | Say T.Text
+type Bot = Event -> Effect ()
 
-bot :: Bot s
-bot Join = Say $ T.pack "HyperNyard"
-bot (Msg user text) = maybe None (effectOfCommand user) $ textAsCommand text
+bot :: Bot
+bot Join = say $ T.pack "HyperNyard"
+bot (Msg user text) = maybe ok (effectOfCommand user) $ textAsCommand text
 
-effectOfCommand :: T.Text -> Command T.Text -> Effect s
+effectOfCommand :: T.Text -> Command T.Text -> Effect ()
 effectOfCommand sender command =
+    -- TODO(#35): refactor out case in effectOfCommand
+    -- Use function level pattern matching
     case T.unpack $ commandName command of
       "russify" -> replyToUser sender
                    $ russify
                    $ commandArgs command
-      _ -> None
+      "addquote" -> do timestamp <- now
+                       let entity =
+                               Entity { entityName = "quote"
+                                      , entityProperties =
+                                          M.fromList [ ("content", PropertyText $ commandArgs command)
+                                                     , ("quoter", PropertyText $ sender)
+                                                     , ("timestamp", PropertyUTCTime $ timestamp)
+                                                     ]
+                                      }
+                       entityId <- saveEntity entity
+                       replyToUser sender $ T.concat [ "Added the quote under the number "
+                                                     , T.pack $ show entityId
+                                                     ]
+      -- TODO(#36): implement !quote command
+      _ -> ok
 
-replyToUser :: T.Text -> T.Text -> Effect s
-replyToUser user text = Say $ T.concat [ (T.pack "@")
+replyToUser :: T.Text -> T.Text -> Effect ()
+replyToUser user text = say $ T.concat [ (T.pack "@")
                                        , user
                                        , (T.pack " ")
                                        , text]

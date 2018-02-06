@@ -58,9 +58,11 @@ executable HyperNerd
   other-modules:       Bot
                      , Command
                      , Russify
+                     , Effect
+                     , Entity
   
   -- LANGUAGE extensions used by modules in this package.
-  -- other-extensions:    
+  other-extensions:    OverloadedStrings
   
   -- Other library packages from which modules are imported.
   build-depends:       base >=4.9 && <4.10
@@ -73,9 +75,13 @@ executable HyperNerd
                      , aeson
                      , text
                      , regex-compat
+                     , free
+                     , time
   
   -- Directories containing source files.
   hs-source-dirs:      src
   
   -- Base language which the package is written in.
   default-language:    Haskell2010
+
+-- TODO(#34): fail build on non-exhaustive pattern matchings

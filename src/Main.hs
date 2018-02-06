@@ -3,17 +3,22 @@ module Main where
 import Bot
 import Control.Exception
 import Control.Monad
+import Control.Monad.Free
 import Data.Foldable
 import Data.Ini
+import qualified Data.Map as M
 import qualified Data.Text as T
+import Data.Time
 import Data.Traversable
+import Effect
+import Entity
 import Hookup
 import Irc.Commands (ircPong, ircNick, ircPass, ircJoin, ircPrivmsg)
 import Irc.Identifier (idText)
-import Irc.UserInfo (userNick)
 import Irc.Message (IrcMsg(Ping, Privmsg), cookIrcMsg)
 import Irc.RateLimit (RateLimit)
 import Irc.RawIrcMsg (RawIrcMsg, parseRawIrcMsg, asUtf8, renderRawIrcMsg)
+import Irc.UserInfo (userNick)
 import System.Environment
 
 -- TODO(#15): utilize rate limits
@@ -77,19 +82,34 @@ readIrcLine conn =
 sendMsg :: Connection -> RawIrcMsg -> IO ()
 sendMsg conn msg = send conn (renderRawIrcMsg msg)
 
-applyEffect :: Config -> Connection -> Effect s -> IO ()
-applyEffect _ _ None = return ()
-applyEffect config conn (Say text) =
-    sendMsg conn (ircPrivmsg (configChannel config) text)
+applyEffect :: Config -> Connection -> Effect () -> IO ()
+applyEffect _ _ (Pure r) = return r
+applyEffect config conn (Free (Ok s)) =
+    applyEffect config conn s
+applyEffect config conn (Free (Say text s)) =
+    do sendMsg conn (ircPrivmsg (configChannel config) text)
+       applyEffect config conn s
 
-ircTransport :: Bot s -> Config -> Connection -> IO ()
+applyEffect config conn (Free (Now s)) =
+    do timestamp <- getCurrentTime
+       applyEffect config conn (s timestamp)
+
+-- TODO(#37): Implement SaveEntity and GetEntityById effects
+applyEffect config conn (Free (SaveEntity entity s)) =
+    applyEffect config conn (s 42)
+applyEffect config conn (Free (GetEntityById name _ s)) =
+    applyEffect config conn (s $ Just $ Entity { entityName = name
+                                               , entityProperties = M.empty
+                                               })
+
+ircTransport :: Bot -> Config -> Connection -> IO ()
 ircTransport bot config conn =
     -- TODO(#17): check unsuccessful authorization
     do authorize config conn
        applyEffect config conn $ bot Join
        eventLoop bot config conn
 
-eventLoop :: Bot s -> Config -> Connection -> IO ()
+eventLoop :: Bot -> Config -> Connection -> IO ()
 eventLoop bot config conn =
     do mb <- readIrcLine conn
        for_ mb $ \msg ->
