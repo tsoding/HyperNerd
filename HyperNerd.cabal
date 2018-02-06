@@ -84,4 +84,4 @@ executable HyperNerd
   -- Base language which the package is written in.
   default-language:    Haskell2010
 
--- TODO: fail build on non-exhaustive pattern matchings
+-- TODO(#34): fail build on non-exhaustive pattern matchings
