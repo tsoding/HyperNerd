@@ -16,7 +16,6 @@ import Hookup
 import Irc.Commands (ircPong, ircNick, ircPass, ircJoin, ircPrivmsg)
 import Irc.Identifier (idText)
 import Irc.Message (IrcMsg(Ping, Privmsg), cookIrcMsg)
-import Irc.RateLimit (RateLimit)
 import Irc.RawIrcMsg (RawIrcMsg, parseRawIrcMsg, asUtf8, renderRawIrcMsg)
 import Irc.UserInfo (userNick)
 import System.Environment
@@ -42,10 +41,10 @@ config nick password channel =
 configFromFile :: FilePath -> IO Config
 configFromFile filePath =
     do ini <- readIniFile filePath
-       let lookup section key = ini >>= lookupValue (T.pack section) (T.pack key)
-       let nick = lookup "User" "nick"
-       let password = lookup "User" "password"
-       let channel = lookup "User" "channel"
+       let lookupParam section key = ini >>= lookupValue (T.pack section) (T.pack key)
+       let nick = lookupParam "User" "nick"
+       let password = lookupParam "User" "password"
+       let channel = lookupParam "User" "channel"
        either (ioError . userError) return $ liftM3 config nick password channel
 
 twitchConnectionParams :: ConnectionParams
@@ -66,10 +65,10 @@ withConnection params body =
     bracket (connect params) close body
 
 authorize :: Config -> Connection -> IO ()
-authorize config conn =
-    do sendMsg conn (ircPass $ configPass config)
-       sendMsg conn (ircNick $ configNick config)
-       sendMsg conn (ircJoin (configChannel config) Nothing)
+authorize conf conn =
+    do sendMsg conn (ircPass $ configPass conf)
+       sendMsg conn (ircNick $ configNick conf)
+       sendMsg conn (ircJoin (configChannel conf) Nothing)
 
 readIrcLine :: Connection -> IO (Maybe IrcMsg)
 readIrcLine conn =
@@ -84,44 +83,44 @@ sendMsg conn msg = send conn (renderRawIrcMsg msg)
 
 applyEffect :: Config -> Connection -> Effect () -> IO ()
 applyEffect _ _ (Pure r) = return r
-applyEffect config conn (Free (Say text s)) =
-    do sendMsg conn (ircPrivmsg (configChannel config) text)
-       applyEffect config conn s
+applyEffect conf conn (Free (Say text s)) =
+    do sendMsg conn (ircPrivmsg (configChannel conf) text)
+       applyEffect conf conn s
 
-applyEffect config conn (Free (Now s)) =
+applyEffect conf conn (Free (Now s)) =
     do timestamp <- getCurrentTime
-       applyEffect config conn (s timestamp)
+       applyEffect conf conn (s timestamp)
 
 -- TODO(#37): Implement SaveEntity and GetEntityById effects
-applyEffect config conn (Free (SaveEntity entity s)) =
-    applyEffect config conn (s 42)
-applyEffect config conn (Free (GetEntityById name _ s)) =
-    applyEffect config conn (s $ Just $ Entity { entityName = name
-                                               , entityProperties = M.empty
-                                               })
+applyEffect conf conn (Free (SaveEntity _ s)) =
+    applyEffect conf conn (s 42)
+applyEffect conf conn (Free (GetEntityById name _ s)) =
+    applyEffect conf conn (s $ Just $ Entity { entityName = name
+                                             , entityProperties = M.empty
+                                             })
 
 ircTransport :: Bot -> Config -> Connection -> IO ()
-ircTransport bot config conn =
+ircTransport b conf conn =
     -- TODO(#17): check unsuccessful authorization
-    do authorize config conn
-       applyEffect config conn $ bot Join
-       eventLoop bot config conn
+    do authorize conf conn
+       applyEffect conf conn $ b Join
+       eventLoop b conf conn
 
 eventLoop :: Bot -> Config -> Connection -> IO ()
-eventLoop bot config conn =
+eventLoop b conf conn =
     do mb <- readIrcLine conn
        for_ mb $ \msg ->
            do print msg
               case msg of
                 Ping xs -> sendMsg conn (ircPong xs)
-                Privmsg userInfo _ msg -> applyEffect config conn (bot $ Msg (idText $ userNick $ userInfo) msg)
+                Privmsg userInfo _ msgText -> applyEffect conf conn (b $ Msg (idText $ userNick $ userInfo) msgText)
                 _ -> return ()
-              eventLoop bot config conn
+              eventLoop b conf conn
 
 mainWithArgs :: [String] -> IO ()
 mainWithArgs [configPath] =
-    do config <- configFromFile configPath
-       withConnection twitchConnectionParams $ ircTransport bot config
+    do conf <- configFromFile configPath
+       withConnection twitchConnectionParams $ ircTransport bot conf
 mainWithArgs _ = error "./HyperNerd <config-file>"
 
 main :: IO ()
