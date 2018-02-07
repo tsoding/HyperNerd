@@ -9,7 +9,7 @@ data Property = PropertyInt Int
               | PropertyUTCTime UTCTime
                 deriving (Eq, Show)
 
--- TODO: get rid of entityName from Entity type
+-- TODO(#41): get rid of entityName from Entity type
 --
 -- Pass entity name via effects like getEntityById or SaveEntity along
 -- with entity id if applicable
