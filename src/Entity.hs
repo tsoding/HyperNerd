@@ -9,6 +9,10 @@ data Property = PropertyInt Int
               | PropertyUTCTime UTCTime
                 deriving (Eq, Show)
 
+-- TODO(#41): get rid of entityName from Entity type
+--
+-- Pass entity name via effects like getEntityById or SaveEntity along
+-- with entity id if applicable
 data Entity = Entity { entityName :: T.Text
                      , entityProperties :: M.Map T.Text Property
                      } deriving (Eq, Show)
