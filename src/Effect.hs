@@ -20,8 +20,8 @@ instance Functor EffectF where
     fmap f (Say msg s)      = Say msg (f s)
     fmap f (SaveEntity entity h) =
         SaveEntity entity (f . h)
-    fmap f (GetEntityById name id h) =
-        GetEntityById name id (f . h)
+    fmap f (GetEntityById name ident h) =
+        GetEntityById name ident (f . h)
     fmap f (Now h) = Now (f . h)
 
 type Effect = Free EffectF

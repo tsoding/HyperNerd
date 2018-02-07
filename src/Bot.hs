@@ -3,7 +3,6 @@ module Bot (Bot, bot, Event(..)) where
 
 import Command
 import qualified Data.Map as M
-import Data.Maybe
 import qualified Data.Text as T
 import Data.Time
 import Effect
