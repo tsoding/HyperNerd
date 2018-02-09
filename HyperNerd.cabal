@@ -87,3 +87,18 @@ executable HyperNerd
   
   -- Base language which the package is written in.
   default-language:    Haskell2010
+
+test-suite HyperNerdTest
+  type:                exitcode-stdio-1.0
+  main-is:             Spec.hs
+  hs-source-dirs:      test
+                     , src
+  build-depends:       base
+                     , HUnit
+                     , aeson
+                     , file-embed
+                     , bytestring
+                     , containers
+                     , text
+
+  other-modules:       Russify
