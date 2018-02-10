@@ -9,6 +9,9 @@ data Property = PropertyInt Int
               | PropertyUTCTime UTCTime
                 deriving (Eq, Show)
 
-data Entity = Entity { entityName :: T.Text
+type Properties = M.Map T.Text Property
+
+data Entity = Entity { entityId :: Int
+                     , entityName :: T.Text
                      , entityProperties :: M.Map T.Text Property
                      } deriving (Eq, Show)

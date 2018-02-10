@@ -91,16 +91,21 @@ applyEffect _ _ _ (Pure r) = return r
 applyEffect conf ircConn sqliteConn (Free (Say text s)) =
     do sendMsg ircConn (ircPrivmsg (configChannel conf) text)
        applyEffect conf ircConn sqliteConn s
-
+applyEffect conf ircConn sqliteConn (Free (LogMsg msg s)) =
+    do putStrLn $ T.unpack msg
+       applyEffect conf ircConn sqliteConn s
 applyEffect conf ircConn sqliteConn (Free (Now s)) =
     do timestamp <- getCurrentTime
        applyEffect conf ircConn sqliteConn (s timestamp)
 
-applyEffect conf ircConn sqliteConn (Free (SaveEntity entity s)) =
-    do entityId <- SEP.saveEntity entity
+applyEffect conf ircConn sqliteConn (Free (CreateEntity name properties s)) =
+    do entityId <- SEP.saveEntity name properties
        applyEffect conf ircConn sqliteConn (s entityId)
 applyEffect conf ircConn sqliteConn (Free (GetEntityById name entityId s)) =
     do entity <- SEP.getEntityById name entityId
+       applyEffect conf ircConn sqliteConn (s entity)
+applyEffect conf ircConn sqliteConn (Free (GetRandomEntity name s)) =
+    do entity <- SEP.getRandomEntity name
        applyEffect conf ircConn sqliteConn (s entity)
 
 ircTransport :: Bot -> Config -> Connection -> SQLite.Connection -> IO ()

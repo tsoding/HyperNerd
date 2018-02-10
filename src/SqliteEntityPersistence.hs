@@ -9,8 +9,14 @@ import           Entity
 prepareSchema :: Connection -> IO ()
 prepareSchema _ = return ()
 
-saveEntity :: Entity -> IO Int
-saveEntity _ = return 42
+saveEntity :: T.Text -> Properties -> IO Entity
+saveEntity name properties = return $ Entity { entityId = 42
+                                             , entityName = name
+                                             , entityProperties = properties
+                                             }
 
 getEntityById :: T.Text -> Int -> IO (Maybe Entity)
 getEntityById _ _ = return Nothing
+
+getRandomEntity :: T.Text -> IO (Maybe Entity)
+getRandomEntity _ = return Nothing
