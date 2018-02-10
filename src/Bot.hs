@@ -27,8 +27,10 @@ effectOfCommand sender (Command { commandName = "addquote"
     (quoteProperties quoteContent sender <$> now)
     >>= createEntity "quote"
     >>= (quoteAddedReply sender . entityId)
-
--- TODO(#36): implement !quote command
+effectOfCommand sender (Command { commandName = "quote"
+                                , commandArgs = "" }) =
+    do quoteEntity <- getRandomEntity "quote"
+       quoteFoundReply sender quoteEntity
 
 effectOfCommand _ _ = return ()
 
@@ -43,6 +45,26 @@ quoteAddedReply user quoteId =
     replyToUser user $ T.concat [ "Added the quote under the number "
                                 , T.pack $ show quoteId
                                 ]
+
+-- TODO: Bot.quoteFoundReply is too messy
+quoteFoundReply :: T.Text -> Maybe Entity -> Effect ()
+quoteFoundReply user (Nothing) = replyToUser user "Couldn't find any quotes"
+quoteFoundReply user (Just entity) =
+    case M.lookup "content" $ entityProperties entity of
+      Nothing ->
+          do logMsg $ T.concat [ "Quote #"
+                               , T.pack $ show $ entityId entity
+                               , " doesn't have the 'content field'"
+                               ]
+             replyToUser user "Couldn't find any quotes, because of some database issues."
+      Just (PropertyText content) ->
+          replyToUser user $ T.concat [ content, " (", T.pack $ show $ entityId entity, ")" ]
+      Just _ -> do logMsg $ T.concat [ "Quote #"
+                                     , T.pack $ show $ entityId entity
+                                     , " content is not text"
+                                     ]
+                   replyToUser user "Couldn't find any quotes, because of some database issues."
+
 
 quoteProperties :: T.Text -> T.Text -> UTCTime -> Properties
 quoteProperties content quoter timestamp =
