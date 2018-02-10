@@ -1,13 +1,13 @@
 {-# LANGUAGE OverloadedStrings #-}
 module Bot (Bot, bot, Event(..)) where
 
-import Command
+import           Command
 import qualified Data.Map as M
 import qualified Data.Text as T
-import Data.Time
-import Effect
-import Entity
-import Russify
+import           Data.Time
+import           Effect
+import           Entity
+import           Russify
 
 data Event = Join
            | Msg T.Text T.Text

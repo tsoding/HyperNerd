@@ -1,24 +1,29 @@
 module Main where
 
-import Bot
-import Control.Exception
-import Control.Monad
-import Control.Monad.Free
-import Data.Foldable
-import Data.Ini
-import qualified Data.Map as M
+import           Bot
+import           Control.Exception
+import           Control.Monad
+import           Control.Monad.Free
+import           Data.Foldable
+import           Data.Ini
 import qualified Data.Text as T
-import Data.Time
-import Data.Traversable
-import Effect
-import Entity
-import Hookup
-import Irc.Commands (ircPong, ircNick, ircPass, ircJoin, ircPrivmsg)
-import Irc.Identifier (idText)
-import Irc.Message (IrcMsg(Ping, Privmsg), cookIrcMsg)
-import Irc.RawIrcMsg (RawIrcMsg, parseRawIrcMsg, asUtf8, renderRawIrcMsg)
-import Irc.UserInfo (userNick)
-import System.Environment
+import           Data.Time
+import           Data.Traversable
+import           Effect
+import           Hookup
+import           Irc.Commands ( ircPong
+                              , ircNick
+                              , ircPass
+                              , ircJoin
+                              , ircPrivmsg
+                              )
+import           Irc.Identifier (idText)
+import           Irc.Message (IrcMsg(Ping, Privmsg), cookIrcMsg)
+import           Irc.RawIrcMsg (RawIrcMsg, parseRawIrcMsg, asUtf8, renderRawIrcMsg)
+import           Irc.UserInfo (userNick)
+import           System.Environment
+import qualified Database.SQLite.Simple as SQLite
+import qualified SqliteEntityPersistence as SEP
 
 -- TODO(#15): utilize rate limits
 -- See https://github.com/glguy/irc-core/blob/6dd03dfed4affe6ae8cdd63ede68c88d70af9aac/bot/src/Main.hs#L32
@@ -81,47 +86,49 @@ readIrcLine conn =
 sendMsg :: Connection -> RawIrcMsg -> IO ()
 sendMsg conn msg = send conn (renderRawIrcMsg msg)
 
-applyEffect :: Config -> Connection -> Effect () -> IO ()
-applyEffect _ _ (Pure r) = return r
-applyEffect conf conn (Free (Say text s)) =
-    do sendMsg conn (ircPrivmsg (configChannel conf) text)
-       applyEffect conf conn s
+applyEffect :: Config -> Connection -> SQLite.Connection -> Effect () -> IO ()
+applyEffect _ _ _ (Pure r) = return r
+applyEffect conf ircConn sqliteConn (Free (Say text s)) =
+    do sendMsg ircConn (ircPrivmsg (configChannel conf) text)
+       applyEffect conf ircConn sqliteConn s
 
-applyEffect conf conn (Free (Now s)) =
+applyEffect conf ircConn sqliteConn (Free (Now s)) =
     do timestamp <- getCurrentTime
-       applyEffect conf conn (s timestamp)
+       applyEffect conf ircConn sqliteConn (s timestamp)
 
--- TODO(#37): Implement SaveEntity and GetEntityById effects
-applyEffect conf conn (Free (SaveEntity _ s)) =
-    applyEffect conf conn (s 42)
-applyEffect conf conn (Free (GetEntityById name _ s)) =
-    applyEffect conf conn (s $ Just $ Entity { entityName = name
-                                             , entityProperties = M.empty
-                                             })
+applyEffect conf ircConn sqliteConn (Free (SaveEntity entity s)) =
+    do entityId <- SEP.saveEntity entity
+       applyEffect conf ircConn sqliteConn (s entityId)
+applyEffect conf ircConn sqliteConn (Free (GetEntityById name entityId s)) =
+    do entity <- SEP.getEntityById name entityId
+       applyEffect conf ircConn sqliteConn (s entity)
 
-ircTransport :: Bot -> Config -> Connection -> IO ()
-ircTransport b conf conn =
+ircTransport :: Bot -> Config -> Connection -> SQLite.Connection -> IO ()
+ircTransport b conf ircConn sqliteConn =
     -- TODO(#17): check unsuccessful authorization
-    do authorize conf conn
-       applyEffect conf conn $ b Join
-       eventLoop b conf conn
+    do authorize conf ircConn
+       applyEffect conf ircConn sqliteConn $ b Join
+       eventLoop b conf ircConn sqliteConn
 
-eventLoop :: Bot -> Config -> Connection -> IO ()
-eventLoop b conf conn =
-    do mb <- readIrcLine conn
+eventLoop :: Bot -> Config -> Connection -> SQLite.Connection -> IO ()
+eventLoop b conf ircConn sqliteConn =
+    do mb <- readIrcLine ircConn
        for_ mb $ \msg ->
            do print msg
               case msg of
-                Ping xs -> sendMsg conn (ircPong xs)
-                Privmsg userInfo _ msgText -> applyEffect conf conn (b $ Msg (idText $ userNick $ userInfo) msgText)
+                Ping xs -> sendMsg ircConn (ircPong xs)
+                Privmsg userInfo _ msgText -> applyEffect conf ircConn sqliteConn (b $ Msg (idText $ userNick $ userInfo) msgText)
                 _ -> return ()
-              eventLoop b conf conn
+              eventLoop b conf ircConn sqliteConn
 
 mainWithArgs :: [String] -> IO ()
-mainWithArgs [configPath] =
+mainWithArgs [configPath, databasePath] =
     do conf <- configFromFile configPath
-       withConnection twitchConnectionParams $ ircTransport bot conf
-mainWithArgs _ = error "./HyperNerd <config-file>"
+       withConnection twitchConnectionParams
+                      (\ircConn -> SQLite.withConnection databasePath
+                                   (\sqliteConn -> do SEP.prepareSchema sqliteConn
+                                                      ircTransport bot conf ircConn sqliteConn))
+mainWithArgs _ = error "./HyperNerd <config-file> <database-file>"
 
 main :: IO ()
 main = getArgs >>= mainWithArgs
