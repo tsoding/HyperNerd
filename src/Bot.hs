@@ -53,7 +53,7 @@ quoteAddedReply user quoteId =
                                 , T.pack $ show quoteId
                                 ]
 
--- TODO: Bot.quoteFoundReply is too messy
+-- TODO(#51): Bot.quoteFoundReply is too messy
 quoteFoundReply :: T.Text -> Maybe Entity -> Effect ()
 quoteFoundReply user (Nothing) = replyToUser user "Couldn't find any quotes"
 quoteFoundReply user (Just entity) =
