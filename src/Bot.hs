@@ -24,9 +24,9 @@ effectOfCommand sender (Command { commandName = "russify"
     replyToUser sender $ russify westernSpyMsg
 effectOfCommand sender (Command { commandName = "addquote"
                                 , commandArgs = quoteContent }) =
-    (quoteEntity quoteContent sender <$> now)
-    >>= saveEntity
-    >>= quoteAddedReply sender
+    (quoteProperties quoteContent sender <$> now)
+    >>= saveEntity "quote"
+    >>= (quoteAddedReply sender . entityId)
 
 -- TODO(#36): implement !quote command
 
@@ -44,12 +44,9 @@ quoteAddedReply user quoteId =
                                 , T.pack $ show quoteId
                                 ]
 
-quoteEntity :: T.Text -> T.Text -> UTCTime -> Entity
-quoteEntity content quoter timestamp =
-    Entity { entityName = "quote"
-           , entityProperties =
-               M.fromList [ ("content", PropertyText content)
-                          , ("quoter", PropertyText quoter)
-                          , ("timestamp", PropertyUTCTime timestamp)
-                          ]
-           }
+quoteProperties :: T.Text -> T.Text -> UTCTime -> Properties
+quoteProperties content quoter timestamp =
+    M.fromList [ ("content", PropertyText content)
+               , ("quoter", PropertyText quoter)
+               , ("timestamp", PropertyUTCTime timestamp)
+               ]

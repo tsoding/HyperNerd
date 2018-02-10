@@ -96,8 +96,8 @@ applyEffect conf ircConn sqliteConn (Free (Now s)) =
     do timestamp <- getCurrentTime
        applyEffect conf ircConn sqliteConn (s timestamp)
 
-applyEffect conf ircConn sqliteConn (Free (SaveEntity entity s)) =
-    do entityId <- SEP.saveEntity entity
+applyEffect conf ircConn sqliteConn (Free (SaveEntity name properties s)) =
+    do entityId <- SEP.saveEntity name properties
        applyEffect conf ircConn sqliteConn (s entityId)
 applyEffect conf ircConn sqliteConn (Free (GetEntityById name entityId s)) =
     do entity <- SEP.getEntityById name entityId
