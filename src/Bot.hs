@@ -25,7 +25,7 @@ effectOfCommand sender (Command { commandName = "russify"
 effectOfCommand sender (Command { commandName = "addquote"
                                 , commandArgs = quoteContent }) =
     (quoteProperties quoteContent sender <$> now)
-    >>= saveEntity "quote"
+    >>= createEntity "quote"
     >>= (quoteAddedReply sender . entityId)
 
 -- TODO(#36): implement !quote command
