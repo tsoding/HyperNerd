@@ -4,7 +4,7 @@ import qualified Data.Text as T
 import           Database.SQLite.Simple
 import           Entity
 
--- TODO: implement SqliteEntityPersistance module
+-- TODO(#49): Implement SqliteEntityPersistance module
 
 prepareSchema :: Connection -> IO ()
 prepareSchema _ = return ()
