@@ -14,6 +14,7 @@ import Entity
 data EffectF s = Say T.Text s
                | CreateEntity T.Text Properties (Entity -> s)
                | GetEntityById T.Text Int (Maybe Entity -> s)
+               | GetRandomEntity T.Text (Maybe Entity -> s)
                | Now (UTCTime -> s)
 
 instance Functor EffectF where
@@ -22,6 +23,8 @@ instance Functor EffectF where
         CreateEntity name properties (f . h)
     fmap f (GetEntityById name ident h) =
         GetEntityById name ident (f . h)
+    fmap f (GetRandomEntity name h) =
+        GetRandomEntity name (f . h)
     fmap f (Now h) = Now (f . h)
 
 type Effect = Free EffectF

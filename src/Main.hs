@@ -102,6 +102,9 @@ applyEffect conf ircConn sqliteConn (Free (CreateEntity name properties s)) =
 applyEffect conf ircConn sqliteConn (Free (GetEntityById name entityId s)) =
     do entity <- SEP.getEntityById name entityId
        applyEffect conf ircConn sqliteConn (s entity)
+applyEffect conf ircConn sqliteConn (Free (GetRandomEntity name s)) =
+    do entity <- SEP.getRandomEntity name
+       applyEffect conf ircConn sqliteConn (s entity)
 
 ircTransport :: Bot -> Config -> Connection -> SQLite.Connection -> IO ()
 ircTransport b conf ircConn sqliteConn =

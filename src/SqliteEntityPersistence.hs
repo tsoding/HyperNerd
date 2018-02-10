@@ -17,3 +17,6 @@ saveEntity name properties = return $ Entity { entityId = 42
 
 getEntityById :: T.Text -> Int -> IO (Maybe Entity)
 getEntityById _ _ = return Nothing
+
+getRandomEntity :: T.Text -> IO (Maybe Entity)
+getRandomEntity _ = return Nothing
