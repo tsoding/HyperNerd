@@ -91,7 +91,9 @@ applyEffect _ _ _ (Pure r) = return r
 applyEffect conf ircConn sqliteConn (Free (Say text s)) =
     do sendMsg ircConn (ircPrivmsg (configChannel conf) text)
        applyEffect conf ircConn sqliteConn s
-
+applyEffect conf ircConn sqliteConn (Free (LogMsg msg s)) =
+    do putStrLn $ T.unpack msg
+       applyEffect conf ircConn sqliteConn s
 applyEffect conf ircConn sqliteConn (Free (Now s)) =
     do timestamp <- getCurrentTime
        applyEffect conf ircConn sqliteConn (s timestamp)
