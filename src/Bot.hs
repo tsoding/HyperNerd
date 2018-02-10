@@ -8,6 +8,7 @@ import           Data.Time
 import           Effect
 import           Entity
 import           Russify
+import           Text.Read
 
 data Event = Join
            | Msg T.Text T.Text
@@ -31,6 +32,12 @@ effectOfCommand sender (Command { commandName = "quote"
                                 , commandArgs = "" }) =
     do quoteEntity <- getRandomEntity "quote"
        quoteFoundReply sender quoteEntity
+effectOfCommand sender (Command { commandName = "quote"
+                                , commandArgs = quoteIdText }) =
+    case readMaybe $ T.unpack $ quoteIdText of
+      Nothing -> replyToUser sender "Couldn't find any quotes"
+      Just quoteId -> do quoteEntity <- getEntityById "quote" quoteId
+                         quoteFoundReply sender quoteEntity
 
 effectOfCommand _ _ = return ()
 
