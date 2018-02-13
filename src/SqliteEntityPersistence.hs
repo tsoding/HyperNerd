@@ -106,7 +106,7 @@ createEntity conn name properties =
                       }
 
 
--- TODO: implement SEP.getEntityById
+-- TODO(#55): SEP.getEntityById is not implemented
 getEntityById :: T.Text -> Int -> IO (Maybe Entity)
 getEntityById _ _ = return Nothing
 
