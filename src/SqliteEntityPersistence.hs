@@ -82,7 +82,7 @@ prepareSchema conn =
                                           , "  entityName TEXT NOT NULL,"
                                           , "  entityId INTEGER NOT NULL,"
                                           , "  propertyName TEXT NOT NULL,"
-                                          -- TODO: add constraint to check wrong propertyType
+                                          -- TODO(#54): propertyType field of EntityProperty table of SQLiteEntityPersistence may contain incorrect values
                                           , "  propertyType TEXT NOT NULL,"
                                           , "  propertyInt INTEGER,"
                                           , "  propertyText TEXT,"
