@@ -1,13 +1,28 @@
 module SqliteEntityPersistence where
 
+import           Data.String
 import qualified Data.Text as T
 import           Database.SQLite.Simple
 import           Entity
 
--- TODO(#49): Implement SqliteEntityPersistance module
-
 prepareSchema :: Connection -> IO ()
-prepareSchema _ = return ()
+prepareSchema conn = do
+  do execute_ conn $ fromString $ concat [ "CREATE TABLE EntityProperties ("
+                                         , "  id INTEGER PRIMARY KEY,"
+                                         , "  entityName TEXT NOT NULL,"
+                                         , "  entityId INTEGER NOT NULL,"
+                                         -- TODO: add constraint to check wrong propertyType
+                                         , "  propertyType TEXT NOT NULL,"
+                                         , "  propertyInt INTEGER,"
+                                         , "  propertyText TEXT,"
+                                         , "  propertyUTCTime DATETIME"
+                                         , ");"
+                                         ]
+     execute_ conn $ fromString $ concat [ "CREATE TABLE EntityIds ("
+                                         , "  entityName TEXT NOT NULL UNIQUE,"
+                                         , "  entityId INTEGER NOT NULL DEFAULT 0"
+                                         , ");"
+                                         ]
 
 saveEntity :: T.Text -> Properties -> IO Entity
 saveEntity name properties = return $ Entity { entityId = 42
