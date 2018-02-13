@@ -110,6 +110,6 @@ createEntity conn name properties =
 getEntityById :: T.Text -> Int -> IO (Maybe Entity)
 getEntityById _ _ = return Nothing
 
--- TODO: implement SEP.getRandomENtity
+-- TODO(#56): SEP.getRandomENtity is not implemented
 getRandomEntity :: T.Text -> IO (Maybe Entity)
 getRandomEntity _ = return Nothing
