@@ -42,9 +42,38 @@ nextEntityId conn name =
                 return (ident + 1)
          _ -> ioError (userError "EntityId table contains duplicate entries")
 
-createEntityProperty :: Connection -> T.Text -> Int -> T.Text -> Property -> IO ()
-createEntityProperty = undefined
 
+createEntityProperty :: Connection -> T.Text -> Int -> T.Text -> Property -> IO ()
+createEntityProperty conn name ident propertyName property =
+    executeNamed conn
+                 (fromString $ concat [ "INSERT INTO EntityProperty ("
+                                      , "  entityName,"
+                                      , "  entityId,"
+                                      , "  propertyName,"
+                                      , "  propertyType,"
+                                      , "  propertyInt,"
+                                      , "  propertyText,"
+                                      , "  propertyUTCTime"
+                                      , ") VALUES ("
+                                      , "  :entityName,"
+                                      , "  :entityId,"
+                                      , "  :propertyName,"
+                                      , "  :propertyType,"
+                                      , "  :propertyInt,"
+                                      , "  :propertyText,"
+                                      , "  :propertyUTCTime"
+                                      , ");"
+                                      ])
+                 [ ":entityName" := name
+                 , ":entityId" := ident
+                 , ":propertyName" := propertyName
+                 , ":propertyType" := propertyTypeName property
+                 , ":propertyInt" := propertyAsInt property
+                 , ":propertyText" := propertyAsText property
+                 , ":propertyUTCTime" := propertyAsUTCTime property
+                 ]
+
+-- TODO: The SQLite schema is not migrated
 prepareSchema :: Connection -> IO ()
 prepareSchema conn =
     withTransaction conn $ do
@@ -77,8 +106,10 @@ createEntity conn name properties =
                       }
 
 
+-- TODO: implement SEP.getEntityById
 getEntityById :: T.Text -> Int -> IO (Maybe Entity)
 getEntityById _ _ = return Nothing
 
+-- TODO: implement SEP.getRandomENtity
 getRandomEntity :: T.Text -> IO (Maybe Entity)
 getRandomEntity _ = return Nothing
