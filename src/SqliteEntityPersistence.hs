@@ -24,11 +24,11 @@ prepareSchema conn = do
                                          , ");"
                                          ]
 
-saveEntity :: T.Text -> Properties -> IO Entity
-saveEntity name properties = return $ Entity { entityId = 42
-                                             , entityName = name
-                                             , entityProperties = properties
-                                             }
+createEntity :: T.Text -> Properties -> IO Entity
+createEntity name properties = return $ Entity { entityId = 42
+                                               , entityName = name
+                                               , entityProperties = properties
+                                               }
 
 getEntityById :: T.Text -> Int -> IO (Maybe Entity)
 getEntityById _ _ = return Nothing
