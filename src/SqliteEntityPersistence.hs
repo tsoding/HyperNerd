@@ -73,7 +73,7 @@ createEntityProperty conn name ident propertyName property =
                  , ":propertyUTCTime" := propertyAsUTCTime property
                  ]
 
--- TODO: The SQLite schema is not migrated
+-- TODO(#53): The SQLite schema is not migrated automatically
 prepareSchema :: Connection -> IO ()
 prepareSchema conn =
     withTransaction conn $ do
