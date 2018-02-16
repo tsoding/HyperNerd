@@ -102,6 +102,13 @@ test-suite HyperNerdTest
                      , bytestring
                      , containers
                      , text
+                     , temporary
+                     , time
+                     , sqlite-simple
+                     , HUnit
 
   other-modules:       Russify
+                     , Entity
+                     , SqliteEntityPersistence
+                     , SqliteEntityPersistenceSpec
   default-language:    Haskell2010

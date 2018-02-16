@@ -77,7 +77,7 @@ createEntityProperty conn name ident propertyName property =
 prepareSchema :: Connection -> IO ()
 prepareSchema conn =
     withTransaction conn $ do
-      execute_ conn $ fromString $ concat [ "CREATE TABLE EntityProperty ("
+      execute_ conn $ fromString $ concat [ "CREATE TABLE IF NOT EXISTS EntityProperty ("
                                           , "  id INTEGER PRIMARY KEY,"
                                           , "  entityName TEXT NOT NULL,"
                                           , "  entityId INTEGER NOT NULL,"
@@ -89,7 +89,7 @@ prepareSchema conn =
                                           , "  propertyUTCTime DATETIME"
                                           , ");"
                                           ]
-      execute_ conn $ fromString $ concat [ "CREATE TABLE EntityId ("
+      execute_ conn $ fromString $ concat [ "CREATE TABLE IF NOT EXISTS EntityId ("
                                           , "  entityName TEXT NOT NULL UNIQUE,"
                                           , "  entityId INTEGER NOT NULL DEFAULT 0"
                                           , ");"
