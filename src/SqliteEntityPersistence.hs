@@ -78,7 +78,7 @@ createEntityProperty conn name ident propertyName property =
 -- TODO(#53): The SQLite schema is not migrated automatically
 prepareSchema :: Connection -> IO ()
 prepareSchema conn =
-    withTransaction conn $ do
+    do
       execute_ conn $ fromString $ concat [ "CREATE TABLE IF NOT EXISTS EntityProperty ("
                                           , "  id INTEGER PRIMARY KEY,"
                                           , "  entityName TEXT NOT NULL,"
@@ -99,7 +99,7 @@ prepareSchema conn =
 
 createEntity :: Connection -> T.Text -> Properties -> IO Entity
 createEntity conn name properties =
-    withTransaction conn $ do
+    do
       ident <- nextEntityId conn name
       sequence_ $ map (uncurry $ createEntityProperty conn name ident) $ M.toList properties
       return $ Entity { entityId = ident
@@ -109,7 +109,7 @@ createEntity conn name properties =
 
 getEntityById :: Connection -> T.Text -> Int -> IO (Maybe Entity)
 getEntityById conn name ident =
-    withTransaction conn $ do
+    do
       rawProperties <- queryNamed conn [r| SELECT propertyName,
                                                   propertyType,
                                                   propertyInt,

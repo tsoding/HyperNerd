@@ -112,7 +112,7 @@ ircTransport :: Bot -> Config -> Connection -> SQLite.Connection -> IO ()
 ircTransport b conf ircConn sqliteConn =
     -- TODO(#17): check unsuccessful authorization
     do authorize conf ircConn
-       applyEffect conf ircConn sqliteConn $ b Join
+       SQLite.withTransaction sqliteConn $ applyEffect conf ircConn sqliteConn $ b Join
        eventLoop b conf ircConn sqliteConn
 
 eventLoop :: Bot -> Config -> Connection -> SQLite.Connection -> IO ()
@@ -122,7 +122,8 @@ eventLoop b conf ircConn sqliteConn =
            do print msg
               case msg of
                 Ping xs -> sendMsg ircConn (ircPong xs)
-                Privmsg userInfo _ msgText -> applyEffect conf ircConn sqliteConn (b $ Msg (idText $ userNick $ userInfo) msgText)
+                Privmsg userInfo _ msgText -> SQLite.withTransaction sqliteConn $
+                                              applyEffect conf ircConn sqliteConn (b $ Msg (idText $ userNick $ userInfo) msgText)
                 _ -> return ()
               eventLoop b conf ircConn sqliteConn
 
