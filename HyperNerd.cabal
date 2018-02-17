@@ -92,6 +92,11 @@ executable HyperNerd
 
 test-suite HyperNerdTest
   type:                exitcode-stdio-1.0
+  ghc-options:         -threaded
+                       -Wall
+                       -Werror
+                       -fwarn-incomplete-patterns
+                       -fwarn-incomplete-uni-patterns
   main-is:             Spec.hs
   hs-source-dirs:      test
                      , src
