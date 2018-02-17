@@ -107,8 +107,6 @@ createEntity conn name properties =
                       , entityProperties = properties
                       }
 
-
--- TODO(#55): SEP.getEntityById is not implemented
 getEntityById :: Connection -> T.Text -> Int -> IO (Maybe Entity)
 getEntityById conn name ident =
     withTransaction conn $ do
