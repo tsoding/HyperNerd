@@ -7,6 +7,7 @@ module SqliteEntityPersistence ( prepareSchema
                                ) where
 
 import qualified Data.Map as M
+import           Data.Maybe
 import           Data.String
 import qualified Data.Text as T
 import           Database.SQLite.Simple
@@ -123,6 +124,17 @@ getEntityById conn name ident =
                                        ]
       return $ restoreEntity name ident rawProperties
 
--- TODO(#56): SEP.getRandomENtity is not implemented
-getRandomEntity :: T.Text -> IO (Maybe Entity)
-getRandomEntity _ = return Nothing
+getRandomEntityId :: Connection -> T.Text -> IO (Maybe Int)
+getRandomEntityId conn name =
+    do entityIds <- queryNamed conn [r| SELECT entityId
+                                        FROM EntityProperty
+                                        WHERE entityName = :entityName
+                                        GROUP BY entityId
+                                        ORDER BY RANDOM()
+                                        LIMIT 1 |]
+                                    [ ":entityName" := name ]
+       return $ listToMaybe $ map fromOnly entityIds
+
+getRandomEntity :: Connection -> T.Text -> IO (Maybe Entity)
+getRandomEntity conn name =
+    getRandomEntityId conn name >>= maybe (return Nothing) (getEntityById conn name)
