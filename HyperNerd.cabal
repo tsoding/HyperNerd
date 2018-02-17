@@ -83,6 +83,7 @@ executable HyperNerd
                      , free
                      , time
                      , sqlite-simple
+                     , raw-strings-qq
   
   -- Directories containing source files.
   hs-source-dirs:      src
@@ -92,6 +93,11 @@ executable HyperNerd
 
 test-suite HyperNerdTest
   type:                exitcode-stdio-1.0
+  ghc-options:         -threaded
+                       -Wall
+                       -Werror
+                       -fwarn-incomplete-patterns
+                       -fwarn-incomplete-uni-patterns
   main-is:             Spec.hs
   hs-source-dirs:      test
                      , src
@@ -106,6 +112,7 @@ test-suite HyperNerdTest
                      , time
                      , sqlite-simple
                      , HUnit
+                     , raw-strings-qq
 
   other-modules:       Russify
                      , Entity

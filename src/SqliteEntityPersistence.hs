@@ -1,4 +1,5 @@
 {-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE QuasiQuotes #-}
 module SqliteEntityPersistence ( prepareSchema
                                , createEntity
                                , getEntityById
@@ -10,6 +11,7 @@ import           Data.String
 import qualified Data.Text as T
 import           Database.SQLite.Simple
 import           Entity
+import           Text.RawString.QQ
 
 data EntityIdEntry = EntityIdEntry T.Text Int
 
@@ -105,10 +107,21 @@ createEntity conn name properties =
                       , entityProperties = properties
                       }
 
-
--- TODO(#55): SEP.getEntityById is not implemented
-getEntityById :: T.Text -> Int -> IO (Maybe Entity)
-getEntityById _ _ = return Nothing
+getEntityById :: Connection -> T.Text -> Int -> IO (Maybe Entity)
+getEntityById conn name ident =
+    withTransaction conn $ do
+      rawProperties <- queryNamed conn [r| SELECT propertyName,
+                                                  propertyType,
+                                                  propertyInt,
+                                                  propertyText,
+                                                  propertyUTCTime
+                                           FROM EntityProperty
+                                           WHERE entityName=:entityName AND
+                                                 entityId=:entityId |]
+                                       [ ":entityName" := name
+                                       , ":entityId" := ident
+                                       ]
+      return $ restoreEntity name ident rawProperties
 
 -- TODO(#56): SEP.getRandomENtity is not implemented
 getRandomEntity :: T.Text -> IO (Maybe Entity)

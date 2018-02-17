@@ -1,3 +1,4 @@
+{-# LANGUAGE OverloadedStrings #-}
 module Entity where
 
 import qualified Data.Map as M
@@ -32,3 +33,19 @@ propertyAsText _ = Nothing
 propertyAsUTCTime :: Property -> Maybe UTCTime
 propertyAsUTCTime (PropertyUTCTime x) = Just x
 propertyAsUTCTime _ = Nothing
+
+restoreProperty :: (T.Text, T.Text, Maybe Int, Maybe T.Text, Maybe UTCTime) -> Maybe (T.Text, Property)
+restoreProperty (name, "PropertyInt", Just x, Nothing, Nothing) = Just (name, PropertyInt x)
+restoreProperty (name, "PropertyText", Nothing, Just x, Nothing) = Just (name, PropertyText x)
+restoreProperty (name, "PropertyUTCTime", Nothing, Nothing, Just x) = Just (name, PropertyUTCTime x)
+restoreProperty _ = error "Khooy"
+
+restoreEntity :: T.Text -> Int -> [(T.Text, T.Text, Maybe Int, Maybe T.Text, Maybe UTCTime)] -> Maybe Entity
+restoreEntity name ident rawProperties =
+    do properties <- sequence $ map restoreProperty rawProperties
+       if null properties
+       then Nothing
+       else Just $ Entity { entityName = name
+                          , entityId = ident
+                          , entityProperties = M.fromList properties
+                          }
