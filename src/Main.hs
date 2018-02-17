@@ -102,7 +102,7 @@ applyEffect conf ircConn sqliteConn (Free (CreateEntity name properties s)) =
     do entityId <- SEP.createEntity sqliteConn name properties
        applyEffect conf ircConn sqliteConn (s entityId)
 applyEffect conf ircConn sqliteConn (Free (GetEntityById name entityId s)) =
-    do entity <- SEP.getEntityById name entityId
+    do entity <- SEP.getEntityById sqliteConn name entityId
        applyEffect conf ircConn sqliteConn (s entity)
 applyEffect conf ircConn sqliteConn (Free (GetRandomEntity name s)) =
     do entity <- SEP.getRandomEntity name

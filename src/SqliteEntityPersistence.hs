@@ -107,8 +107,8 @@ createEntity conn name properties =
 
 
 -- TODO(#55): SEP.getEntityById is not implemented
-getEntityById :: T.Text -> Int -> IO (Maybe Entity)
-getEntityById _ _ = return Nothing
+getEntityById :: Connection -> T.Text -> Int -> IO (Maybe Entity)
+getEntityById _ _ _ = undefined
 
 -- TODO(#56): SEP.getRandomENtity is not implemented
 getRandomEntity :: T.Text -> IO (Maybe Entity)

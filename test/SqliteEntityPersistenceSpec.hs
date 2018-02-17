@@ -25,5 +25,5 @@ createEntityAndGetItById =
                                            $ M.fromList [ ("foo", PropertyInt 42)
                                                         , ("bar", PropertyText "hello")
                                                         ]
-                         restoredEntity <- SEP.getEntityById "entity" $ entityId storedEntity
+                         restoredEntity <- SEP.getEntityById conn "entity" $ entityId storedEntity
                          assertEqual "Unexpected restored entity" (Just storedEntity) restoredEntity
