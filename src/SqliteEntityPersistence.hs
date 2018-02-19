@@ -50,24 +50,23 @@ nextEntityId conn name =
 createEntityProperty :: Connection -> T.Text -> Int -> T.Text -> Property -> IO ()
 createEntityProperty conn name ident propertyName property =
     executeNamed conn
-                 (fromString $ concat [ "INSERT INTO EntityProperty ("
-                                      , "  entityName,"
-                                      , "  entityId,"
-                                      , "  propertyName,"
-                                      , "  propertyType,"
-                                      , "  propertyInt,"
-                                      , "  propertyText,"
-                                      , "  propertyUTCTime"
-                                      , ") VALUES ("
-                                      , "  :entityName,"
-                                      , "  :entityId,"
-                                      , "  :propertyName,"
-                                      , "  :propertyType,"
-                                      , "  :propertyInt,"
-                                      , "  :propertyText,"
-                                      , "  :propertyUTCTime"
-                                      , ");"
-                                      ])
+                 [r| INSERT INTO EntityProperty (
+                       entityName,
+                       entityId,
+                       propertyName,
+                       propertyType,
+                       propertyInt,
+                       propertyText,
+                       propertyUTCTime
+                     ) VALUES (
+                       :entityName,
+                       :entityId,
+                       :propertyName,
+                       :propertyType,
+                       :propertyInt,
+                       :propertyText,
+                       :propertyUTCTime
+                     ) |]
                  [ ":entityName" := name
                  , ":entityId" := ident
                  , ":propertyName" := propertyName
