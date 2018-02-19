@@ -43,10 +43,7 @@ effectOfCommand sender (Command { commandName = "quote"
 effectOfCommand _ _ = return ()
 
 replyToUser :: T.Text -> T.Text -> Effect ()
-replyToUser user text = say $ T.concat [ (T.pack "@")
-                                       , user
-                                       , (T.pack " ")
-                                       , text]
+replyToUser user text = say $ T.pack $ printf "@%s %s" user text
 
 quoteAddedReply :: T.Text -> Int -> Effect ()
 quoteAddedReply user quoteId =
