@@ -16,31 +16,43 @@ data Event = Join
 
 type Bot = Event -> Effect ()
 
+commands :: M.Map T.Text (T.Text -> T.Text -> Effect ())
+commands = M.fromList [ ("russify", russifyCommand)
+                      , ("addquote", addQuoteCommand)
+                      , ("quote", quoteCommand)
+                      ]
+
 bot :: Bot
 bot Join = say $ T.pack "HyperNyard"
-bot (Msg user text) = maybe (return ()) (effectOfCommand user) $ textAsCommand text
+bot (Msg user text) = maybe (return ())
+                            (dispatchCommand user)
+                            (textAsCommand text)
 
-effectOfCommand :: T.Text -> Command T.Text -> Effect ()
-effectOfCommand sender (Command { commandName = "russify"
-                                , commandArgs = westernSpyMsg }) =
+dispatchCommand :: T.Text -> Command T.Text -> Effect ()
+dispatchCommand user command =
+    maybe (return ())
+          (\f -> f user $ commandArgs command)
+          (M.lookup (commandName command) commands)
+
+russifyCommand :: T.Text -> T.Text -> Effect ()
+russifyCommand sender westernSpyMsg =
     replyToUser sender $ russify westernSpyMsg
-effectOfCommand sender (Command { commandName = "addquote"
-                                , commandArgs = quoteContent }) =
+
+addQuoteCommand :: T.Text -> T.Text -> Effect ()
+addQuoteCommand sender quoteContent =
     (quoteProperties quoteContent sender <$> now)
     >>= createEntity "quote"
     >>= (quoteAddedReply sender . entityId)
-effectOfCommand sender (Command { commandName = "quote"
-                                , commandArgs = "" }) =
+
+quoteCommand :: T.Text -> T.Text -> Effect ()
+quoteCommand sender "" =
     do quoteEntity <- getRandomEntity "quote"
        quoteFoundReply sender quoteEntity
-effectOfCommand sender (Command { commandName = "quote"
-                                , commandArgs = quoteIdText }) =
+quoteCommand sender quoteIdText =
     case readMaybe $ T.unpack $ quoteIdText of
       Nothing -> replyToUser sender "Couldn't find any quotes"
       Just quoteId -> do quoteEntity <- getEntityById "quote" quoteId
                          quoteFoundReply sender quoteEntity
-
-effectOfCommand _ _ = return ()
 
 replyToUser :: T.Text -> T.Text -> Effect ()
 replyToUser user text = say $ T.pack $ printf "@%s %s" user text
