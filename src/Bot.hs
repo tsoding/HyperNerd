@@ -47,9 +47,7 @@ replyToUser user text = say $ T.pack $ printf "@%s %s" user text
 
 quoteAddedReply :: T.Text -> Int -> Effect ()
 quoteAddedReply user quoteId =
-    replyToUser user $ T.concat [ "Added the quote under the number "
-                                , T.pack $ show quoteId
-                                ]
+    replyToUser user $ T.pack $ printf "Added the quote under the number %d" quoteId
 
 -- TODO(#51): Bot.quoteFoundReply is too messy
 quoteFoundReply :: T.Text -> Maybe Entity -> Effect ()
