@@ -8,7 +8,6 @@ module SqliteEntityPersistence ( prepareSchema
 
 import qualified Data.Map as M
 import           Data.Maybe
-import           Data.String
 import qualified Data.Text as T
 import           Database.SQLite.Simple
 import           Entity
@@ -80,23 +79,21 @@ createEntityProperty conn name ident propertyName property =
 prepareSchema :: Connection -> IO ()
 prepareSchema conn =
     do
-      execute_ conn $ fromString $ concat [ "CREATE TABLE IF NOT EXISTS EntityProperty ("
-                                          , "  id INTEGER PRIMARY KEY,"
-                                          , "  entityName TEXT NOT NULL,"
-                                          , "  entityId INTEGER NOT NULL,"
-                                          , "  propertyName TEXT NOT NULL,"
-                                          -- TODO(#54): propertyType field of EntityProperty table of SQLiteEntityPersistence may contain incorrect values
-                                          , "  propertyType TEXT NOT NULL,"
-                                          , "  propertyInt INTEGER,"
-                                          , "  propertyText TEXT,"
-                                          , "  propertyUTCTime DATETIME"
-                                          , ");"
-                                          ]
-      execute_ conn $ fromString $ concat [ "CREATE TABLE IF NOT EXISTS EntityId ("
-                                          , "  entityName TEXT NOT NULL UNIQUE,"
-                                          , "  entityId INTEGER NOT NULL DEFAULT 0"
-                                          , ");"
-                                          ]
+      -- TODO(#54): propertyType field of EntityProperty table of SQLiteEntityPersistence may contain incorrect values
+      execute_ conn [r| CREATE TABLE IF NOT EXISTS EntityProperty (
+                          id INTEGER PRIMARY KEY,
+                          entityName TEXT NOT NULL,
+                          entityId INTEGER NOT NULL,
+                          propertyName TEXT NOT NULL,
+                          propertyType TEXT NOT NULL,
+                          propertyInt INTEGER,
+                          propertyText TEXT,
+                          propertyUTCTime DATETIME
+                        ) |]
+      execute_ conn [r| CREATE TABLE IF NOT EXISTS EntityId (
+                          entityName TEXT NOT NULL UNIQUE,
+                          entityId INTEGER NOT NULL DEFAULT 0
+                        ); |]
 
 createEntity :: Connection -> T.Text -> Properties -> IO Entity
 createEntity conn name properties =
