@@ -24,21 +24,22 @@ nextEntityId conn name =
     do e <- query_ conn "SELECT * from EntityId;" :: IO [EntityIdEntry]
        case e of
          [] -> do executeNamed conn
-                               (fromString $ concat [ "INSERT INTO EntityId ("
-                                                    , "  entityName,"
-                                                    , "  entityId"
-                                                    , ") VALUES ("
-                                                    , "  :entityName,"
-                                                    , "  :entityId"
-                                                    , ")"
-                                                    ])
+                               [r| INSERT INTO EntityId (
+                                     entityName,
+                                     entityId
+                                   ) VALUES (
+                                     :entityName,
+                                     :entityId
+                                   ) |]
                                [ ":entityName" := name
                                , ":entityId" := (1 :: Int)
                                ]
                   return 1
          [EntityIdEntry _ ident] -> do
                 executeNamed conn
-                             "UPDATE EntityId SET entityId = :entityId WHERE entityName = :entityName"
+                             [r| UPDATE EntityId
+                                 SET entityId = :entityId
+                                 WHERE entityName = :entityName |]
                              [ ":entityName" := name
                              , ":entityId" := ident + 1
                              ]
