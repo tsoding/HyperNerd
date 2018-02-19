@@ -49,7 +49,6 @@ quoteAddedReply :: T.Text -> Int -> Effect ()
 quoteAddedReply user quoteId =
     replyToUser user $ T.pack $ printf "Added the quote under the number %d" quoteId
 
--- TODO(#51): Bot.quoteFoundReply is too messy
 quoteFoundReply :: T.Text -> Maybe Entity -> Effect ()
 quoteFoundReply user (Nothing) = replyToUser user "Couldn't find any quotes"
 quoteFoundReply user (Just entity) =
