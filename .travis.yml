@@ -8,6 +8,8 @@
 # Copy these contents into the root directory of your Github project in a file
 # named .travis.yml
 
+# Docker Cache Idea: https://github.com/travis-ci/travis-ci/issues/5358#issuecomment-248915326
+
 # Use new container infrastructure to enable caching
 sudo: false
 
@@ -16,8 +18,10 @@ language: generic
 
 # Caching so the next build will be fast too.
 cache:
+  bundler: true
   directories:
-  - $HOME/.stack
+    - $HOME/docker
+    - $HOME/.stack
 
 services:
   - docker
@@ -29,11 +33,18 @@ addons:
       - libgmp-dev
       - openssl
 
+before_cache:
+  # Save tagged docker images
+  - mkdir -p $HOME/docker
+  - docker images -a --filter='dangling=false' --format '{{.Repository}}:{{.Tag}} {{.ID}}' | xargs -n 2 -t sh -c 'test -e $HOME/docker/$1.tar.gz || docker save $0 | gzip -2 > $HOME/docker/$1.tar.gz'
+
 before_install:
 # Download and unpack the stack executable
 - mkdir -p ~/.local/bin
 - export PATH=$HOME/.local/bin:$PATH
 - travis_retry curl -L https://www.stackage.org/stack/linux-x86_64 | tar xz --wildcards --strip-components=1 -C ~/.local/bin '*/stack'
+# Load cached docker images
+- if [[ -d $HOME/docker ]]; then ls $HOME/docker/*.tar.gz | xargs -I {file} sh -c "zcat {file} | docker load"; fi
 
 install:
 # Build dependencies
