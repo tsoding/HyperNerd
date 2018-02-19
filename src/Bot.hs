@@ -43,18 +43,12 @@ effectOfCommand sender (Command { commandName = "quote"
 effectOfCommand _ _ = return ()
 
 replyToUser :: T.Text -> T.Text -> Effect ()
-replyToUser user text = say $ T.concat [ (T.pack "@")
-                                       , user
-                                       , (T.pack " ")
-                                       , text]
+replyToUser user text = say $ T.pack $ printf "@%s %s" user text
 
 quoteAddedReply :: T.Text -> Int -> Effect ()
 quoteAddedReply user quoteId =
-    replyToUser user $ T.concat [ "Added the quote under the number "
-                                , T.pack $ show quoteId
-                                ]
+    replyToUser user $ T.pack $ printf "Added the quote under the number %d" quoteId
 
--- TODO(#51): Bot.quoteFoundReply is too messy
 quoteFoundReply :: T.Text -> Maybe Entity -> Effect ()
 quoteFoundReply user (Nothing) = replyToUser user "Couldn't find any quotes"
 quoteFoundReply user (Just entity) =

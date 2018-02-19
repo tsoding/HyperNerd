@@ -9,6 +9,7 @@ import           Data.Ini
 import qualified Data.Text as T
 import           Data.Time
 import           Data.Traversable
+import qualified Database.SQLite.Simple as SQLite
 import           Effect
 import           Hookup
 import           Irc.Commands ( ircPong
@@ -21,9 +22,9 @@ import           Irc.Identifier (idText)
 import           Irc.Message (IrcMsg(Ping, Privmsg), cookIrcMsg)
 import           Irc.RawIrcMsg (RawIrcMsg, parseRawIrcMsg, asUtf8, renderRawIrcMsg)
 import           Irc.UserInfo (userNick)
-import           System.Environment
-import qualified Database.SQLite.Simple as SQLite
 import qualified SqliteEntityPersistence as SEP
+import           System.Environment
+import           Text.Printf
 
 -- TODO(#15): utilize rate limits
 -- See https://github.com/glguy/irc-core/blob/6dd03dfed4affe6ae8cdd63ede68c88d70af9aac/bot/src/Main.hs#L32
@@ -40,7 +41,7 @@ config :: T.Text -> T.Text -> T.Text -> Config
 config nick password channel =
     Config { configNick = nick
            , configPass = password
-           , configChannel = T.concat [(T.pack "#"), channel]
+           , configChannel = T.pack $ printf "#%s" channel
            }
 
 configFromFile :: FilePath -> IO Config
