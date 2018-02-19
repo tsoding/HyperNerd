@@ -33,3 +33,5 @@ You can support my work via
 
 [tsoder]: http://github.com/tsoding/tsoder
 [tsoding]: https://www.twitch.tv/tsoding
+
+<!-- waffles eaten: 1 -->
