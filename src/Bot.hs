@@ -8,6 +8,7 @@ import           Data.Time
 import           Effect
 import           Entity
 import           Russify
+import           Text.Printf
 import           Text.Read
 
 data Event = Join
@@ -59,17 +60,11 @@ quoteFoundReply user (Nothing) = replyToUser user "Couldn't find any quotes"
 quoteFoundReply user (Just entity) =
     case M.lookup "content" $ entityProperties entity of
       Nothing ->
-          do logMsg $ T.concat [ "Quote #"
-                               , T.pack $ show $ entityId entity
-                               , " doesn't have the 'content field'"
-                               ]
+          do logMsg $ T.pack $ printf "Quote #%d doesn't have the 'content field'" $ entityId entity
              replyToUser user "Couldn't find any quotes, because of some database issues."
       Just (PropertyText content) ->
-          replyToUser user $ T.concat [ content, " (", T.pack $ show $ entityId entity, ")" ]
-      Just _ -> do logMsg $ T.concat [ "Quote #"
-                                     , T.pack $ show $ entityId entity
-                                     , " content is not text"
-                                     ]
+          replyToUser user $ T.pack $ printf "%s (%d)" content $ entityId entity
+      Just _ -> do logMsg $ T.pack $ printf "Quote #%d content is not text" $ entityId entity
                    replyToUser user "Couldn't find any quotes, because of some database issues."
 
 
