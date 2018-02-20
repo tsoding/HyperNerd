@@ -9,6 +9,7 @@ main :: IO Counts
 main = do results <- runTestTT $ TestList [ SEPS.doublePrepareSchemaSpec
                                           , SEPS.createEntityAndGetItById
                                           , commandWithGermanUmlauts
+                                          , commandWithRussians
                                           ]
           (if errors results + failures results == 0
            then exitWith ExitSuccess

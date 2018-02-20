@@ -79,7 +79,6 @@ executable HyperNerd
                      , irc-core
                      , aeson
                      , text
-                     , regex-compat
                      , free
                      , time
                      , sqlite-simple
@@ -113,10 +112,11 @@ test-suite HyperNerdTest
                      , sqlite-simple
                      , HUnit
                      , raw-strings-qq
-                     , regex-compat
 
   other-modules:       Russify
                      , Entity
                      , SqliteEntityPersistence
                      , SqliteEntityPersistenceSpec
+                     , Command
+                     , CommandSpec
   default-language:    Haskell2010

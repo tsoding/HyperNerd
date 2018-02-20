@@ -12,3 +12,12 @@ commandWithGermanUmlauts =
                                            , commandArgs = "äöü"
                                            })
                            (textAsCommand "!russify äöü")
+
+commandWithRussians :: Test
+commandWithRussians =
+    TestLabel "Parse Command with Russians" $
+    TestCase $ assertEqual "Unexpected parse result"
+                           (Just $ Command { commandName = "russify"
+                                           , commandArgs = "водка"
+                                           })
+                           (textAsCommand "!russify водка")
