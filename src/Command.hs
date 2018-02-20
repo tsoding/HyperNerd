@@ -5,7 +5,7 @@ import Text.Regex
 
 data Command a = Command { commandName :: T.Text
                          , commandArgs :: a
-                         } deriving Show
+                         } deriving (Eq, Show)
 
 textAsCommand :: T.Text -> Maybe (Command T.Text)
 textAsCommand text =
