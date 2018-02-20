@@ -16,11 +16,24 @@ data Event = Join
 
 type Bot = Event -> Effect ()
 
-commands :: M.Map T.Text (T.Text -> T.Text -> Effect ())
+type CommandHandler = T.Text -> T.Text -> Effect ()
+
+commands :: M.Map T.Text CommandHandler
 commands = M.fromList [ ("russify", russifyCommand)
-                      , ("addquote", addQuoteCommand)
+                      , ("addquote", authorizeCommand [ "tsoding"
+                                                      , "r3x1m"
+                                                      , "bpaf"
+                                                      , "voldyman"
+                                                      ]
+                                                      addQuoteCommand)
                       , ("quote", quoteCommand)
                       ]
+
+authorizeCommand :: [T.Text] -> CommandHandler -> CommandHandler
+authorizeCommand authorizedPeople commandHandler sender args =
+    if sender `elem` authorizedPeople
+    then commandHandler sender args
+    else replyToUser sender $ "You are not authorized to use this command! HyperNyard"
 
 bot :: Bot
 bot Join = say $ T.pack "HyperNyard"
