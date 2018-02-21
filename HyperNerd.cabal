@@ -83,6 +83,7 @@ executable HyperNerd
                      , time
                      , sqlite-simple
                      , raw-strings-qq
+                     , http-conduit
   
   -- Directories containing source files.
   hs-source-dirs:      src
