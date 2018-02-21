@@ -42,10 +42,11 @@ bot (Msg user text) = maybe (return ())
                             (dispatchCommand user)
                             (textAsCommand text)
 
--- TODO: Bot.bttvCommand is not implemented
+-- TODO(#72): Bot.bttvCommand is not implemented
 bttvCommand :: T.Text -> T.Text -> Effect ()
-bttvCommand sender _ = replyToUser sender "This command is not implemented yet"
-
+bttvCommand sender _ = replyToUser sender "This command is not implemented yet. \
+                                          \See https://github.com/tsoding/HyperNerd/issues/72. \
+                                          \Feel free to help with implementation."
 
 dispatchCommand :: T.Text -> Command T.Text -> Effect ()
 dispatchCommand user command =
