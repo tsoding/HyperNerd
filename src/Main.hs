@@ -22,6 +22,7 @@ import           Irc.Identifier (idText)
 import           Irc.Message (IrcMsg(Ping, Privmsg), cookIrcMsg)
 import           Irc.RawIrcMsg (RawIrcMsg, parseRawIrcMsg, asUtf8, renderRawIrcMsg)
 import           Irc.UserInfo (userNick)
+import           Network.HTTP.Simple
 import qualified SqliteEntityPersistence as SEP
 import           System.Environment
 import           Text.Printf
@@ -108,6 +109,9 @@ applyEffect conf ircConn sqliteConn (Free (GetEntityById name entityId s)) =
 applyEffect conf ircConn sqliteConn (Free (GetRandomEntity name s)) =
     do entity <- SEP.getRandomEntity sqliteConn name
        applyEffect conf ircConn sqliteConn (s entity)
+applyEffect conf ircConn sqliteConn (Free (HttpRequest request s)) =
+    do response <- httpLBS request
+       applyEffect conf ircConn sqliteConn (s response)
 
 ircTransport :: Bot -> Config -> Connection -> SQLite.Connection -> IO ()
 ircTransport b conf ircConn sqliteConn =

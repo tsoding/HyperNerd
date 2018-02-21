@@ -8,10 +8,12 @@ module Effect ( Effect
               , now
               ) where
 
-import Control.Monad.Free
+import           Control.Monad.Free
+import qualified Data.ByteString.Lazy.Char8 as B8
 import qualified Data.Text as T
-import Data.Time
-import Entity
+import           Data.Time
+import           Entity
+import           Network.HTTP.Simple
 
 data EffectF s = Say T.Text s
                | LogMsg T.Text s
@@ -19,6 +21,7 @@ data EffectF s = Say T.Text s
                | GetEntityById T.Text Int (Maybe Entity -> s)
                | GetRandomEntity T.Text (Maybe Entity -> s)
                | Now (UTCTime -> s)
+               | HttpRequest Request (Response B8.ByteString -> s)
 
 instance Functor EffectF where
     fmap f (Say msg s) = Say msg (f s)
@@ -30,6 +33,7 @@ instance Functor EffectF where
     fmap f (GetRandomEntity name h) =
         GetRandomEntity name (f . h)
     fmap f (Now h) = Now (f . h)
+    fmap f (HttpRequest r h) = HttpRequest r (f . h)
 
 type Effect = Free EffectF
 

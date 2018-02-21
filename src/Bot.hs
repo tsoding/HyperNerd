@@ -26,6 +26,7 @@ commands = M.fromList [ ("russify", russifyCommand)
                                                       , "voldyman"
                                                       ]
                                                       addQuoteCommand)
+                      , ("bttv", bttvCommand)
                       , ("quote", quoteCommand)
                       ]
 
@@ -40,6 +41,12 @@ bot Join = say $ T.pack "HyperNyard"
 bot (Msg user text) = maybe (return ())
                             (dispatchCommand user)
                             (textAsCommand text)
+
+-- TODO(#72): Bot.bttvCommand is not implemented
+bttvCommand :: T.Text -> T.Text -> Effect ()
+bttvCommand sender _ = replyToUser sender "This command is not implemented yet. \
+                                          \See https://github.com/tsoding/HyperNerd/issues/72. \
+                                          \Feel free to help with implementation."
 
 dispatchCommand :: T.Text -> Command T.Text -> Effect ()
 dispatchCommand user command =
