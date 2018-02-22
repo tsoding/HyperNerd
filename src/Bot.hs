@@ -45,10 +45,11 @@ bot (Msg user text) = maybe (return ())
                             (dispatchCommand user)
                             (textAsCommand text)
 
--- TODO: Bot.bttvApiResponseAsEmoteList is not implemented
+-- TODO(#74): Bot.bttvApiResponseAsEmoteList is not implemented
 bttvApiResponseAsEmoteList :: Object -> Maybe [T.Text]
 bttvApiResponseAsEmoteList _ =
-    return $ ["We don't know yet."]
+    return $ ["We don't know yet. \
+              \See https://github.com/tsoding/HyperNerd/issues/74"]
 
 bttvCommand :: T.Text -> T.Text -> Effect ()
 bttvCommand sender _ =
