@@ -37,7 +37,7 @@ authorizeCommand authorizedPeople commandHandler sender args =
     else replyToUser sender $ "You are not authorized to use this command! HyperNyard"
 
 bot :: Bot
-bot Join = say $ T.pack "HyperNyard"
+bot Join = say "HyperNyard"
 bot (Msg user text) = maybe (return ())
                             (dispatchCommand user)
                             (textAsCommand text)
