@@ -2,11 +2,14 @@
 module Bot (Bot, bot, Event(..)) where
 
 import           Command
+import           Data.Aeson
+import           Data.List
 import qualified Data.Map as M
 import qualified Data.Text as T
 import           Data.Time
 import           Effect
 import           Entity
+import           Network.HTTP.Simple
 import           Russify
 import           Text.Printf
 import           Text.Read
@@ -37,16 +40,33 @@ authorizeCommand authorizedPeople commandHandler sender args =
     else replyToUser sender $ "You are not authorized to use this command! HyperNyard"
 
 bot :: Bot
-bot Join = say $ T.pack "HyperNyard"
+bot Join = say "HyperNyard"
 bot (Msg user text) = maybe (return ())
                             (dispatchCommand user)
                             (textAsCommand text)
 
--- TODO(#72): Bot.bttvCommand is not implemented
+-- TODO(#74): Bot.bttvApiResponseAsEmoteList is not implemented
+bttvApiResponseAsEmoteList :: Object -> Maybe [T.Text]
+bttvApiResponseAsEmoteList _ =
+    return $ ["We don't know yet. \
+              \See https://github.com/tsoding/HyperNerd/issues/74"]
+
 bttvCommand :: T.Text -> T.Text -> Effect ()
-bttvCommand sender _ = replyToUser sender "This command is not implemented yet. \
-                                          \See https://github.com/tsoding/HyperNerd/issues/72. \
-                                          \Feel free to help with implementation."
+bttvCommand sender _ =
+    maybe (logMsg $ T.pack $ printf "Couldn't parse URL %s" bttvURL)
+          (\request ->
+               do response <- decode <$>
+                              getResponseBody <$>
+                              httpRequest request
+                  maybe (logMsg "Couldn't parse BTTV response")
+                        (replyToUser sender .
+                         T.pack .
+                         printf "Available BTTV emotes: %s" .
+                         T.concat .
+                         intersperse ", ")
+                        (response >>= bttvApiResponseAsEmoteList))
+          (parseRequest bttvURL)
+    where bttvURL = "https://api.betterttv.net/2/channels/tsoding"
 
 dispatchCommand :: T.Text -> Command T.Text -> Effect ()
 dispatchCommand user command =
