@@ -5,6 +5,7 @@ module Effect ( Effect
               , createEntity
               , getEntityById
               , getRandomEntity
+              , httpRequest
               , now
               ) where
 
@@ -54,3 +55,6 @@ getRandomEntity name = liftF $ GetRandomEntity name id
 
 now :: Effect UTCTime
 now = liftF $ Now id
+
+httpRequest :: Request -> Effect (Response B8.ByteString)
+httpRequest request = liftF $ HttpRequest request id

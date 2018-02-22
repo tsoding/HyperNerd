@@ -70,20 +70,21 @@ executable HyperNerd
   other-extensions:    OverloadedStrings
   
   -- Other library packages from which modules are imported.
-  build-depends:       base >=4.9 && <4.10
+  build-depends:       aeson
+                     , base >=4.9 && <4.10
                      , bytestring
                      , containers
                      , file-embed
+                     , free
                      , hookup
+                     , http-conduit
                      , ini
                      , irc-core
-                     , aeson
-                     , text
-                     , free
-                     , time
-                     , sqlite-simple
                      , raw-strings-qq
-                     , http-conduit
+                     , sqlite-simple
+                     , text
+                     , time
+                     , unordered-containers
   
   -- Directories containing source files.
   hs-source-dirs:      src
@@ -101,18 +102,19 @@ test-suite HyperNerdTest
   main-is:             Spec.hs
   hs-source-dirs:      test
                      , src
-  build-depends:       base
+  build-depends:       HUnit
                      , HUnit
                      , aeson
-                     , file-embed
+                     , base
                      , bytestring
                      , containers
-                     , text
-                     , temporary
-                     , time
-                     , sqlite-simple
-                     , HUnit
+                     , file-embed
                      , raw-strings-qq
+                     , sqlite-simple
+                     , temporary
+                     , text
+                     , time
+                     , unordered-containers
 
   other-modules:       Russify
                      , Entity
