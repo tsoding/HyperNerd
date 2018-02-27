@@ -20,17 +20,19 @@ data Event = Join
 type Bot = Event -> Effect ()
 
 type CommandHandler = T.Text -> T.Text -> Effect ()
+type CommandTable = M.Map T.Text (T.Text, CommandHandler)
 
-commands :: M.Map T.Text CommandHandler
-commands = M.fromList [ ("russify", russifyCommand)
-                      , ("addquote", authorizeCommand [ "tsoding"
-                                                      , "r3x1m"
-                                                      , "bpaf"
-                                                      , "voldyman"
-                                                      ]
-                                                      addQuoteCommand)
-                      , ("bttv", bttvCommand)
-                      , ("quote", quoteCommand)
+commands :: CommandTable
+commands = M.fromList [ ("russify", ("Russify western spy text", russifyCommand))
+                      , ("addquote", ("Add quote to quote database",
+                                      authorizeCommand [ "tsoding"
+                                                       , "r3x1m"
+                                                       , "bpaf"
+                                                       , "voldyman"
+                                                       ] addQuoteCommand))
+                      , ("bttv", ("Show all available BTTV emotes", bttvCommand))
+                      , ("quote", ("Get a quote from the quote database", quoteCommand))
+                      , ("help", ("Send help", helpCommand commands))
                       ]
 
 authorizeCommand :: [T.Text] -> CommandHandler -> CommandHandler
@@ -51,6 +53,20 @@ bttvApiResponseAsEmoteList _ =
     return $ ["We don't know yet. \
               \See https://github.com/tsoding/HyperNerd/issues/74"]
 
+helpCommand :: CommandTable -> CommandHandler
+helpCommand commandTable sender "" =
+    replyToUser sender $
+    T.pack $
+    printf "Available commands: %s" $
+    T.concat $
+    intersperse (T.pack ", ") $
+    map (\x -> T.concat [T.pack "!", x]) $
+    M.keys commandTable
+helpCommand commandTable sender command =
+    maybe (replyToUser sender "Cannot find your stupid command HyperNyard")
+          (replyToUser sender)
+          (fst <$> M.lookup command commandTable)
+
 bttvCommand :: T.Text -> T.Text -> Effect ()
 bttvCommand sender _ =
     maybe (logMsg $ T.pack $ printf "Couldn't parse URL %s" bttvURL)
@@ -70,8 +86,8 @@ bttvCommand sender _ =
 
 dispatchCommand :: T.Text -> Command T.Text -> Effect ()
 dispatchCommand user command =
-    maybe (return ())
-          (\f -> f user $ commandArgs command)
+    maybe (replyToUser user "LUL")
+          (\(_, f) -> f user $ commandArgs command)
           (M.lookup (commandName command) commands)
 
 russifyCommand :: T.Text -> T.Text -> Effect ()
