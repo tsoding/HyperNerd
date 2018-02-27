@@ -13,6 +13,7 @@ import           Network.HTTP.Simple
 import           Russify
 import           Text.Printf
 import           Text.Read
+import           Data.Aeson.Types
 
 data Event = Join
            | Msg T.Text T.Text
@@ -47,11 +48,10 @@ bot (Msg user text) = maybe (return ())
                             (dispatchCommand user)
                             (textAsCommand text)
 
--- TODO(#74): Bot.bttvApiResponseAsEmoteList is not implemented
 bttvApiResponseAsEmoteList :: Object -> Maybe [T.Text]
-bttvApiResponseAsEmoteList _ =
-    return $ ["We don't know yet. \
-              \See https://github.com/tsoding/HyperNerd/issues/74"]
+bttvApiResponseAsEmoteList =
+    parseMaybe $ \obj ->
+        obj .: "emotes" >>= sequence . map (.: "code")
 
 helpCommand :: CommandTable -> CommandHandler
 helpCommand commandTable sender "" =
@@ -79,7 +79,7 @@ bttvCommand sender _ =
                          T.pack .
                          printf "Available BTTV emotes: %s" .
                          T.concat .
-                         intersperse ", ")
+                         intersperse " ")
                         (response >>= bttvApiResponseAsEmoteList))
           (parseRequest bttvURL)
     where bttvURL = "https://api.betterttv.net/2/channels/tsoding"
