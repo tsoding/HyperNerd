@@ -92,7 +92,10 @@ dispatchCommand user command =
 
 russifyCommand :: T.Text -> T.Text -> Effect ()
 russifyCommand sender westernSpyMsg =
-    replyToUser sender $ russify westernSpyMsg
+    replyToUser sender
+    $ T.pack
+    $ printf "%s KKomrade"
+    $ russify westernSpyMsg
 
 addQuoteCommand :: T.Text -> T.Text -> Effect ()
 addQuoteCommand sender quoteContent =
