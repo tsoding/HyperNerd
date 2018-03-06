@@ -3,6 +3,7 @@ module Bot (Bot, bot, Event(..)) where
 
 import           Command
 import           Data.Aeson
+import           Data.Aeson.Types
 import           Data.List
 import qualified Data.Map as M
 import qualified Data.Text as T
@@ -13,7 +14,6 @@ import           Network.HTTP.Simple
 import           Russify
 import           Text.Printf
 import           Text.Read
-import           Data.Aeson.Types
 
 data Event = Join
            | Msg T.Text T.Text
@@ -32,6 +32,7 @@ commands = M.fromList [ ("russify", ("Russify western spy text", russifyCommand)
                                                        , "voldyman"
                                                        ] addQuoteCommand))
                       , ("bttv", ("Show all available BTTV emotes", bttvCommand))
+                      , ("ffz", ("Show all available FFZ emotes", ffzCommand))
                       , ("quote", ("Get a quote from the quote database", quoteCommand))
                       , ("help", ("Send help", helpCommand commands))
                       ]
@@ -53,6 +54,16 @@ bttvApiResponseAsEmoteList =
     parseMaybe $ \obj ->
         obj .: "emotes" >>= sequence . map (.: "code")
 
+ffzApiResponseAsEmoteList :: Object -> Maybe [T.Text]
+ffzApiResponseAsEmoteList =
+    parseMaybe $ \obj ->
+        do room <- obj .: "room"
+           sets <- obj .: "sets"
+           setId <- (room .: "set") :: Parser Int
+           roomSet <- sets .: (T.pack $ show $ setId)
+           emoticons <- roomSet .: "emoticons"
+           sequence $ map (.: "name") emoticons
+
 helpCommand :: CommandTable -> CommandHandler
 helpCommand commandTable sender "" =
     replyToUser sender $
@@ -67,9 +78,9 @@ helpCommand commandTable sender command =
           (replyToUser sender)
           (fst <$> M.lookup command commandTable)
 
-bttvCommand :: T.Text -> T.Text -> Effect ()
-bttvCommand sender _ =
-    maybe (logMsg $ T.pack $ printf "Couldn't parse URL %s" bttvURL)
+requestEmoteList :: T.Text -> String -> (Object -> Maybe [T.Text]) -> Effect ()
+requestEmoteList sender url emoteListExtractor =
+    maybe (logMsg $ T.pack $ printf "Couldn't parse URL %s" url)
           (\request ->
                do response <- decode <$>
                               getResponseBody <$>
@@ -77,12 +88,19 @@ bttvCommand sender _ =
                   maybe (logMsg "Couldn't parse BTTV response")
                         (replyToUser sender .
                          T.pack .
-                         printf "Available BTTV emotes: %s" .
+                         printf "Available emotes: %s" .
                          T.concat .
                          intersperse " ")
-                        (response >>= bttvApiResponseAsEmoteList))
-          (parseRequest bttvURL)
-    where bttvURL = "https://api.betterttv.net/2/channels/tsoding"
+                        (response >>= emoteListExtractor))
+          (parseRequest url)
+
+ffzCommand :: CommandHandler
+ffzCommand sender _ = requestEmoteList sender url ffzApiResponseAsEmoteList
+    where url = "https://api.frankerfacez.com/v1/room/tsoding"
+
+bttvCommand :: CommandHandler
+bttvCommand sender _ = requestEmoteList sender url bttvApiResponseAsEmoteList
+    where url = "https://api.betterttv.net/2/channels/tsoding"
 
 dispatchCommand :: T.Text -> Command T.Text -> Effect ()
 dispatchCommand user command =
