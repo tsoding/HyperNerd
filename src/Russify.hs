@@ -1,13 +1,13 @@
 {-# LANGUAGE TemplateHaskell #-}
 module Russify where
 
-import Data.Aeson
+import           Data.Aeson
 import qualified Data.ByteString.Lazy.Char8 as B
-import Data.FileEmbed
+import           Data.FileEmbed
 import qualified Data.Map.Lazy as M
-import Data.Maybe
+import           Data.Maybe
 import qualified Data.Text as T
-import Data.Text.Encoding
+import           Data.Text.Encoding
 
 mazarusha :: M.Map T.Text T.Text
 mazarusha =
