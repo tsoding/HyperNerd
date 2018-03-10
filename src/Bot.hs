@@ -49,14 +49,14 @@ bot (Msg user text) = maybe (return ())
                             (dispatchCommand user)
                             (textAsCommand text)
 
-bttvApiResponseAsEmoteList :: Object -> Maybe [T.Text]
+bttvApiResponseAsEmoteList :: Object -> Either String [T.Text]
 bttvApiResponseAsEmoteList =
-    parseMaybe $ \obj ->
+    parseEither $ \obj ->
         obj .: "emotes" >>= sequence . map (.: "code")
 
-ffzApiResponseAsEmoteList :: Object -> Maybe [T.Text]
+ffzApiResponseAsEmoteList :: Object -> Either String [T.Text]
 ffzApiResponseAsEmoteList =
-    parseMaybe $ \obj ->
+    parseEither $ \obj ->
         do room <- obj .: "room"
            sets <- obj .: "sets"
            setId <- (room .: "set") :: Parser Int
@@ -78,20 +78,22 @@ helpCommand commandTable sender command =
           (replyToUser sender)
           (fst <$> M.lookup command commandTable)
 
-requestEmoteList :: T.Text -> String -> (Object -> Maybe [T.Text]) -> Effect ()
+requestEmoteList :: T.Text -> String -> (Object -> Either String [T.Text]) -> Effect ()
 requestEmoteList sender url emoteListExtractor =
     maybe (logMsg $ T.pack $ printf "Couldn't parse URL %s" url)
           (\request ->
-               do response <- decode <$>
-                              getResponseBody <$>
-                              httpRequest request
-                  maybe (logMsg "Couldn't parse BTTV response")
-                        (replyToUser sender .
-                         T.pack .
-                         printf "Available emotes: %s" .
-                         T.concat .
-                         intersperse " ")
-                        (response >>= emoteListExtractor))
+               do response <- eitherDecode
+                              <$> getResponseBody
+                              <$> httpRequest request
+                  case response >>= emoteListExtractor of
+                    Left err -> logMsg
+                                $ T.pack
+                                $ printf "Couldn't parse Emote List response: %s" err
+                    Right emotes -> replyToUser sender
+                                    $ T.pack
+                                    $ printf "Available emotes: %s"
+                                    $ T.concat $ intersperse " "
+                                    $ emotes)
           (parseRequest url)
 
 ffzCommand :: CommandHandler
