@@ -1,6 +1,8 @@
 {-# LANGUAGE OverloadedStrings #-}
 module Bot (Bot, bot, Event(..)) where
 
+import           Bot.Poll
+import           Bot.Replies
 import           Command
 import           Data.Aeson
 import           Data.Aeson.Types
@@ -31,9 +33,10 @@ commands = M.fromList [ ("russify", ("Russify western spy text", russifyCommand)
                                                        , "bpaf"
                                                        , "voldyman"
                                                        ] addQuoteCommand))
+                      , ("quote", ("Get a quote from the quote database", quoteCommand))
                       , ("bttv", ("Show all available BTTV emotes", bttvCommand))
                       , ("ffz", ("Show all available FFZ emotes", ffzCommand))
-                      , ("quote", ("Get a quote from the quote database", quoteCommand))
+
                       , ("help", ("Send help", helpCommand commands))
                       , ("poll", ("Starts a poll", authorizeCommand [ "tsoding"
                                                                     , "r3x1m"
@@ -87,12 +90,6 @@ helpCommand commandTable sender command =
     maybe (replyToUser sender "Cannot find your stupid command HyperNyard")
           (replyToUser sender)
           (fst <$> M.lookup command commandTable)
-
-pollCommand :: T.Text -> [T.Text] -> Effect ()
-pollCommand sender _ = replyToUser sender "I don't support that yet"
-
-voteCommand :: T.Text -> T.Text -> Effect ()
-voteCommand sender _ = replyToUser sender "I don't support that yet"
 
 requestEmoteList :: T.Text -> String -> (Object -> Either String [T.Text]) -> Effect ()
 requestEmoteList sender url emoteListExtractor =
@@ -148,9 +145,6 @@ quoteCommand sender quoteIdText =
       Nothing -> replyToUser sender "Couldn't find any quotes"
       Just quoteId -> do quoteEntity <- getEntityById "quote" quoteId
                          quoteFoundReply sender quoteEntity
-
-replyToUser :: T.Text -> T.Text -> Effect ()
-replyToUser user text = say $ T.pack $ printf "@%s %s" user text
 
 quoteAddedReply :: T.Text -> Int -> Effect ()
 quoteAddedReply user quoteId =
