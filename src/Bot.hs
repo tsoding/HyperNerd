@@ -20,10 +20,10 @@ data Event = Join
 
 type Bot = Event -> Effect ()
 
-type CommandHandler = T.Text -> T.Text -> Effect ()
-type CommandTable = M.Map T.Text (T.Text, CommandHandler)
+type CommandHandler a = T.Text -> a -> Effect ()
+type CommandTable a = M.Map T.Text (T.Text, CommandHandler a)
 
-commands :: CommandTable
+commands :: CommandTable T.Text
 commands = M.fromList [ ("russify", ("Russify western spy text", russifyCommand))
                       , ("addquote", ("Add quote to quote database",
                                       authorizeCommand [ "tsoding"
@@ -41,7 +41,7 @@ commands = M.fromList [ ("russify", ("Russify western spy text", russifyCommand)
                       , ("vote", ("Vote for a poll option", voteCommand))
                       ]
 
-authorizeCommand :: [T.Text] -> CommandHandler -> CommandHandler
+authorizeCommand :: [T.Text] -> CommandHandler T.Text -> CommandHandler T.Text
 authorizeCommand authorizedPeople commandHandler sender args =
     if sender `elem` authorizedPeople
     then commandHandler sender args
@@ -68,7 +68,7 @@ ffzApiResponseAsEmoteList =
            emoticons <- roomSet .: "emoticons"
            sequence $ map (.: "name") emoticons
 
-helpCommand :: CommandTable -> CommandHandler
+helpCommand :: CommandTable T.Text -> CommandHandler T.Text
 helpCommand commandTable sender "" =
     replyToUser sender $
     T.pack $
@@ -106,11 +106,11 @@ requestEmoteList sender url emoteListExtractor =
                                     $ emotes)
           (parseRequest url)
 
-ffzCommand :: CommandHandler
+ffzCommand :: CommandHandler T.Text
 ffzCommand sender _ = requestEmoteList sender url ffzApiResponseAsEmoteList
     where url = "https://api.frankerfacez.com/v1/room/tsoding"
 
-bttvCommand :: CommandHandler
+bttvCommand :: CommandHandler T.Text
 bttvCommand sender _ = requestEmoteList sender url bttvApiResponseAsEmoteList
     where url = "https://api.betterttv.net/2/channels/tsoding"
 
