@@ -27,7 +27,7 @@ voteCommand sender option =
          Just pollId -> registerVote pollId sender option
          Nothing -> replyToUser sender "No polls are in place"
 
--- TODO: currentPoll is not implemented yet
+-- TODO(#86): currentPoll is not implemented yet
 currentPoll :: Effect (Maybe Int)
 currentPoll = return Nothing
 
