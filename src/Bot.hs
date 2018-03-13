@@ -1,6 +1,8 @@
 {-# LANGUAGE OverloadedStrings #-}
 module Bot (Bot, bot, Event(..)) where
 
+import           Bot.Poll
+import           Bot.Replies
 import           Command
 import           Data.Aeson
 import           Data.Aeson.Types
@@ -20,10 +22,10 @@ data Event = Join
 
 type Bot = Event -> Effect ()
 
-type CommandHandler = T.Text -> T.Text -> Effect ()
-type CommandTable = M.Map T.Text (T.Text, CommandHandler)
+type CommandHandler a = T.Text -> a -> Effect ()
+type CommandTable a = M.Map T.Text (T.Text, CommandHandler a)
 
-commands :: CommandTable
+commands :: CommandTable T.Text
 commands = M.fromList [ ("russify", ("Russify western spy text", russifyCommand))
                       , ("addquote", ("Add quote to quote database",
                                       authorizeCommand [ "tsoding"
@@ -31,17 +33,28 @@ commands = M.fromList [ ("russify", ("Russify western spy text", russifyCommand)
                                                        , "bpaf"
                                                        , "voldyman"
                                                        ] addQuoteCommand))
+                      , ("quote", ("Get a quote from the quote database", quoteCommand))
                       , ("bttv", ("Show all available BTTV emotes", bttvCommand))
                       , ("ffz", ("Show all available FFZ emotes", ffzCommand))
-                      , ("quote", ("Get a quote from the quote database", quoteCommand))
+
                       , ("help", ("Send help", helpCommand commands))
+                      , ("poll", ("Starts a poll", authorizeCommand [ "tsoding"
+                                                                    , "r3x1m"
+                                                                    ]
+                                                   $ wordsArgsCommand
+                                                   $ pollCommand))
+                      , ("vote", ("Vote for a poll option", voteCommand))
                       ]
 
-authorizeCommand :: [T.Text] -> CommandHandler -> CommandHandler
+authorizeCommand :: [T.Text] -> CommandHandler T.Text -> CommandHandler T.Text
 authorizeCommand authorizedPeople commandHandler sender args =
     if sender `elem` authorizedPeople
     then commandHandler sender args
     else replyToUser sender $ "You are not authorized to use this command! HyperNyard"
+
+wordsArgsCommand :: CommandHandler [T.Text] -> CommandHandler T.Text
+wordsArgsCommand commandHandler sender args =
+    commandHandler sender $ T.words args
 
 bot :: Bot
 bot Join = say "HyperNyard"
@@ -64,7 +77,7 @@ ffzApiResponseAsEmoteList =
            emoticons <- roomSet .: "emoticons"
            sequence $ map (.: "name") emoticons
 
-helpCommand :: CommandTable -> CommandHandler
+helpCommand :: CommandTable T.Text -> CommandHandler T.Text
 helpCommand commandTable sender "" =
     replyToUser sender $
     T.pack $
@@ -96,11 +109,11 @@ requestEmoteList sender url emoteListExtractor =
                                     $ emotes)
           (parseRequest url)
 
-ffzCommand :: CommandHandler
+ffzCommand :: CommandHandler T.Text
 ffzCommand sender _ = requestEmoteList sender url ffzApiResponseAsEmoteList
     where url = "https://api.frankerfacez.com/v1/room/tsoding"
 
-bttvCommand :: CommandHandler
+bttvCommand :: CommandHandler T.Text
 bttvCommand sender _ = requestEmoteList sender url bttvApiResponseAsEmoteList
     where url = "https://api.betterttv.net/2/channels/tsoding"
 
@@ -132,9 +145,6 @@ quoteCommand sender quoteIdText =
       Nothing -> replyToUser sender "Couldn't find any quotes"
       Just quoteId -> do quoteEntity <- getEntityById "quote" quoteId
                          quoteFoundReply sender quoteEntity
-
-replyToUser :: T.Text -> T.Text -> Effect ()
-replyToUser user text = say $ T.pack $ printf "@%s %s" user text
 
 quoteAddedReply :: T.Text -> Int -> Effect ()
 quoteAddedReply user quoteId =
