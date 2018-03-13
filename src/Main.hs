@@ -112,7 +112,7 @@ applyEffect conf ircConn sqliteConn (Free (GetRandomEntity name s)) =
 applyEffect conf ircConn sqliteConn (Free (HttpRequest request s)) =
     do response <- httpLBS request
        applyEffect conf ircConn sqliteConn (s response)
--- TODO: applyEffect for Timeout is not implemented
+-- TODO(#90): applyEffect for Timeout is not implemented
 applyEffect conf ircConn sqliteConn (Free (Timeout _ _ s)) =
     applyEffect conf ircConn sqliteConn s
 
