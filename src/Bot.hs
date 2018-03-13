@@ -37,7 +37,9 @@ commands = M.fromList [ ("russify", ("Russify western spy text", russifyCommand)
                       , ("help", ("Send help", helpCommand commands))
                       , ("poll", ("Starts a poll", authorizeCommand [ "tsoding"
                                                                     , "r3x1m"
-                                                                    ] pollCommand))
+                                                                    ]
+                                                   $ wordsArgsCommand
+                                                   $ pollCommand))
                       , ("vote", ("Vote for a poll option", voteCommand))
                       ]
 
@@ -46,6 +48,9 @@ authorizeCommand authorizedPeople commandHandler sender args =
     if sender `elem` authorizedPeople
     then commandHandler sender args
     else replyToUser sender $ "You are not authorized to use this command! HyperNyard"
+
+wordsArgsCommand :: CommandHandler [T.Text] -> CommandHandler T.Text
+wordsArgsCommand = undefined
 
 bot :: Bot
 bot Join = say "HyperNyard"
@@ -82,7 +87,7 @@ helpCommand commandTable sender command =
           (replyToUser sender)
           (fst <$> M.lookup command commandTable)
 
-pollCommand :: T.Text -> T.Text -> Effect ()
+pollCommand :: T.Text -> [T.Text] -> Effect ()
 pollCommand sender _ = replyToUser sender "I don't support that yet"
 
 voteCommand :: T.Text -> T.Text -> Effect ()
