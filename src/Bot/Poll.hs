@@ -39,6 +39,6 @@ startPoll _ _ = return 42
 announcePollResults :: Int -> Effect ()
 announcePollResults _ = return ()
 
--- TODO: voteCommand is not implemented
+-- TODO(#89): voteCommand is not implemented
 registerVote :: Int -> T.Text -> T.Text -> Effect ()
 registerVote _ _ _ = return ()
