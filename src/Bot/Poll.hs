@@ -35,7 +35,7 @@ currentPoll = return Nothing
 startPoll :: T.Text -> [T.Text] -> Effect Int
 startPoll _ _ = return 42
 
--- TODO: announcePollResults is not implemented
+-- TODO(#88): announcePollResults is not implemented
 announcePollResults :: Int -> Effect ()
 announcePollResults _ = return ()
 
