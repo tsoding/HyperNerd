@@ -50,7 +50,8 @@ authorizeCommand authorizedPeople commandHandler sender args =
     else replyToUser sender $ "You are not authorized to use this command! HyperNyard"
 
 wordsArgsCommand :: CommandHandler [T.Text] -> CommandHandler T.Text
-wordsArgsCommand = undefined
+wordsArgsCommand commandHandler sender args =
+    commandHandler sender $ T.words args
 
 bot :: Bot
 bot Join = say "HyperNyard"
