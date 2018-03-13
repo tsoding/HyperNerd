@@ -31,7 +31,7 @@ voteCommand sender option =
 currentPoll :: Effect (Maybe Int)
 currentPoll = return Nothing
 
--- TODO: startsPoll is not implemented
+-- TODO(#87): startsPoll is not implemented
 startPoll :: T.Text -> [T.Text] -> Effect Int
 startPoll _ _ = return 42
 
