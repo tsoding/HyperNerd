@@ -21,7 +21,11 @@ pollCommand sender options =
                        timeout 10000 $ announcePollResults pollId
 
 voteCommand :: T.Text -> T.Text -> Effect ()
-voteCommand sender _ = replyToUser sender "I don't support that yet"
+voteCommand sender option =
+    do poll <- currentPoll
+       case poll of
+         Just pollId -> registerVote pollId sender option
+         Nothing -> replyToUser sender "No polls are in place"
 
 -- TODO: currentPoll is not implemented yet
 currentPoll :: Effect (Maybe Int)
@@ -34,3 +38,7 @@ startPoll _ _ = return 42
 -- TODO: announcePollResults is not implemented
 announcePollResults :: Int -> Effect ()
 announcePollResults _ = return ()
+
+-- TODO: voteCommand is not implemented
+registerVote :: Int -> T.Text -> T.Text -> Effect ()
+registerVote _ _ _ = return ()
