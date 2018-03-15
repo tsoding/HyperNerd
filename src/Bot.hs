@@ -58,22 +58,19 @@ bot (Msg user text) = maybe (return ())
                             (dispatchCommand user)
                             (textAsCommand text)
 
-
 helpCommand :: CommandTable T.Text -> CommandHandler T.Text
 helpCommand commandTable sender "" =
-    replyToUser sender $
-    T.pack $
-    printf "Available commands: %s" $
-    T.concat $
-    intersperse (T.pack ", ") $
-    map (\x -> T.concat [T.pack "!", x]) $
-    M.keys commandTable
+    replyToUser sender
+      $ T.pack
+      $ printf "Available commands: %s"
+      $ T.concat
+      $ intersperse (T.pack ", ")
+      $ map (\x -> T.concat [T.pack "!", x])
+      $ M.keys commandTable
 helpCommand commandTable sender command =
     maybe (replyToUser sender "Cannot find your stupid command HyperNyard")
           (replyToUser sender)
           (fst <$> M.lookup command commandTable)
-
-
 
 dispatchCommand :: T.Text -> Command T.Text -> Effect ()
 dispatchCommand user command =
