@@ -65,7 +65,6 @@ executable HyperNerd
                      , Bot.Quote
                      , Bot.Russify
                      , Command
-                     , Russify
                      , Effect
                      , Entity
                      , SqliteEntityPersistence
