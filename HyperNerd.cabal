@@ -62,6 +62,7 @@ executable HyperNerd
   other-modules:       Bot
                      , Bot.Replies
                      , Bot.Poll
+                     , Bot.Quote
                      , Command
                      , Russify
                      , Effect
