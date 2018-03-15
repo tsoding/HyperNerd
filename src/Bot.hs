@@ -138,13 +138,12 @@ addQuoteCommand sender quoteContent =
 
 quoteCommand :: T.Text -> T.Text -> Effect ()
 quoteCommand sender "" =
-    do quoteEntity <- getRandomEntity "quote"
-       quoteFoundReply sender quoteEntity
+    getRandomEntity "quote" >>= quoteFoundReply sender
 quoteCommand sender quoteIdText =
-    case readMaybe $ T.unpack $ quoteIdText of
-      Nothing -> replyToUser sender "Couldn't find any quotes"
-      Just quoteId -> do quoteEntity <- getEntityById "quote" quoteId
-                         quoteFoundReply sender quoteEntity
+    maybe
+      (replyToUser sender "Couldn't find any quotes")
+      (\quoteId -> getEntityById "quote" quoteId >>= quoteFoundReply sender)
+      (readMaybe $ T.unpack quoteIdText)
 
 quoteAddedReply :: T.Text -> Int -> Effect ()
 quoteAddedReply user quoteId =
