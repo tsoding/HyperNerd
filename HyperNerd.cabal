@@ -64,6 +64,7 @@ executable HyperNerd
                      , Bot.Poll
                      , Bot.Quote
                      , Bot.Russify
+                     , Bot.BttvFfz
                      , Command
                      , Effect
                      , Entity

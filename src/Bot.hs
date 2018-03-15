@@ -1,19 +1,17 @@
 {-# LANGUAGE OverloadedStrings #-}
 module Bot (Bot, bot, Event(..)) where
 
+import           Bot.BttvFfz
 import           Bot.Poll
 import           Bot.Quote
 import           Bot.Replies
+import           Bot.Russify
 import           Command
-import           Data.Aeson
-import           Data.Aeson.Types
 import           Data.List
 import qualified Data.Map as M
 import qualified Data.Text as T
 import           Effect
-import           Network.HTTP.Simple
 import           Text.Printf
-import           Bot.Russify
 
 data Event = Join
            | Msg T.Text T.Text
@@ -60,20 +58,6 @@ bot (Msg user text) = maybe (return ())
                             (dispatchCommand user)
                             (textAsCommand text)
 
-bttvApiResponseAsEmoteList :: Object -> Either String [T.Text]
-bttvApiResponseAsEmoteList =
-    parseEither $ \obj ->
-        obj .: "emotes" >>= sequence . map (.: "code")
-
-ffzApiResponseAsEmoteList :: Object -> Either String [T.Text]
-ffzApiResponseAsEmoteList =
-    parseEither $ \obj ->
-        do room <- obj .: "room"
-           sets <- obj .: "sets"
-           setId <- (room .: "set") :: Parser Int
-           roomSet <- sets .: (T.pack $ show $ setId)
-           emoticons <- roomSet .: "emoticons"
-           sequence $ map (.: "name") emoticons
 
 helpCommand :: CommandTable T.Text -> CommandHandler T.Text
 helpCommand commandTable sender "" =
@@ -89,31 +73,7 @@ helpCommand commandTable sender command =
           (replyToUser sender)
           (fst <$> M.lookup command commandTable)
 
-requestEmoteList :: T.Text -> String -> (Object -> Either String [T.Text]) -> Effect ()
-requestEmoteList sender url emoteListExtractor =
-    maybe (logMsg $ T.pack $ printf "Couldn't parse URL %s" url)
-          (\request ->
-               do response <- eitherDecode
-                              <$> getResponseBody
-                              <$> httpRequest request
-                  case response >>= emoteListExtractor of
-                    Left err -> logMsg
-                                $ T.pack
-                                $ printf "Couldn't parse Emote List response: %s" err
-                    Right emotes -> replyToUser sender
-                                    $ T.pack
-                                    $ printf "Available emotes: %s"
-                                    $ T.concat $ intersperse " "
-                                    $ emotes)
-          (parseRequest url)
 
-ffzCommand :: CommandHandler T.Text
-ffzCommand sender _ = requestEmoteList sender url ffzApiResponseAsEmoteList
-    where url = "https://api.frankerfacez.com/v1/room/tsoding"
-
-bttvCommand :: CommandHandler T.Text
-bttvCommand sender _ = requestEmoteList sender url bttvApiResponseAsEmoteList
-    where url = "https://api.betterttv.net/2/channels/tsoding"
 
 dispatchCommand :: T.Text -> Command T.Text -> Effect ()
 dispatchCommand user command =
