@@ -12,8 +12,8 @@ import qualified Data.Map as M
 import qualified Data.Text as T
 import           Effect
 import           Network.HTTP.Simple
-import           Russify
 import           Text.Printf
+import           Bot.Russify
 
 data Event = Join
            | Msg T.Text T.Text
@@ -120,10 +120,3 @@ dispatchCommand user command =
     maybe (replyToUser user "LUL")
           (\(_, f) -> f user $ commandArgs command)
           (M.lookup (commandName command) commands)
-
-russifyCommand :: T.Text -> T.Text -> Effect ()
-russifyCommand sender westernSpyMsg =
-    replyToUser sender
-    $ T.pack
-    $ printf "%s KKomrade"
-    $ russify westernSpyMsg

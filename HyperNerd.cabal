@@ -63,6 +63,7 @@ executable HyperNerd
                      , Bot.Replies
                      , Bot.Poll
                      , Bot.Quote
+                     , Bot.Russify
                      , Command
                      , Russify
                      , Effect
