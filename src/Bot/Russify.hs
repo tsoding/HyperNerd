@@ -1,6 +1,7 @@
 {-# LANGUAGE TemplateHaskell #-}
-module Russify where
+module Bot.Russify (russifyCommand) where
 
+import           Bot.Replies
 import           Data.Aeson
 import qualified Data.ByteString.Lazy.Char8 as B
 import           Data.FileEmbed
@@ -8,6 +9,15 @@ import qualified Data.Map.Lazy as M
 import           Data.Maybe
 import qualified Data.Text as T
 import           Data.Text.Encoding
+import           Effect
+import           Text.Printf
+
+russifyCommand :: T.Text -> T.Text -> Effect ()
+russifyCommand sender westernSpyMsg =
+    replyToUser sender
+    $ T.pack
+    $ printf "%s KKomrade"
+    $ russify westernSpyMsg
 
 mazarusha :: M.Map T.Text T.Text
 mazarusha =

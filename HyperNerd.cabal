@@ -62,8 +62,10 @@ executable HyperNerd
   other-modules:       Bot
                      , Bot.Replies
                      , Bot.Poll
+                     , Bot.Quote
+                     , Bot.Russify
+                     , Bot.BttvFfz
                      , Command
-                     , Russify
                      , Effect
                      , Entity
                      , SqliteEntityPersistence
@@ -118,8 +120,7 @@ test-suite HyperNerdTest
                      , time
                      , unordered-containers
 
-  other-modules:       Russify
-                     , Entity
+  other-modules:       Entity
                      , SqliteEntityPersistence
                      , SqliteEntityPersistenceSpec
                      , Command
