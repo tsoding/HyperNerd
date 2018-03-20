@@ -123,7 +123,7 @@ applyEffect effectState (Free (HttpRequest request s)) =
 applyEffect effectState (Free (Timeout ms e s)) =
     applyEffect (effectState { esTimeouts = (ms, e) : esTimeouts effectState }) s
 
--- TODO: advanceTimeouts is not implemented
+-- TODO(#94): advanceTimeouts is not implemented
 advanceTimeouts :: Integer -> EffectState -> IO EffectState
 advanceTimeouts _ effectState = return $ effectState
 
