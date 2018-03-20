@@ -24,6 +24,7 @@ import           Irc.RawIrcMsg (RawIrcMsg, parseRawIrcMsg, asUtf8, renderRawIrcM
 import           Irc.UserInfo (userNick)
 import           Network.HTTP.Simple
 import qualified SqliteEntityPersistence as SEP
+import           System.CPUTime
 import           System.Environment
 import           Text.Printf
 
@@ -122,34 +123,44 @@ applyEffect effectState (Free (HttpRequest request s)) =
 applyEffect effectState (Free (Timeout ms e s)) =
     applyEffect (effectState { esTimeouts = (ms, e) : esTimeouts effectState }) s
 
+-- TODO: advanceTimeouts is not implemented
+advanceTimeouts :: Integer -> EffectState -> IO EffectState
+advanceTimeouts _ effectState = return $ effectState
+
 ircTransport :: Bot -> EffectState -> IO ()
 ircTransport b effectState =
     -- TODO(#17): check unsuccessful authorization
     do authorize (esConfig effectState) ircConn
-       (SQLite.withTransaction sqliteConn
-        $ applyEffect effectState
-        $ b Join)
-         >>= eventLoop b
+       eventLoop b
+         <$> (getCPUTime)
+         <*> (SQLite.withTransaction sqliteConn
+                $ applyEffect effectState
+                $ b Join)
+         >>= id
     where ircConn = esIrcConn effectState
           sqliteConn = esSqliteConn effectState
 
 
-eventLoop :: Bot -> EffectState -> IO ()
-eventLoop b effectState =
+handleIrcMessage :: Bot -> IrcMsg -> EffectState -> IO EffectState
+handleIrcMessage _ (Ping xs) effectState =
+    do sendMsg (esIrcConn effectState) (ircPong xs)
+       return effectState
+handleIrcMessage b (Privmsg userInfo _ msgText) effectState =
+    SQLite.withTransaction (esSqliteConn effectState)
+    $ applyEffect effectState (b $ Msg (idText $ userNick $ userInfo) msgText)
+handleIrcMessage _ _ effectState = return effectState
+
+eventLoop :: Bot -> Integer -> EffectState -> IO ()
+eventLoop b prevCPUTime effectState =
     do mb <- readIrcLine ircConn
        for_ mb $ \msg ->
            do print msg
-              case msg of
-                Ping xs ->
-                    do sendMsg ircConn (ircPong xs)
-                       eventLoop b effectState
-                Privmsg userInfo _ msgText ->
-                    do effectState' <- SQLite.withTransaction sqliteConn
-                                         $ applyEffect effectState (b $ Msg (idText $ userNick $ userInfo) msgText)
-                       eventLoop b effectState'
-                _ -> eventLoop b effectState
+              currCPUTime <- getCPUTime
+              let deltaTime = (currCPUTime - prevCPUTime) `div` ((10 :: Integer) ^ (9 :: Integer))
+              handleIrcMessage b msg effectState
+                >>= advanceTimeouts deltaTime
+                >>= eventLoop b currCPUTime
     where ircConn = esIrcConn effectState
-          sqliteConn = esSqliteConn effectState
 
 mainWithArgs :: [String] -> IO ()
 mainWithArgs [configPath, databasePath] =
