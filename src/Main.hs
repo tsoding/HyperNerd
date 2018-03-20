@@ -150,12 +150,13 @@ mainWithArgs :: [String] -> IO ()
 mainWithArgs [configPath, databasePath] =
     do conf <- configFromFile configPath
        withConnection twitchConnectionParams
-                      (\ircConn -> SQLite.withConnection databasePath
-                                   (\sqliteConn -> do SEP.prepareSchema sqliteConn
-                                                      ircTransport bot conf $ EffectState { esIrcConn = ircConn
-                                                                                          , esSqliteConn = sqliteConn
-                                                                                          , esTimeouts = []
-                                                                                          }))
+         $ \ircConn -> SQLite.withConnection databasePath
+         $ \sqliteConn -> do SEP.prepareSchema sqliteConn
+                             ircTransport bot conf
+                               $ EffectState { esIrcConn = ircConn
+                                             , esSqliteConn = sqliteConn
+                                             , esTimeouts = []
+                                             }
 mainWithArgs _ = error "./HyperNerd <config-file> <database-file>"
 
 main :: IO ()
