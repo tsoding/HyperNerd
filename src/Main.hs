@@ -94,8 +94,8 @@ readIrcLine conn =
 sendMsg :: Connection -> RawIrcMsg -> IO ()
 sendMsg conn msg = send conn (renderRawIrcMsg msg)
 
-applyEffect :: Config -> EffectState -> Effect () -> IO ()
-applyEffect _ _ (Pure r) = return r
+applyEffect :: Config -> EffectState -> Effect () -> IO EffectState
+applyEffect _ effectState (Pure _) = return effectState
 applyEffect conf effectState (Free (Say text s)) =
     do sendMsg (esIrcConn effectState) (ircPrivmsg (configChannel conf) text)
        applyEffect conf effectState s
@@ -126,8 +126,10 @@ ircTransport :: Bot -> Config -> EffectState -> IO ()
 ircTransport b conf effectState =
     -- TODO(#17): check unsuccessful authorization
     do authorize conf ircConn
-       SQLite.withTransaction sqliteConn $ applyEffect conf effectState $ b Join
-       eventLoop b conf effectState
+       (SQLite.withTransaction sqliteConn
+        $ applyEffect conf effectState
+        $ b Join)
+         >>= eventLoop b conf
     where ircConn = esIrcConn effectState
           sqliteConn = esSqliteConn effectState
 
@@ -138,11 +140,14 @@ eventLoop b conf effectState =
        for_ mb $ \msg ->
            do print msg
               case msg of
-                Ping xs -> sendMsg ircConn (ircPong xs)
-                Privmsg userInfo _ msgText -> SQLite.withTransaction sqliteConn
-                                                $ applyEffect conf effectState (b $ Msg (idText $ userNick $ userInfo) msgText)
-                _ -> return ()
-              eventLoop b conf effectState
+                Ping xs ->
+                    do sendMsg ircConn (ircPong xs)
+                       eventLoop b conf effectState
+                Privmsg userInfo _ msgText ->
+                    do effectState' <- SQLite.withTransaction sqliteConn
+                                         $ applyEffect conf effectState (b $ Msg (idText $ userNick $ userInfo) msgText)
+                       eventLoop b conf effectState'
+                _ -> eventLoop b conf effectState
     where ircConn = esIrcConn effectState
           sqliteConn = esSqliteConn effectState
 
