@@ -35,6 +35,12 @@ data Config = Config { configNick :: T.Text
                      , configChannel :: T.Text
                      } deriving Show
 
+data EffectState =
+    EffectState { esIrcConn :: Connection
+                , esSqliteConn :: SQLite.Connection
+                , esTimeouts :: [(Int, Effect ())]
+                }
+
 maxIrcMessage :: Int
 maxIrcMessage = 512
 
@@ -116,24 +122,29 @@ applyEffect conf ircConn sqliteConn (Free (HttpRequest request s)) =
 applyEffect conf ircConn sqliteConn (Free (Timeout _ _ s)) =
     applyEffect conf ircConn sqliteConn s
 
-ircTransport :: Bot -> Config -> Connection -> SQLite.Connection -> IO ()
-ircTransport b conf ircConn sqliteConn =
+ircTransport :: Bot -> Config -> EffectState -> IO ()
+ircTransport b conf effectState =
     -- TODO(#17): check unsuccessful authorization
     do authorize conf ircConn
        SQLite.withTransaction sqliteConn $ applyEffect conf ircConn sqliteConn $ b Join
-       eventLoop b conf ircConn sqliteConn
+       eventLoop b conf effectState
+    where ircConn = esIrcConn effectState
+          sqliteConn = esSqliteConn effectState
 
-eventLoop :: Bot -> Config -> Connection -> SQLite.Connection -> IO ()
-eventLoop b conf ircConn sqliteConn =
+
+eventLoop :: Bot -> Config -> EffectState -> IO ()
+eventLoop b conf effectState =
     do mb <- readIrcLine ircConn
        for_ mb $ \msg ->
            do print msg
               case msg of
                 Ping xs -> sendMsg ircConn (ircPong xs)
-                Privmsg userInfo _ msgText -> SQLite.withTransaction sqliteConn $
-                                              applyEffect conf ircConn sqliteConn (b $ Msg (idText $ userNick $ userInfo) msgText)
+                Privmsg userInfo _ msgText -> SQLite.withTransaction sqliteConn
+                                                $ applyEffect conf ircConn sqliteConn (b $ Msg (idText $ userNick $ userInfo) msgText)
                 _ -> return ()
-              eventLoop b conf ircConn sqliteConn
+              eventLoop b conf effectState
+    where ircConn = esIrcConn effectState
+          sqliteConn = esSqliteConn effectState
 
 mainWithArgs :: [String] -> IO ()
 mainWithArgs [configPath, databasePath] =
@@ -141,7 +152,10 @@ mainWithArgs [configPath, databasePath] =
        withConnection twitchConnectionParams
                       (\ircConn -> SQLite.withConnection databasePath
                                    (\sqliteConn -> do SEP.prepareSchema sqliteConn
-                                                      ircTransport bot conf ircConn sqliteConn))
+                                                      ircTransport bot conf $ EffectState { esIrcConn = ircConn
+                                                                                          , esSqliteConn = sqliteConn
+                                                                                          , esTimeouts = []
+                                                                                          }))
 mainWithArgs _ = error "./HyperNerd <config-file> <database-file>"
 
 main :: IO ()
