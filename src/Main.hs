@@ -36,7 +36,8 @@ data Config = Config { configNick :: T.Text
                      } deriving Show
 
 data EffectState =
-    EffectState { esIrcConn :: Connection
+    EffectState { esConfig :: Config
+                , esIrcConn :: Connection
                 , esSqliteConn :: SQLite.Connection
                 , esTimeouts :: [(Int, Effect ())]
                 }
@@ -94,61 +95,59 @@ readIrcLine conn =
 sendMsg :: Connection -> RawIrcMsg -> IO ()
 sendMsg conn msg = send conn (renderRawIrcMsg msg)
 
-applyEffect :: Config -> EffectState -> Effect () -> IO EffectState
-applyEffect _ effectState (Pure _) = return effectState
-applyEffect conf effectState (Free (Say text s)) =
-    do sendMsg (esIrcConn effectState) (ircPrivmsg (configChannel conf) text)
-       applyEffect conf effectState s
-applyEffect conf effectState (Free (LogMsg msg s)) =
+applyEffect :: EffectState -> Effect () -> IO EffectState
+applyEffect effectState (Pure _) = return effectState
+applyEffect effectState (Free (Say text s)) =
+    do sendMsg (esIrcConn effectState) (ircPrivmsg (configChannel $ esConfig $ effectState) text)
+       applyEffect effectState s
+applyEffect effectState (Free (LogMsg msg s)) =
     do putStrLn $ T.unpack msg
-       applyEffect conf effectState s
-applyEffect conf effectState (Free (Now s)) =
+       applyEffect effectState s
+applyEffect effectState (Free (Now s)) =
     do timestamp <- getCurrentTime
-       applyEffect conf effectState (s timestamp)
+       applyEffect effectState (s timestamp)
 
-applyEffect conf effectState (Free (CreateEntity name properties s)) =
+applyEffect effectState (Free (CreateEntity name properties s)) =
     do entityId <- SEP.createEntity (esSqliteConn effectState) name properties
-       applyEffect conf effectState (s entityId)
-applyEffect conf effectState (Free (GetEntityById name entityId s)) =
+       applyEffect effectState (s entityId)
+applyEffect effectState (Free (GetEntityById name entityId s)) =
     do entity <- SEP.getEntityById (esSqliteConn effectState) name entityId
-       applyEffect conf effectState (s entity)
-applyEffect conf effectState (Free (GetRandomEntity name s)) =
+       applyEffect effectState (s entity)
+applyEffect effectState (Free (GetRandomEntity name s)) =
     do entity <- SEP.getRandomEntity (esSqliteConn effectState) name
-       applyEffect conf effectState (s entity)
-applyEffect conf effectState (Free (HttpRequest request s)) =
+       applyEffect effectState (s entity)
+applyEffect effectState (Free (HttpRequest request s)) =
     do response <- httpLBS request
-       applyEffect conf effectState (s response)
-applyEffect conf effectState (Free (Timeout ms e s)) =
-    applyEffect conf
-                (effectState { esTimeouts = (ms, e) : esTimeouts effectState })
-                s
+       applyEffect effectState (s response)
+applyEffect effectState (Free (Timeout ms e s)) =
+    applyEffect (effectState { esTimeouts = (ms, e) : esTimeouts effectState }) s
 
-ircTransport :: Bot -> Config -> EffectState -> IO ()
-ircTransport b conf effectState =
+ircTransport :: Bot -> EffectState -> IO ()
+ircTransport b effectState =
     -- TODO(#17): check unsuccessful authorization
-    do authorize conf ircConn
+    do authorize (esConfig effectState) ircConn
        (SQLite.withTransaction sqliteConn
-        $ applyEffect conf effectState
+        $ applyEffect effectState
         $ b Join)
-         >>= eventLoop b conf
+         >>= eventLoop b
     where ircConn = esIrcConn effectState
           sqliteConn = esSqliteConn effectState
 
 
-eventLoop :: Bot -> Config -> EffectState -> IO ()
-eventLoop b conf effectState =
+eventLoop :: Bot -> EffectState -> IO ()
+eventLoop b effectState =
     do mb <- readIrcLine ircConn
        for_ mb $ \msg ->
            do print msg
               case msg of
                 Ping xs ->
                     do sendMsg ircConn (ircPong xs)
-                       eventLoop b conf effectState
+                       eventLoop b effectState
                 Privmsg userInfo _ msgText ->
                     do effectState' <- SQLite.withTransaction sqliteConn
-                                         $ applyEffect conf effectState (b $ Msg (idText $ userNick $ userInfo) msgText)
-                       eventLoop b conf effectState'
-                _ -> eventLoop b conf effectState
+                                         $ applyEffect effectState (b $ Msg (idText $ userNick $ userInfo) msgText)
+                       eventLoop b effectState'
+                _ -> eventLoop b effectState
     where ircConn = esIrcConn effectState
           sqliteConn = esSqliteConn effectState
 
@@ -158,8 +157,9 @@ mainWithArgs [configPath, databasePath] =
        withConnection twitchConnectionParams
          $ \ircConn -> SQLite.withConnection databasePath
          $ \sqliteConn -> do SEP.prepareSchema sqliteConn
-                             ircTransport bot conf
-                               $ EffectState { esIrcConn = ircConn
+                             ircTransport bot
+                               $ EffectState { esConfig = conf
+                                             , esIrcConn = ircConn
                                              , esSqliteConn = sqliteConn
                                              , esTimeouts = []
                                              }
