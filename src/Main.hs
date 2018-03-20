@@ -118,9 +118,10 @@ applyEffect conf effectState (Free (GetRandomEntity name s)) =
 applyEffect conf effectState (Free (HttpRequest request s)) =
     do response <- httpLBS request
        applyEffect conf effectState (s response)
--- TODO(#90): applyEffect for Timeout is not implemented
-applyEffect conf effectState (Free (Timeout _ _ s)) =
-    applyEffect conf effectState s
+applyEffect conf effectState (Free (Timeout ms e s)) =
+    applyEffect conf
+                (effectState { esTimeouts = (ms, e) : esTimeouts effectState })
+                s
 
 ircTransport :: Bot -> Config -> EffectState -> IO ()
 ircTransport b conf effectState =
