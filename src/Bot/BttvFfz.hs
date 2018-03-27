@@ -9,6 +9,7 @@ import qualified Data.Text as T
 import           Effect
 import           Events
 import           Network.HTTP.Simple
+import           Safe
 import           Text.Printf
 
 requestEmoteList :: T.Text -> String -> (Object -> Either String [T.Text]) -> Effect ()
@@ -46,8 +47,14 @@ ffzApiResponseAsEmoteList =
 
 ffzCommand :: Sender -> T.Text -> Effect ()
 ffzCommand sender _ = requestEmoteList (senderName sender) url ffzApiResponseAsEmoteList
-    where url = "https://api.frankerfacez.com/v1/room/tsoding"
+    where
+      url = maybe "tsoding"
+                  (printf "https://api.frankerfacez.com/v1/room/%s")
+                  (tailMay $ T.unpack $ senderChannel sender)
 
 bttvCommand :: Sender -> T.Text -> Effect ()
 bttvCommand sender _ = requestEmoteList (senderName sender) url bttvApiResponseAsEmoteList
-    where url = "https://api.betterttv.net/2/channels/tsoding"
+    where
+      url = maybe "tsoding"
+                  (printf "https://api.betterttv.net/2/channels/%s")
+                  (tailMay $ T.unpack $ senderChannel sender)
