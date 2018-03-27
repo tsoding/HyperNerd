@@ -45,6 +45,7 @@ ffzApiResponseAsEmoteList =
            emoticons <- roomSet .: "emoticons"
            sequence $ map (.: "name") emoticons
 
+-- TODO: URLs in !ffz and !bttv commands are constructed through string concatination
 ffzCommand :: Sender -> T.Text -> Effect ()
 ffzCommand sender _ = requestEmoteList (senderName sender) url ffzApiResponseAsEmoteList
     where
