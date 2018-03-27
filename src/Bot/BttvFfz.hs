@@ -7,6 +7,7 @@ import           Data.Aeson.Types
 import           Data.List
 import qualified Data.Text as T
 import           Effect
+import           Events
 import           Network.HTTP.Simple
 import           Text.Printf
 
@@ -43,10 +44,10 @@ ffzApiResponseAsEmoteList =
            emoticons <- roomSet .: "emoticons"
            sequence $ map (.: "name") emoticons
 
-ffzCommand :: T.Text -> T.Text -> Effect ()
-ffzCommand sender _ = requestEmoteList sender url ffzApiResponseAsEmoteList
+ffzCommand :: Sender -> T.Text -> Effect ()
+ffzCommand sender _ = requestEmoteList (senderName sender) url ffzApiResponseAsEmoteList
     where url = "https://api.frankerfacez.com/v1/room/tsoding"
 
-bttvCommand :: T.Text -> T.Text -> Effect ()
-bttvCommand sender _ = requestEmoteList sender url bttvApiResponseAsEmoteList
+bttvCommand :: Sender -> T.Text -> Effect ()
+bttvCommand sender _ = requestEmoteList (senderName sender) url bttvApiResponseAsEmoteList
     where url = "https://api.betterttv.net/2/channels/tsoding"

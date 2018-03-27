@@ -10,11 +10,12 @@ import           Data.Maybe
 import qualified Data.Text as T
 import           Data.Text.Encoding
 import           Effect
+import           Events
 import           Text.Printf
 
-russifyCommand :: T.Text -> T.Text -> Effect ()
+russifyCommand :: Sender -> T.Text -> Effect ()
 russifyCommand sender westernSpyMsg =
-    replyToUser sender
+    replyToUser (senderName sender)
     $ T.pack
     $ printf "%s KKomrade"
     $ russify westernSpyMsg

@@ -67,6 +67,7 @@ executable HyperNerd
                      , Bot.BttvFfz
                      , Command
                      , Effect
+                     , Events
                      , Entity
                      , SqliteEntityPersistence
   
