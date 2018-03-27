@@ -11,6 +11,7 @@ import           Data.Time
 import           Data.Traversable
 import qualified Database.SQLite.Simple as SQLite
 import           Effect
+import           Events()
 import           Hookup
 import           Irc.Commands ( ircPong
                               , ircNick
@@ -145,9 +146,12 @@ handleIrcMessage :: Bot -> IrcMsg -> EffectState -> IO EffectState
 handleIrcMessage _ (Ping xs) effectState =
     do sendMsg (esIrcConn effectState) (ircPong xs)
        return effectState
-handleIrcMessage b (Privmsg userInfo _ msgText) effectState =
+handleIrcMessage b (Privmsg userInfo target msgText) effectState =
     SQLite.withTransaction (esSqliteConn effectState)
-    $ applyEffect effectState (b $ Msg (idText $ userNick $ userInfo) msgText)
+    $ applyEffect effectState (b $ Msg (Sender { senderName = idText $ userNick $ userInfo
+                                               , senderChannel = idText $ target
+                                               })
+                                       msgText)
 handleIrcMessage _ _ effectState = return effectState
 
 eventLoop :: Bot -> Integer -> EffectState -> IO ()

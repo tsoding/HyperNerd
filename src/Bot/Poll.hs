@@ -6,13 +6,14 @@ import           Data.List
 import qualified Data.Text as T
 import           Effect
 import           Text.Printf
+import           Events
 
-pollCommand :: T.Text -> [T.Text] -> Effect ()
+pollCommand :: Sender -> [T.Text] -> Effect ()
 pollCommand sender options =
     do poll <- currentPoll
        case poll of
-         Just _ -> replyToUser sender "Cannot create a poll while another poll is in place"
-         Nothing -> do pollId <- startPoll sender options
+         Just _ -> replyToUser (senderName sender) "Cannot create a poll while another poll is in place"
+         Nothing -> do pollId <- startPoll (senderName sender) options
                        say
                          $ T.pack
                          $ printf "The poll has been started. Vote for one of the options: %s"
@@ -20,12 +21,12 @@ pollCommand sender options =
                          $ intersperse ", " options
                        timeout 10000 $ announcePollResults pollId
 
-voteCommand :: T.Text -> T.Text -> Effect ()
+voteCommand :: Sender -> T.Text -> Effect ()
 voteCommand sender option =
     do poll <- currentPoll
        case poll of
-         Just pollId -> registerVote pollId sender option
-         Nothing -> replyToUser sender "No polls are in place"
+         Just pollId -> registerVote pollId (senderName sender) option
+         Nothing -> replyToUser (senderName sender) "No polls are in place"
 
 -- TODO(#86): currentPoll is not implemented yet
 currentPoll :: Effect (Maybe Int)

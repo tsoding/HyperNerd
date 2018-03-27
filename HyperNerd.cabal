@@ -67,6 +67,7 @@ executable HyperNerd
                      , Bot.BttvFfz
                      , Command
                      , Effect
+                     , Events
                      , Entity
                      , SqliteEntityPersistence
   
@@ -89,6 +90,7 @@ executable HyperNerd
                      , text
                      , time
                      , unordered-containers
+                     , safe
   
   -- Directories containing source files.
   hs-source-dirs:      src

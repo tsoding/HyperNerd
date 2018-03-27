@@ -7,22 +7,23 @@ import qualified Data.Text as T
 import           Data.Time
 import           Effect
 import           Entity
-import           Text.Read
+import           Events
 import           Text.Printf
+import           Text.Read
 
-addQuoteCommand :: T.Text -> T.Text -> Effect ()
+addQuoteCommand :: Sender -> T.Text -> Effect ()
 addQuoteCommand sender quoteContent =
-    (quoteProperties quoteContent sender <$> now)
+    (quoteProperties quoteContent (senderName sender) <$> now)
     >>= createEntity "quote"
-    >>= (quoteAddedReply sender . entityId)
+    >>= (quoteAddedReply (senderName sender) . entityId)
 
-quoteCommand :: T.Text -> T.Text -> Effect ()
+quoteCommand :: Sender -> T.Text -> Effect ()
 quoteCommand sender "" =
-    getRandomEntity "quote" >>= quoteFoundReply sender
+    getRandomEntity "quote" >>= quoteFoundReply (senderName sender)
 quoteCommand sender quoteIdText =
     maybe
-      (replyToUser sender "Couldn't find any quotes")
-      (\quoteId -> getEntityById "quote" quoteId >>= quoteFoundReply sender)
+      (replyToUser (senderName sender) "Couldn't find any quotes")
+      (\quoteId -> getEntityById "quote" quoteId >>= quoteFoundReply (senderName sender))
       (readMaybe $ T.unpack quoteIdText)
 
 quoteAddedReply :: T.Text -> Int -> Effect ()
