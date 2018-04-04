@@ -12,6 +12,7 @@ main = do results <- runTestTT $ TestList [ SEPS.doublePrepareSchemaSpec
                                           , CS.commandWithGermanUmlauts
                                           , CS.commandWithRussians
                                           , BFS.parseCorrectBttvEmoteList
+                                          , BFS.parseCorrectFfzEmoteList
                                           ]
           (if errors results + failures results == 0
            then exitWith ExitSuccess

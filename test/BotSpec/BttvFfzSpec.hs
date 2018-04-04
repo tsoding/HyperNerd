@@ -21,3 +21,21 @@ parseCorrectBttvEmoteList =
                                                   ]
                                               } |]
                                >>= parseEither bttvApiResponseAsEmoteList)
+
+parseCorrectFfzEmoteList :: Test
+parseCorrectFfzEmoteList =
+    TestLabel "Parse Correct FFZ Emote List" $
+    TestCase $ assertEqual "Couldn't parse emote list"
+                           (Right ["hello", "world"])
+                           (eitherDecode [r| {
+                                                 "room": {"set": 42},
+                                                 "sets": {
+                                                     "42": {
+                                                         "emoticons": [
+                                                             {"name": "hello"},
+                                                             {"name": "world"}
+                                                         ]
+                                                     }
+                                                 }
+                                             } |]
+                              >>= parseEither ffzApiResponseAsEmoteList)
