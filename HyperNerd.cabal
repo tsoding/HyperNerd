@@ -121,10 +121,19 @@ test-suite HyperNerdTest
                      , text
                      , time
                      , unordered-containers
+                     , free
+                     , http-conduit
+                     , safe
 
   other-modules:       Entity
                      , SqliteEntityPersistence
                      , SqliteEntityPersistenceSpec
                      , Command
                      , CommandSpec
+                     , Bot.BttvFfz
+                     , Bot.Replies
+                     , BotSpec.BttvFfzSpec
+                     , Effect
+                     , Events
+
   default-language:    Haskell2010

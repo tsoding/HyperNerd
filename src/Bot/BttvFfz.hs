@@ -1,5 +1,5 @@
 {-# LANGUAGE OverloadedStrings #-}
-module Bot.BttvFfz (bttvCommand, ffzCommand) where
+module Bot.BttvFfz where
 
 import           Bot.Replies
 import           Data.Aeson

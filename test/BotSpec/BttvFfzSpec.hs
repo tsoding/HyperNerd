@@ -1,0 +1,23 @@
+{-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE QuasiQuotes #-}
+module BotSpec.BttvFfzSpec where
+
+import           Bot.BttvFfz
+import           Data.Aeson
+import           Data.Aeson.Types
+import           Test.HUnit
+import           Text.RawString.QQ
+
+parseCorrectBttvEmoteList :: Test
+parseCorrectBttvEmoteList =
+    TestLabel "Parse Correct BTTV Emote List" $
+    TestCase $ assertEqual "FIXME"
+                            (Right ["foo", "bar", "baz"])
+                            (eitherDecode [r| {
+                                                  "emotes": [
+                                                      {"code": "foo"},
+                                                      {"code": "bar"},
+                                                      {"code": "baz"}
+                                                  ]
+                                              } |]
+                               >>= parseEither bttvApiResponseAsEmoteList)
