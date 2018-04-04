@@ -11,7 +11,7 @@ import           Text.RawString.QQ
 parseCorrectBttvEmoteList :: Test
 parseCorrectBttvEmoteList =
     TestLabel "Parse Correct BTTV Emote List" $
-    TestCase $ assertEqual "FIXME"
+    TestCase $ assertEqual "Couldn't parse emote list"
                             (Right ["foo", "bar", "baz"])
                             (eitherDecode [r| {
                                                   "emotes": [
