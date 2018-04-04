@@ -32,7 +32,7 @@ requestEmoteList sender url emoteListExtractor =
 
 bttvApiResponseAsEmoteList :: Object -> Parser [T.Text]
 bttvApiResponseAsEmoteList obj =
-        obj .: "emotes" >>= sequence . map (.: "code")
+    obj .: "emotes" >>= sequence . map (.: "code")
 
 ffzApiResponseAsEmoteList :: Object -> Parser [T.Text]
 ffzApiResponseAsEmoteList obj =
