@@ -36,12 +36,11 @@ bttvApiResponseAsEmoteList obj =
 
 ffzApiResponseAsEmoteList :: Object -> Parser [T.Text]
 ffzApiResponseAsEmoteList obj =
-    do room <- obj .: "room"
-       sets <- obj .: "sets"
-       setId <- (room .: "set") :: Parser Int
-       roomSet <- sets .: (T.pack $ show $ setId)
-       emoticons <- roomSet .: "emoticons"
-       sequence $ map (.: "name") emoticons
+    do setId <- obj .: "room" >>= (.: "set") :: Parser Int
+       obj .: "sets"
+         >>= (.: (T.pack $ show $ setId))
+         >>= (.: "emoticons")
+         >>= sequence . map (.: "name")
 
 -- TODO(#96): URLs in !ffz and !bttv commands are constructed through string concatination
 ffzCommand :: Sender -> T.Text -> Effect ()
