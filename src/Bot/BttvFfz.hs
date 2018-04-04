@@ -12,14 +12,14 @@ import           Network.HTTP.Simple
 import           Safe
 import           Text.Printf
 
-requestEmoteList :: T.Text -> String -> (Object -> Either String [T.Text]) -> Effect ()
+requestEmoteList :: T.Text -> String -> (Object -> Parser [T.Text]) -> Effect ()
 requestEmoteList sender url emoteListExtractor =
     maybe (logMsg $ T.pack $ printf "Couldn't parse URL %s" url)
           (\request ->
                do response <- eitherDecode
                                 <$> getResponseBody
                                 <$> httpRequest request
-                  case response >>= emoteListExtractor of
+                  case response >>= (parseEither emoteListExtractor) of
                     Left err -> logMsg
                                   $ T.pack
                                   $ printf "Couldn't parse Emote List response: %s" err
@@ -30,20 +30,18 @@ requestEmoteList sender url emoteListExtractor =
                                       $ emotes)
           (parseRequest url)
 
-bttvApiResponseAsEmoteList :: Object -> Either String [T.Text]
-bttvApiResponseAsEmoteList =
-    parseEither $ \obj ->
+bttvApiResponseAsEmoteList :: Object -> Parser [T.Text]
+bttvApiResponseAsEmoteList obj =
         obj .: "emotes" >>= sequence . map (.: "code")
 
-ffzApiResponseAsEmoteList :: Object -> Either String [T.Text]
-ffzApiResponseAsEmoteList =
-    parseEither $ \obj ->
-        do room <- obj .: "room"
-           sets <- obj .: "sets"
-           setId <- (room .: "set") :: Parser Int
-           roomSet <- sets .: (T.pack $ show $ setId)
-           emoticons <- roomSet .: "emoticons"
-           sequence $ map (.: "name") emoticons
+ffzApiResponseAsEmoteList :: Object -> Parser [T.Text]
+ffzApiResponseAsEmoteList obj =
+    do room <- obj .: "room"
+       sets <- obj .: "sets"
+       setId <- (room .: "set") :: Parser Int
+       roomSet <- sets .: (T.pack $ show $ setId)
+       emoticons <- roomSet .: "emoticons"
+       sequence $ map (.: "name") emoticons
 
 -- TODO(#96): URLs in !ffz and !bttv commands are constructed through string concatination
 ffzCommand :: Sender -> T.Text -> Effect ()
