@@ -60,15 +60,15 @@ executable HyperNerd
   
   -- Modules included in this executable, other than Main.
   other-modules:       Bot
-                     , Bot.Replies
+                     , Bot.BttvFfz
                      , Bot.Poll
                      , Bot.Quote
+                     , Bot.Replies
                      , Bot.Russify
-                     , Bot.BttvFfz
                      , Command
                      , Effect
-                     , Events
                      , Entity
+                     , Events
                      , SqliteEntityPersistence
   
   -- LANGUAGE extensions used by modules in this package.
@@ -86,11 +86,11 @@ executable HyperNerd
                      , ini
                      , irc-core
                      , raw-strings-qq
+                     , safe
                      , sqlite-simple
                      , text
                      , time
                      , unordered-containers
-                     , safe
   
   -- Directories containing source files.
   hs-source-dirs:      src
@@ -106,34 +106,33 @@ test-suite HyperNerdTest
                        -fwarn-incomplete-patterns
                        -fwarn-incomplete-uni-patterns
   main-is:             Spec.hs
-  hs-source-dirs:      test
-                     , src
-  build-depends:       HUnit
-                     , HUnit
-                     , aeson
+  hs-source-dirs:      src
+                     , test
+  build-depends:       aeson
                      , base
                      , bytestring
                      , containers
                      , file-embed
+                     , free
+                     , http-conduit
                      , raw-strings-qq
+                     , safe
                      , sqlite-simple
                      , temporary
                      , text
                      , time
                      , unordered-containers
-                     , free
-                     , http-conduit
-                     , safe
+                     , HUnit
 
-  other-modules:       Entity
-                     , SqliteEntityPersistence
-                     , SqliteEntityPersistenceSpec
-                     , Command
-                     , CommandSpec
-                     , Bot.BttvFfz
+  other-modules:       Bot.BttvFfz
                      , Bot.Replies
                      , BotSpec.BttvFfzSpec
+                     , Command
+                     , CommandSpec
                      , Effect
                      , Events
+                     , SqliteEntityPersistence
+                     , SqliteEntityPersistenceSpec
+                     , Entity
 
   default-language:    Haskell2010
