@@ -91,6 +91,7 @@ executable HyperNerd
                      , text
                      , time
                      , unordered-containers
+                     , uri-encode
   
   -- Directories containing source files.
   hs-source-dirs:      src

@@ -9,6 +9,7 @@ import qualified Data.Text as T
 import           Effect
 import           Events
 import           Network.HTTP.Simple
+import qualified Network.URI.Encode as URI
 import           Safe
 import           Text.Printf
 
@@ -42,17 +43,16 @@ ffzApiResponseAsEmoteList obj =
          >>= (.: "emoticons")
          >>= sequence . map (.: "name")
 
--- TODO(#96): URLs in !ffz and !bttv commands are constructed through string concatination
 ffzCommand :: Sender -> T.Text -> Effect ()
 ffzCommand sender _ = requestEmoteList (senderName sender) url ffzApiResponseAsEmoteList
     where
       url = maybe "tsoding"
-                  (printf "https://api.frankerfacez.com/v1/room/%s")
+                  (printf "https://api.frankerfacez.com/v1/room/%s" . URI.encode)
                   (tailMay $ T.unpack $ senderChannel sender)
 
 bttvCommand :: Sender -> T.Text -> Effect ()
 bttvCommand sender _ = requestEmoteList (senderName sender) url bttvApiResponseAsEmoteList
     where
       url = maybe "tsoding"
-                  (printf "https://api.betterttv.net/2/channels/%s")
+                  (printf "https://api.betterttv.net/2/channels/%s" . URI.encode)
                   (tailMay $ T.unpack $ senderChannel sender)
