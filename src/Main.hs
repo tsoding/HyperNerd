@@ -124,9 +124,14 @@ applyEffect effectState (Free (HttpRequest request s)) =
 applyEffect effectState (Free (Timeout ms e s)) =
     applyEffect (effectState { esTimeouts = (ms, e) : esTimeouts effectState }) s
 
--- TODO(#94): advanceTimeouts is not implemented
 advanceTimeouts :: Integer -> EffectState -> IO EffectState
-advanceTimeouts _ effectState = return $ effectState
+advanceTimeouts dt effectState =
+    foldl (\esIO e -> esIO >>= (flip applyEffect e))
+          (return $ effectState { esTimeouts = unripe })
+      $ map snd ripe
+    where (ripe, unripe) = span ((< 0) . fst)
+                             $ map (\(t, e) -> (t - dt, e))
+                             $ esTimeouts effectState
 
 ircTransport :: Bot -> EffectState -> IO ()
 ircTransport b effectState =
@@ -156,6 +161,7 @@ handleIrcMessage _ _ effectState = return effectState
 
 eventLoop :: Bot -> Integer -> EffectState -> IO ()
 eventLoop b prevCPUTime effectState =
+    -- TODO: eventLoop is blocked on readIrcLine not allowing advanceTimeouts to advance timeouts
     do mb <- readIrcLine ircConn
        for_ mb $ \msg ->
            do print msg
