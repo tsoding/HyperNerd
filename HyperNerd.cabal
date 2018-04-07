@@ -123,6 +123,7 @@ test-suite HyperNerdTest
                      , text
                      , time
                      , unordered-containers
+                     , uri-encode
                      , HUnit
 
   other-modules:       Bot.BttvFfz
