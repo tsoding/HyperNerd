@@ -161,7 +161,7 @@ handleIrcMessage _ _ effectState = return effectState
 
 eventLoop :: Bot -> Integer -> EffectState -> IO ()
 eventLoop b prevCPUTime effectState =
-    -- TODO: eventLoop is blocked on readIrcLine not allowing advanceTimeouts to advance timeouts
+    -- TODO(#101): eventLoop is blocked on readIrcLine not allowing advanceTimeouts to advance timeouts
     do mb <- readIrcLine ircConn
        for_ mb $ \msg ->
            do print msg
