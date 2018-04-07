@@ -41,7 +41,7 @@ data EffectState =
     EffectState { esConfig :: Config
                 , esIrcConn :: Connection
                 , esSqliteConn :: SQLite.Connection
-                , esTimeouts :: [(Int, Effect ())]
+                , esTimeouts :: [(Integer, Effect ())]
                 }
 
 maxIrcMessage :: Int
