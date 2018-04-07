@@ -24,7 +24,7 @@ data EffectF s = Say T.Text s
                | GetRandomEntity T.Text (Maybe Entity -> s)
                | Now (UTCTime -> s)
                | HttpRequest Request (Response B8.ByteString -> s)
-               | Timeout Int (Effect ()) s
+               | Timeout Integer (Effect ()) s
 
 instance Functor EffectF where
     fmap f (Say msg s) = Say msg (f s)
@@ -62,5 +62,5 @@ now = liftF $ Now id
 httpRequest :: Request -> Effect (Response B8.ByteString)
 httpRequest request = liftF $ HttpRequest request id
 
-timeout :: Int -> Effect () -> Effect ()
+timeout :: Integer -> Effect () -> Effect ()
 timeout t e = liftF $ Timeout t e ()
