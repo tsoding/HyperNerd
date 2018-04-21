@@ -187,9 +187,9 @@ singleThreadedMain configPath databasePath =
                                              , esTimeouts = []
                                              }
 
--- TODO: Main.logicEntry is not implemented
+-- TODO(#105): Main.logicEntry is not implemented
 logicEntry :: IncomingQueue -> OutcomingQueue -> FilePath -> IO ()
-logicEntry _ _ _ = return $ ()
+logicEntry _ _ _ = putStrLn "Not implemented yet. See https://github.com/tsoding/HyperNerd/issues/105"
 
 multiThreadedMain :: FilePath -> FilePath -> IO ()
 multiThreadedMain configPath _ =
