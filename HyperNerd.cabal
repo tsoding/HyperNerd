@@ -69,6 +69,7 @@ executable HyperNerd
                      , Effect
                      , Entity
                      , Events
+                     , IrcTransport
                      , SqliteEntityPersistence
   
   -- LANGUAGE extensions used by modules in this package.
@@ -88,6 +89,7 @@ executable HyperNerd
                      , raw-strings-qq
                      , safe
                      , sqlite-simple
+                     , stm
                      , text
                      , time
                      , unordered-containers

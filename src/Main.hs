@@ -1,6 +1,8 @@
 module Main where
 
 import           Bot
+import           Control.Concurrent
+import           Control.Concurrent.STM
 import           Control.Exception
 import           Control.Monad
 import           Control.Monad.Free
@@ -23,6 +25,7 @@ import           Irc.Identifier (idText)
 import           Irc.Message (IrcMsg(Ping, Privmsg), cookIrcMsg)
 import           Irc.RawIrcMsg (RawIrcMsg, parseRawIrcMsg, asUtf8, renderRawIrcMsg)
 import           Irc.UserInfo (userNick)
+import           IrcTransport
 import           Network.HTTP.Simple
 import qualified SqliteEntityPersistence as SEP
 import           System.CPUTime
@@ -161,7 +164,6 @@ handleIrcMessage _ _ effectState = return effectState
 
 eventLoop :: Bot -> Integer -> EffectState -> IO ()
 eventLoop b prevCPUTime effectState =
-    -- TODO(#101): eventLoop is blocked on readIrcLine not allowing advanceTimeouts to advance timeouts
     do mb <- readIrcLine ircConn
        for_ mb $ \msg ->
            do print msg
@@ -172,8 +174,8 @@ eventLoop b prevCPUTime effectState =
                 >>= eventLoop b currCPUTime
     where ircConn = esIrcConn effectState
 
-mainWithArgs :: [String] -> IO ()
-mainWithArgs [configPath, databasePath] =
+singleThreadedMain :: FilePath -> FilePath -> IO ()
+singleThreadedMain configPath databasePath =
     do conf <- configFromFile configPath
        withConnection twitchConnectionParams
          $ \ircConn -> SQLite.withConnection databasePath
@@ -184,7 +186,22 @@ mainWithArgs [configPath, databasePath] =
                                              , esSqliteConn = sqliteConn
                                              , esTimeouts = []
                                              }
-mainWithArgs _ = error "./HyperNerd <config-file> <database-file>"
+
+-- TODO(#105): Main.logicEntry is not implemented
+logicEntry :: IncomingQueue -> OutcomingQueue -> FilePath -> IO ()
+logicEntry _ _ _ = putStrLn "Not implemented yet. See https://github.com/tsoding/HyperNerd/issues/105"
+
+multiThreadedMain :: FilePath -> FilePath -> IO ()
+multiThreadedMain configPath _ =
+    do incoming <- atomically $ newTQueue
+       outcoming <- atomically $ newTQueue
+       _ <- forkIO $ ircTransportEntry incoming outcoming configPath
+       logicEntry incoming outcoming configPath
+
+mainWithArgs :: [String] -> IO ()
+mainWithArgs [configPath, databasePath] = singleThreadedMain configPath databasePath
+mainWithArgs ["--mt", configPath, databasePath] = multiThreadedMain configPath databasePath
+mainWithArgs _ = error "./HyperNerd [--mt] <config-file> <database-file>"
 
 main :: IO ()
 main = getArgs >>= mainWithArgs
