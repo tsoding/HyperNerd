@@ -7,6 +7,6 @@ import           Irc.RawIrcMsg (RawIrcMsg)
 type IncomingQueue = TQueue IrcMsg
 type OutcomingQueue = TQueue Irc.RawIrcMsg.RawIrcMsg
 
--- TODO: IrcTransport.ircTransportEntry is not implemented
+-- TODO(#104): IrcTransport.ircTransportEntry is not implemented
 ircTransportEntry :: IncomingQueue -> OutcomingQueue -> FilePath -> IO ()
-ircTransportEntry _ _ _ = return ()
+ircTransportEntry _ _ _ = putStrLn "Not implemented yet. See https://github.com/tsoding/HyperNerd/issues/104"
