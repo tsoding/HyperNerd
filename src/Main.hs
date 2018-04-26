@@ -1,3 +1,4 @@
+{-# LANGUAGE OverloadedStrings #-}
 module Main where
 
 import           Bot
@@ -121,18 +122,20 @@ singleThreadedMain configPath databasePath =
                                              }
 
 -- TODO(#105): Main.logicEntry is not implemented
-logicEntry :: IncomingQueue -> OutcomingQueue -> FilePath -> IO ()
-logicEntry incoming outcoming configPath =
+logicEntry :: IncomingQueue -> OutcomingQueue -> Config -> IO ()
+logicEntry incoming outcoming conf =
     do msg <- atomically $ tryReadTQueue incoming
        maybe (return ()) print msg
-       logicEntry incoming outcoming configPath
+       logicEntry incoming outcoming conf
 
 multiThreadedMain :: FilePath -> FilePath -> IO ()
 multiThreadedMain configPath _ =
     do incoming <- atomically $ newTQueue
        outcoming <- atomically $ newTQueue
+       conf <- configFromFile configPath
        _ <- forkIO $ ircTransportEntry incoming outcoming configPath
-       logicEntry incoming outcoming configPath
+       atomically $ writeTQueue outcoming $ ircPrivmsg (configChannel conf) "AYAYA Clap"
+       logicEntry incoming outcoming conf
 
 mainWithArgs :: [String] -> IO ()
 mainWithArgs [configPath, databasePath] = singleThreadedMain configPath databasePath

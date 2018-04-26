@@ -79,11 +79,12 @@ readIrcLine conn =
              Just msg -> return $! cookIrcMsg msg
              Nothing -> fail "Server sent invalid message!"
 
--- TODO: IrcTransport.eventLoop' does not handle outcoming messages
 eventLoop' :: IncomingQueue -> OutcomingQueue -> Connection -> IO ()
 eventLoop' incoming outcoming ircConn =
     do mb <- readIrcLine ircConn
        for_ mb $ \msg -> atomically $ writeTQueue incoming msg
+       outMsg <- atomically $ tryReadTQueue outcoming
+       maybe (return ()) (sendMsg ircConn) outMsg
        eventLoop' incoming outcoming ircConn
 
 -- TODO(#104): IrcTransport.ircTransportEntry is not implemented
