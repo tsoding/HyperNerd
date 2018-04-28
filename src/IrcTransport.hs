@@ -87,7 +87,6 @@ eventLoop' incoming outcoming ircConn =
        maybe (return ()) (sendMsg ircConn) outMsg
        eventLoop' incoming outcoming ircConn
 
--- TODO(#104): IrcTransport.ircTransportEntry is not implemented
 ircTransportEntry :: IncomingQueue -> OutcomingQueue -> FilePath -> IO ()
 ircTransportEntry incoming outcoming configFilePath =
     do conf <- configFromFile configFilePath
