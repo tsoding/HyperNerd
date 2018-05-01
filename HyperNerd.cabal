@@ -77,6 +77,7 @@ executable HyperNerd
   
   -- Other library packages from which modules are imported.
   build-depends:       aeson
+                     , async
                      , base >=4.9 && <4.10
                      , bytestring
                      , containers
@@ -112,6 +113,7 @@ test-suite HyperNerdTest
   hs-source-dirs:      src
                      , test
   build-depends:       aeson
+                     , async
                      , base
                      , bytestring
                      , containers

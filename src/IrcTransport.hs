@@ -1,5 +1,6 @@
 module IrcTransport where
 
+import           Control.Concurrent.Async
 import           Control.Concurrent.STM
 import           Control.Exception
 import           Control.Monad
@@ -79,18 +80,30 @@ readIrcLine conn =
              Just msg -> return $! cookIrcMsg msg
              Nothing -> fail "Server sent invalid message!"
 
-eventLoop' :: IncomingQueue -> OutcomingQueue -> Connection -> IO ()
-eventLoop' incoming outcoming ircConn =
+
+receiveLoop :: IncomingQueue -> Connection -> IO ()
+receiveLoop incoming ircConn =
     do mb <- readIrcLine ircConn
        for_ mb $ \msg -> atomically $ writeTQueue incoming msg
-       outMsg <- atomically $ tryReadTQueue outcoming
-       maybe (return ()) (sendMsg ircConn) outMsg
-       eventLoop' incoming outcoming ircConn
+       receiveLoop incoming ircConn
+
+sendLoop :: OutcomingQueue -> Connection -> IO ()
+sendLoop outcoming ircConn =
+    do outMsg <- atomically $ readTQueue outcoming
+       sendMsg ircConn outMsg
+       sendLoop outcoming ircConn
 
 ircTransportEntry :: IncomingQueue -> OutcomingQueue -> FilePath -> IO ()
 ircTransportEntry incoming outcoming configFilePath =
     do conf <- configFromFile configFilePath
        withConnection twitchConnectionParams $ \ircConn ->
            do authorize conf ircConn
-              eventLoop' incoming outcoming ircConn
+              withAsync (sendLoop outcoming ircConn) $ \sender ->
+                  withAsync (receiveLoop incoming ircConn) $ \receive ->
+                      do res <- waitEitherCatch sender receive
+                         case res of
+                           Left  Right{}  -> fail "PANIC: sendLoop returned"
+                           Right Right{}  -> return ()
+                           Left  (Left e) -> throwIO e
+                           Right (Left e) -> throwIO e
        return ()

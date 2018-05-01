@@ -122,11 +122,16 @@ singleThreadedMain configPath databasePath =
                                              }
 
 -- TODO(#105): Main.logicEntry is not implemented
-logicEntry :: IncomingQueue -> OutcomingQueue -> Config -> IO ()
-logicEntry incoming outcoming conf =
+logicEntry :: IncomingQueue -> OutcomingQueue -> Integer -> Integer -> Config -> IO ()
+logicEntry incoming outcoming timer prev conf =
     do msg <- atomically $ tryReadTQueue incoming
        maybe (return ()) print msg
-       logicEntry incoming outcoming conf
+       curr <- getCPUTime
+       let deltaTime = (curr - prev) `div` ((10 :: Integer) ^ (9 :: Integer))
+       if timer <= 0
+       then do atomically $ writeTQueue outcoming $ ircPrivmsg (configChannel conf) "AYAYA Clap"
+               logicEntry incoming outcoming 3000 curr conf
+       else logicEntry incoming outcoming (timer - deltaTime) curr conf
 
 multiThreadedMain :: FilePath -> FilePath -> IO ()
 multiThreadedMain configPath _ =
@@ -134,8 +139,8 @@ multiThreadedMain configPath _ =
        outcoming <- atomically $ newTQueue
        conf <- configFromFile configPath
        _ <- forkIO $ ircTransportEntry incoming outcoming configPath
-       atomically $ writeTQueue outcoming $ ircPrivmsg (configChannel conf) "AYAYA Clap"
-       logicEntry incoming outcoming conf
+       curr <- getCPUTime
+       logicEntry incoming outcoming 3000 curr conf
 
 mainWithArgs :: [String] -> IO ()
 mainWithArgs [configPath, databasePath] = singleThreadedMain configPath databasePath
