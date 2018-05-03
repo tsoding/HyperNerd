@@ -97,6 +97,7 @@ ircTransportEntry :: IncomingQueue -> OutcomingQueue -> FilePath -> IO ()
 ircTransportEntry incoming outcoming configFilePath =
     do conf <- configFromFile configFilePath
        withConnection twitchConnectionParams $ \ircConn ->
+           -- TODO(#17): check unsuccessful authorization
            do authorize conf ircConn
               withAsync (sendLoop outcoming ircConn) $ \sender ->
                   withAsync (receiveLoop incoming ircConn) $ \receive ->

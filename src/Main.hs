@@ -5,13 +5,11 @@ import           Bot
 import           Control.Concurrent
 import           Control.Concurrent.STM
 import           Control.Monad.Free
-import           Data.Foldable
 import qualified Data.Text as T
 import           Data.Time
 import qualified Database.SQLite.Simple as SQLite
 import           Effect
 import           Events()
-import           Hookup
 import           Irc.Commands ( ircPong
                               , ircPrivmsg
                               )
@@ -29,15 +27,16 @@ import           System.Environment
 
 data EffectState =
     EffectState { esConfig :: Config
-                , esIrcConn :: Connection
                 , esSqliteConn :: SQLite.Connection
                 , esTimeouts :: [(Integer, Effect ())]
+                , esIncoming :: IncomingQueue
+                , esOutcoming :: OutcomingQueue
                 }
 
 applyEffect :: EffectState -> Effect () -> IO EffectState
 applyEffect effectState (Pure _) = return effectState
 applyEffect effectState (Free (Say text s)) =
-    do sendMsg (esIrcConn effectState) (ircPrivmsg (configChannel $ esConfig $ effectState) text)
+    do atomically $ writeTQueue (esOutcoming effectState) (ircPrivmsg (configChannel $ esConfig $ effectState) text)
        applyEffect effectState s
 applyEffect effectState (Free (LogMsg msg s)) =
     do putStrLn $ T.unpack msg
@@ -72,80 +71,57 @@ advanceTimeouts dt effectState =
 
 ircTransport :: Bot -> EffectState -> IO ()
 ircTransport b effectState =
-    -- TODO(#17): check unsuccessful authorization
-    do authorize (esConfig effectState) ircConn
-       eventLoop b
-         <$> (getCPUTime)
-         <*> (SQLite.withTransaction sqliteConn
-                $ applyEffect effectState
-                $ b Join)
-         >>= id
-    where ircConn = esIrcConn effectState
-          sqliteConn = esSqliteConn effectState
+    eventLoop b
+       <$> (getCPUTime)
+       <*> (SQLite.withTransaction (esSqliteConn effectState)
+              $ applyEffect effectState
+              $ b Join)
+       >>= id
 
-
-handleIrcMessage :: Bot -> IrcMsg -> EffectState -> IO EffectState
-handleIrcMessage _ (Ping xs) effectState =
-    do sendMsg (esIrcConn effectState) (ircPong xs)
+handleIrcMessage :: Bot -> EffectState -> IrcMsg -> IO EffectState
+handleIrcMessage _ effectState (Ping xs) =
+    do atomically $ writeTQueue (esOutcoming effectState) (ircPong xs)
        return effectState
-handleIrcMessage b (Privmsg userInfo target msgText) effectState =
+handleIrcMessage b effectState (Privmsg userInfo target msgText) =
     SQLite.withTransaction (esSqliteConn effectState)
     $ applyEffect effectState (b $ Msg (Sender { senderName = idText $ userNick $ userInfo
                                                , senderChannel = idText $ target
                                                })
                                        msgText)
-handleIrcMessage _ _ effectState = return effectState
+handleIrcMessage _ effectState _ = return effectState
 
 eventLoop :: Bot -> Integer -> EffectState -> IO ()
 eventLoop b prevCPUTime effectState =
-    do mb <- readIrcLine ircConn
-       for_ mb $ \msg ->
-           do print msg
-              currCPUTime <- getCPUTime
-              let deltaTime = (currCPUTime - prevCPUTime) `div` ((10 :: Integer) ^ (9 :: Integer))
-              handleIrcMessage b msg effectState
-                >>= advanceTimeouts deltaTime
-                >>= eventLoop b currCPUTime
-    where ircConn = esIrcConn effectState
+    do currCPUTime <- getCPUTime
+       let deltaTime = (currCPUTime - prevCPUTime) `div` ((10 :: Integer) ^ (9 :: Integer))
+       mb <- atomically $ tryReadTQueue (esIncoming effectState)
+       maybe (return effectState)
+             (\msg -> do print msg
+                         handleIrcMessage b effectState msg)
+             mb
+         >>= advanceTimeouts deltaTime
+         >>= eventLoop b currCPUTime
 
-singleThreadedMain :: FilePath -> FilePath -> IO ()
-singleThreadedMain configPath databasePath =
-    do conf <- configFromFile configPath
-       withConnection twitchConnectionParams
-         $ \ircConn -> SQLite.withConnection databasePath
-         $ \sqliteConn -> do SEP.prepareSchema sqliteConn
-                             ircTransport bot
-                               $ EffectState { esConfig = conf
-                                             , esIrcConn = ircConn
-                                             , esSqliteConn = sqliteConn
-                                             , esTimeouts = []
-                                             }
+logicEntry :: IncomingQueue -> OutcomingQueue -> Config -> String -> IO ()
+logicEntry incoming outcoming conf databasePath =
+    SQLite.withConnection databasePath
+      $ \sqliteConn -> do SEP.prepareSchema sqliteConn
+                          ircTransport bot
+                             $ EffectState { esConfig = conf
+                                           , esSqliteConn = sqliteConn
+                                           , esTimeouts = []
+                                           , esIncoming = incoming
+                                           , esOutcoming = outcoming
+                                           }
 
--- TODO(#105): Main.logicEntry is not implemented
-logicEntry :: IncomingQueue -> OutcomingQueue -> Integer -> Integer -> Config -> IO ()
-logicEntry incoming outcoming timer prev conf =
-    do msg <- atomically $ tryReadTQueue incoming
-       maybe (return ()) print msg
-       curr <- getCPUTime
-       let deltaTime = (curr - prev) `div` ((10 :: Integer) ^ (9 :: Integer))
-       if timer <= 0
-       then do atomically $ writeTQueue outcoming $ ircPrivmsg (configChannel conf) "AYAYA Clap"
-               logicEntry incoming outcoming 3000 curr conf
-       else logicEntry incoming outcoming (timer - deltaTime) curr conf
-
-multiThreadedMain :: FilePath -> FilePath -> IO ()
-multiThreadedMain configPath _ =
+mainWithArgs :: [String] -> IO ()
+mainWithArgs [configPath, databasePath] =
     do incoming <- atomically $ newTQueue
        outcoming <- atomically $ newTQueue
        conf <- configFromFile configPath
        _ <- forkIO $ ircTransportEntry incoming outcoming configPath
-       curr <- getCPUTime
-       logicEntry incoming outcoming 3000 curr conf
-
-mainWithArgs :: [String] -> IO ()
-mainWithArgs [configPath, databasePath] = singleThreadedMain configPath databasePath
-mainWithArgs ["--mt", configPath, databasePath] = multiThreadedMain configPath databasePath
-mainWithArgs _ = error "./HyperNerd [--mt] <config-file> <database-file>"
+       logicEntry incoming outcoming conf databasePath
+mainWithArgs _ = error "./HyperNerd <config-file> <database-file>"
 
 main :: IO ()
 main = getArgs >>= mainWithArgs
