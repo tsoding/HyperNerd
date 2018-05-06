@@ -92,7 +92,8 @@ handleIrcMessage _ effectState _ = return effectState
 
 eventLoop :: Bot -> Integer -> EffectState -> IO ()
 eventLoop b prevCPUTime effectState =
-    do currCPUTime <- getCPUTime
+    do threadDelay 10000        -- to prevent busy looping
+       currCPUTime <- getCPUTime
        let deltaTime = (currCPUTime - prevCPUTime) `div` ((10 :: Integer) ^ (9 :: Integer))
        mb <- atomically $ tryReadTQueue (esIncoming effectState)
        maybe (return effectState)
