@@ -1,3 +1,5 @@
+{-# LANGUAGE InstanceSigs #-}
+{-# LANGUAGE FlexibleInstances #-}
 module Effect ( Effect
               , EffectF (..)
               , say
@@ -11,6 +13,7 @@ module Effect ( Effect
               , errorEff
               ) where
 
+import           Control.Monad.Catch
 import           Control.Monad.Free
 import qualified Data.ByteString.Lazy.Char8 as B8
 import qualified Data.Text as T
@@ -44,6 +47,10 @@ instance Functor EffectF where
 
 type Effect = Free EffectF
 
+instance MonadThrow Effect where
+    throwM :: Exception e => e -> Effect a
+    throwM = errorEff . T.pack . displayException
+
 say :: T.Text -> Effect ()
 say msg = liftF $ Say msg ()
 
@@ -68,5 +75,5 @@ httpRequest request = liftF $ HttpRequest request id
 timeout :: Integer -> Effect () -> Effect ()
 timeout t e = liftF $ Timeout t e ()
 
-errorEff :: T.Text -> Effect ()
+errorEff :: T.Text -> Effect a
 errorEff t = liftF $ ErrorEff t
