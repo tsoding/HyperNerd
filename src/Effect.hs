@@ -11,6 +11,7 @@ module Effect ( Effect
               , now
               , timeout
               , errorEff
+              , twitchApiRequest
               ) where
 
 import           Control.Monad.Catch
@@ -29,6 +30,7 @@ data EffectF s = Say T.Text s
                | GetRandomEntity T.Text (Maybe Entity -> s)
                | Now (UTCTime -> s)
                | HttpRequest Request (Response B8.ByteString -> s)
+               | TwitchApiRequest Request (Response B8.ByteString -> s)
                | Timeout Integer (Effect ()) s
 
 instance Functor EffectF where
@@ -43,6 +45,7 @@ instance Functor EffectF where
         GetRandomEntity name (f . h)
     fmap f (Now h) = Now (f . h)
     fmap f (HttpRequest r h) = HttpRequest r (f . h)
+    fmap f (TwitchApiRequest r h) = TwitchApiRequest r (f . h)
     fmap f (Timeout t e h) = Timeout t e (f h)
 
 type Effect = Free EffectF
@@ -71,6 +74,9 @@ now = liftF $ Now id
 
 httpRequest :: Request -> Effect (Response B8.ByteString)
 httpRequest request = liftF $ HttpRequest request id
+
+twitchApiRequest :: Request -> Effect (Response B8.ByteString)
+twitchApiRequest request = liftF $ TwitchApiRequest request id
 
 timeout :: Integer -> Effect () -> Effect ()
 timeout t e = liftF $ Timeout t e ()
