@@ -118,6 +118,7 @@ test-suite HyperNerdTest
                      , base
                      , bytestring
                      , containers
+                     , exceptions
                      , file-embed
                      , free
                      , http-conduit
