@@ -1,3 +1,5 @@
+{-# LANGUAGE InstanceSigs #-}
+{-# LANGUAGE FlexibleInstances #-}
 module Effect ( Effect
               , EffectF (..)
               , say
@@ -8,8 +10,10 @@ module Effect ( Effect
               , httpRequest
               , now
               , timeout
+              , errorEff
               ) where
 
+import           Control.Monad.Catch
 import           Control.Monad.Free
 import qualified Data.ByteString.Lazy.Char8 as B8
 import qualified Data.Text as T
@@ -19,6 +23,7 @@ import           Network.HTTP.Simple
 
 data EffectF s = Say T.Text s
                | LogMsg T.Text s
+               | ErrorEff T.Text
                | CreateEntity T.Text Properties (Entity -> s)
                | GetEntityById T.Text Int (Maybe Entity -> s)
                | GetRandomEntity T.Text (Maybe Entity -> s)
@@ -31,6 +36,7 @@ instance Functor EffectF where
     fmap f (LogMsg msg s) = LogMsg msg (f s)
     fmap f (CreateEntity name properties h) =
         CreateEntity name properties (f . h)
+    fmap _ (ErrorEff text) = ErrorEff text
     fmap f (GetEntityById name ident h) =
         GetEntityById name ident (f . h)
     fmap f (GetRandomEntity name h) =
@@ -40,6 +46,10 @@ instance Functor EffectF where
     fmap f (Timeout t e h) = Timeout t e (f h)
 
 type Effect = Free EffectF
+
+instance MonadThrow Effect where
+    throwM :: Exception e => e -> Effect a
+    throwM = errorEff . T.pack . displayException
 
 say :: T.Text -> Effect ()
 say msg = liftF $ Say msg ()
@@ -64,3 +74,6 @@ httpRequest request = liftF $ HttpRequest request id
 
 timeout :: Integer -> Effect () -> Effect ()
 timeout t e = liftF $ Timeout t e ()
+
+errorEff :: T.Text -> Effect a
+errorEff t = liftF $ ErrorEff t

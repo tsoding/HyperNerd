@@ -81,6 +81,7 @@ executable HyperNerd
                      , base >=4.9 && <4.10
                      , bytestring
                      , containers
+                     , exceptions
                      , file-embed
                      , free
                      , hookup
@@ -117,6 +118,7 @@ test-suite HyperNerdTest
                      , base
                      , bytestring
                      , containers
+                     , exceptions
                      , file-embed
                      , free
                      , http-conduit
