@@ -38,6 +38,7 @@ commands = M.fromList [ ("russify", ("Russify western spy text", russifyCommand)
                                                    $ wordsArgsCommand
                                                    $ pollCommand))
                       , ("vote", ("Vote for a poll option", voteCommand))
+                      , ("error", ("Throws an error", \_ _ -> errorEff "Hello, World"))
                       ]
 
 authorizeCommand :: [T.Text] -> CommandHandler T.Text -> CommandHandler T.Text

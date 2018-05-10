@@ -21,6 +21,7 @@ import           Network.HTTP.Simple
 import qualified SqliteEntityPersistence as SEP
 import           System.CPUTime
 import           System.Environment
+import           Text.Printf
 
 -- TODO(#15): utilize rate limits
 -- See https://github.com/glguy/irc-core/blob/6dd03dfed4affe6ae8cdd63ede68c88d70af9aac/bot/src/Main.hs#L32
@@ -44,6 +45,9 @@ applyEffect effectState (Free (LogMsg msg s)) =
 applyEffect effectState (Free (Now s)) =
     do timestamp <- getCurrentTime
        applyEffect effectState (s timestamp)
+applyEffect effectState (Free (ErrorEff msg)) =
+    do putStrLn $ printf "[ERROR] %s" $ msg
+       return $ effectState
 
 applyEffect effectState (Free (CreateEntity name properties s)) =
     do entityId <- SEP.createEntity (esSqliteConn effectState) name properties
