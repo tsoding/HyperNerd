@@ -1,5 +1,5 @@
 {-# LANGUAGE OverloadedStrings #-}
-module Bot (Bot, bot, Event(..), Sender(..)) where
+module Bot (Bot, bot, Event(..), Sender(..), TwitchStream(..)) where
 
 import           Bot.BttvFfz
 import           Bot.Poll
@@ -10,6 +10,7 @@ import           Command
 import           Data.List
 import qualified Data.Map as M
 import qualified Data.Text as T
+import           Data.Time
 import           Effect
 import           Events
 import           Text.Printf
@@ -18,6 +19,13 @@ type Bot = Event -> Effect ()
 
 type CommandHandler a = Sender -> a -> Effect ()
 type CommandTable a = M.Map T.Text (T.Text, CommandHandler a)
+
+data TwitchStream = TwitchStream { tsCreatedAt :: UTCTime }
+
+-- TODO: twitchStreamByLogin is not implemented
+twitchStreamByLogin :: T.Text -> Effect TwitchStream
+twitchStreamByLogin _ = do createdAt <- now
+                           return $ TwitchStream { tsCreatedAt = createdAt }
 
 commands :: CommandTable T.Text
 commands = M.fromList [ ("russify", ("Russify western spy text", russifyCommand))
@@ -38,7 +46,17 @@ commands = M.fromList [ ("russify", ("Russify western spy text", russifyCommand)
                                                    $ wordsArgsCommand
                                                    $ pollCommand))
                       , ("vote", ("Vote for a poll option", voteCommand))
-                      , ("uptime", ("Show stream uptime", \_ _ -> return ()))
+                      , ("uptime", ("Show stream uptime", \sender _ ->
+                                        do let channel = senderChannel sender
+                                           let name = senderName sender
+                                           streamStartTime <- tsCreatedAt <$> twitchStreamByLogin channel
+                                           currentTime <- now
+                                           replyToUser name
+                                             $ T.pack
+                                             $ printf "%s was streaming for %s. It's not implemented btw." channel
+                                             $ show
+                                             $ diffUTCTime currentTime streamStartTime
+                                   ))
                       ]
 
 authorizeCommand :: [T.Text] -> CommandHandler T.Text -> CommandHandler T.Text
