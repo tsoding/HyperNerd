@@ -22,7 +22,7 @@ type CommandTable a = M.Map T.Text (T.Text, CommandHandler a)
 
 data TwitchStream = TwitchStream { tsCreatedAt :: UTCTime }
 
--- TODO: twitchStreamByLogin is not implemented
+-- TODO(#114): twitchStreamByLogin is not implemented
 twitchStreamByLogin :: T.Text -> Effect TwitchStream
 twitchStreamByLogin _ = do createdAt <- now
                            return $ TwitchStream { tsCreatedAt = createdAt }
