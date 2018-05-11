@@ -61,7 +61,7 @@ applyEffect effectState (Free (GetRandomEntity name s)) =
 applyEffect effectState (Free (HttpRequest request s)) =
     do response <- httpLBS request
        applyEffect effectState (s response)
--- TODO: inject the Twitch API authentication in TwitchApiRequest Effect
+-- TODO(#115): inject the Twitch API authentication in TwitchApiRequest Effect
 applyEffect effectState (Free (TwitchApiRequest request s)) =
     do response <- httpLBS request
        applyEffect effectState (s response)
