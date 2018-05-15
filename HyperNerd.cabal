@@ -84,6 +84,7 @@ executable HyperNerd
                      , exceptions
                      , file-embed
                      , free
+                     , hlint
                      , hookup
                      , http-conduit
                      , ini
