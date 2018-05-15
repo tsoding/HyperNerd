@@ -6,6 +6,7 @@ import           Control.Concurrent
 import           Control.Concurrent.STM
 import           Control.Monad
 import           Control.Monad.Free
+import           Data.String
 import qualified Data.Text as T
 import           Data.Time
 import qualified Database.SQLite.Simple as SQLite
@@ -62,9 +63,9 @@ applyEffect effectState (Free (GetRandomEntity name s)) =
 applyEffect effectState (Free (HttpRequest request s)) =
     do response <- httpLBS request
        applyEffect effectState (s response)
--- TODO(#115): inject the Twitch API authentication in TwitchApiRequest Effect
 applyEffect effectState (Free (TwitchApiRequest request s)) =
-    do response <- httpLBS request
+    do clientId <- return $ fromString $ T.unpack $ configClientId $ esConfig effectState
+       response <- httpLBS (addRequestHeader "Client-ID" clientId request)
        applyEffect effectState (s response)
 applyEffect effectState (Free (Timeout ms e s)) =
     applyEffect (effectState { esTimeouts = (ms, e) : esTimeouts effectState }) s
