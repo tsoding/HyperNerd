@@ -20,12 +20,16 @@ type Bot = Event -> Effect ()
 type CommandHandler a = Sender -> a -> Effect ()
 type CommandTable a = M.Map T.Text (T.Text, CommandHandler a)
 
-data TwitchStream = TwitchStream { tsCreatedAt :: UTCTime }
+data TwitchStream = TwitchStream { tsStartedAt :: UTCTime
+                                 , tsTitle :: T.Text
+                                 }
 
 -- TODO(#114): twitchStreamByLogin is not implemented
 twitchStreamByLogin :: T.Text -> Effect TwitchStream
 twitchStreamByLogin _ = do createdAt <- now
-                           return $ TwitchStream { tsCreatedAt = createdAt }
+                           return TwitchStream { tsStartedAt = createdAt
+                                               , tsTitle = ""
+                                               }
 
 commands :: CommandTable T.Text
 commands = M.fromList [ ("russify", ("Russify western spy text", russifyCommand))
@@ -43,13 +47,12 @@ commands = M.fromList [ ("russify", ("Russify western spy text", russifyCommand)
                       , ("poll", ("Starts a poll", authorizeCommand [ "tsoding"
                                                                     , "r3x1m"
                                                                     ]
-                                                   $ wordsArgsCommand
-                                                   $ pollCommand))
+                                                   $ wordsArgsCommand pollCommand))
                       , ("vote", ("Vote for a poll option", voteCommand))
                       , ("uptime", ("Show stream uptime", \sender _ ->
                                         do let channel = senderChannel sender
                                            let name = senderName sender
-                                           streamStartTime <- tsCreatedAt <$> twitchStreamByLogin channel
+                                           streamStartTime <- tsStartedAt <$> twitchStreamByLogin channel
                                            currentTime <- now
                                            replyToUser name
                                              $ T.pack
@@ -61,9 +64,10 @@ commands = M.fromList [ ("russify", ("Russify western spy text", russifyCommand)
 
 authorizeCommand :: [T.Text] -> CommandHandler T.Text -> CommandHandler T.Text
 authorizeCommand authorizedPeople commandHandler sender args =
-    if (senderName sender) `elem` authorizedPeople
+    if senderName sender `elem` authorizedPeople
     then commandHandler sender args
-    else replyToUser (senderName sender) $ "You are not authorized to use this command! HyperNyard"
+    else replyToUser (senderName sender)
+                     "You are not authorized to use this command! HyperNyard"
 
 wordsArgsCommand :: CommandHandler [T.Text] -> CommandHandler T.Text
 wordsArgsCommand commandHandler sender args =

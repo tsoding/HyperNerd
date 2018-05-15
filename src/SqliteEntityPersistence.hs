@@ -99,38 +99,37 @@ createEntity :: Connection -> T.Text -> Properties -> IO Entity
 createEntity conn name properties =
     do
       ident <- nextEntityId conn name
-      sequence_ $ map (uncurry $ createEntityProperty conn name ident) $ M.toList properties
-      return $ Entity { entityId = ident
-                      , entityName = name
-                      , entityProperties = properties
-                      }
+      mapM_ (uncurry $ createEntityProperty conn name ident) $ M.toList properties
+      return Entity { entityId = ident
+                    , entityName = name
+                    , entityProperties = properties
+                    }
 
 getEntityById :: Connection -> T.Text -> Int -> IO (Maybe Entity)
 getEntityById conn name ident =
-    do
-      rawProperties <- queryNamed conn [r| SELECT propertyName,
-                                                  propertyType,
-                                                  propertyInt,
-                                                  propertyText,
-                                                  propertyUTCTime
-                                           FROM EntityProperty
-                                           WHERE entityName=:entityName AND
-                                                 entityId=:entityId |]
-                                       [ ":entityName" := name
-                                       , ":entityId" := ident
-                                       ]
-      return $ restoreEntity name ident rawProperties
+    restoreEntity name ident
+      <$> queryNamed conn [r| SELECT propertyName,
+                                     propertyType,
+                                     propertyInt,
+                                     propertyText,
+                                     propertyUTCTime
+                              FROM EntityProperty
+                              WHERE entityName=:entityName AND
+                                    entityId=:entityId |]
+                          [ ":entityName" := name
+                          , ":entityId" := ident
+                          ]
 
 getRandomEntityId :: Connection -> T.Text -> IO (Maybe Int)
 getRandomEntityId conn name =
-    do entityIds <- queryNamed conn [r| SELECT entityId
-                                        FROM EntityProperty
-                                        WHERE entityName = :entityName
-                                        GROUP BY entityId
-                                        ORDER BY RANDOM()
-                                        LIMIT 1 |]
-                                    [ ":entityName" := name ]
-       return $ listToMaybe $ map fromOnly entityIds
+    listToMaybe . map fromOnly
+      <$> queryNamed conn [r| SELECT entityId
+                              FROM EntityProperty
+                              WHERE entityName = :entityName
+                              GROUP BY entityId
+                              ORDER BY RANDOM()
+                              LIMIT 1 |]
+                          [ ":entityName" := name ]
 
 getRandomEntity :: Connection -> T.Text -> IO (Maybe Entity)
 getRandomEntity conn name =

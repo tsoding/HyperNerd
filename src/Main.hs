@@ -4,6 +4,7 @@ module Main where
 import           Bot
 import           Control.Concurrent
 import           Control.Concurrent.STM
+import           Control.Monad
 import           Control.Monad.Free
 import qualified Data.Text as T
 import           Data.Time
@@ -37,7 +38,7 @@ data EffectState =
 applyEffect :: EffectState -> Effect () -> IO EffectState
 applyEffect effectState (Pure _) = return effectState
 applyEffect effectState (Free (Say text s)) =
-    do atomically $ writeTQueue (esOutcoming effectState) (ircPrivmsg (configChannel $ esConfig $ effectState) text)
+    do atomically $ writeTQueue (esOutcoming effectState) (ircPrivmsg (configChannel $ esConfig effectState) text)
        applyEffect effectState s
 applyEffect effectState (Free (LogMsg msg s)) =
     do putStrLn $ T.unpack msg
@@ -46,8 +47,8 @@ applyEffect effectState (Free (Now s)) =
     do timestamp <- getCurrentTime
        applyEffect effectState (s timestamp)
 applyEffect effectState (Free (ErrorEff msg)) =
-    do putStrLn $ printf "[ERROR] %s" $ msg
-       return $ effectState
+    do putStrLn $ printf "[ERROR] %s" msg
+       return effectState
 
 applyEffect effectState (Free (CreateEntity name properties s)) =
     do entityId <- SEP.createEntity (esSqliteConn effectState) name properties
@@ -70,7 +71,7 @@ applyEffect effectState (Free (Timeout ms e s)) =
 
 advanceTimeouts :: Integer -> EffectState -> IO EffectState
 advanceTimeouts dt effectState =
-    foldl (\esIO e -> esIO >>= (flip applyEffect e))
+    foldl (\esIO e -> esIO >>= flip applyEffect e)
           (return $ effectState { esTimeouts = unripe })
       $ map snd ripe
     where (ripe, unripe) = span ((< 0) . fst)
@@ -79,12 +80,11 @@ advanceTimeouts dt effectState =
 
 ircTransport :: Bot -> EffectState -> IO ()
 ircTransport b effectState =
-    eventLoop b
-       <$> (getCPUTime)
-       <*> (SQLite.withTransaction (esSqliteConn effectState)
-              $ applyEffect effectState
-              $ b Join)
-       >>= id
+    join
+      (eventLoop b
+          <$> getCPUTime
+          <*> SQLite.withTransaction (esSqliteConn effectState)
+                (applyEffect effectState $ b Join))
 
 handleIrcMessage :: Bot -> EffectState -> IrcMsg -> IO EffectState
 handleIrcMessage _ effectState (Ping xs) =
@@ -92,9 +92,9 @@ handleIrcMessage _ effectState (Ping xs) =
        return effectState
 handleIrcMessage b effectState (Privmsg userInfo target msgText) =
     SQLite.withTransaction (esSqliteConn effectState)
-    $ applyEffect effectState (b $ Msg (Sender { senderName = idText $ userNick $ userInfo
-                                               , senderChannel = idText $ target
-                                               })
+    $ applyEffect effectState (b $ Msg Sender { senderName = idText $ userNick userInfo
+                                              , senderChannel = idText target
+                                              }
                                        msgText)
 handleIrcMessage _ effectState _ = return effectState
 
@@ -116,17 +116,17 @@ logicEntry incoming outcoming conf databasePath =
     SQLite.withConnection databasePath
       $ \sqliteConn -> do SEP.prepareSchema sqliteConn
                           ircTransport bot
-                             $ EffectState { esConfig = conf
-                                           , esSqliteConn = sqliteConn
-                                           , esTimeouts = []
-                                           , esIncoming = incoming
-                                           , esOutcoming = outcoming
-                                           }
+                             EffectState { esConfig = conf
+                                         , esSqliteConn = sqliteConn
+                                         , esTimeouts = []
+                                         , esIncoming = incoming
+                                         , esOutcoming = outcoming
+                                         }
 
 mainWithArgs :: [String] -> IO ()
 mainWithArgs [configPath, databasePath] =
-    do incoming <- atomically $ newTQueue
-       outcoming <- atomically $ newTQueue
+    do incoming <- atomically newTQueue
+       outcoming <- atomically newTQueue
        conf <- configFromFile configPath
        _ <- forkIO $ ircTransportEntry incoming outcoming configPath
        logicEntry incoming outcoming conf databasePath

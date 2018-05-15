@@ -42,10 +42,10 @@ restoreProperty _ = error "Khooy"
 
 restoreEntity :: T.Text -> Int -> [(T.Text, T.Text, Maybe Int, Maybe T.Text, Maybe UTCTime)] -> Maybe Entity
 restoreEntity name ident rawProperties =
-    do properties <- sequence $ map restoreProperty rawProperties
+    do properties <- mapM restoreProperty rawProperties
        if null properties
        then Nothing
-       else Just $ Entity { entityName = name
-                          , entityId = ident
-                          , entityProperties = M.fromList properties
-                          }
+       else Just Entity { entityName = name
+                        , entityId = ident
+                        , entityProperties = M.fromList properties
+                        }
