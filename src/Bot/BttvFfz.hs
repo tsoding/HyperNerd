@@ -16,24 +16,23 @@ import           Text.Printf
 requestEmoteList :: String -> (Object -> Parser [T.Text]) -> Effect [T.Text]
 requestEmoteList url emoteListExtractor =
     do request <- parseRequest url
-       response <- eitherDecode
-                     <$> getResponseBody
+       response <- eitherDecode . getResponseBody
                      <$> httpRequest request
        either (errorEff . T.pack)
-              (return . id)
+              return
               (response >>= parseEither emoteListExtractor)
 
 bttvApiResponseAsEmoteList :: Object -> Parser [T.Text]
 bttvApiResponseAsEmoteList obj =
-    obj .: "emotes" >>= sequence . map (.: "code")
+    obj .: "emotes" >>= mapM (.: "code")
 
 ffzApiResponseAsEmoteList :: Object -> Parser [T.Text]
 ffzApiResponseAsEmoteList obj =
     do setId <- obj .: "room" >>= (.: "set") :: Parser Int
        obj .: "sets"
-         >>= (.: (T.pack $ show $ setId))
+         >>= (.: (T.pack $ show setId))
          >>= (.: "emoticons")
-         >>= sequence . map (.: "name")
+         >>= mapM (.: "name")
 
 ffzCommand :: Sender -> T.Text -> Effect ()
 ffzCommand sender _ = do emotes <- requestEmoteList url ffzApiResponseAsEmoteList
@@ -41,8 +40,7 @@ ffzCommand sender _ = do emotes <- requestEmoteList url ffzApiResponseAsEmoteLis
                            $ T.pack
                            $ printf "Available FFZ emotes: %s"
                            $ T.concat
-                           $ intersperse " "
-                           $ emotes
+                           $ intersperse " " emotes
     where
       url = maybe "tsoding"
                   (printf "https://api.frankerfacez.com/v1/room/%s" . URI.encode)
@@ -54,8 +52,7 @@ bttvCommand sender _ = do emotes <- requestEmoteList url bttvApiResponseAsEmoteL
                             $ T.pack
                             $ printf "Available BTTV emotes: %s"
                             $ T.concat
-                            $ intersperse " "
-                            $ emotes
+                            $ intersperse " " emotes
     where
       url = maybe "tsoding"
                   (printf "https://api.betterttv.net/2/channels/%s" . URI.encode)

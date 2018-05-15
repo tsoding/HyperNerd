@@ -14,6 +14,6 @@ main = do results <- runTestTT $ TestList [ SEPS.doublePrepareSchemaSpec
                                           , BFS.parseCorrectBttvEmoteList
                                           , BFS.parseCorrectFfzEmoteList
                                           ]
-          (if errors results + failures results == 0
-           then exitWith ExitSuccess
-           else exitWith (ExitFailure 1))
+          if errors results + failures results == 0
+          then exitSuccess
+          else exitWith (ExitFailure 1)

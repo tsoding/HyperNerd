@@ -99,11 +99,11 @@ createEntity :: Connection -> T.Text -> Properties -> IO Entity
 createEntity conn name properties =
     do
       ident <- nextEntityId conn name
-      sequence_ $ map (uncurry $ createEntityProperty conn name ident) $ M.toList properties
-      return $ Entity { entityId = ident
-                      , entityName = name
-                      , entityProperties = properties
-                      }
+      mapM_ (uncurry $ createEntityProperty conn name ident) $ M.toList properties
+      return Entity { entityId = ident
+                    , entityName = name
+                    , entityProperties = properties
+                    }
 
 getEntityById :: Connection -> T.Text -> Int -> IO (Maybe Entity)
 getEntityById conn name ident =

@@ -13,10 +13,8 @@ import           Irc.Commands ( ircPass
                               , ircJoin
                               , ircNick
                               )
-import           Irc.Message (IrcMsg)
-import           Irc.Message (cookIrcMsg)
-import           Irc.RawIrcMsg (RawIrcMsg)
-import           Irc.RawIrcMsg (parseRawIrcMsg, asUtf8, renderRawIrcMsg)
+import           Irc.Message (IrcMsg, cookIrcMsg)
+import           Irc.RawIrcMsg (RawIrcMsg, parseRawIrcMsg, asUtf8, renderRawIrcMsg)
 import           Text.Printf
 
 type IncomingQueue = TQueue IrcMsg
@@ -53,8 +51,7 @@ authorize conf conn =
        sendMsg conn (ircJoin (configChannel conf) Nothing)
 
 withConnection :: ConnectionParams -> (Connection -> IO a) -> IO a
-withConnection params body =
-    bracket (connect params) close body
+withConnection params = bracket (connect params) close
 
 config :: T.Text -> T.Text -> T.Text -> Config
 config nick password channel =

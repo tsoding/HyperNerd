@@ -2,6 +2,7 @@
 module Bot.Quote where
 
 import           Bot.Replies
+import           Control.Monad
 import qualified Data.Map as M
 import qualified Data.Text as T
 import           Data.Time
@@ -23,18 +24,17 @@ quoteCommand sender "" =
 quoteCommand sender quoteIdText =
     maybe
       (replyToUser (senderName sender) "Couldn't find any quotes")
-      (\quoteId -> getEntityById "quote" quoteId >>= quoteFoundReply (senderName sender))
+      (getEntityById "quote" >=> quoteFoundReply (senderName sender))
       (readMaybe $ T.unpack quoteIdText)
 
 quoteAddedReply :: T.Text -> Int -> Effect ()
 quoteAddedReply user quoteId =
     replyToUser user
       $ T.pack
-      $ printf "Added the quote under the number %d"
-      $ quoteId
+      $ printf "Added the quote under the number %d" quoteId
 
 quoteFoundReply :: T.Text -> Maybe Entity -> Effect ()
-quoteFoundReply user (Nothing) = replyToUser user "Couldn't find any quotes"
+quoteFoundReply user Nothing = replyToUser user "Couldn't find any quotes"
 quoteFoundReply user (Just entity) =
     case M.lookup "content" $ entityProperties entity of
       Nothing ->
