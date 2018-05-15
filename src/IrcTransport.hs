@@ -4,7 +4,6 @@ module IrcTransport where
 import           Control.Concurrent.Async
 import           Control.Concurrent.STM
 import           Control.Exception
-import           Control.Monad
 import           Data.Foldable
 import           Data.Ini
 import qualified Data.Text as T
@@ -24,6 +23,7 @@ type OutcomingQueue = TQueue Irc.RawIrcMsg.RawIrcMsg
 data Config = Config { configNick :: T.Text
                      , configPass :: T.Text
                      , configChannel :: T.Text
+                     , configClientId :: T.Text
                      } deriving Show
 
 maxIrcMessage :: Int
@@ -61,9 +61,11 @@ configFromFile filePath =
          do nick     <- ini >>= lookupValue "User" "nick"
             password <- ini >>= lookupValue "User" "password"
             channel  <- ini >>= lookupValue "User" "channel"
+            clientId <- ini >>= lookupValue "User" "clientId"
             return Config { configNick = nick
                           , configPass = password
                           , configChannel = T.pack $ printf "#%s" channel
+                          , configClientId = clientId
                           }
 
 readIrcLine :: Connection -> IO (Maybe IrcMsg)
