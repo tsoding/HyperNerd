@@ -25,8 +25,7 @@ mazarusha =
     fromMaybe M.empty
     $ decode
     $ B.fromStrict
-    $ encodeUtf8
-    $ $(embedStringFile "./resources/mazarusha.json")
+    $ encodeUtf8 $(embedStringFile "./resources/mazarusha.json")
 
 russifyChar :: Char -> T.Text
 russifyChar x = fromMaybe (T.pack [x]) $ M.lookup (T.pack [x]) mazarusha
