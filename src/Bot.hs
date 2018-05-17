@@ -72,7 +72,7 @@ commands = M.fromList [ ("russify", ("Russify western spy text", russifyCommand)
                       , ("uptime", ("Show stream uptime", \sender _ ->
                                         do channel  <- return
                                                          $ T.pack
-                                                         $ maybe "tsoding" id
+                                                         $ fromMaybe "tsoding"
                                                          $ tailMay
                                                          $ T.unpack
                                                          $ senderChannel sender
