@@ -18,8 +18,8 @@ import           Effect
 import           Events
 import           Network.HTTP.Simple
 import qualified Network.URI.Encode as URI
-import           Text.Printf
 import           Safe
+import           Text.Printf
 
 type Bot = Event -> Effect ()
 
@@ -29,6 +29,23 @@ type CommandTable a = M.Map T.Text (T.Text, CommandHandler a)
 data TwitchStream = TwitchStream { tsStartedAt :: UTCTime
                                  , tsTitle :: T.Text
                                  }
+
+humanReadableDiffTime :: NominalDiffTime -> T.Text
+humanReadableDiffTime t =
+    T.pack
+      $ unwords
+      $ map (\(name, amount) -> printf "%d %s" amount name)
+      $ filter ((> 0) . snd) components
+    where s :: Int
+          s = round t
+          components :: [(T.Text, Int)]
+          components = [("days" :: T.Text, s `div` secondsInDay),
+                        ("hours",   (s `mod` secondsInDay) `div` secondsInHour),
+                        ("minutes", ((s `mod` secondsInDay) `mod` secondsInHour) `div` secondsInMinute),
+                        ("seconds", ((s `mod` secondsInDay) `mod` secondsInHour) `mod` secondsInMinute)]
+          secondsInDay = 24 * secondsInHour
+          secondsInHour = 60 * secondsInMinute
+          secondsInMinute = 60
 
 twitchStreamsParser :: Object -> Parser [TwitchStream]
 twitchStreamsParser obj =
@@ -85,7 +102,7 @@ commands = M.fromList [ ("russify", ("Russify western spy text", russifyCommand)
                                                        replyToUser name
                                                          $ T.pack
                                                          $ printf "Streaming for %s"
-                                                         $ show
+                                                         $ humanReadableDiffTime
                                                          $ diffUTCTime currentTime streamStartTime)
                                                  response
                                    ))
