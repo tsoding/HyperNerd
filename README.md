@@ -22,6 +22,7 @@ $ stack exec HyperNerd secret.ini
 nick = HyperNerd
 password = 12345
 channel = Tsoding
+clientId = <client-id-token>
 ```
 
 ## Support

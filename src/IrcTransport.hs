@@ -1,9 +1,9 @@
+{-# LANGUAGE OverloadedStrings #-}
 module IrcTransport where
 
 import           Control.Concurrent.Async
 import           Control.Concurrent.STM
 import           Control.Exception
-import           Control.Monad
 import           Data.Foldable
 import           Data.Ini
 import qualified Data.Text as T
@@ -23,6 +23,7 @@ type OutcomingQueue = TQueue Irc.RawIrcMsg.RawIrcMsg
 data Config = Config { configNick :: T.Text
                      , configPass :: T.Text
                      , configChannel :: T.Text
+                     , configClientId :: T.Text
                      } deriving Show
 
 maxIrcMessage :: Int
@@ -53,21 +54,19 @@ authorize conf conn =
 withConnection :: ConnectionParams -> (Connection -> IO a) -> IO a
 withConnection params = bracket (connect params) close
 
-config :: T.Text -> T.Text -> T.Text -> Config
-config nick password channel =
-    Config { configNick = nick
-           , configPass = password
-           , configChannel = T.pack $ printf "#%s" channel
-           }
-
 configFromFile :: FilePath -> IO Config
 configFromFile filePath =
     do ini <- readIniFile filePath
-       let lookupParam section key = ini >>= lookupValue (T.pack section) (T.pack key)
-       let nick = lookupParam "User" "nick"
-       let password = lookupParam "User" "password"
-       let channel = lookupParam "User" "channel"
-       either (ioError . userError) return $ liftM3 config nick password channel
+       either (ioError . userError) return $
+         do nick     <- ini >>= lookupValue "User" "nick"
+            password <- ini >>= lookupValue "User" "password"
+            channel  <- ini >>= lookupValue "User" "channel"
+            clientId <- ini >>= lookupValue "User" "clientId"
+            return Config { configNick = nick
+                          , configPass = password
+                          , configChannel = T.pack $ printf "#%s" channel
+                          , configClientId = clientId
+                          }
 
 readIrcLine :: Connection -> IO (Maybe IrcMsg)
 readIrcLine conn =
