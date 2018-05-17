@@ -19,6 +19,7 @@ import           Events
 import           Network.HTTP.Simple
 import qualified Network.URI.Encode as URI
 import           Text.Printf
+import           Safe
 
 type Bot = Event -> Effect ()
 
@@ -69,7 +70,12 @@ commands = M.fromList [ ("russify", ("Russify western spy text", russifyCommand)
                                                    $ wordsArgsCommand pollCommand))
                       , ("vote", ("Vote for a poll option", voteCommand))
                       , ("uptime", ("Show stream uptime", \sender _ ->
-                                        do channel  <- return $ senderChannel sender
+                                        do channel  <- return
+                                                         $ T.pack
+                                                         $ fromMaybe "tsoding"
+                                                         $ tailMay
+                                                         $ T.unpack
+                                                         $ senderChannel sender
                                            name     <- return $ senderName sender
                                            response <- twitchStreamByLogin channel
                                            maybe (replyToUser name "Not even streaming LUL")
