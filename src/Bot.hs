@@ -29,21 +29,26 @@ data TwitchStream = TwitchStream { tsStartedAt :: UTCTime
                                  , tsTitle :: T.Text
                                  }
 
--- TODO: twitchStreamParser is not implemented
 twitchStreamsParser :: Object -> Parser [TwitchStream]
-twitchStreamsParser = undefined
+twitchStreamsParser obj =
+    obj .: "data" >>= mapM (\s ->
+        do title     <- s .: "title"
+           startedAt <- s .: "started_at"
+           return TwitchStream { tsStartedAt = startedAt
+                               , tsTitle = title
+                               })
 
 twitchStreamByLogin :: T.Text -> Effect (Maybe TwitchStream)
 twitchStreamByLogin login =
     do request <- parseRequest
-                    $ printf "https://api.twitch.tv/helix/streams/%s"
+                    $ printf "https://api.twitch.tv/helix/streams?user_login=%s"
                     $ URI.encode
                     $ T.unpack login
-       response <- eitherDecode . getResponseBody
-                     <$> twitchApiRequest request
+       response <- twitchApiRequest request
+       payload  <- return $ eitherDecode $ getResponseBody response
        either (errorEff . T.pack)
               (return . listToMaybe)
-              (response >>= parseEither twitchStreamsParser)
+              (payload >>= parseEither twitchStreamsParser)
 
 commands :: CommandTable T.Text
 commands = M.fromList [ ("russify", ("Russify western spy text", russifyCommand))
@@ -67,15 +72,13 @@ commands = M.fromList [ ("russify", ("Russify western spy text", russifyCommand)
                                         do channel  <- return $ senderChannel sender
                                            name     <- return $ senderName sender
                                            response <- twitchStreamByLogin channel
-                                           maybe (replyToUser name
-                                                    $ T.pack
-                                                    $ printf "%s is not streaming" channel)
+                                           maybe (replyToUser name "Not even streaming LUL")
                                                  (\twitchStream ->
                                                     do streamStartTime <- return $ tsStartedAt twitchStream
                                                        currentTime     <- now
                                                        replyToUser name
                                                          $ T.pack
-                                                         $ printf "%s is streaming for %s. It's not implemented btw." channel
+                                                         $ printf "Streaming for %s"
                                                          $ show
                                                          $ diffUTCTime currentTime streamStartTime)
                                                  response
