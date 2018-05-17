@@ -7,12 +7,17 @@ import           Bot.Quote
 import           Bot.Replies
 import           Bot.Russify
 import           Command
+import           Data.Aeson
+import           Data.Aeson.Types
 import           Data.List
 import qualified Data.Map as M
+import           Data.Maybe
 import qualified Data.Text as T
 import           Data.Time
 import           Effect
 import           Events
+import           Network.HTTP.Simple
+import qualified Network.URI.Encode as URI
 import           Text.Printf
 
 type Bot = Event -> Effect ()
@@ -24,12 +29,26 @@ data TwitchStream = TwitchStream { tsStartedAt :: UTCTime
                                  , tsTitle :: T.Text
                                  }
 
--- TODO(#114): twitchStreamByLogin is not implemented
-twitchStreamByLogin :: T.Text -> Effect TwitchStream
-twitchStreamByLogin _ = do createdAt <- now
-                           return TwitchStream { tsStartedAt = createdAt
-                                               , tsTitle = ""
-                                               }
+twitchStreamsParser :: Object -> Parser [TwitchStream]
+twitchStreamsParser obj =
+    obj .: "data" >>= mapM (\s ->
+        do title     <- s .: "title"
+           startedAt <- s .: "started_at"
+           return TwitchStream { tsStartedAt = startedAt
+                               , tsTitle = title
+                               })
+
+twitchStreamByLogin :: T.Text -> Effect (Maybe TwitchStream)
+twitchStreamByLogin login =
+    do request <- parseRequest
+                    $ printf "https://api.twitch.tv/helix/streams?user_login=%s"
+                    $ URI.encode
+                    $ T.unpack login
+       response <- twitchApiRequest request
+       payload  <- return $ eitherDecode $ getResponseBody response
+       either (errorEff . T.pack)
+              (return . listToMaybe)
+              (payload >>= parseEither twitchStreamsParser)
 
 commands :: CommandTable T.Text
 commands = M.fromList [ ("russify", ("Russify western spy text", russifyCommand))
@@ -50,15 +69,19 @@ commands = M.fromList [ ("russify", ("Russify western spy text", russifyCommand)
                                                    $ wordsArgsCommand pollCommand))
                       , ("vote", ("Vote for a poll option", voteCommand))
                       , ("uptime", ("Show stream uptime", \sender _ ->
-                                        do let channel = senderChannel sender
-                                           let name = senderName sender
-                                           streamStartTime <- tsStartedAt <$> twitchStreamByLogin channel
-                                           currentTime <- now
-                                           replyToUser name
-                                             $ T.pack
-                                             $ printf "%s was streaming for %s. It's not implemented btw." channel
-                                             $ show
-                                             $ diffUTCTime currentTime streamStartTime
+                                        do channel  <- return $ senderChannel sender
+                                           name     <- return $ senderName sender
+                                           response <- twitchStreamByLogin channel
+                                           maybe (replyToUser name "Not even streaming LUL")
+                                                 (\twitchStream ->
+                                                    do streamStartTime <- return $ tsStartedAt twitchStream
+                                                       currentTime     <- now
+                                                       replyToUser name
+                                                         $ T.pack
+                                                         $ printf "Streaming for %s"
+                                                         $ show
+                                                         $ diffUTCTime currentTime streamStartTime)
+                                                 response
                                    ))
                       ]
 
