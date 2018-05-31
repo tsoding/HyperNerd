@@ -28,10 +28,10 @@ data Entity = Entity { entityId :: Int
 
 extractProperty :: (IsProperty a, MonadThrow m) => T.Text -> Entity -> m a
 extractProperty fieldName entity =
-    do property <- maybe (throwM $ EntityException (T.pack $ printf "No field: %s" fieldName))
+    do property <- maybe (throwM $ EntityException (T.pack $ printf "No field '%s' for entity '%s'" fieldName (entityName entity)))
                    return
                    (M.lookup fieldName $ entityProperties entity)
-       value <- either (throwM . EntityException . T.pack . printf "Cannot parse field %s: %s" fieldName)
+       value <- either (throwM . EntityException . T.pack . printf "Cannot parse field '%s' of entity '%s': %s" fieldName (entityName entity))
                        return
                        (fromProperty property)
        return value
@@ -73,9 +73,10 @@ propertyAsUTCTime (PropertyUTCTime x) = Just x
 propertyAsUTCTime _ = Nothing
 
 restoreProperty :: (T.Text, T.Text, Maybe Int, Maybe T.Text, Maybe UTCTime) -> Maybe (T.Text, Property)
-restoreProperty (name, "PropertyInt", Just x, Nothing, Nothing) = Just (name, PropertyInt x)
-restoreProperty (name, "PropertyText", Nothing, Just x, Nothing) = Just (name, PropertyText x)
-restoreProperty (name, "PropertyUTCTime", Nothing, Nothing, Just x) = Just (name, PropertyUTCTime x)
+restoreProperty (name, "PropertyInt", Just x,      _, _) = Just (name, PropertyInt x)
+restoreProperty (name, "PropertyText",     _, Just x, _) = Just (name, PropertyText x)
+restoreProperty (name, "PropertyUTCTime",  _,      _, Just x) = Just (name, PropertyUTCTime x)
+-- TODO: don't crash the program if it's impossible to restore a property
 restoreProperty _ = error "Khooy"
 
 restoreEntity :: T.Text -> Int -> [(T.Text, T.Text, Maybe Int, Maybe T.Text, Maybe UTCTime)] -> Maybe Entity
