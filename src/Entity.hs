@@ -5,6 +5,7 @@ module Entity where
 
 import           Control.Monad.Catch
 import qualified Data.Map as M
+import           Data.Maybe
 import qualified Data.Text as T
 import           Data.Time
 import           Text.Printf
@@ -28,10 +29,16 @@ data Entity = Entity { entityId :: Int
 
 extractProperty :: (IsProperty a, MonadThrow m) => T.Text -> Entity -> m a
 extractProperty fieldName entity =
-    do property <- maybe (throwM $ EntityException (T.pack $ printf "No field '%s' for entity '%s'" fieldName (entityName entity)))
+    do property <- maybe (throwM $ EntityException (T.pack $ printf "No field '%s' in entity '%s' with id %d"
+                                                                    fieldName
+                                                                    (entityName entity)
+                                                                    (entityId entity)))
                    return
                    (M.lookup fieldName $ entityProperties entity)
-       either (throwM . EntityException . T.pack . printf "Cannot parse field '%s' of entity '%s': %s" fieldName (entityName entity))
+       either (throwM . EntityException . T.pack . printf "Cannot parse field '%s' of entity '%s' with id %d: %s"
+                                                          fieldName
+                                                          (entityName entity)
+                                                          (entityId entity))
               return
               (fromProperty property)
 
@@ -75,12 +82,11 @@ restoreProperty :: (T.Text, T.Text, Maybe Int, Maybe T.Text, Maybe UTCTime) -> M
 restoreProperty (name, "PropertyInt", Just x,      _, _) = Just (name, PropertyInt x)
 restoreProperty (name, "PropertyText",     _, Just x, _) = Just (name, PropertyText x)
 restoreProperty (name, "PropertyUTCTime",  _,      _, Just x) = Just (name, PropertyUTCTime x)
--- TODO: don't crash the program if it's impossible to restore a property
-restoreProperty _ = error "Khooy"
+restoreProperty _ = Nothing
 
 restoreEntity :: T.Text -> Int -> [(T.Text, T.Text, Maybe Int, Maybe T.Text, Maybe UTCTime)] -> Maybe Entity
 restoreEntity name ident rawProperties =
-    do properties <- mapM restoreProperty rawProperties
+    do properties <- return $ mapMaybe restoreProperty rawProperties
        if null properties
        then Nothing
        else Just Entity { entityName = name
