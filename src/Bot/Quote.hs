@@ -12,9 +12,26 @@ import           Events
 import           Text.Printf
 import           Text.Read
 
+data Quote = Quote { quoteContent :: T.Text
+                   , quoteQuoter :: T.Text
+                   , quoteTimestamp :: UTCTime
+                   }
+
+instance IsEntity Quote where
+    toProperties quote = quoteProperties (quoteContent quote)
+                                         (quoteQuoter quote)
+                                         (quoteTimestamp quote)
+    fromEntity entity = do content <- extractProperty "content" entity
+                           quoter <- extractProperty "quoter" entity
+                           timestamp <- extractProperty "timestamp" entity
+                           return Quote { quoteContent = content
+                                        , quoteQuoter = quoter
+                                        , quoteTimestamp = timestamp
+                                        }
+
 addQuoteCommand :: Sender -> T.Text -> Effect ()
-addQuoteCommand sender quoteContent =
-    (quoteProperties quoteContent (senderName sender) <$> now)
+addQuoteCommand sender qc =
+    (quoteProperties qc (senderName sender) <$> now)
     >>= createEntity "quote"
     >>= (quoteAddedReply (senderName sender) . entityId)
 

@@ -1,9 +1,17 @@
+{-# LANGUAGE FlexibleInstances #-}
+{-# LANGUAGE TypeSynonymInstances #-}
 {-# LANGUAGE OverloadedStrings #-}
 module Entity where
 
+import           Control.Monad.Catch
 import qualified Data.Map as M
 import qualified Data.Text as T
-import Data.Time
+import           Data.Time
+import           Text.Printf
+
+data EntityException = EntityException T.Text deriving Show
+
+instance Exception EntityException
 
 data Property = PropertyInt Int
               | PropertyText T.Text
@@ -16,6 +24,36 @@ data Entity = Entity { entityId :: Int
                      , entityName :: T.Text
                      , entityProperties :: M.Map T.Text Property
                      } deriving (Eq, Show)
+
+
+extractProperty :: (IsProperty a, MonadThrow m) => T.Text -> Entity -> m a
+extractProperty fieldName entity =
+    do property <- maybe (throwM $ EntityException (T.pack $ printf "No field: %s" fieldName))
+                   return
+                   (M.lookup fieldName $ entityProperties entity)
+       value <- either (throwM . EntityException . T.pack . printf "Cannot parse field %s: %s" fieldName)
+                       return
+                       (fromProperty property)
+       return value
+
+class IsEntity e where
+    toProperties :: e -> Properties
+    fromEntity :: MonadThrow m => Entity -> m e
+
+class IsProperty a where
+    fromProperty :: Property -> Either T.Text a
+
+instance IsProperty Int where
+    fromProperty (PropertyInt x) = Right x
+    fromProperty _ = Left "Expected type Int"
+
+instance IsProperty T.Text where
+    fromProperty (PropertyText x) = Right x
+    fromProperty _ = Left "Expected type Text"
+
+instance IsProperty UTCTime where
+    fromProperty (PropertyUTCTime x) = Right x
+    fromProperty _ = Left "Expected type UTCTime"
 
 propertyTypeName :: Property -> String
 propertyTypeName (PropertyInt _) = "PropertyInt"
