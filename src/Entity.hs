@@ -9,7 +9,7 @@ import qualified Data.Text as T
 import           Data.Time
 import           Text.Printf
 
-data EntityException = EntityException T.Text deriving Show
+newtype EntityException = EntityException T.Text deriving Show
 
 instance Exception EntityException
 
@@ -31,10 +31,9 @@ extractProperty fieldName entity =
     do property <- maybe (throwM $ EntityException (T.pack $ printf "No field '%s' for entity '%s'" fieldName (entityName entity)))
                    return
                    (M.lookup fieldName $ entityProperties entity)
-       value <- either (throwM . EntityException . T.pack . printf "Cannot parse field '%s' of entity '%s': %s" fieldName (entityName entity))
-                       return
-                       (fromProperty property)
-       return value
+       either (throwM . EntityException . T.pack . printf "Cannot parse field '%s' of entity '%s': %s" fieldName (entityName entity))
+              return
+              (fromProperty property)
 
 class IsEntity e where
     toProperties :: e -> Properties

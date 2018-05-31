@@ -12,6 +12,7 @@ Second iteration of [Tsoder][tsoder]. Chat bot for [Tsoding][tsoding] streams.
 ```console
 $ nix-shell
 $ stack build
+$ stack exec hlint .
 $ stack exec HyperNerd secret.ini
 ```
 
