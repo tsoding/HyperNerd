@@ -2,7 +2,6 @@
 module Bot (Bot, bot, Event(..), Sender(..), TwitchStream(..)) where
 
 import           Bot.BttvFfz
-import           Bot.Log
 import           Bot.Poll
 import           Bot.Quote
 import           Bot.Replies
@@ -123,7 +122,8 @@ wordsArgsCommand commandHandler sender args =
 bot :: Bot
 bot Join = say "HyperNyard"
 bot (Msg sender text) =
-    do recordUserMsg sender text
+    -- TODO: enable log recording again once the persistence bug is fixed
+    -- do recordUserMsg sender text
        maybe (return ())
              (dispatchCommand sender)
              (textAsCommand text)

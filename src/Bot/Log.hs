@@ -36,9 +36,8 @@ recordUserMsg :: Sender -> T.Text -> Effect ()
 recordUserMsg sender msg =
     do timestamp <- now
        _         <- createEntity "LogRecord"
-                      $ toProperties
-                      $ LogRecord { lrSender = sender
-                                  , lrMsg = msg
-                                  , lrTimestamp = timestamp
-                                  }
+                      $ toProperties LogRecord { lrSender = sender
+                                               , lrMsg = msg
+                                               , lrTimestamp = timestamp
+                                               }
        return ()

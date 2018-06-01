@@ -4,12 +4,14 @@ module SqliteEntityPersistence ( prepareSchema
                                , createEntity
                                , getEntityById
                                , getRandomEntity
+                               , selectEntities
                                ) where
 
 import qualified Data.Map as M
 import           Data.Maybe
 import qualified Data.Text as T
 import           Database.SQLite.Simple
+import           Effect (Selector(All))
 import           Entity
 import           Text.RawString.QQ
 
@@ -131,6 +133,24 @@ getRandomEntityId conn name =
                               LIMIT 1 |]
                           [ ":entityName" := name ]
 
+getAllEntityIds :: Connection -> T.Text -> IO [Int]
+getAllEntityIds conn name =
+    map fromOnly
+      <$> queryNamed conn [r| SELECT entityId
+                              FROM EntityProperty
+                              WHERE entityName = :entityName
+                              GROUP BY entityId
+                              ORDER BY entityId
+                              LIMIT 1 |]
+                          [ ":entityName" := name ]
+
+
 getRandomEntity :: Connection -> T.Text -> IO (Maybe Entity)
 getRandomEntity conn name =
     getRandomEntityId conn name >>= maybe (return Nothing) (getEntityById conn name)
+
+
+selectEntities :: Connection -> T.Text -> Selector -> IO [Entity]
+selectEntities conn name All =
+    do ids <- getAllEntityIds conn name
+       fromMaybe [] . traverse id <$> traverse (getEntityById conn name) ids
