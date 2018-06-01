@@ -2,10 +2,12 @@
 {-# LANGUAGE FlexibleInstances #-}
 module Effect ( Effect
               , EffectF (..)
+              , Selector (..)
               , say
               , logMsg
               , createEntity
               , getEntityById
+              , selectEntities
               , getRandomEntity
               , httpRequest
               , now
@@ -22,12 +24,15 @@ import           Data.Time
 import           Entity
 import           Network.HTTP.Simple
 
+data Selector = All
+
 data EffectF s = Say T.Text s
                | LogMsg T.Text s
                | ErrorEff T.Text
                | CreateEntity T.Text Properties (Entity -> s)
                | GetEntityById T.Text Int (Maybe Entity -> s)
                | GetRandomEntity T.Text (Maybe Entity -> s)
+               | SelectEntities T.Text Selector ([Entity] -> s)
                | Now (UTCTime -> s)
                | HttpRequest Request (Response B8.ByteString -> s)
                | TwitchApiRequest Request (Response B8.ByteString -> s)
@@ -43,6 +48,8 @@ instance Functor EffectF where
         GetEntityById name ident (f . h)
     fmap f (GetRandomEntity name h) =
         GetRandomEntity name (f . h)
+    fmap f (SelectEntities name selector h) =
+        SelectEntities name selector (f . h)
     fmap f (Now h) = Now (f . h)
     fmap f (HttpRequest r h) = HttpRequest r (f . h)
     fmap f (TwitchApiRequest r h) = TwitchApiRequest r (f . h)
@@ -65,6 +72,9 @@ createEntity name properties = liftF $ CreateEntity name properties id
 
 getEntityById :: T.Text -> Int -> Effect (Maybe Entity)
 getEntityById name ident = liftF $ GetEntityById name ident id
+
+selectEntities :: T.Text -> Selector -> Effect [Entity]
+selectEntities name selector = liftF $ SelectEntities name selector id
 
 getRandomEntity :: T.Text -> Effect (Maybe Entity)
 getRandomEntity name = liftF $ GetRandomEntity name id

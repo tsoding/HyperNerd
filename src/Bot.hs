@@ -121,9 +121,12 @@ wordsArgsCommand commandHandler sender args =
 
 bot :: Bot
 bot Join = say "HyperNyard"
-bot (Msg sender text) = maybe (return ())
-                              (dispatchCommand sender)
-                              (textAsCommand text)
+bot (Msg sender text) =
+    -- TODO(#128): Enable log recording again once #127 is fixed
+    -- do recordUserMsg sender text
+       maybe (return ())
+             (dispatchCommand sender)
+             (textAsCommand text)
 
 helpCommand :: CommandTable T.Text -> CommandHandler T.Text
 helpCommand commandTable sender "" =
