@@ -12,11 +12,36 @@ import           Events
 import           Text.Printf
 import           Text.Read
 
+data Quote = Quote { quoteContent :: T.Text
+                   , quoteQuoter :: T.Text
+                   , quoteTimestamp :: UTCTime
+                   }
+
+instance IsEntity Quote where
+    toProperties quote =
+        M.fromList [ ("content", PropertyText $ quoteContent quote)
+                   , ("quoter", PropertyText $ quoteQuoter quote)
+                   , ("timestamp", PropertyUTCTime $ quoteTimestamp quote)
+                   ]
+    fromEntity entity = do content <- extractProperty "content" entity
+                           quoter <- extractProperty "quoter" entity
+                           timestamp <- extractProperty "timestamp" entity
+                           return Quote { quoteContent = content
+                                        , quoteQuoter = quoter
+                                        , quoteTimestamp = timestamp
+                                        }
+
 addQuoteCommand :: Sender -> T.Text -> Effect ()
-addQuoteCommand sender quoteContent =
-    (quoteProperties quoteContent (senderName sender) <$> now)
-    >>= createEntity "quote"
-    >>= (quoteAddedReply (senderName sender) . entityId)
+addQuoteCommand sender content =
+    do timestamp <- now
+       quoter    <- return $ senderName sender
+       quote     <- return Quote { quoteContent = content
+                                 , quoteQuoter = quoter
+                                 , quoteTimestamp = timestamp
+                                 }
+       entity    <- createEntity "quote" $ toProperties quote
+
+       quoteAddedReply quoter $ entityId entity
 
 quoteCommand :: Sender -> T.Text -> Effect ()
 quoteCommand sender "" =
@@ -36,27 +61,5 @@ quoteAddedReply user quoteId =
 quoteFoundReply :: T.Text -> Maybe Entity -> Effect ()
 quoteFoundReply user Nothing = replyToUser user "Couldn't find any quotes"
 quoteFoundReply user (Just entity) =
-    case M.lookup "content" $ entityProperties entity of
-      Nothing ->
-          do logMsg
-               $ T.pack
-               $ printf "Quote #%d doesn't have the 'content field'"
-               $ entityId entity
-             replyToUser user "Couldn't find any quotes, because of some database issues."
-      Just (PropertyText content) ->
-          replyToUser user
-            $ T.pack
-            $ printf "%s (%d)" content
-            $ entityId entity
-      Just _ -> do logMsg
-                     $ T.pack
-                     $ printf "Quote #%d content is not text"
-                     $ entityId entity
-                   replyToUser user "Couldn't find any quotes, because of some database issues."
-
-quoteProperties :: T.Text -> T.Text -> UTCTime -> Properties
-quoteProperties content quoter timestamp =
-    M.fromList [ ("content", PropertyText content)
-               , ("quoter", PropertyText quoter)
-               , ("timestamp", PropertyUTCTime timestamp)
-               ]
+    do quote <- fromEntity entity
+       replyToUser user $ T.pack $ printf "%s (%d)" (quoteContent quote) (entityId entity)
