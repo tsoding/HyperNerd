@@ -122,7 +122,7 @@ wordsArgsCommand commandHandler sender args =
 bot :: Bot
 bot Join = say "HyperNyard"
 bot (Msg sender text) =
-    -- TODO: enable log recording again once the persistence bug is fixed
+    -- TODO(#128): Enable log recording again once #127 is fixed
     -- do recordUserMsg sender text
        maybe (return ())
              (dispatchCommand sender)
