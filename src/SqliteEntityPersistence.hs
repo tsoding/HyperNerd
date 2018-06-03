@@ -144,8 +144,7 @@ getAllEntityIds conn name =
                               FROM EntityProperty
                               WHERE entityName = :entityName
                               GROUP BY entityId
-                              ORDER BY entityId
-                              LIMIT 1 |]
+                              ORDER BY entityId |]
                           [ ":entityName" := name ]
 
 

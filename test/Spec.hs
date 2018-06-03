@@ -10,7 +10,7 @@ main :: IO Counts
 main = do results <- runTestTT $ TestList [ SEPS.doublePrepareSchemaSpec
                                           , SEPS.createEntityAndGetItById
                                           -- TODO(#127): SEPS.createSeveralEntityTypes is failing
-                                          -- , SEPS.createSeveralEntityTypes
+                                          , SEPS.createSeveralEntityTypes
                                           , SEPS.nextEntityId
                                           , CS.commandWithGermanUmlauts
                                           , CS.commandWithRussians
