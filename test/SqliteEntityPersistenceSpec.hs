@@ -49,4 +49,17 @@ createSeveralEntityTypes =
                                              , ("kamaz", PropertyText "ahaha")
                                              ]
                          entities <- SEP.selectEntities conn "entity2" All
-                         assertEqual "Unexpected ids of entitities of second type"[1, 2] $ sort $ map entityId entities
+                         assertEqual "Unexpected ids of entitities of second type" [1, 2] $ sort $ map entityId entities
+
+nextEntityId :: Test
+nextEntityId =
+    TestLabel "Next entity id" $
+    TestCase $ do databaseFile <- emptySystemTempFile "database"
+                  SQLite.withConnection databaseFile $ \conn ->
+                      do SEP.prepareSchema conn
+                         id1 <- SEP.nextEntityId conn "entity"
+                         id2 <- SEP.nextEntityId conn "entity1"
+                         id3 <- SEP.nextEntityId conn "entity1"
+                         assertEqual "Unexpected id" 1 id1
+                         assertEqual "Unexpected id" 1 id2
+                         assertEqual "Unexpected id" 2 id3

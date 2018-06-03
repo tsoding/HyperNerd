@@ -5,6 +5,7 @@ module SqliteEntityPersistence ( prepareSchema
                                , getEntityById
                                , getRandomEntity
                                , selectEntities
+                               , nextEntityId
                                ) where
 
 import qualified Data.Map as M
@@ -22,7 +23,10 @@ instance FromRow EntityIdEntry where
 
 nextEntityId :: Connection -> T.Text -> IO Int
 nextEntityId conn name =
-    do e <- query_ conn "SELECT * from EntityId;" :: IO [EntityIdEntry]
+    do e <- queryNamed conn [r| SELECT entityName, entityId
+                                FROM EntityId
+                                WHERE entityName = :entityName |]
+                            [ ":entityName" := name ]
        case e of
          [] -> do executeNamed conn
                                [r| INSERT INTO EntityId (
