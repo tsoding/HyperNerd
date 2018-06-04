@@ -66,7 +66,7 @@ propertyTypeName (PropertyInt _) = "PropertyInt"
 propertyTypeName (PropertyText _) = "PropertyText"
 propertyTypeName (PropertyUTCTime _) = "PropertyUTCTime"
 
--- TODO: propertyAs* functions duplicates IsProperty typeclass
+-- TODO(#132): propertyAs* functions duplicates IsProperty typeclass
 propertyAsInt :: Property -> Maybe Int
 propertyAsInt (PropertyInt x) = Just x
 propertyAsInt _ = Nothing
