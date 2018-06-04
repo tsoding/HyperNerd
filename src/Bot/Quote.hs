@@ -45,7 +45,7 @@ addQuoteCommand sender content =
 
 quoteCommand :: Sender -> T.Text -> Effect ()
 quoteCommand sender "" =
-    getRandomEntity "quote" >>= quoteFoundReply (senderName sender)
+    getRandomEntity "quote" All >>= quoteFoundReply (senderName sender)
 quoteCommand sender quoteIdText =
     maybe
       (replyToUser (senderName sender) "Couldn't find any quotes")

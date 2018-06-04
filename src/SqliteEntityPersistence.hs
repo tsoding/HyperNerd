@@ -12,7 +12,7 @@ import qualified Data.Map as M
 import           Data.Maybe
 import qualified Data.Text as T
 import           Database.SQLite.Simple
-import           Effect (Selector(All))
+import           Effect (Selector(..))
 import           Entity
 import           Text.RawString.QQ
 
@@ -126,8 +126,8 @@ getEntityById conn name ident =
                           , ":entityId" := ident
                           ]
 
-getRandomEntityId :: Connection -> T.Text -> IO (Maybe Int)
-getRandomEntityId conn name =
+getRandomEntityId :: Connection -> T.Text -> Selector -> IO (Maybe Int)
+getRandomEntityId conn name All =
     listToMaybe . map fromOnly
       <$> queryNamed conn [r| SELECT entityId
                               FROM EntityProperty
@@ -136,6 +136,9 @@ getRandomEntityId conn name =
                               ORDER BY RANDOM()
                               LIMIT 1 |]
                           [ ":entityName" := name ]
+-- TODO: PropertyEquals selector is not handled in SEP.getRandomEntityId
+getRandomEntityId conn name (PropertyEquals _ _) =
+    getRandomEntityId conn name All
 
 getAllEntityIds :: Connection -> T.Text -> IO [Int]
 getAllEntityIds conn name =
@@ -148,12 +151,15 @@ getAllEntityIds conn name =
                           [ ":entityName" := name ]
 
 
-getRandomEntity :: Connection -> T.Text -> IO (Maybe Entity)
-getRandomEntity conn name =
-    getRandomEntityId conn name >>= maybe (return Nothing) (getEntityById conn name)
+getRandomEntity :: Connection -> T.Text -> Selector -> IO (Maybe Entity)
+getRandomEntity conn name selector =
+    getRandomEntityId conn name selector >>= maybe (return Nothing) (getEntityById conn name)
 
 
 selectEntities :: Connection -> T.Text -> Selector -> IO [Entity]
 selectEntities conn name All =
     do ids <- getAllEntityIds conn name
        fromMaybe [] . traverse id <$> traverse (getEntityById conn name) ids
+-- TODO: PropertyEquals selector is not handled in SEP.selectEntities
+selectEntities conn name (PropertyEquals _ _) =
+    selectEntities conn name All

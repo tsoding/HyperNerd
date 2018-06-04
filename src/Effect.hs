@@ -24,14 +24,14 @@ import           Data.Time
 import           Entity
 import           Network.HTTP.Simple
 
-data Selector = All
+data Selector = All | PropertyEquals T.Text Property
 
 data EffectF s = Say T.Text s
                | LogMsg T.Text s
                | ErrorEff T.Text
                | CreateEntity T.Text Properties (Entity -> s)
                | GetEntityById T.Text Int (Maybe Entity -> s)
-               | GetRandomEntity T.Text (Maybe Entity -> s)
+               | GetRandomEntity T.Text Selector (Maybe Entity -> s)
                | SelectEntities T.Text Selector ([Entity] -> s)
                | Now (UTCTime -> s)
                | HttpRequest Request (Response B8.ByteString -> s)
@@ -46,8 +46,8 @@ instance Functor EffectF where
     fmap _ (ErrorEff text) = ErrorEff text
     fmap f (GetEntityById name ident h) =
         GetEntityById name ident (f . h)
-    fmap f (GetRandomEntity name h) =
-        GetRandomEntity name (f . h)
+    fmap f (GetRandomEntity name selector h) =
+        GetRandomEntity name selector (f . h)
     fmap f (SelectEntities name selector h) =
         SelectEntities name selector (f . h)
     fmap f (Now h) = Now (f . h)
@@ -76,8 +76,8 @@ getEntityById name ident = liftF $ GetEntityById name ident id
 selectEntities :: T.Text -> Selector -> Effect [Entity]
 selectEntities name selector = liftF $ SelectEntities name selector id
 
-getRandomEntity :: T.Text -> Effect (Maybe Entity)
-getRandomEntity name = liftF $ GetRandomEntity name id
+getRandomEntity :: T.Text -> Selector -> Effect (Maybe Entity)
+getRandomEntity name selector = liftF $ GetRandomEntity name selector id
 
 now :: Effect UTCTime
 now = liftF $ Now id
