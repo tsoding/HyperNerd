@@ -136,7 +136,7 @@ getRandomEntityId conn name All =
                               ORDER BY RANDOM()
                               LIMIT 1 |]
                           [ ":entityName" := name ]
--- TODO: PropertyEquals selector is not handled in SEP.getRandomEntityId
+-- TODO(#133): PropertyEquals selector is not handled in SEP.getRandomEntityId
 getRandomEntityId conn name (PropertyEquals _ _) =
     getRandomEntityId conn name All
 
