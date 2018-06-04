@@ -107,6 +107,7 @@ commands = M.fromList [ ("russify", ("Russify western spy text", russifyCommand)
                                                          $ diffUTCTime currentTime streamStartTime)
                                                  response
                                    ))
+                      , ("rq", ("Get random quote from your log", randomLogRecordCommand))
                       ]
 
 authorizeCommand :: [T.Text] -> CommandHandler T.Text -> CommandHandler T.Text

@@ -1,6 +1,8 @@
 {-# LANGUAGE OverloadedStrings #-}
 module Bot.Log where
 
+import           Bot.Replies
+import           Control.Monad
 import qualified Data.Map as M
 import qualified Data.Text as T
 import           Data.Time
@@ -41,3 +43,11 @@ recordUserMsg sender msg =
                                                , lrTimestamp = timestamp
                                                }
        return ()
+
+randomLogRecordCommand :: Sender -> T.Text -> Effect ()
+randomLogRecordCommand sender _ =
+    do user   <- return $ senderName sender
+       entity <- getRandomEntity "LogRecord" (PropertyEquals "user" (PropertyText user))
+       maybe (return ())
+             (fromEntity >=> replyToUser user . lrMsg)
+             entity

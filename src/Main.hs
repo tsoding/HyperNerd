@@ -57,8 +57,8 @@ applyEffect effectState (Free (CreateEntity name properties s)) =
 applyEffect effectState (Free (GetEntityById name entityId s)) =
     do entity <- SEP.getEntityById (esSqliteConn effectState) name entityId
        applyEffect effectState (s entity)
-applyEffect effectState (Free (GetRandomEntity name s)) =
-    do entity <- SEP.getRandomEntity (esSqliteConn effectState) name
+applyEffect effectState (Free (GetRandomEntity name selector s)) =
+    do entity <- SEP.getRandomEntity (esSqliteConn effectState) name selector
        applyEffect effectState (s entity)
 applyEffect effectState (Free (SelectEntities name selector s)) =
     do entities <- SEP.selectEntities (esSqliteConn effectState) name selector
