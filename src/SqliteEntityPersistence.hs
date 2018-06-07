@@ -160,6 +160,6 @@ selectEntities :: Connection -> T.Text -> Selector -> IO [Entity]
 selectEntities conn name All =
     do ids <- getAllEntityIds conn name
        fromMaybe [] . traverse id <$> traverse (getEntityById conn name) ids
--- TODO(#134): PropertyEquals selector is not handled in SEP.selectEntities
-selectEntities conn name (PropertyEquals _ _) =
-    selectEntities conn name All
+selectEntities conn name (PropertyEquals propertyName propertyValue) =
+    filter (\e -> (M.lookup propertyName $ entityProperties e) == return propertyValue)
+      <$> selectEntities conn name All

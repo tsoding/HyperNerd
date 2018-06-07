@@ -1,14 +1,16 @@
 {-# LANGUAGE OverloadedStrings #-}
 module SqliteEntityPersistenceSpec where
 
+import           Control.Monad
 import           Data.List
 import qualified Data.Map as M
 import qualified Database.SQLite.Simple as SQLite
-import           Effect (Selector(All))
+import           Effect (Selector(All, PropertyEquals))
 import           Entity
 import qualified SqliteEntityPersistence as SEP
 import           System.IO.Temp
 import           Test.HUnit
+
 
 doublePrepareSchemaSpec :: Test
 doublePrepareSchemaSpec =
@@ -63,3 +65,18 @@ nextEntityId =
                          assertEqual "Unexpected id" 1 id1
                          assertEqual "Unexpected id" 1 id2
                          assertEqual "Unexpected id" 2 id3
+
+selectEntitiesWithPropertyEquals :: Test
+selectEntitiesWithPropertyEquals =
+    TestLabel "Select Entities with PropertyEquals" $
+    TestCase $ do databaseFile <- emptySystemTempFile "database"
+                  SQLite.withConnection databaseFile $ \conn ->
+                      do SEP.prepareSchema conn
+                         replicateM_ 2
+                           $ SEP.createEntity conn "entity"
+                           $ M.fromList [ ("foo", PropertyInt 42) ]
+                         replicateM_ 3
+                           $ SEP.createEntity conn "entity"
+                           $ M.fromList [ ("foo", PropertyInt 43) ]
+                         entities <- SEP.selectEntities conn "entity" (PropertyEquals "foo" (PropertyInt 42))
+                         assertEqual "Unexpected emount of entities selected" 2 $ length entities

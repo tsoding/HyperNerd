@@ -11,6 +11,7 @@ main = do results <- runTestTT $ TestList [ SEPS.doublePrepareSchemaSpec
                                           , SEPS.createEntityAndGetItById
                                           , SEPS.createSeveralEntityTypes
                                           , SEPS.nextEntityId
+                                          , SEPS.selectEntitiesWithPropertyEquals
                                           , CS.commandWithGermanUmlauts
                                           , CS.commandWithRussians
                                           , BFS.parseCorrectBttvEmoteList
