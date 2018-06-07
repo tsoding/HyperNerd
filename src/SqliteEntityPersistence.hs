@@ -151,7 +151,7 @@ getRandomEntityId conn name (PropertyEquals propertyName (PropertyText value)) =
                           , ":propertyName" := propertyName
                           , ":propertyText" := value
                           ]
--- TODO: SEP.getRandomEntityId doesn't work with Int and UTCTime on PropertyEquals
+-- TODO(#138): SEP.getRandomEntityId doesn't work with Int and UTCTime on PropertyEquals
 getRandomEntityId conn name (PropertyEquals _ _) =
     getRandomEntityId conn name All
 
