@@ -161,5 +161,5 @@ selectEntities conn name All =
     do ids <- getAllEntityIds conn name
        fromMaybe [] . traverse id <$> traverse (getEntityById conn name) ids
 selectEntities conn name (PropertyEquals propertyName propertyValue) =
-    filter (\e -> (M.lookup propertyName $ entityProperties e) == return propertyValue)
+    filter (\e -> M.lookup propertyName (entityProperties e) == return propertyValue)
       <$> selectEntities conn name All
