@@ -11,6 +11,7 @@ module SqliteEntityPersistence ( prepareSchema
 import qualified Data.Map as M
 import           Data.Maybe
 import qualified Data.Text as T
+import           Data.Time
 import           Database.SQLite.Simple
 import           Effect (Selector(..))
 import           Entity
@@ -76,9 +77,9 @@ createEntityProperty conn name ident propertyName property =
                  , ":entityId" := ident
                  , ":propertyName" := propertyName
                  , ":propertyType" := propertyTypeName property
-                 , ":propertyInt" := propertyAsInt property
-                 , ":propertyText" := propertyAsText property
-                 , ":propertyUTCTime" := propertyAsUTCTime property
+                 , ":propertyInt" := (fromProperty property :: Maybe Int)
+                 , ":propertyText" := (fromProperty property :: Maybe T.Text)
+                 , ":propertyUTCTime" := (fromProperty property :: Maybe UTCTime)
                  ]
 
 -- TODO(#53): The SQLite schema is not migrated automatically
