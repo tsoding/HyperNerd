@@ -137,23 +137,24 @@ getRandomEntityId conn name All =
                               ORDER BY RANDOM()
                               LIMIT 1 |]
                           [ ":entityName" := name ]
-getRandomEntityId conn name (PropertyEquals propertyName (PropertyText value)) =
+getRandomEntityId conn name (PropertyEquals propertyName property) =
     listToMaybe . map fromOnly
       <$> queryNamed conn [r| SELECT entityId
                               FROM EntityProperty
                               WHERE entityName = :entityName
                                 AND propertyName = :propertyName
-                                AND propertyText = :propertyText
+                                AND propertyInt IS :propertyIntValue
+                                AND propertyText IS :propertyTextValue
+                                AND propertyUTCTime IS :propertyUTCTime
                               GROUP BY entityId
                               ORDER BY RANDOM()
                               LIMIT 1 |]
                           [ ":entityName" := name
                           , ":propertyName" := propertyName
-                          , ":propertyText" := value
+                          , ":propertyIntValue" := (fromProperty property :: Maybe Int)
+                          , ":propertyTextValue" := (fromProperty property :: Maybe T.Text)
+                          , ":propertyUTCTime" := (fromProperty property :: Maybe UTCTime)
                           ]
--- TODO(#138): SEP.getRandomEntityId doesn't work with Int and UTCTime on PropertyEquals
-getRandomEntityId conn name (PropertyEquals _ _) =
-    getRandomEntityId conn name All
 
 getAllEntityIds :: Connection -> T.Text -> IO [Int]
 getAllEntityIds conn name =
