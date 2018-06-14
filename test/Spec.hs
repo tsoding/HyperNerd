@@ -10,6 +10,7 @@ main :: IO Counts
 main = do results <- runTestTT $ TestList [ SEPS.doublePrepareSchemaSpec
                                           , SEPS.createEntityAndGetItById
                                           , SEPS.createSeveralEntityTypes
+                                          , SEPS.getRandomEntityIdWithPropertyEquals
                                           , SEPS.nextEntityId
                                           , SEPS.selectEntitiesWithPropertyEquals
                                           , CS.commandWithGermanUmlauts

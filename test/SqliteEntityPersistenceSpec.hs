@@ -4,6 +4,7 @@ module SqliteEntityPersistenceSpec where
 import           Control.Monad
 import           Data.List
 import qualified Data.Map as M
+import qualified Data.Text as T
 import qualified Database.SQLite.Simple as SQLite
 import           Effect (Selector(All, PropertyEquals))
 import           Entity
@@ -11,6 +12,9 @@ import qualified SqliteEntityPersistence as SEP
 import           System.IO.Temp
 import           Test.HUnit
 
+withTempSqliteDatabase :: (SQLite.Connection -> IO a) -> IO a
+withTempSqliteDatabase action = do databaseFile <- emptySystemTempFile "database"
+                                   SQLite.withConnection databaseFile action
 
 doublePrepareSchemaSpec :: Test
 doublePrepareSchemaSpec =
@@ -79,4 +83,24 @@ selectEntitiesWithPropertyEquals =
                            $ SEP.createEntity conn "entity"
                            $ M.fromList [ ("foo", PropertyInt 43) ]
                          entities <- SEP.selectEntities conn "entity" (PropertyEquals "foo" (PropertyInt 42))
-                         assertEqual "Unexpected emount of entities selected" 2 $ length entities
+                         assertEqual "Unexpected amount of entities selected" 2 $ length entities
+
+getRandomEntityIdWithPropertyEquals :: Test
+getRandomEntityIdWithPropertyEquals =
+    TestLabel "Get random entity id with property equals to a value" $
+    TestCase $ withTempSqliteDatabase $ \conn ->
+        do SEP.prepareSchema conn
+           -- The amount of entities that should not be selected. If
+           -- the test is broken, the probably of a false positive
+           -- result of this test is equal to 1 / wrongEntitiesCount.
+           wrongEntitiesCount <- return 1000
+           replicateM_ wrongEntitiesCount
+             $ SEP.createEntity conn "entity"
+             $ M.fromList [ ("foo", PropertyInt 42) ]
+           createdEntity <- SEP.createEntity conn "entity"
+                             $ M.fromList [ ("foo", PropertyInt 43) ]
+           SQLite.setTrace conn (Just (putStrLn . T.unpack))
+           randomEntity <- SEP.getRandomEntity conn "entity" (PropertyEquals "foo" (PropertyInt 43))
+           assertEqual "Unexpected random entity selected"
+                       (return createdEntity)
+                       randomEntity
