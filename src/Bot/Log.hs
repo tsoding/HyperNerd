@@ -9,6 +9,7 @@ import           Data.Time
 import           Effect
 import           Entity
 import           Events
+import           Text.Printf
 
 data LogRecord = LogRecord { lrSender :: Sender
                            , lrMsg :: T.Text
@@ -45,8 +46,12 @@ recordUserMsg sender msg =
        return ()
 
 randomLogRecordCommand :: Sender -> T.Text -> Effect ()
-randomLogRecordCommand sender _ =
-    do user   <- return $ senderName sender
+randomLogRecordCommand sender rawName =
+    do name   <- return $ T.toLower $ T.strip rawName
+       user   <- if T.null name
+                 then return $ senderName sender
+                 else return name
+       logMsg $ T.pack $ printf "The requested user is %s" user
        entity <- getRandomEntity "LogRecord" (PropertyEquals "user" (PropertyText user))
        maybe (return ())
              (fromEntity >=> replyToUser user . lrMsg)
