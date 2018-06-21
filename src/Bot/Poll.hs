@@ -64,7 +64,6 @@ voteCommand sender option =
 currentPoll :: Effect (Maybe Int)
 currentPoll = return Nothing
 
--- TODO(#87): startsPoll is not implemented
 startPoll :: T.Text -> [T.Text] -> Effect Int
 startPoll author options =
     do startedAt <- now
