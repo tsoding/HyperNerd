@@ -2,11 +2,43 @@
 module Bot.Poll where
 
 import           Bot.Replies
+import           Data.Foldable
 import           Data.List
+import qualified Data.Map as M
 import qualified Data.Text as T
+import           Data.Time
 import           Effect
-import           Text.Printf
+import           Entity
 import           Events
+import           Text.Printf
+
+data PollOption = PollOption { poPollId :: Int
+                             , poName :: T.Text
+                             }
+
+data Poll = Poll { pollAuthor :: T.Text
+                 , pollStartedAt :: UTCTime
+                 }
+
+instance IsEntity Poll where
+    toProperties poll = M.fromList [ ("author", PropertyText $ pollAuthor poll)
+                                   , ("startedAt", PropertyUTCTime $ pollStartedAt poll)
+                                   ]
+    fromEntity entity = do author    <- extractProperty "author" entity
+                           startedAt <- extractProperty "startedAt" entity
+                           return Poll { pollAuthor = author
+                                       , pollStartedAt = startedAt
+                                       }
+
+instance IsEntity PollOption where
+    toProperties pollOption = M.fromList [ ("pollId", PropertyInt $ poPollId pollOption)
+                                         , ("name", PropertyText $ poName pollOption)
+                                         ]
+    fromEntity entity = do pollId <- extractProperty "pollId" entity
+                           name   <- extractProperty "name" entity
+                           return PollOption { poPollId = pollId
+                                             , poName = name
+                                             }
 
 pollCommand :: Sender -> [T.Text] -> Effect ()
 pollCommand sender options =
@@ -32,9 +64,18 @@ voteCommand sender option =
 currentPoll :: Effect (Maybe Int)
 currentPoll = return Nothing
 
--- TODO(#87): startsPoll is not implemented
 startPoll :: T.Text -> [T.Text] -> Effect Int
-startPoll _ _ = return 42
+startPoll author options =
+    do startedAt <- now
+       poll   <- createEntity "Poll" (toProperties Poll { pollAuthor = author
+                                                        , pollStartedAt = startedAt
+                                                        })
+       pollId <- return $ entityId poll
+       for_ options $ \name ->
+           createEntity "PollOption" $ toProperties PollOption { poName = name
+                                                               , poPollId = pollId
+                                                               }
+       return pollId
 
 -- TODO(#88): announcePollResults is not implemented
 announcePollResults :: Int -> Effect ()
