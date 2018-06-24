@@ -12,6 +12,7 @@ import           Hookup
 import           Irc.Commands ( ircPass
                               , ircJoin
                               , ircNick
+                              , ircCapReq
                               )
 import           Irc.RawIrcMsg (RawIrcMsg, parseRawIrcMsg, asUtf8, renderRawIrcMsg)
 import           Text.Printf
@@ -49,6 +50,7 @@ authorize conf conn =
     do sendMsg conn (ircPass $ configPass conf)
        sendMsg conn (ircNick $ configNick conf)
        sendMsg conn (ircJoin (configChannel conf) Nothing)
+       sendMsg conn (ircCapReq ["twitch.tv/tags"])
 
 withConnection :: ConnectionParams -> (Connection -> IO a) -> IO a
 withConnection params = bracket (connect params) close
