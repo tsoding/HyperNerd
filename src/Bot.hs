@@ -121,13 +121,32 @@ wordsArgsCommand :: CommandHandler [T.Text] -> CommandHandler T.Text
 wordsArgsCommand commandHandler sender args =
     commandHandler sender $ T.words args
 
+-- TODO: textContainsLink is not implemented
+textContainsLink :: T.Text -> Bool
+textContainsLink _ = False
+
+-- TODO: senderIsPleb is not implemented
+senderIsPleb :: Sender -> Bool
+senderIsPleb _ = False
+
+forbidLinksForPlebs :: Event -> Maybe (Effect())
+forbidLinksForPlebs (Msg sender text)
+    | textContainsLink text && senderIsPleb sender =
+        -- TODO: use CLEARCHAT command instead of /timeout
+        return $ do say $ T.pack $ printf "/timeout %s 30" $ senderName sender
+                    replyToUser (senderName sender)
+                                "Only subs can post links, sorry."
+    | otherwise = Nothing
+forbidLinksForPlebs _ = Nothing
+
 bot :: Bot
 bot Join = say "HyperNyard"
-bot (Msg sender text) =
-    do recordUserMsg sender text
-       maybe (return ())
-             (dispatchCommand sender)
-             (textAsCommand text)
+bot event@(Msg sender text) =
+    fromMaybe (do recordUserMsg sender text
+                  maybe (return ())
+                        (dispatchCommand sender)
+                        (textAsCommand text))
+              (forbidLinksForPlebs event)
 
 helpCommand :: CommandTable T.Text -> CommandHandler T.Text
 helpCommand commandTable sender "" =

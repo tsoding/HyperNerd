@@ -11,7 +11,6 @@ import qualified Data.Text as T
 import           Data.Time
 import qualified Database.SQLite.Simple as SQLite
 import           Effect
-import           Events()
 import           Irc.Commands ( ircPong
                               , ircPrivmsg
                               )
@@ -98,6 +97,7 @@ handleIrcMessage b effectState (Privmsg userInfo target msgText) =
     SQLite.withTransaction (esSqliteConn effectState)
     $ applyEffect effectState (b $ Msg Sender { senderName = idText $ userNick userInfo
                                               , senderChannel = idText target
+                                              , senderBadges = []
                                               }
                                        msgText)
 handleIrcMessage _ effectState _ = return effectState
