@@ -1,4 +1,5 @@
 {-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE QuasiQuotes #-}
 module Bot (Bot, bot, Event(..), Sender(..), TwitchStream(..)) where
 
 import           Bot.BttvFfz
@@ -121,13 +122,12 @@ wordsArgsCommand :: CommandHandler [T.Text] -> CommandHandler T.Text
 wordsArgsCommand commandHandler sender args =
     commandHandler sender $ T.words args
 
--- TODO: textContainsLink is not implemented
+-- TODO: textContainsLink doesn't recognize URLs without schema
 textContainsLink :: T.Text -> Bool
-textContainsLink _ = False
+textContainsLink t = any isJust $ map (parseRequest . T.unpack) $ T.words t
 
--- TODO: senderIsPleb is not implemented
 senderIsPleb :: Sender -> Bool
-senderIsPleb _ = False
+senderIsPleb sender = not $ senderSubscriber sender
 
 forbidLinksForPlebs :: Event -> Maybe (Effect())
 forbidLinksForPlebs (Msg sender text)

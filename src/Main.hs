@@ -6,6 +6,8 @@ import           Control.Concurrent
 import           Control.Concurrent.STM
 import           Control.Monad
 import           Control.Monad.Free
+import           Data.List
+import           Data.Maybe
 import           Data.String
 import qualified Data.Text as T
 import           Data.Time
@@ -16,7 +18,7 @@ import           Irc.Commands ( ircPong
                               )
 import           Irc.Identifier (idText)
 import           Irc.Message (IrcMsg(Ping, Privmsg), cookIrcMsg)
-import           Irc.RawIrcMsg (RawIrcMsg)
+import           Irc.RawIrcMsg (RawIrcMsg(..), TagEntry(..))
 import           Irc.UserInfo (userNick)
 import           IrcTransport
 import           Network.HTTP.Simple
@@ -99,7 +101,10 @@ handleIrcMessage b effectState msg =
           SQLite.withTransaction (esSqliteConn effectState)
             $ applyEffect effectState (b $ Msg Sender { senderName = idText $ userNick userInfo
                                                       , senderChannel = idText target
-                                                      , senderBadges = []
+                                                      , senderSubscriber = fromMaybe False
+                                                                             $ fmap (\(TagEntry _ value) -> value == "1")
+                                                                             $ find (\(TagEntry ident _) -> ident == "subscriber")
+                                                                             $ _msgTags msg
                                                       }
                                        msgText)
       _ -> return effectState

@@ -30,8 +30,8 @@ instance IsEntity LogRecord where
            timestamp <- extractProperty "timestamp" entity
            return LogRecord { lrSender = Sender { senderName = user
                                                 , senderChannel = channel
-                                                -- TODO: senderBadges look out of place in IsEntity LogRecord
-                                                , senderBadges = []
+                                                -- TODO: senderSubscriber look out of place in IsEntity LogRecord
+                                                , senderSubscriber = False
                                                 }
                             , lrMsg = msg
                             , lrTimestamp = timestamp
