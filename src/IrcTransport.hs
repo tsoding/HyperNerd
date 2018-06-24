@@ -13,11 +13,10 @@ import           Irc.Commands ( ircPass
                               , ircJoin
                               , ircNick
                               )
-import           Irc.Message (IrcMsg, cookIrcMsg)
 import           Irc.RawIrcMsg (RawIrcMsg, parseRawIrcMsg, asUtf8, renderRawIrcMsg)
 import           Text.Printf
 
-type IncomingQueue = TQueue IrcMsg
+type IncomingQueue = TQueue Irc.RawIrcMsg.RawIrcMsg
 type OutcomingQueue = TQueue Irc.RawIrcMsg.RawIrcMsg
 
 data Config = Config { configNick :: T.Text
@@ -68,12 +67,12 @@ configFromFile filePath =
                           , configClientId = clientId
                           }
 
-readIrcLine :: Connection -> IO (Maybe IrcMsg)
+readIrcLine :: Connection -> IO (Maybe RawIrcMsg)
 readIrcLine conn =
     do mb <- recvLine conn maxIrcMessage
        for mb $ \xs ->
            case parseRawIrcMsg (asUtf8 xs) of
-             Just msg -> return $! cookIrcMsg msg
+             Just msg -> return $! msg
              Nothing -> fail "Server sent invalid message!"
 
 
