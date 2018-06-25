@@ -121,7 +121,7 @@ wordsArgsCommand :: CommandHandler [T.Text] -> CommandHandler T.Text
 wordsArgsCommand commandHandler sender args =
     commandHandler sender $ T.words args
 
--- TODO: textContainsLink doesn't recognize URLs without schema
+-- TODO(#146): textContainsLink doesn't recognize URLs without schema
 textContainsLink :: T.Text -> Bool
 textContainsLink t = any isJust $ map (parseRequest . T.unpack) $ T.words t
 
