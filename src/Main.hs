@@ -6,17 +6,18 @@ import           Control.Concurrent
 import           Control.Concurrent.STM
 import           Control.Monad
 import           Control.Monad.Free
+import           Data.List
 import           Data.String
 import qualified Data.Text as T
 import           Data.Time
 import qualified Database.SQLite.Simple as SQLite
 import           Effect
-import           Events()
 import           Irc.Commands ( ircPong
                               , ircPrivmsg
                               )
 import           Irc.Identifier (idText)
-import           Irc.Message (IrcMsg(Ping, Privmsg))
+import           Irc.Message (IrcMsg(Ping, Privmsg), cookIrcMsg)
+import           Irc.RawIrcMsg (RawIrcMsg(..), TagEntry(..))
 import           Irc.UserInfo (userNick)
 import           IrcTransport
 import           Network.HTTP.Simple
@@ -90,17 +91,21 @@ ircTransport b effectState =
           <*> SQLite.withTransaction (esSqliteConn effectState)
                 (applyEffect effectState $ b Join))
 
-handleIrcMessage :: Bot -> EffectState -> IrcMsg -> IO EffectState
-handleIrcMessage _ effectState (Ping xs) =
-    do atomically $ writeTQueue (esOutcoming effectState) (ircPong xs)
-       return effectState
-handleIrcMessage b effectState (Privmsg userInfo target msgText) =
-    SQLite.withTransaction (esSqliteConn effectState)
-    $ applyEffect effectState (b $ Msg Sender { senderName = idText $ userNick userInfo
-                                              , senderChannel = idText target
-                                              }
+handleIrcMessage :: Bot -> EffectState -> RawIrcMsg -> IO EffectState
+handleIrcMessage b effectState msg =
+    case cookIrcMsg msg of
+      (Ping xs) -> do atomically $ writeTQueue (esOutcoming effectState) (ircPong xs)
+                      return effectState
+      (Privmsg userInfo target msgText) ->
+          SQLite.withTransaction (esSqliteConn effectState)
+            $ applyEffect effectState (b $ Msg Sender { senderName = idText $ userNick userInfo
+                                                      , senderChannel = idText target
+                                                      , senderSubscriber = maybe False (\(TagEntry _ value) -> value == "1")
+                                                                             $ find (\(TagEntry ident _) -> ident == "subscriber")
+                                                                             $ _msgTags msg
+                                                      }
                                        msgText)
-handleIrcMessage _ effectState _ = return effectState
+      _ -> return effectState
 
 eventLoop :: Bot -> Integer -> EffectState -> IO ()
 eventLoop b prevCPUTime effectState =

@@ -9,6 +9,10 @@ Second iteration of [Tsoder][tsoder]. Chat bot for [Tsoding][tsoding] streams.
 
 ## Quick Start
 
+Native dependencies:
+- OpenSSL
+- zlib
+
 ```console
 $ nix-shell
 $ stack build

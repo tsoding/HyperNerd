@@ -121,13 +121,31 @@ wordsArgsCommand :: CommandHandler [T.Text] -> CommandHandler T.Text
 wordsArgsCommand commandHandler sender args =
     commandHandler sender $ T.words args
 
+-- TODO(#146): textContainsLink doesn't recognize URLs without schema
+textContainsLink :: T.Text -> Bool
+textContainsLink t = any isJust $ map (parseRequest . T.unpack) $ T.words t
+
+senderIsPleb :: Sender -> Bool
+senderIsPleb sender = not $ senderSubscriber sender
+
+forbidLinksForPlebs :: Event -> Maybe (Effect())
+forbidLinksForPlebs (Msg sender text)
+    | textContainsLink text && senderIsPleb sender =
+        -- TODO(#147): use CLEARCHAT command instead of /timeout
+        return $ do say $ T.pack $ printf "/timeout %s 30" $ senderName sender
+                    replyToUser (senderName sender)
+                                "Only subs can post links, sorry."
+    | otherwise = Nothing
+forbidLinksForPlebs _ = Nothing
+
 bot :: Bot
 bot Join = say "HyperNyard"
-bot (Msg sender text) =
-    do recordUserMsg sender text
-       maybe (return ())
-             (dispatchCommand sender)
-             (textAsCommand text)
+bot event@(Msg sender text) =
+    fromMaybe (do recordUserMsg sender text
+                  maybe (return ())
+                        (dispatchCommand sender)
+                        (textAsCommand text))
+              (forbidLinksForPlebs event)
 
 helpCommand :: CommandTable T.Text -> CommandHandler T.Text
 helpCommand commandTable sender "" =
