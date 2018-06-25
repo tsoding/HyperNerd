@@ -7,7 +7,6 @@ import           Control.Concurrent.STM
 import           Control.Monad
 import           Control.Monad.Free
 import           Data.List
-import           Data.Maybe
 import           Data.String
 import qualified Data.Text as T
 import           Data.Time
@@ -101,8 +100,7 @@ handleIrcMessage b effectState msg =
           SQLite.withTransaction (esSqliteConn effectState)
             $ applyEffect effectState (b $ Msg Sender { senderName = idText $ userNick userInfo
                                                       , senderChannel = idText target
-                                                      , senderSubscriber = fromMaybe False
-                                                                             $ fmap (\(TagEntry _ value) -> value == "1")
+                                                      , senderSubscriber = maybe False (\(TagEntry _ value) -> value == "1")
                                                                              $ find (\(TagEntry ident _) -> ident == "subscriber")
                                                                              $ _msgTags msg
                                                       }
