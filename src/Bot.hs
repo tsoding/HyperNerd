@@ -43,6 +43,7 @@ commands = M.fromList [ ("russify", ("Russify western spy text", russifyCommand)
                       , ("vote", ("Vote for a poll option", voteCommand))
                       , ("uptime", ("Show stream uptime", uptimeCommand))
                       , ("rq", ("Get random quote from your log", randomLogRecordCommand))
+                      , ("scoods", ("OMGScoods ☝🏻", \_ _ -> say "OMGScoods ☝🏻"))
                       ]
 
 authorizeCommand :: [T.Text] -> CommandHandler T.Text -> CommandHandler T.Text
