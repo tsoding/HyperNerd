@@ -1,4 +1,5 @@
 {-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE QuasiQuotes #-}
 module Bot (Bot, bot, Event(..), Sender(..), TwitchStream(..)) where
 
 import           Bot.BttvFfz
@@ -7,6 +8,7 @@ import           Bot.Poll
 import           Bot.Quote
 import           Bot.Replies
 import           Bot.Russify
+import           Bot.Twitch
 import           Command
 import           Data.List
 import qualified Data.Map as M
@@ -16,7 +18,7 @@ import           Effect
 import           Events
 import           Network.HTTP.Simple
 import           Text.Printf
-import           Bot.Twitch
+import           Text.RawString.QQ
 
 type Bot = Event -> Effect ()
 
@@ -43,7 +45,7 @@ commands = M.fromList [ ("russify", ("Russify western spy text", russifyCommand)
                       , ("vote", ("Vote for a poll option", voteCommand))
                       , ("uptime", ("Show stream uptime", uptimeCommand))
                       , ("rq", ("Get random quote from your log", randomLogRecordCommand))
-                      , ("scoods", ("OMGScoods ☝🏻", \_ _ -> say "OMGScoods ☝🏻"))
+                      , ("scoods", ([r|OMGScoods ☝🏻|], \_ _ -> say [r|OMGScoods ☝🏻|]))
                       ]
 
 authorizeCommand :: [T.Text] -> CommandHandler T.Text -> CommandHandler T.Text
