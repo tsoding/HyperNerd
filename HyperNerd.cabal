@@ -66,6 +66,7 @@ executable HyperNerd
                      , Bot.Quote
                      , Bot.Replies
                      , Bot.Russify
+                     , Bot.Twitch
                      , Command
                      , Effect
                      , Entity
