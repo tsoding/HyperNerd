@@ -93,19 +93,21 @@ ircTransport b effectState =
 
 handleIrcMessage :: Bot -> EffectState -> RawIrcMsg -> IO EffectState
 handleIrcMessage b effectState msg =
-    case cookIrcMsg msg of
-      (Ping xs) -> do atomically $ writeTQueue (esOutcoming effectState) (ircPong xs)
-                      return effectState
-      (Privmsg userInfo target msgText) ->
-          SQLite.withTransaction (esSqliteConn effectState)
-            $ applyEffect effectState (b $ Msg Sender { senderName = idText $ userNick userInfo
-                                                      , senderChannel = idText target
-                                                      , senderSubscriber = maybe False (\(TagEntry _ value) -> value == "1")
-                                                                             $ find (\(TagEntry ident _) -> ident == "subscriber")
-                                                                             $ _msgTags msg
-                                                      }
-                                       msgText)
-      _ -> return effectState
+    do cookedMsg <- return $ cookIrcMsg msg
+       print cookedMsg
+       case cookedMsg of
+         (Ping xs) -> do atomically $ writeTQueue (esOutcoming effectState) (ircPong xs)
+                         return effectState
+         (Privmsg userInfo target msgText) ->
+             SQLite.withTransaction (esSqliteConn effectState)
+               $ applyEffect effectState (b $ Msg Sender { senderName = idText $ userNick userInfo
+                                                         , senderChannel = idText target
+                                                         , senderSubscriber = maybe False (\(TagEntry _ value) -> value == "1")
+                                                                                $ find (\(TagEntry ident _) -> ident == "subscriber")
+                                                                                $ _msgTags msg
+                                                         }
+                                          msgText)
+         _ -> return effectState
 
 eventLoop :: Bot -> Integer -> EffectState -> IO ()
 eventLoop b prevCPUTime effectState =
@@ -114,8 +116,7 @@ eventLoop b prevCPUTime effectState =
        let deltaTime = (currCPUTime - prevCPUTime) `div` ((10 :: Integer) ^ (9 :: Integer))
        mb <- atomically $ tryReadTQueue (esIncoming effectState)
        maybe (return effectState)
-             (\msg -> do print msg
-                         handleIrcMessage b effectState msg)
+             (handleIrcMessage b effectState)
              mb
          >>= advanceTimeouts deltaTime
          >>= eventLoop b currCPUTime
