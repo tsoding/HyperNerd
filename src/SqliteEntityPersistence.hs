@@ -182,6 +182,6 @@ selectEntities conn name All =
 selectEntities conn name (Filter (PropertyEquals propertyName propertyValue) All) =
     filter (\e -> M.lookup propertyName (entityProperties e) == return propertyValue)
       <$> selectEntities conn name All
--- TODO: selectEntities ignores Filter on a general case
+-- TODO(#154): selectEntities ignores Filter on a general case
 selectEntities conn name (Filter (PropertyEquals _ _) selector) =
     selectEntities conn name selector
