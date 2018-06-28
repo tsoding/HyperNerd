@@ -54,7 +54,7 @@ randomLogRecordCommand sender rawName =
                  then return $ senderName sender
                  else return name
        logMsg $ T.pack $ printf "The requested user is %s" user
-       entity <- getRandomEntity "LogRecord" (PropertyEquals "user" (PropertyText user))
+       entity <- getRandomEntity "LogRecord" (Filter (PropertyEquals "user" (PropertyText user)) All)
        maybe (return ())
              (fromEntity >=> replyToUser user . lrMsg)
              entity

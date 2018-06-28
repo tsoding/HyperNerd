@@ -6,7 +6,7 @@ import           Data.List
 import qualified Data.Map as M
 import qualified Data.Text as T
 import qualified Database.SQLite.Simple as SQLite
-import           Effect (Selector(All, PropertyEquals))
+import           Effect (Selector(..), Condition(..))
 import           Entity
 import qualified SqliteEntityPersistence as SEP
 import           System.IO.Temp
@@ -82,7 +82,7 @@ selectEntitiesWithPropertyEquals =
                          replicateM_ 3
                            $ SEP.createEntity conn "entity"
                            $ M.fromList [ ("foo", PropertyInt 43) ]
-                         entities <- SEP.selectEntities conn "entity" (PropertyEquals "foo" (PropertyInt 42))
+                         entities <- SEP.selectEntities conn "entity" (Filter (PropertyEquals "foo" (PropertyInt 42)) All)
                          assertEqual "Unexpected amount of entities selected" 2 $ length entities
 
 getRandomEntityIdWithPropertyEquals :: Test
@@ -100,7 +100,7 @@ getRandomEntityIdWithPropertyEquals =
            createdEntity <- SEP.createEntity conn "entity"
                              $ M.fromList [ ("foo", PropertyInt 43) ]
            SQLite.setTrace conn (Just (putStrLn . T.unpack))
-           randomEntity <- SEP.getRandomEntity conn "entity" (PropertyEquals "foo" (PropertyInt 43))
+           randomEntity <- SEP.getRandomEntity conn "entity" (Filter (PropertyEquals "foo" (PropertyInt 43)) All)
            assertEqual "Unexpected random entity selected"
                        (return createdEntity)
                        randomEntity
