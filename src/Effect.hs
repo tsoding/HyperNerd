@@ -35,7 +35,7 @@ data EffectF s = Say T.Text s
                | ErrorEff T.Text
                | CreateEntity T.Text Properties (Entity -> s)
                | GetEntityById T.Text Int (Maybe Entity -> s)
-               -- TODO: Introduce Shuffle selector to get rid of GetRandomEntity effect
+               -- TODO(#152): Introduce Shuffle selector to get rid of GetRandomEntity effect
                | GetRandomEntity T.Text Selector (Maybe Entity -> s)
                | SelectEntities T.Text Selector ([Entity] -> s)
                | Now (UTCTime -> s)
