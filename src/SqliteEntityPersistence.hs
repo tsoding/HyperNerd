@@ -155,7 +155,7 @@ getRandomEntityId conn name (Filter (PropertyEquals propertyName property) All) 
                           , ":propertyTextValue" := (fromProperty property :: Maybe T.Text)
                           , ":propertyUTCTime" := (fromProperty property :: Maybe UTCTime)
                           ]
--- TODO: getRandomEntityId ignores Filter on a general case
+-- TODO(#153): getRandomEntityId ignores Filter on a general case
 getRandomEntityId conn name (Filter (PropertyEquals _ _) selector) =
     getRandomEntityId conn name selector
 
