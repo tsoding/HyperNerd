@@ -13,7 +13,7 @@ import           Data.Maybe
 import qualified Data.Text as T
 import           Data.Time
 import           Database.SQLite.Simple
-import           Effect (Selector(..))
+import           Effect (Selector(..), Condition(..))
 import           Entity
 import           Text.RawString.QQ
 
@@ -137,7 +137,7 @@ getRandomEntityId conn name All =
                               ORDER BY RANDOM()
                               LIMIT 1 |]
                           [ ":entityName" := name ]
-getRandomEntityId conn name (PropertyEquals propertyName property) =
+getRandomEntityId conn name (Filter (PropertyEquals propertyName property) All) =
     listToMaybe . map fromOnly
       <$> queryNamed conn [r| SELECT entityId
                               FROM EntityProperty
@@ -155,6 +155,9 @@ getRandomEntityId conn name (PropertyEquals propertyName property) =
                           , ":propertyTextValue" := (fromProperty property :: Maybe T.Text)
                           , ":propertyUTCTime" := (fromProperty property :: Maybe UTCTime)
                           ]
+-- TODO: getRandomEntityId ignores Filter on a general case
+getRandomEntityId conn name (Filter (PropertyEquals _ _) selector) =
+    getRandomEntityId conn name selector
 
 getAllEntityIds :: Connection -> T.Text -> IO [Int]
 getAllEntityIds conn name =
@@ -176,6 +179,9 @@ selectEntities :: Connection -> T.Text -> Selector -> IO [Entity]
 selectEntities conn name All =
     do ids <- getAllEntityIds conn name
        fromMaybe [] . traverse id <$> traverse (getEntityById conn name) ids
-selectEntities conn name (PropertyEquals propertyName propertyValue) =
+selectEntities conn name (Filter (PropertyEquals propertyName propertyValue) All) =
     filter (\e -> M.lookup propertyName (entityProperties e) == return propertyValue)
       <$> selectEntities conn name All
+-- TODO: selectEntities ignores Filter on a general case
+selectEntities conn name (Filter (PropertyEquals _ _) selector) =
+    selectEntities conn name selector

@@ -3,6 +3,7 @@
 module Effect ( Effect
               , EffectF (..)
               , Selector (..)
+              , Condition (..)
               , say
               , logMsg
               , createEntity
@@ -24,13 +25,17 @@ import           Data.Time
 import           Entity
 import           Network.HTTP.Simple
 
-data Selector = All | PropertyEquals T.Text Property
+data Condition = PropertyEquals T.Text Property
+
+data Selector = All
+              | Filter Condition Selector
 
 data EffectF s = Say T.Text s
                | LogMsg T.Text s
                | ErrorEff T.Text
                | CreateEntity T.Text Properties (Entity -> s)
                | GetEntityById T.Text Int (Maybe Entity -> s)
+               -- TODO: Introduce Shuffle selector to get rid of GetRandomEntity effect
                | GetRandomEntity T.Text Selector (Maybe Entity -> s)
                | SelectEntities T.Text Selector ([Entity] -> s)
                | Now (UTCTime -> s)
