@@ -46,8 +46,7 @@ addQuoteCommand sender content =
 
 quoteCommand :: Sender -> T.Text -> Effect ()
 quoteCommand sender "" =
-    selectEntities "quote" (Take 1 $ Shuffle All)
-      >>= return . listToMaybe
+    fmap listToMaybe (selectEntities "quote" (Take 1 $ Shuffle All))
       >>= quoteFoundReply (senderName sender)
 quoteCommand sender quoteIdText =
     maybe
