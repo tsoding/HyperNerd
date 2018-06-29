@@ -184,6 +184,6 @@ selectEntities conn name (Take n (Shuffle (Filter (PropertyEquals propertyName p
                                     , ":n" := n
                                     ]
        fromMaybe [] . traverse id <$> traverse (getEntityById conn name) ids
--- TODO: SEP.selectEntities doesn't support arbitrary selector combination
+-- TODO(#157): SEP.selectEntities doesn't support arbitrary selector combination
 selectEntities _ _ selector =
     error ("Unsupported selector combination " ++ show selector)
