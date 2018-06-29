@@ -3,7 +3,6 @@
 module SqliteEntityPersistence ( prepareSchema
                                , createEntity
                                , getEntityById
-                               , getRandomEntity
                                , selectEntities
                                , nextEntityId
                                ) where
@@ -127,38 +126,6 @@ getEntityById conn name ident =
                           , ":entityId" := ident
                           ]
 
-getRandomEntityId :: Connection -> T.Text -> Selector -> IO (Maybe Int)
-getRandomEntityId conn name All =
-    listToMaybe . map fromOnly
-      <$> queryNamed conn [r| SELECT entityId
-                              FROM EntityProperty
-                              WHERE entityName = :entityName
-                              GROUP BY entityId
-                              ORDER BY RANDOM()
-                              LIMIT 1 |]
-                          [ ":entityName" := name ]
-getRandomEntityId conn name (Filter (PropertyEquals propertyName property) All) =
-    listToMaybe . map fromOnly
-      <$> queryNamed conn [r| SELECT entityId
-                              FROM EntityProperty
-                              WHERE entityName = :entityName
-                                AND propertyName = :propertyName
-                                AND propertyInt IS :propertyIntValue
-                                AND propertyText IS :propertyTextValue
-                                AND propertyUTCTime IS :propertyUTCTime
-                              GROUP BY entityId
-                              ORDER BY RANDOM()
-                              LIMIT 1 |]
-                          [ ":entityName" := name
-                          , ":propertyName" := propertyName
-                          , ":propertyIntValue" := (fromProperty property :: Maybe Int)
-                          , ":propertyTextValue" := (fromProperty property :: Maybe T.Text)
-                          , ":propertyUTCTime" := (fromProperty property :: Maybe UTCTime)
-                          ]
--- TODO(#153): getRandomEntityId ignores Filter on a general case
-getRandomEntityId conn name (Filter (PropertyEquals _ _) selector) =
-    getRandomEntityId conn name selector
-
 getAllEntityIds :: Connection -> T.Text -> IO [Int]
 getAllEntityIds conn name =
     map fromOnly
@@ -169,12 +136,6 @@ getAllEntityIds conn name =
                               ORDER BY entityId |]
                           [ ":entityName" := name ]
 
-
-getRandomEntity :: Connection -> T.Text -> Selector -> IO (Maybe Entity)
-getRandomEntity conn name selector =
-    getRandomEntityId conn name selector >>= maybe (return Nothing) (getEntityById conn name)
-
-
 selectEntities :: Connection -> T.Text -> Selector -> IO [Entity]
 selectEntities conn name All =
     do ids <- getAllEntityIds conn name
@@ -182,6 +143,47 @@ selectEntities conn name All =
 selectEntities conn name (Filter (PropertyEquals propertyName propertyValue) All) =
     filter (\e -> M.lookup propertyName (entityProperties e) == return propertyValue)
       <$> selectEntities conn name All
--- TODO(#154): selectEntities ignores Filter on a general case
-selectEntities conn name (Filter (PropertyEquals _ _) selector) =
-    selectEntities conn name selector
+selectEntities conn name (Shuffle All) =
+    do ids <- map fromOnly
+                <$> queryNamed conn [r| SELECT entityId
+                                        FROM EntityProperty
+                                        WHERE entityName = :entityName
+                                        GROUP BY entityId
+                                        ORDER BY RANDOM() |]
+                                    [ ":entityName" := name ]
+       fromMaybe [] . traverse id <$> traverse (getEntityById conn name) ids
+selectEntities conn name (Take n (Shuffle All)) =
+    do ids <- map fromOnly
+                <$> queryNamed conn [r| SELECT entityId
+                                        FROM EntityProperty
+                                        WHERE entityName = :entityName
+                                        GROUP BY entityId
+                                        ORDER BY RANDOM()
+                                        LIMIT :n |]
+                                    [ ":entityName" := name
+                                    , ":n" := n
+                                    ]
+       fromMaybe [] . traverse id <$> traverse (getEntityById conn name) ids
+selectEntities conn name (Take n (Shuffle (Filter (PropertyEquals propertyName property) All))) =
+    do ids <- map fromOnly
+                <$> queryNamed conn [r| SELECT entityId
+                                        FROM EntityProperty
+                                        WHERE entityName = :entityName
+                                          AND propertyName = :propertyName
+                                          AND propertyInt IS :propertyIntValue
+                                          AND propertyText IS :propertyTextValue
+                                          AND propertyUTCTime IS :propertyUTCTime
+                                        GROUP BY entityId
+                                        ORDER BY RANDOM()
+                                        LIMIT :n |]
+                                    [ ":entityName" := name
+                                    , ":propertyName" := propertyName
+                                    , ":propertyIntValue" := (fromProperty property :: Maybe Int)
+                                    , ":propertyTextValue" := (fromProperty property :: Maybe T.Text)
+                                    , ":propertyUTCTime" := (fromProperty property :: Maybe UTCTime)
+                                    , ":n" := n
+                                    ]
+       fromMaybe [] . traverse id <$> traverse (getEntityById conn name) ids
+-- TODO(#157): SEP.selectEntities doesn't support arbitrary selector combination
+selectEntities _ _ selector =
+    error ("Unsupported selector combination " ++ show selector)

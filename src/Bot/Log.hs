@@ -10,6 +10,7 @@ import           Effect
 import           Entity
 import           Events
 import           Text.Printf
+import           Data.Maybe
 
 data LogRecord = LogRecord { lrUser :: T.Text
                            , lrChannel :: T.Text
@@ -53,7 +54,11 @@ randomLogRecordCommand sender rawName =
                  then return $ senderName sender
                  else return name
        logMsg $ T.pack $ printf "The requested user is %s" user
-       entity <- getRandomEntity "LogRecord" (Filter (PropertyEquals "user" (PropertyText user)) All)
+       entity <- listToMaybe
+                   <$> selectEntities "LogRecord" (Take 1
+                                                     $ Shuffle
+                                                     $ Filter (PropertyEquals "user" $ PropertyText user)
+                                                       All)
        maybe (return ())
              (fromEntity >=> replyToUser user . lrMsg)
              entity

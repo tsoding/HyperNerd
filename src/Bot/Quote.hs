@@ -4,6 +4,7 @@ module Bot.Quote where
 import           Bot.Replies
 import           Control.Monad
 import qualified Data.Map as M
+import           Data.Maybe
 import qualified Data.Text as T
 import           Data.Time
 import           Effect
@@ -45,7 +46,8 @@ addQuoteCommand sender content =
 
 quoteCommand :: Sender -> T.Text -> Effect ()
 quoteCommand sender "" =
-    getRandomEntity "quote" All >>= quoteFoundReply (senderName sender)
+    fmap listToMaybe (selectEntities "quote" (Take 1 $ Shuffle All))
+      >>= quoteFoundReply (senderName sender)
 quoteCommand sender quoteIdText =
     maybe
       (replyToUser (senderName sender) "Couldn't find any quotes")

@@ -100,7 +100,10 @@ getRandomEntityIdWithPropertyEquals =
            createdEntity <- SEP.createEntity conn "entity"
                              $ M.fromList [ ("foo", PropertyInt 43) ]
            SQLite.setTrace conn (Just (putStrLn . T.unpack))
-           randomEntity <- SEP.getRandomEntity conn "entity" (Filter (PropertyEquals "foo" (PropertyInt 43)) All)
+           randomEntity <- SEP.selectEntities conn "entity" (Take 1
+                                                               $ Shuffle
+                                                               $ Filter (PropertyEquals "foo" (PropertyInt 43))
+                                                                 All)
            assertEqual "Unexpected random entity selected"
                        (return createdEntity)
                        randomEntity
