@@ -46,6 +46,11 @@ commands = M.fromList [ ("russify", ("Russify western spy text", russifyCommand)
                       , ("uptime", ("Show stream uptime", uptimeCommand))
                       , ("rq", ("Get random quote from your log", randomLogRecordCommand))
                       , ("scoods", ([r|OMGScoods ☝🏻|], \_ _ -> say [r|OMGScoods ☝🏻|]))
+                      , ("schedule", ("Link to the schedule", \_ _ -> say "Hey! Checkout the new schedule thingy! \
+                                                                          \https://tsoding.github.io/schedule-beta/ \
+                                                                          \For questions/bug reports please file an issue \
+                                                                          \https://github.com/tsoding/schedule-beta/issues/new \
+                                                                          \Thanks!" ))
                       ]
 
 authorizeCommand :: [T.Text] -> CommandHandler T.Text -> CommandHandler T.Text
