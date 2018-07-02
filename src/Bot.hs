@@ -51,6 +51,10 @@ commands = M.fromList [ ("russify", ("Russify western spy text", russifyCommand)
                                                                           \For questions/bug reports please file an issue \
                                                                           \https://github.com/tsoding/schedule-beta/issues/new \
                                                                           \Thanks!" ))
+                      , ("nope", ("Timeout yourself for 1 second", \sender _ -> say
+                                                                                  $ T.pack
+                                                                                  $ printf "/timeout %s 1"
+                                                                                  $ senderName sender))
                       ]
 
 authorizeCommand :: [T.Text] -> CommandHandler T.Text -> CommandHandler T.Text
