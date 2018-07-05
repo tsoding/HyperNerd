@@ -82,6 +82,7 @@ executable HyperNerd
                      , async
                      , base >=4.9 && <4.10
                      , bytestring
+                     , clock
                      , containers
                      , exceptions
                      , file-embed

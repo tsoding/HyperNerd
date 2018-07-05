@@ -22,7 +22,7 @@ import           Irc.UserInfo (userNick)
 import           IrcTransport
 import           Network.HTTP.Simple
 import qualified SqliteEntityPersistence as SEP
-import           System.CPUTime
+import           System.Clock
 import           System.Environment
 import           Text.Printf
 
@@ -84,7 +84,7 @@ ircTransport :: Bot -> EffectState -> IO ()
 ircTransport b effectState =
     join
       (eventLoop b
-          <$> getCPUTime
+          <$> getTime Monotonic
           <*> SQLite.withTransaction (esSqliteConn effectState)
                 (applyEffect effectState $ b Join))
 
@@ -106,11 +106,11 @@ handleIrcMessage b effectState msg =
                                           msgText)
          _ -> return effectState
 
-eventLoop :: Bot -> Integer -> EffectState -> IO ()
+eventLoop :: Bot -> TimeSpec -> EffectState -> IO ()
 eventLoop b prevCPUTime effectState =
     do threadDelay 10000        -- to prevent busy looping
-       currCPUTime <- getCPUTime
-       let deltaTime = (currCPUTime - prevCPUTime) `div` ((10 :: Integer) ^ (9 :: Integer))
+       currCPUTime <- getTime Monotonic
+       let deltaTime = toNanoSecs (currCPUTime - prevCPUTime) `div` 1000000
        mb <- atomically $ tryReadTQueue (esIncoming effectState)
        maybe (return effectState)
              (handleIrcMessage b effectState)
