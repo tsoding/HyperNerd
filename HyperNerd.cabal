@@ -93,6 +93,7 @@ executable HyperNerd
                      , ini
                      , irc-core
                      , raw-strings-qq
+                     , regex-compat
                      , safe
                      , sqlite-simple
                      , stm

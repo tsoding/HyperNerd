@@ -16,9 +16,9 @@ import           Data.Maybe
 import qualified Data.Text as T
 import           Effect
 import           Events
-import           Network.HTTP.Simple
 import           Text.Printf
 import           Text.RawString.QQ
+import           Text.Regex
 
 type Bot = Event -> Effect ()
 
@@ -71,7 +71,9 @@ wordsArgsCommand commandHandler sender args =
 
 -- TODO(#146): textContainsLink doesn't recognize URLs without schema
 textContainsLink :: T.Text -> Bool
-textContainsLink t = any isJust $ map (parseRequest . T.unpack) $ T.words t
+textContainsLink t = isJust
+                       $ matchRegex (mkRegex "[-a-zA-Z0-9@:%._\\+~#=]{2,256}\\.[a-z]{2,6}\\b([-a-zA-Z0-9@:%_\\+.~#?&\\/\\/=]*)")
+                       $ T.unpack t
 
 senderIsPleb :: Sender -> Bool
 senderIsPleb sender = not $ senderSubscriber sender
@@ -80,7 +82,7 @@ forbidLinksForPlebs :: Event -> Maybe (Effect())
 forbidLinksForPlebs (Msg sender text)
     | textContainsLink text && senderIsPleb sender =
         -- TODO(#147): use CLEARCHAT command instead of /timeout
-        return $ do say $ T.pack $ printf "/timeout %s 30" $ senderName sender
+        return $ do say $ T.pack $ printf "/timeout %s 10" $ senderName sender
                     replyToUser (senderName sender)
                                 "Only subs can post links, sorry."
     | otherwise = Nothing
