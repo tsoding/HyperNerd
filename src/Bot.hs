@@ -55,6 +55,7 @@ commands = M.fromList [ ("russify", ("Russify western spy text", russifyCommand)
                                                                                   $ T.pack
                                                                                   $ printf "/timeout %s 1"
                                                                                   $ senderName sender))
+                      , ("lit", ("LIT AF", \_ _ -> say [r|😂 👌 💯 🔥 LIT AF|]))
                       ]
 
 authorizeCommand :: [T.Text] -> CommandHandler T.Text -> CommandHandler T.Text
