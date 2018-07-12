@@ -41,8 +41,8 @@ addPeriodicMessage sender message =
 
 startPeriodicMessages :: Effect ()
 startPeriodicMessages =
-    do maybeEntity <- listToMaybe <$> selectEntities "PeriodicMessage" (Take 1 $ Shuffle $ All)
-       maybePm <- return $ (maybeEntity >>= fromEntity)
+    do maybeEntity <- listToMaybe <$> selectEntities "PeriodicMessage" (Take 1 $ Shuffle All)
+       maybePm <- return (maybeEntity >>= fromEntity)
        maybe (return ())
              (say . pmText)
              maybePm
