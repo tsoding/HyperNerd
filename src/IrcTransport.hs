@@ -27,7 +27,7 @@ data Config = Config { configNick :: T.Text
                      } deriving Show
 
 maxIrcMessage :: Int
-maxIrcMessage = 512
+maxIrcMessage = 1000
 
 twitchConnectionParams :: ConnectionParams
 twitchConnectionParams =
