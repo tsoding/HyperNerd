@@ -96,8 +96,7 @@ forbidLinksForPlebs (Msg sender text)
 forbidLinksForPlebs _ = Nothing
 
 bot :: Bot
-bot Join = do say "HyperNyard"
-              startPeriodicMessages
+bot Join = startPeriodicMessages
 bot event@(Msg sender text) =
     fromMaybe (do recordUserMsg sender text
                   maybe (return ())

@@ -9,6 +9,7 @@ import           Data.Time
 import           Effect
 import           Entity
 import           Events
+import           Data.Maybe
 
 data PeriodicMessage = PeriodicMessage { pmText :: T.Text
                                        , pmAuthor :: T.Text
@@ -39,4 +40,10 @@ addPeriodicMessage sender message =
        return ()
 
 startPeriodicMessages :: Effect ()
-startPeriodicMessages = return ()
+startPeriodicMessages =
+    do maybeEntity <- listToMaybe <$> selectEntities "PeriodicMessage" (Take 1 $ Shuffle $ All)
+       maybePm <- return $ (maybeEntity >>= fromEntity)
+       maybe (return ())
+             (say . pmText)
+             maybePm
+       timeout (10 * 60 * 1000) startPeriodicMessages
