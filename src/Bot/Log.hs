@@ -39,12 +39,11 @@ instance IsEntity LogRecord where
 recordUserMsg :: Sender -> T.Text -> Effect ()
 recordUserMsg sender msg =
     do timestamp <- now
-       _         <- createEntity "LogRecord"
-                      $ toProperties LogRecord { lrUser = senderName sender
-                                               , lrChannel = senderChannel sender
-                                               , lrMsg = msg
-                                               , lrTimestamp = timestamp
-                                               }
+       _         <- createEntity "LogRecord" LogRecord { lrUser = senderName sender
+                                                       , lrChannel = senderChannel sender
+                                                       , lrMsg = msg
+                                                       , lrTimestamp = timestamp
+                                                       }
        return ()
 
 randomLogRecordCommand :: Sender -> T.Text -> Effect ()

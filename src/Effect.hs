@@ -70,8 +70,9 @@ say msg = liftF $ Say msg ()
 logMsg :: T.Text -> Effect ()
 logMsg msg = liftF $ LogMsg msg ()
 
-createEntity :: T.Text -> Properties -> Effect Entity
-createEntity name properties = liftF $ CreateEntity name properties id
+createEntity :: IsEntity e => T.Text -> e -> Effect Entity
+createEntity name entity =
+    liftF $ CreateEntity name (toProperties entity) id
 
 getEntityById :: T.Text -> Int -> Effect (Maybe Entity)
 getEntityById name ident = liftF $ GetEntityById name ident id

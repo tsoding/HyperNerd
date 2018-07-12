@@ -4,6 +4,7 @@ module Bot (Bot, bot, Event(..), Sender(..), TwitchStream(..)) where
 
 import           Bot.BttvFfz
 import           Bot.Log
+import           Bot.Periodic
 import           Bot.Poll
 import           Bot.Quote
 import           Bot.Replies
@@ -56,6 +57,12 @@ commands = M.fromList [ ("russify", ("Russify western spy text", russifyCommand)
                                                                                   $ printf "/timeout %s 1"
                                                                                   $ senderName sender))
                       , ("lit", ("LIT AF", \_ _ -> say [r|😂 👌 💯 🔥 LIT AF|]))
+                      , ("addperiodic", ("Add periodic message", authorizeCommand [ "tsoding"
+                                                                                  , "r3x1m"
+                                                                                  ]
+                                                                   $ \sender message -> do addPeriodicMessage sender message
+                                                                                           replyToUser (senderName sender)
+                                                                                                       "Added the periodic message"))
                       ]
 
 authorizeCommand :: [T.Text] -> CommandHandler T.Text -> CommandHandler T.Text
@@ -89,7 +96,7 @@ forbidLinksForPlebs (Msg sender text)
 forbidLinksForPlebs _ = Nothing
 
 bot :: Bot
-bot Join = say "HyperNyard"
+bot Join = startPeriodicMessages
 bot event@(Msg sender text) =
     fromMaybe (do recordUserMsg sender text
                   maybe (return ())

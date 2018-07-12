@@ -40,7 +40,7 @@ addQuoteCommand sender content =
                                  , quoteQuoter = quoter
                                  , quoteTimestamp = timestamp
                                  }
-       entity    <- createEntity "quote" $ toProperties quote
+       entity    <- createEntity "quote" quote
 
        quoteAddedReply quoter $ entityId entity
 
