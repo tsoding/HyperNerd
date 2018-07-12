@@ -60,7 +60,7 @@ commands = M.fromList [ ("russify", ("Russify western spy text", russifyCommand)
                       , ("addperiodic", ("Add periodic message", authorizeCommand [ "tsoding"
                                                                                   , "r3x1m"
                                                                                   ]
-                                                                   $ \sender message -> do addPeriodicMessage message
+                                                                   $ \sender message -> do addPeriodicMessage sender message
                                                                                            replyToUser (senderName sender)
                                                                                                        "Added the periodic message"))
                       ]

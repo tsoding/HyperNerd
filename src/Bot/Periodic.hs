@@ -8,6 +8,7 @@ import qualified Data.Text as T
 import           Data.Time
 import           Effect
 import           Entity
+import           Events
 
 data PeriodicMessage = PeriodicMessage { pmText :: T.Text
                                        , pmAuthor :: T.Text
@@ -28,8 +29,14 @@ instance IsEntity PeriodicMessage where
                                              , pmCreatedAt = createdAt
                                              }
 
-addPeriodicMessage :: T.Text -> Effect ()
-addPeriodicMessage _ = return ()
+addPeriodicMessage :: Sender -> T.Text -> Effect ()
+addPeriodicMessage sender message =
+    do createAt <- now
+       _ <- createEntity "PeriodicMessage" PeriodicMessage { pmText = message
+                                                           , pmAuthor = senderName sender
+                                                           , pmCreatedAt = createAt
+                                                           }
+       return ()
 
 startPeriodicMessages :: Effect ()
 startPeriodicMessages = return ()
