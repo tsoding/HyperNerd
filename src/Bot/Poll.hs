@@ -67,14 +67,14 @@ currentPoll = return Nothing
 startPoll :: T.Text -> [T.Text] -> Effect Int
 startPoll author options =
     do startedAt <- now
-       poll   <- createEntity "Poll" (toProperties Poll { pollAuthor = author
-                                                        , pollStartedAt = startedAt
-                                                        })
+       poll   <- createEntity "Poll" Poll { pollAuthor = author
+                                          , pollStartedAt = startedAt
+                                          }
        pollId <- return $ entityId poll
        for_ options $ \name ->
-           createEntity "PollOption" $ toProperties PollOption { poName = name
-                                                               , poPollId = pollId
-                                                               }
+           createEntity "PollOption" PollOption { poName = name
+                                                , poPollId = pollId
+                                                }
        return pollId
 
 -- TODO(#88): announcePollResults is not implemented

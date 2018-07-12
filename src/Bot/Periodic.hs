@@ -29,7 +29,7 @@ instance IsEntity PeriodicMessage where
                                              }
 
 addPeriodicMessage :: T.Text -> Effect ()
-addPeriodicMessage _ = undefined
+addPeriodicMessage _ = return ()
 
 startPeriodicMessages :: Effect ()
-startPeriodicMessages = undefined
+startPeriodicMessages = return ()
