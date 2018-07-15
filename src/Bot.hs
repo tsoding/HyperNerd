@@ -89,7 +89,7 @@ forbidLinksForPlebs :: Event -> Maybe (Effect())
 forbidLinksForPlebs (Msg sender text)
     | textContainsLink text && senderIsPleb sender =
         -- TODO(#147): use CLEARCHAT command instead of /timeout
-        return $ do say $ T.pack $ printf "/timeout %s 10" $ senderName sender
+        return $ do say $ T.pack $ printf "/timeout %s 1" $ senderName sender
                     replyToUser (senderName sender)
                                 "Only subs can post links, sorry."
     | otherwise = Nothing
