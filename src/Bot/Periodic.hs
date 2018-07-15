@@ -46,4 +46,4 @@ startPeriodicMessages =
        maybe (return ())
              (say . pmText)
              maybePm
-       timeout (10 * 60 * 1000) startPeriodicMessages
+       timeout (20 * 60 * 1000) startPeriodicMessages
