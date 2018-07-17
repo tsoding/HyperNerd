@@ -11,6 +11,8 @@ import           Bot.Replies
 import           Bot.Russify
 import           Bot.Twitch
 import           Command
+import           Control.Applicative
+import           Data.Char
 import           Data.List
 import qualified Data.Map as M
 import           Data.Maybe
@@ -95,6 +97,20 @@ forbidLinksForPlebs (Msg sender text)
     | otherwise = Nothing
 forbidLinksForPlebs _ = Nothing
 
+textContainsWords :: [T.Text] -> T.Text -> Bool
+textContainsWords banwords text =
+    any (`elem` banwords)
+      $ map (T.filter isAlpha . T.toLower)
+      $ T.words text
+
+helsinkiFilter :: Event -> Maybe (Effect ())
+helsinkiFilter (Msg sender text)
+    | textContainsWords ["putin", "trump", "helsinki"] text =
+        return $ do say $ T.pack $ printf "/timeout %s 300" $ senderName sender
+                    replyToUser (senderName sender) "Jebaited"
+    | otherwise = Nothing
+helsinkiFilter _ = Nothing
+
 bot :: Bot
 bot Join = startPeriodicMessages
 bot event@(Msg sender text) =
@@ -102,7 +118,7 @@ bot event@(Msg sender text) =
                   maybe (return ())
                         (dispatchCommand sender)
                         (textAsCommand text))
-              (forbidLinksForPlebs event)
+              (helsinkiFilter event <|> forbidLinksForPlebs event)
 
 helpCommand :: CommandTable T.Text -> CommandHandler T.Text
 helpCommand commandTable sender "" =
