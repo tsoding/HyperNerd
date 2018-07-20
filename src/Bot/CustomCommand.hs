@@ -57,3 +57,5 @@ dispatchCustomCommand _ command =
        maybe (return ())
              (say . customCommandMessage)
              customCommand
+
+-- TODO(#170): There is no way to update a custom command
