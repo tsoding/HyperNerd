@@ -3,6 +3,7 @@
 module Bot (Bot, bot, Event(..), Sender(..), TwitchStream(..)) where
 
 import           Bot.BttvFfz
+import           Bot.CustomCommand
 import           Bot.Log
 import           Bot.Periodic
 import           Bot.Poll
@@ -73,12 +74,6 @@ commands = M.fromList [ ("russify", ("Russify western spy text", russifyCommand)
                                                                               ]
                                                                $ deleteCustomCommand))
                       ]
-
-addCustomCommand :: CommandHandler (T.Text, T.Text)
-addCustomCommand = undefined
-
-deleteCustomCommand :: CommandHandler T.Text
-deleteCustomCommand = undefined
 
 authorizeCommand :: [T.Text] -> CommandHandler a -> CommandHandler a
 authorizeCommand authorizedPeople commandHandler sender args =
@@ -165,7 +160,12 @@ helpCommand commandTable sender command =
           (fst <$> M.lookup command commandTable)
 
 dispatchCommand :: Sender -> Command T.Text -> Effect ()
-dispatchCommand sender command =
-    maybe (replyToUser (senderName sender) "LUL")
+dispatchCommand sender cmd =
+    do dispatchBuiltinCommand sender cmd
+       dispatchCustomCommand sender cmd
+
+dispatchBuiltinCommand :: Sender -> Command T.Text -> Effect ()
+dispatchBuiltinCommand sender command =
+    maybe (return ())
           (\(_, f) -> f sender $ commandArgs command)
           (M.lookup (commandName command) commands)
