@@ -47,7 +47,7 @@ addCustomCommand builtinCommands sender (name, message) =
                                                                }
                replyToUser (senderName sender) $ T.pack $ printf "Add command '%s'" name
 
--- TODO: Bot.CustomCommand.deleteCustomCommand is not implemented
+-- TODO(#171): Bot.CustomCommand.deleteCustomCommand is not implemented
 deleteCustomCommand :: CommandHandler T.Text
 deleteCustomCommand sender _ = replyToUser (senderName sender) "Not implemented yet"
 
