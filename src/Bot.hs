@@ -26,54 +26,55 @@ import           Text.Regex
 
 type Bot = Event -> Effect ()
 
-commands :: CommandTable T.Text
-commands = M.fromList [ ("russify", ("Russify western spy text", russifyCommand))
-                      , ("addquote", ("Add quote to quote database",
-                                      authorizeCommand [ "tsoding"
-                                                       , "r3x1m"
-                                                       , "bpaf"
-                                                       , "voldyman"
-                                                       ] addQuoteCommand))
-                      , ("quote", ("Get a quote from the quote database", quoteCommand))
-                      , ("bttv", ("Show all available BTTV emotes", bttvCommand))
-                      , ("ffz", ("Show all available FFZ emotes", ffzCommand))
+builtinCommands :: CommandTable T.Text
+builtinCommands =
+    M.fromList [ ("russify", ("Russify western spy text", russifyCommand))
+               , ("addquote", ("Add quote to quote database",
+                               authorizeCommand [ "tsoding"
+                                                , "r3x1m"
+                                                , "bpaf"
+                                                , "voldyman"
+                                                ] addQuoteCommand))
+               , ("quote", ("Get a quote from the quote database", quoteCommand))
+               , ("bttv", ("Show all available BTTV emotes", bttvCommand))
+               , ("ffz", ("Show all available FFZ emotes", ffzCommand))
 
-                      , ("help", ("Send help", helpCommand commands))
-                      , ("poll", ("Starts a poll", authorizeCommand [ "tsoding"
-                                                                    , "r3x1m"
-                                                                    ]
-                                                   $ wordsArgsCommand pollCommand))
-                      , ("vote", ("Vote for a poll option", voteCommand))
-                      , ("uptime", ("Show stream uptime", uptimeCommand))
-                      , ("rq", ("Get random quote from your log", randomLogRecordCommand))
-                      , ("scoods", ([r|OMGScoods ☝🏻|], \_ _ -> say [r|OMGScoods ☝🏻|]))
-                      , ("schedule", ("Link to the schedule", \_ _ -> say "Hey! Checkout the new schedule thingy! \
-                                                                          \https://tsoding.github.io/schedule-beta/ \
-                                                                          \For questions/bug reports please file an issue \
-                                                                          \https://github.com/tsoding/schedule-beta/issues/new \
-                                                                          \Thanks!" ))
-                      , ("nope", ("Timeout yourself for 1 second", \sender _ -> say
-                                                                                  $ T.pack
-                                                                                  $ printf "/timeout %s 1"
-                                                                                  $ senderName sender))
-                      , ("lit", ("LIT AF", \_ _ -> say [r|😂 👌 💯 🔥 LIT AF|]))
-                      , ("addperiodic", ("Add periodic message", authorizeCommand [ "tsoding"
-                                                                                  , "r3x1m"
-                                                                                  ]
-                                                                   $ \sender message -> do addPeriodicMessage sender message
-                                                                                           replyToUser (senderName sender)
-                                                                                                       "Added the periodic message"))
-                      , ("addcmd", ("Add custom command", authorizeCommand [ "tsoding"
+               , ("help", ("Send help", helpCommand builtinCommands))
+               , ("poll", ("Starts a poll", authorizeCommand [ "tsoding"
+                                                             , "r3x1m"
+                                                             ]
+                                            $ wordsArgsCommand pollCommand))
+               , ("vote", ("Vote for a poll option", voteCommand))
+               , ("uptime", ("Show stream uptime", uptimeCommand))
+               , ("rq", ("Get random quote from your log", randomLogRecordCommand))
+               , ("scoods", ([r|OMGScoods ☝🏻|], \_ _ -> say [r|OMGScoods ☝🏻|]))
+               , ("schedule", ("Link to the schedule", \_ _ -> say "Hey! Checkout the new schedule thingy! \
+                                                                   \https://tsoding.github.io/schedule-beta/ \
+                                                                   \For questions/bug reports please file an issue \
+                                                                   \https://github.com/tsoding/schedule-beta/issues/new \
+                                                                   \Thanks!" ))
+               , ("nope", ("Timeout yourself for 1 second", \sender _ -> say
+                                                                           $ T.pack
+                                                                           $ printf "/timeout %s 1"
+                                                                           $ senderName sender))
+               , ("lit", ("LIT AF", \_ _ -> say [r|😂 👌 💯 🔥 LIT AF|]))
+               , ("addperiodic", ("Add periodic message", authorizeCommand [ "tsoding"
                                                                            , "r3x1m"
                                                                            ]
-                                                            $ regexArgsCommand "([a-zA-Z0-9]+) ?(.*)"
-                                                            $ pairArgsCommand
-                                                            $ addCustomCommand))
-                      , ("delcmd", ("Delete custom command", authorizeCommand [ "tsoding"
-                                                                              , "r3x1m"
-                                                                              ]
-                                                               $ deleteCustomCommand))
-                      ]
+                                                            $ \sender message -> do addPeriodicMessage sender message
+                                                                                    replyToUser (senderName sender)
+                                                                                                "Added the periodic message"))
+               , ("addcmd", ("Add custom command", authorizeCommand [ "tsoding"
+                                                                    , "r3x1m"
+                                                                    ]
+                                                     $ regexArgsCommand "([a-zA-Z0-9]+) ?(.*)"
+                                                     $ pairArgsCommand
+                                                     $ addCustomCommand builtinCommands))
+               , ("delcmd", ("Delete custom command", authorizeCommand [ "tsoding"
+                                                                       , "r3x1m"
+                                                                       ]
+                                                        $ deleteCustomCommand))
+               ]
 
 authorizeCommand :: [T.Text] -> CommandHandler a -> CommandHandler a
 authorizeCommand authorizedPeople commandHandler sender args =
@@ -168,4 +169,4 @@ dispatchBuiltinCommand :: Sender -> Command T.Text -> Effect ()
 dispatchBuiltinCommand sender command =
     maybe (return ())
           (\(_, f) -> f sender $ commandArgs command)
-          (M.lookup (commandName command) commands)
+          (M.lookup (commandName command) builtinCommands)
