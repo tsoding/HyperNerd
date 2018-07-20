@@ -61,6 +61,7 @@ executable HyperNerd
   -- Modules included in this executable, other than Main.
   other-modules:       Bot
                      , Bot.BttvFfz
+                     , Bot.CustomCommand
                      , Bot.Log
                      , Bot.Periodic
                      , Bot.Poll
@@ -94,7 +95,7 @@ executable HyperNerd
                      , ini
                      , irc-core
                      , raw-strings-qq
-                     , regex-compat
+                     , regex-compat-tdfa
                      , safe
                      , sqlite-simple
                      , stm

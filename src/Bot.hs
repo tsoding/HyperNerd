@@ -3,6 +3,7 @@
 module Bot (Bot, bot, Event(..), Sender(..), TwitchStream(..)) where
 
 import           Bot.BttvFfz
+import           Bot.CustomCommand
 import           Bot.Log
 import           Bot.Periodic
 import           Bot.Poll
@@ -25,54 +26,77 @@ import           Text.Regex
 
 type Bot = Event -> Effect ()
 
-type CommandHandler a = Sender -> a -> Effect ()
-type CommandTable a = M.Map T.Text (T.Text, CommandHandler a)
+builtinCommands :: CommandTable T.Text
+builtinCommands =
+    M.fromList [ ("russify", ("Russify western spy text", russifyCommand))
+               , ("addquote", ("Add quote to quote database",
+                               authorizeCommand [ "tsoding"
+                                                , "r3x1m"
+                                                , "bpaf"
+                                                , "voldyman"
+                                                ] addQuoteCommand))
+               , ("quote", ("Get a quote from the quote database", quoteCommand))
+               , ("bttv", ("Show all available BTTV emotes", bttvCommand))
+               , ("ffz", ("Show all available FFZ emotes", ffzCommand))
 
-commands :: CommandTable T.Text
-commands = M.fromList [ ("russify", ("Russify western spy text", russifyCommand))
-                      , ("addquote", ("Add quote to quote database",
-                                      authorizeCommand [ "tsoding"
-                                                       , "r3x1m"
-                                                       , "bpaf"
-                                                       , "voldyman"
-                                                       ] addQuoteCommand))
-                      , ("quote", ("Get a quote from the quote database", quoteCommand))
-                      , ("bttv", ("Show all available BTTV emotes", bttvCommand))
-                      , ("ffz", ("Show all available FFZ emotes", ffzCommand))
-
-                      , ("help", ("Send help", helpCommand commands))
-                      , ("poll", ("Starts a poll", authorizeCommand [ "tsoding"
+               , ("help", ("Send help", helpCommand builtinCommands))
+               , ("poll", ("Starts a poll", authorizeCommand [ "tsoding"
+                                                             , "r3x1m"
+                                                             ]
+                                            $ wordsArgsCommand pollCommand))
+               , ("vote", ("Vote for a poll option", voteCommand))
+               , ("uptime", ("Show stream uptime", uptimeCommand))
+               , ("rq", ("Get random quote from your log", randomLogRecordCommand))
+               , ("scoods", ([r|OMGScoods ☝🏻|], \_ _ -> say [r|OMGScoods ☝🏻|]))
+               , ("schedule", ("Link to the schedule", \_ _ -> say "Hey! Checkout the new schedule thingy! \
+                                                                   \https://tsoding.github.io/schedule-beta/ \
+                                                                   \For questions/bug reports please file an issue \
+                                                                   \https://github.com/tsoding/schedule-beta/issues/new \
+                                                                   \Thanks!" ))
+               , ("nope", ("Timeout yourself for 1 second", \sender _ -> say
+                                                                           $ T.pack
+                                                                           $ printf "/timeout %s 1"
+                                                                           $ senderName sender))
+               , ("lit", ("LIT AF", \_ _ -> say [r|😂 👌 💯 🔥 LIT AF|]))
+               , ("addperiodic", ("Add periodic message", authorizeCommand [ "tsoding"
+                                                                           , "r3x1m"
+                                                                           ]
+                                                            $ \sender message -> do addPeriodicMessage sender message
+                                                                                    replyToUser (senderName sender)
+                                                                                                "Added the periodic message"))
+               , ("addcmd", ("Add custom command", authorizeCommand [ "tsoding"
                                                                     , "r3x1m"
                                                                     ]
-                                                   $ wordsArgsCommand pollCommand))
-                      , ("vote", ("Vote for a poll option", voteCommand))
-                      , ("uptime", ("Show stream uptime", uptimeCommand))
-                      , ("rq", ("Get random quote from your log", randomLogRecordCommand))
-                      , ("scoods", ([r|OMGScoods ☝🏻|], \_ _ -> say [r|OMGScoods ☝🏻|]))
-                      , ("schedule", ("Link to the schedule", \_ _ -> say "Hey! Checkout the new schedule thingy! \
-                                                                          \https://tsoding.github.io/schedule-beta/ \
-                                                                          \For questions/bug reports please file an issue \
-                                                                          \https://github.com/tsoding/schedule-beta/issues/new \
-                                                                          \Thanks!" ))
-                      , ("nope", ("Timeout yourself for 1 second", \sender _ -> say
-                                                                                  $ T.pack
-                                                                                  $ printf "/timeout %s 1"
-                                                                                  $ senderName sender))
-                      , ("lit", ("LIT AF", \_ _ -> say [r|😂 👌 💯 🔥 LIT AF|]))
-                      , ("addperiodic", ("Add periodic message", authorizeCommand [ "tsoding"
-                                                                                  , "r3x1m"
-                                                                                  ]
-                                                                   $ \sender message -> do addPeriodicMessage sender message
-                                                                                           replyToUser (senderName sender)
-                                                                                                       "Added the periodic message"))
-                      ]
+                                                     $ regexArgsCommand "([a-zA-Z0-9]+) ?(.*)"
+                                                     $ pairArgsCommand
+                                                     $ addCustomCommand builtinCommands))
+               , ("delcmd", ("Delete custom command", authorizeCommand ["tsoding", "r3x1m"]
+                                                                       deleteCustomCommand))
+               ]
 
-authorizeCommand :: [T.Text] -> CommandHandler T.Text -> CommandHandler T.Text
+authorizeCommand :: [T.Text] -> CommandHandler a -> CommandHandler a
 authorizeCommand authorizedPeople commandHandler sender args =
     if senderName sender `elem` authorizedPeople
     then commandHandler sender args
     else replyToUser (senderName sender)
                      "You are not authorized to use this command! HyperNyard"
+
+pairArgsCommand :: CommandHandler (a, a) -> CommandHandler [a]
+pairArgsCommand commandHandler sender [x, y] = commandHandler sender (x, y)
+pairArgsCommand _ sender args =
+    replyToUser (senderName sender)
+      $ T.pack
+      $ printf "Expected two arguments but got %d"
+      $ length args
+
+regexArgsCommand :: String -> CommandHandler [T.Text] -> CommandHandler T.Text
+regexArgsCommand regexString commandHandler sender args =
+    maybe (replyToUser (senderName sender)
+             $ T.pack
+             $ printf "Command doesn't match '%s' regex" regexString)
+          (commandHandler sender . map T.pack)
+      $ matchRegex (mkRegex regexString)
+      $ T.unpack args
 
 wordsArgsCommand :: CommandHandler [T.Text] -> CommandHandler T.Text
 wordsArgsCommand commandHandler sender args =
@@ -135,7 +159,12 @@ helpCommand commandTable sender command =
           (fst <$> M.lookup command commandTable)
 
 dispatchCommand :: Sender -> Command T.Text -> Effect ()
-dispatchCommand sender command =
-    maybe (replyToUser (senderName sender) "LUL")
+dispatchCommand sender cmd =
+    do dispatchBuiltinCommand sender cmd
+       dispatchCustomCommand sender cmd
+
+dispatchBuiltinCommand :: Sender -> Command T.Text -> Effect ()
+dispatchBuiltinCommand sender command =
+    maybe (return ())
           (\(_, f) -> f sender $ commandArgs command)
-          (M.lookup (commandName command) commands)
+          (M.lookup (commandName command) builtinCommands)
