@@ -2,7 +2,13 @@
 module Command where
 
 import           Data.Char
+import qualified Data.Map as M
 import qualified Data.Text as T
+import           Effect
+import           Events
+
+type CommandHandler a = Sender -> a -> Effect ()
+type CommandTable a = M.Map T.Text (T.Text, CommandHandler a)
 
 data Command a = Command { commandName :: T.Text
                          , commandArgs :: a

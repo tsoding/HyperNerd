@@ -94,7 +94,7 @@ executable HyperNerd
                      , ini
                      , irc-core
                      , raw-strings-qq
-                     , regex-compat
+                     , regex-compat-tdfa
                      , safe
                      , sqlite-simple
                      , stm

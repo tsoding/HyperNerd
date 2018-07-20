@@ -25,9 +25,6 @@ import           Text.Regex
 
 type Bot = Event -> Effect ()
 
-type CommandHandler a = Sender -> a -> Effect ()
-type CommandTable a = M.Map T.Text (T.Text, CommandHandler a)
-
 commands :: CommandTable T.Text
 commands = M.fromList [ ("russify", ("Russify western spy text", russifyCommand))
                       , ("addquote", ("Add quote to quote database",
@@ -65,14 +62,47 @@ commands = M.fromList [ ("russify", ("Russify western spy text", russifyCommand)
                                                                    $ \sender message -> do addPeriodicMessage sender message
                                                                                            replyToUser (senderName sender)
                                                                                                        "Added the periodic message"))
+                      , ("addcmd", ("Add custom command", authorizeCommand [ "tsoding"
+                                                                           , "r3x1m"
+                                                                           ]
+                                                            $ regexArgsCommand "([a-zA-Z0-9]+) ?(.*)"
+                                                            $ pairArgsCommand
+                                                            $ addCustomCommand))
+                      , ("delcmd", ("Delete custom command", authorizeCommand [ "tsoding"
+                                                                              , "r3x1m"
+                                                                              ]
+                                                               $ deleteCustomCommand))
                       ]
 
-authorizeCommand :: [T.Text] -> CommandHandler T.Text -> CommandHandler T.Text
+addCustomCommand :: CommandHandler (T.Text, T.Text)
+addCustomCommand = undefined
+
+deleteCustomCommand :: CommandHandler T.Text
+deleteCustomCommand = undefined
+
+authorizeCommand :: [T.Text] -> CommandHandler a -> CommandHandler a
 authorizeCommand authorizedPeople commandHandler sender args =
     if senderName sender `elem` authorizedPeople
     then commandHandler sender args
     else replyToUser (senderName sender)
                      "You are not authorized to use this command! HyperNyard"
+
+pairArgsCommand :: CommandHandler (a, a) -> CommandHandler [a]
+pairArgsCommand commandHandler sender [x, y] = commandHandler sender (x, y)
+pairArgsCommand _ sender args =
+    replyToUser (senderName sender)
+      $ T.pack
+      $ printf "Expected two arguments but got %d"
+      $ length args
+
+regexArgsCommand :: String -> CommandHandler [T.Text] -> CommandHandler T.Text
+regexArgsCommand regexString commandHandler sender args =
+    maybe (replyToUser (senderName sender)
+             $ T.pack
+             $ printf "Command doesn't match '%s' regex" regexString)
+          (commandHandler sender . map T.pack)
+      $ matchRegex (mkRegex regexString)
+      $ T.unpack args
 
 wordsArgsCommand :: CommandHandler [T.Text] -> CommandHandler T.Text
 wordsArgsCommand commandHandler sender args =
