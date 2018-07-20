@@ -31,7 +31,7 @@ instance IsEntity CustomCommand where
 
 customCommandByName :: T.Text -> Effect (Maybe CustomCommand)
 customCommandByName name =
-    do entities <- selectEntities "CustomCommand" (Filter (PropertyEquals "name" $ PropertyText name) $ All)
+    do entities <- selectEntities "CustomCommand" (Filter (PropertyEquals "name" $ PropertyText name) All)
        return (listToMaybe entities >>= fromEntity)
 
 addCustomCommand :: CommandTable a -> CommandHandler (T.Text, T.Text)

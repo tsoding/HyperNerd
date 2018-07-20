@@ -70,10 +70,8 @@ builtinCommands =
                                                      $ regexArgsCommand "([a-zA-Z0-9]+) ?(.*)"
                                                      $ pairArgsCommand
                                                      $ addCustomCommand builtinCommands))
-               , ("delcmd", ("Delete custom command", authorizeCommand [ "tsoding"
-                                                                       , "r3x1m"
-                                                                       ]
-                                                        $ deleteCustomCommand))
+               , ("delcmd", ("Delete custom command", authorizeCommand ["tsoding", "r3x1m"]
+                                                                       deleteCustomCommand))
                ]
 
 authorizeCommand :: [T.Text] -> CommandHandler a -> CommandHandler a
