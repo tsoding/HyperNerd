@@ -129,7 +129,7 @@ textContainsWords banwords text =
 
 helsinkiFilter :: Event -> Maybe (Effect ())
 helsinkiFilter (Msg sender text)
-    | textContainsWords ["putin", "trump", "helsinki"] text =
+    | textContainsWords [] text =
         return $ do say $ T.pack $ printf "/timeout %s 300" $ senderName sender
                     replyToUser (senderName sender) "Jebaited"
     | otherwise = Nothing
