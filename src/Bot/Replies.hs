@@ -9,4 +9,4 @@ replyToUser :: T.Text -> T.Text -> Effect ()
 replyToUser user text = say $ T.pack $ printf "@%s %s" user text
 
 replyToSender :: Sender -> T.Text -> Effect ()
-replyToSender sender text = replyToUser (senderName sender) text
+replyToSender sender = replyToUser (senderName sender)
