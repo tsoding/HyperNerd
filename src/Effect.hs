@@ -85,7 +85,7 @@ selectEntities :: T.Text -> Selector -> Effect [Entity]
 selectEntities name selector = liftF $ SelectEntities name selector id
 
 deleteEntities :: T.Text -> Selector -> Effect Int
-deleteEntities _ _ = return 0
+deleteEntities name selector = liftF $ DeleteEntities name selector id
 
 now :: Effect UTCTime
 now = liftF $ Now id
