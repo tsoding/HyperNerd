@@ -71,7 +71,7 @@ builtinCommands =
                                                      $ pairArgsCommand
                                                      $ addCustomCommand builtinCommands))
                , ("delcmd", ("Delete custom command", authorizeCommand ["tsoding", "r3x1m"]
-                                                                       deleteCustomCommand))
+                                                        $ deleteCustomCommand builtinCommands))
                ]
 
 authorizeCommand :: [T.Text] -> CommandHandler a -> CommandHandler a

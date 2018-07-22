@@ -61,6 +61,9 @@ applyEffect effectState (Free (GetEntityById name entityId s)) =
 applyEffect effectState (Free (SelectEntities name selector s)) =
     do entities <- SEP.selectEntities (esSqliteConn effectState) name selector
        applyEffect effectState (s entities)
+applyEffect effectState (Free (DeleteEntities name selector s)) =
+    do n <- SEP.deleteEntities (esSqliteConn effectState) name selector
+       applyEffect effectState (s n)
 applyEffect effectState (Free (HttpRequest request s)) =
     do response <- httpLBS request
        applyEffect effectState (s response)
