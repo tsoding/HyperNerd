@@ -4,6 +4,7 @@ module SqliteEntityPersistence ( prepareSchema
                                , createEntity
                                , getEntityById
                                , selectEntities
+                               , deleteEntities
                                , nextEntityId
                                ) where
 
@@ -187,3 +188,6 @@ selectEntities conn name (Take n (Shuffle (Filter (PropertyEquals propertyName p
 -- TODO(#157): SEP.selectEntities doesn't support arbitrary selector combination
 selectEntities _ _ selector =
     error ("Unsupported selector combination " ++ show selector)
+
+deleteEntities :: Connection -> T.Text -> Selector -> IO Int
+deleteEntities _ _ _ = return 0

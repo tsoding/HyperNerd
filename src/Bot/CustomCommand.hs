@@ -47,9 +47,17 @@ addCustomCommand builtinCommands sender (name, message) =
                                                                }
                replyToUser (senderName sender) $ T.pack $ printf "Add command '%s'" name
 
--- TODO(#171): Bot.CustomCommand.deleteCustomCommand is not implemented
-deleteCustomCommand :: CommandHandler T.Text
-deleteCustomCommand sender _ = replyToUser (senderName sender) "Not implemented yet"
+deleteCustomCommand :: CommandTable a -> CommandHandler T.Text
+deleteCustomCommand builtinCommands sender name =
+    do customCommand  <- customCommandByName name
+       builtinCommand <- return $ M.lookup name builtinCommands
+
+       if isJust customCommand
+       then do _ <- deleteEntities "CustomCommand" (Filter (PropertyEquals "name" $ PropertyText name) All)
+               replyToSender sender $ T.pack $ printf "Command '%s' has been removed" name
+       else if isJust builtinCommand
+            then replyToSender sender $ T.pack $ printf "Command '%s' is builtin and can't be removed like that" name
+            else replyToSender sender $ T.pack $ printf "Command '%s' does not exist" name
 
 dispatchCustomCommand :: Sender -> Command T.Text -> Effect ()
 dispatchCustomCommand _ command =

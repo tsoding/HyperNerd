@@ -9,6 +9,7 @@ module Effect ( Effect
               , createEntity
               , getEntityById
               , selectEntities
+              , deleteEntities
               , httpRequest
               , now
               , timeout
@@ -38,6 +39,7 @@ data EffectF s = Say T.Text s
                | CreateEntity T.Text Properties (Entity -> s)
                | GetEntityById T.Text Int (Maybe Entity -> s)
                | SelectEntities T.Text Selector ([Entity] -> s)
+               | DeleteEntities T.Text Selector (Int -> s)
                | Now (UTCTime -> s)
                | HttpRequest Request (Response B8.ByteString -> s)
                | TwitchApiRequest Request (Response B8.ByteString -> s)
@@ -53,6 +55,8 @@ instance Functor EffectF where
         GetEntityById name ident (f . h)
     fmap f (SelectEntities name selector h) =
         SelectEntities name selector (f . h)
+    fmap f (DeleteEntities name selector h) =
+        DeleteEntities name selector (f . h)
     fmap f (Now h) = Now (f . h)
     fmap f (HttpRequest r h) = HttpRequest r (f . h)
     fmap f (TwitchApiRequest r h) = TwitchApiRequest r (f . h)
@@ -79,6 +83,9 @@ getEntityById name ident = liftF $ GetEntityById name ident id
 
 selectEntities :: T.Text -> Selector -> Effect [Entity]
 selectEntities name selector = liftF $ SelectEntities name selector id
+
+deleteEntities :: T.Text -> Selector -> Effect Int
+deleteEntities name selector = liftF $ DeleteEntities name selector id
 
 now :: Effect UTCTime
 now = liftF $ Now id

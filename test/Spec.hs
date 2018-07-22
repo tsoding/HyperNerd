@@ -7,16 +7,18 @@ import           System.Exit
 import           Test.HUnit
 
 main :: IO Counts
-main = do results <- runTestTT $ TestList [ SEPS.doublePrepareSchemaSpec
+main = do results <- runTestTT $ TestList [ BFS.parseCorrectBttvEmoteList
+                                          , BFS.parseCorrectFfzEmoteList
+                                          , CS.commandWithGermanUmlauts
+                                          , CS.commandWithRussians
                                           , SEPS.createEntityAndGetItById
                                           , SEPS.createSeveralEntityTypes
+                                          -- TODO(#173): SEP.deleteEntities is not implemented
+                                          -- , SEPS.deleteEntitiesWithPropertyEquals
                                           , SEPS.getRandomEntityIdWithPropertyEquals
                                           , SEPS.nextEntityId
                                           , SEPS.selectEntitiesWithPropertyEquals
-                                          , CS.commandWithGermanUmlauts
-                                          , CS.commandWithRussians
-                                          , BFS.parseCorrectBttvEmoteList
-                                          , BFS.parseCorrectFfzEmoteList
+                                          , SEPS.doublePrepareSchemaSpec
                                           ]
           if errors results + failures results == 0
           then exitSuccess

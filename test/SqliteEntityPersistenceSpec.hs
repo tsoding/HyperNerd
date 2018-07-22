@@ -81,9 +81,24 @@ selectEntitiesWithPropertyEquals =
                            $ M.fromList [ ("foo", PropertyInt 42) ]
                          replicateM_ 3
                            $ SEP.createEntity conn "entity"
-                           $ M.fromList [ ("foo", PropertyInt 43) ]
+                           $ M.fromList [ ("foo", PropertyInt 44) ]
                          entities <- SEP.selectEntities conn "entity" (Filter (PropertyEquals "foo" (PropertyInt 42)) All)
                          assertEqual "Unexpected amount of entities selected" 2 $ length entities
+
+deleteEntitiesWithPropertyEquals :: Test
+deleteEntitiesWithPropertyEquals =
+    TestLabel "Delete Entities with PropertyEquals" $
+    TestCase $ do databaseFile <- emptySystemTempFile "database"
+                  SQLite.withConnection databaseFile $ \conn ->
+                      do SEP.prepareSchema conn
+                         replicateM_ 2
+                           $ SEP.createEntity conn "entity"
+                           $ M.fromList [ ("foo", PropertyInt 42) ]
+                         replicateM_ 3
+                           $ SEP.createEntity conn "entity"
+                           $ M.fromList [ ("foo", PropertyInt 43) ]
+                         n <- SEP.deleteEntities conn "entity" (Filter (PropertyEquals "foo" (PropertyInt 42)) All)
+                         assertEqual "Unexpected amount of entities removed" 2 n
 
 getRandomEntityIdWithPropertyEquals :: Test
 getRandomEntityIdWithPropertyEquals =
