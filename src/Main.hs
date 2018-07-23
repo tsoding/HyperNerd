@@ -29,94 +29,94 @@ import           Text.Printf
 -- TODO(#15): utilize rate limits
 -- See https://github.com/glguy/irc-core/blob/6dd03dfed4affe6ae8cdd63ede68c88d70af9aac/bot/src/Main.hs#L32
 
-data EffectState =
-    EffectState { esConfig :: Config
-                , esSqliteConn :: SQLite.Connection
-                , esTimeouts :: [(Integer, Effect ())]
-                , esIncoming :: IncomingQueue
-                , esOutcoming :: OutcomingQueue
-                }
+data BotState =
+    BotState { esConfig :: Config
+             , esSqliteConn :: SQLite.Connection
+             , esTimeouts :: [(Integer, Effect ())]
+             , esIncoming :: IncomingQueue
+             , esOutcoming :: OutcomingQueue
+             }
 
-applyEffect :: EffectState -> Effect () -> IO EffectState
-applyEffect effectState (Pure _) = return effectState
-applyEffect effectState (Free (Say text s)) =
-    do atomically $ writeTQueue (esOutcoming effectState) (ircPrivmsg (configChannel $ esConfig effectState) text)
-       applyEffect effectState s
-applyEffect effectState (Free (LogMsg msg s)) =
+applyEffect :: BotState -> Effect () -> IO BotState
+applyEffect botState (Pure _) = return botState
+applyEffect botState (Free (Say text s)) =
+    do atomically $ writeTQueue (esOutcoming botState) (ircPrivmsg (configChannel $ esConfig botState) text)
+       applyEffect botState s
+applyEffect botState (Free (LogMsg msg s)) =
     do putStrLn $ T.unpack msg
-       applyEffect effectState s
-applyEffect effectState (Free (Now s)) =
+       applyEffect botState s
+applyEffect botState (Free (Now s)) =
     do timestamp <- getCurrentTime
-       applyEffect effectState (s timestamp)
-applyEffect effectState (Free (ErrorEff msg)) =
+       applyEffect botState (s timestamp)
+applyEffect botState (Free (ErrorEff msg)) =
     do putStrLn $ printf "[ERROR] %s" msg
-       return effectState
+       return botState
 
-applyEffect effectState (Free (CreateEntity name properties s)) =
-    do entityId <- SEP.createEntity (esSqliteConn effectState) name properties
-       applyEffect effectState (s entityId)
-applyEffect effectState (Free (GetEntityById name entityId s)) =
-    do entity <- SEP.getEntityById (esSqliteConn effectState) name entityId
-       applyEffect effectState (s entity)
-applyEffect effectState (Free (SelectEntities name selector s)) =
-    do entities <- SEP.selectEntities (esSqliteConn effectState) name selector
-       applyEffect effectState (s entities)
-applyEffect effectState (Free (DeleteEntities name selector s)) =
-    do n <- SEP.deleteEntities (esSqliteConn effectState) name selector
-       applyEffect effectState (s n)
-applyEffect effectState (Free (HttpRequest request s)) =
+applyEffect botState (Free (CreateEntity name properties s)) =
+    do entityId <- SEP.createEntity (esSqliteConn botState) name properties
+       applyEffect botState (s entityId)
+applyEffect botState (Free (GetEntityById name entityId s)) =
+    do entity <- SEP.getEntityById (esSqliteConn botState) name entityId
+       applyEffect botState (s entity)
+applyEffect botState (Free (SelectEntities name selector s)) =
+    do entities <- SEP.selectEntities (esSqliteConn botState) name selector
+       applyEffect botState (s entities)
+applyEffect botState (Free (DeleteEntities name selector s)) =
+    do n <- SEP.deleteEntities (esSqliteConn botState) name selector
+       applyEffect botState (s n)
+applyEffect botState (Free (HttpRequest request s)) =
     do response <- httpLBS request
-       applyEffect effectState (s response)
-applyEffect effectState (Free (TwitchApiRequest request s)) =
-    do clientId <- return $ fromString $ T.unpack $ configClientId $ esConfig effectState
+       applyEffect botState (s response)
+applyEffect botState (Free (TwitchApiRequest request s)) =
+    do clientId <- return $ fromString $ T.unpack $ configClientId $ esConfig botState
        response <- httpLBS (addRequestHeader "Client-ID" clientId request)
-       applyEffect effectState (s response)
-applyEffect effectState (Free (Timeout ms e s)) =
-    applyEffect (effectState { esTimeouts = (ms, e) : esTimeouts effectState }) s
+       applyEffect botState (s response)
+applyEffect botState (Free (Timeout ms e s)) =
+    applyEffect (botState { esTimeouts = (ms, e) : esTimeouts botState }) s
 
-advanceTimeouts :: Integer -> EffectState -> IO EffectState
-advanceTimeouts dt effectState =
+advanceTimeouts :: Integer -> BotState -> IO BotState
+advanceTimeouts dt botState =
     foldl (\esIO e -> esIO >>= flip applyEffect e)
-          (return $ effectState { esTimeouts = unripe })
+          (return $ botState { esTimeouts = unripe })
       $ map snd ripe
     where (ripe, unripe) = span ((< 0) . fst)
                              $ map (\(t, e) -> (t - dt, e))
-                             $ esTimeouts effectState
+                             $ esTimeouts botState
 
-ircTransport :: Bot -> EffectState -> IO ()
-ircTransport b effectState =
+ircTransport :: Bot -> BotState -> IO ()
+ircTransport b botState =
     join
       (eventLoop b
           <$> getTime Monotonic
-          <*> SQLite.withTransaction (esSqliteConn effectState)
-                (applyEffect effectState $ b Join))
+          <*> SQLite.withTransaction (esSqliteConn botState)
+                (applyEffect botState $ b Join))
 
-handleIrcMessage :: Bot -> EffectState -> RawIrcMsg -> IO EffectState
-handleIrcMessage b effectState msg =
+handleIrcMessage :: Bot -> BotState -> RawIrcMsg -> IO BotState
+handleIrcMessage b botState msg =
     do cookedMsg <- return $ cookIrcMsg msg
        print cookedMsg
        case cookedMsg of
-         (Ping xs) -> do atomically $ writeTQueue (esOutcoming effectState) (ircPong xs)
-                         return effectState
+         (Ping xs) -> do atomically $ writeTQueue (esOutcoming botState) (ircPong xs)
+                         return botState
          (Privmsg userInfo target msgText) ->
-             SQLite.withTransaction (esSqliteConn effectState)
-               $ applyEffect effectState (b $ Msg Sender { senderName = idText $ userNick userInfo
+             SQLite.withTransaction (esSqliteConn botState)
+               $ applyEffect botState (b $ Msg Sender { senderName = idText $ userNick userInfo
                                                          , senderChannel = idText target
                                                          , senderSubscriber = maybe False (\(TagEntry _ value) -> value == "1")
                                                                                 $ find (\(TagEntry ident _) -> ident == "subscriber")
                                                                                 $ _msgTags msg
                                                          }
                                           msgText)
-         _ -> return effectState
+         _ -> return botState
 
-eventLoop :: Bot -> TimeSpec -> EffectState -> IO ()
-eventLoop b prevCPUTime effectState =
+eventLoop :: Bot -> TimeSpec -> BotState -> IO ()
+eventLoop b prevCPUTime botState =
     do threadDelay 10000        -- to prevent busy looping
        currCPUTime <- getTime Monotonic
        let deltaTime = toNanoSecs (currCPUTime - prevCPUTime) `div` 1000000
-       mb <- atomically $ tryReadTQueue (esIncoming effectState)
-       maybe (return effectState)
-             (handleIrcMessage b effectState)
+       mb <- atomically $ tryReadTQueue (esIncoming botState)
+       maybe (return botState)
+             (handleIrcMessage b botState)
              mb
          >>= advanceTimeouts deltaTime
          >>= eventLoop b currCPUTime
@@ -126,12 +126,12 @@ logicEntry incoming outcoming conf databasePath =
     SQLite.withConnection databasePath
       $ \sqliteConn -> do SEP.prepareSchema sqliteConn
                           ircTransport bot
-                             EffectState { esConfig = conf
-                                         , esSqliteConn = sqliteConn
-                                         , esTimeouts = []
-                                         , esIncoming = incoming
-                                         , esOutcoming = outcoming
-                                         }
+                             BotState { esConfig = conf
+                                      , esSqliteConn = sqliteConn
+                                      , esTimeouts = []
+                                      , esIncoming = incoming
+                                      , esOutcoming = outcoming
+                                      }
 
 mainWithArgs :: [String] -> IO ()
 mainWithArgs [configPath, databasePath] =
