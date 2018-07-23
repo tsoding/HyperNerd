@@ -4,13 +4,14 @@ module Bot.Log where
 import           Bot.Replies
 import           Control.Monad
 import qualified Data.Map as M
+import           Data.Maybe
 import qualified Data.Text as T
 import           Data.Time
 import           Effect
 import           Entity
 import           Events
+import           Property
 import           Text.Printf
-import           Data.Maybe
 
 data LogRecord = LogRecord { lrUser :: T.Text
                            , lrChannel :: T.Text

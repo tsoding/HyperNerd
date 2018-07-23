@@ -8,6 +8,7 @@ import qualified Data.Text as T
 import qualified Database.SQLite.Simple as SQLite
 import           Effect (Selector(..), Condition(..))
 import           Entity
+import           Property
 import qualified SqliteEntityPersistence as SEP
 import           System.IO.Temp
 import           Test.HUnit

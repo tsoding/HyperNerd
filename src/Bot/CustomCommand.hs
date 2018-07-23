@@ -12,6 +12,7 @@ import qualified Data.Text as T
 import           Effect
 import           Entity
 import           Events
+import           Property
 import           Text.Printf
 
 data CustomCommand = CustomCommand { customCommandName :: T.Text
