@@ -15,6 +15,7 @@ import           Data.Time
 import           Database.SQLite.Simple
 import           Effect (Selector(..), Condition(..))
 import           Entity
+import           Property
 import           Text.RawString.QQ
 
 data EntityIdEntry = EntityIdEntry T.Text Int

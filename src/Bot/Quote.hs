@@ -10,6 +10,7 @@ import           Data.Time
 import           Effect
 import           Entity
 import           Events
+import           Property
 import           Text.Printf
 import           Text.Read
 

@@ -24,6 +24,7 @@ import qualified Data.Text as T
 import           Data.Time
 import           Entity
 import           Network.HTTP.Simple
+import           Property
 
 data Condition = PropertyEquals T.Text Property deriving Show
 

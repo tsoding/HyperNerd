@@ -74,6 +74,7 @@ executable HyperNerd
                      , Entity
                      , Events
                      , IrcTransport
+                     , Property
                      , SqliteEntityPersistence
   
   -- LANGUAGE extensions used by modules in this package.
@@ -145,9 +146,10 @@ test-suite HyperNerdTest
                      , Command
                      , CommandSpec
                      , Effect
+                     , Entity
                      , Events
+                     , Property
                      , SqliteEntityPersistence
                      , SqliteEntityPersistenceSpec
-                     , Entity
 
   default-language:    Haskell2010

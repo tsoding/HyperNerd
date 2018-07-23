@@ -4,12 +4,13 @@ module Bot.Periodic ( addPeriodicMessage
                     ) where
 
 import qualified Data.Map as M
+import           Data.Maybe
 import qualified Data.Text as T
 import           Data.Time
 import           Effect
 import           Entity
 import           Events
-import           Data.Maybe
+import           Property
 
 data PeriodicMessage = PeriodicMessage { pmText :: T.Text
                                        , pmAuthor :: T.Text
