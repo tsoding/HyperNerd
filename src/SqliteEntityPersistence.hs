@@ -128,6 +128,16 @@ getEntityById conn name ident =
                           , ":entityId" := ident
                           ]
 
+deleteEntityById :: Connection -> T.Text -> Int -> IO ()
+deleteEntityById conn name ident =
+    executeNamed conn [r| DELETE
+                          FROM EntityProperty
+                          WHERE entityName=:entityName AND
+                                entityId=:entityId |]
+                      [ ":entityName" := name
+                      , ":entityId" := ident
+                      ]
+
 selectEntities :: Connection -> T.Text -> Selector -> IO [Entity]
 selectEntities conn name selector =
     do ids <- selectEntityIds conn name selector
@@ -200,5 +210,10 @@ selectEntityIds conn name (Take n (Shuffle (Filter (PropertyEquals propertyName 
 selectEntityIds _ _ selector =
     error ("Unsupported selector combination " ++ show selector)
 
-deleteEntities :: Connection -> T.Text -> Selector -> IO Int
-deleteEntities _ _ _ = return 0
+deleteEntities :: Connection    -- conn
+               -> T.Text        -- name
+               -> Selector      -- selector
+               -> IO Int
+deleteEntities conn name selector =
+    do ids <- selectEntityIds conn name selector
+       length <$> traverse (deleteEntityById conn name) ids

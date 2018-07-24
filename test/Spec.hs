@@ -13,8 +13,7 @@ main = do results <- runTestTT $ TestList [ BFS.parseCorrectBttvEmoteList
                                           , CS.commandWithRussians
                                           , SEPS.createEntityAndGetItById
                                           , SEPS.createSeveralEntityTypes
-                                          -- TODO(#173): SEP.deleteEntities is not implemented
-                                          -- , SEPS.deleteEntitiesWithPropertyEquals
+                                          , SEPS.deleteEntitiesWithPropertyEquals
                                           , SEPS.getRandomEntityIdWithPropertyEquals
                                           , SEPS.nextEntityId
                                           , SEPS.selectEntitiesWithPropertyEquals
