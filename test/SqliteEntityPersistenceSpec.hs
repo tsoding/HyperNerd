@@ -98,8 +98,10 @@ deleteEntitiesWithPropertyEquals =
                          replicateM_ 3
                            $ SEP.createEntity conn "entity"
                            $ M.fromList [ ("foo", PropertyInt 43) ]
-                         n <- SEP.deleteEntities conn "entity" (Filter (PropertyEquals "foo" (PropertyInt 42)) All)
-                         assertEqual "Unexpected amount of entities removed" 2 n
+                         countRemoved <- SEP.deleteEntities conn "entity" (Filter (PropertyEquals "foo" (PropertyInt 42)) All)
+                         countRemaining <- length <$> SEP.selectEntities conn "entity" All
+                         assertEqual "Unexpected amount of entities removed" 2 countRemoved
+                         assertEqual "Unexpected amount of remaining entities" 3 countRemaining
 
 getRandomEntityIdWithPropertyEquals :: Test
 getRandomEntityIdWithPropertyEquals =
