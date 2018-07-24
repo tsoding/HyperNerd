@@ -206,7 +206,7 @@ selectEntityIds conn name (Take n (Shuffle (Filter (PropertyEquals propertyName 
                           , ":propertyUTCTime" := (fromProperty property :: Maybe UTCTime)
                           , ":n" := n
                           ]
--- TODO: SEP.selectEntityIds doesn't support arbitrary selector combination
+-- TODO(#178): SEP.selectEntityIds doesn't support arbitrary selector combination
 selectEntityIds _ _ selector =
     error ("Unsupported selector combination " ++ show selector)
 
