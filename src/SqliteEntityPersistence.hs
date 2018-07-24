@@ -129,61 +129,75 @@ getEntityById conn name ident =
                           ]
 
 selectEntities :: Connection -> T.Text -> Selector -> IO [Entity]
-selectEntities conn name All =
-    do ids <- map fromOnly
-                <$> queryNamed conn [r| SELECT entityId
-                                        FROM EntityProperty
-                                        WHERE entityName = :entityName
-                                        GROUP BY entityId
-                                        ORDER BY entityId |]
-                                    [ ":entityName" := name ]
+selectEntities conn name selector =
+    do ids <- selectEntityIds conn name selector
        fromMaybe [] . traverse id <$> traverse (getEntityById conn name) ids
-selectEntities conn name (Filter (PropertyEquals propertyName propertyValue) All) =
-    filter (\e -> M.lookup propertyName (entityProperties e) == return propertyValue)
-      <$> selectEntities conn name All
-selectEntities conn name (Shuffle All) =
-    do ids <- map fromOnly
-                <$> queryNamed conn [r| SELECT entityId
-                                        FROM EntityProperty
-                                        WHERE entityName = :entityName
-                                        GROUP BY entityId
-                                        ORDER BY RANDOM() |]
-                                    [ ":entityName" := name ]
-       fromMaybe [] . traverse id <$> traverse (getEntityById conn name) ids
-selectEntities conn name (Take n (Shuffle All)) =
-    do ids <- map fromOnly
-                <$> queryNamed conn [r| SELECT entityId
-                                        FROM EntityProperty
-                                        WHERE entityName = :entityName
-                                        GROUP BY entityId
-                                        ORDER BY RANDOM()
-                                        LIMIT :n |]
-                                    [ ":entityName" := name
-                                    , ":n" := n
-                                    ]
-       fromMaybe [] . traverse id <$> traverse (getEntityById conn name) ids
-selectEntities conn name (Take n (Shuffle (Filter (PropertyEquals propertyName property) All))) =
-    do ids <- map fromOnly
-                <$> queryNamed conn [r| SELECT entityId
-                                        FROM EntityProperty
-                                        WHERE entityName = :entityName
-                                          AND propertyName = :propertyName
-                                          AND propertyInt IS :propertyIntValue
-                                          AND propertyText IS :propertyTextValue
-                                          AND propertyUTCTime IS :propertyUTCTime
-                                        GROUP BY entityId
-                                        ORDER BY RANDOM()
-                                        LIMIT :n |]
-                                    [ ":entityName" := name
-                                    , ":propertyName" := propertyName
-                                    , ":propertyIntValue" := (fromProperty property :: Maybe Int)
-                                    , ":propertyTextValue" := (fromProperty property :: Maybe T.Text)
-                                    , ":propertyUTCTime" := (fromProperty property :: Maybe UTCTime)
-                                    , ":n" := n
-                                    ]
-       fromMaybe [] . traverse id <$> traverse (getEntityById conn name) ids
--- TODO(#157): SEP.selectEntities doesn't support arbitrary selector combination
-selectEntities _ _ selector =
+
+selectEntityIds :: Connection -> T.Text -> Selector -> IO [Int]
+selectEntityIds conn name All =
+    map fromOnly
+      <$> queryNamed conn [r| SELECT entityId
+                              FROM EntityProperty
+                              WHERE entityName = :entityName
+                              GROUP BY entityId
+                              ORDER BY entityId |]
+                          [ ":entityName" := name ]
+selectEntityIds conn name (Filter (PropertyEquals propertyName property) All) =
+    map fromOnly
+      <$> queryNamed conn [r| SELECT entityId
+                              FROM EntityProperty
+                              WHERE entityName = :entityName
+                                AND propertyName = :propertyName
+                                AND propertyInt IS :propertyIntValue
+                                AND propertyText IS :propertyTextValue
+                                AND propertyUTCTime IS :propertyUTCTime
+                              GROUP BY entityId |]
+                          [ ":entityName" := name
+                          , ":propertyName" := propertyName
+                          , ":propertyIntValue" := (fromProperty property :: Maybe Int)
+                          , ":propertyTextValue" := (fromProperty property :: Maybe T.Text)
+                          , ":propertyUTCTime" := (fromProperty property :: Maybe UTCTime)
+                          ]
+selectEntityIds conn name (Shuffle All) =
+    map fromOnly
+      <$> queryNamed conn [r| SELECT entityId
+                              FROM EntityProperty
+                              WHERE entityName = :entityName
+                              GROUP BY entityId
+                              ORDER BY RANDOM() |]
+                          [ ":entityName" := name ]
+selectEntityIds conn name (Take n (Shuffle All)) =
+    map fromOnly
+      <$> queryNamed conn [r| SELECT entityId
+                              FROM EntityProperty
+                              WHERE entityName = :entityName
+                              GROUP BY entityId
+                              ORDER BY RANDOM()
+                              LIMIT :n |]
+                          [ ":entityName" := name
+                          , ":n" := n
+                          ]
+selectEntityIds conn name (Take n (Shuffle (Filter (PropertyEquals propertyName property) All))) =
+    map fromOnly
+      <$> queryNamed conn [r| SELECT entityId
+                              FROM EntityProperty
+                              WHERE entityName = :entityName
+                                AND propertyName = :propertyName
+                                AND propertyInt IS :propertyIntValue
+                                AND propertyText IS :propertyTextValue
+                                AND propertyUTCTime IS :propertyUTCTime
+                              GROUP BY entityId
+                              ORDER BY RANDOM()
+                              LIMIT :n |]
+                          [ ":entityName" := name
+                          , ":propertyName" := propertyName
+                          , ":propertyIntValue" := (fromProperty property :: Maybe Int)
+                          , ":propertyTextValue" := (fromProperty property :: Maybe T.Text)
+                          , ":propertyUTCTime" := (fromProperty property :: Maybe UTCTime)
+                          , ":n" := n
+                          ]
+-- TODO: SEP.selectEntityIds doesn't support arbitrary selector combination
+selectEntityIds _ _ selector =
     error ("Unsupported selector combination " ++ show selector)
 
 deleteEntities :: Connection -> T.Text -> Selector -> IO Int
