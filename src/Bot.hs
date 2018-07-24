@@ -1,5 +1,4 @@
 {-# LANGUAGE OverloadedStrings #-}
-{-# LANGUAGE QuasiQuotes #-}
 module Bot (Bot, bot, Event(..), Sender(..), TwitchStream(..)) where
 
 import           Bot.BttvFfz
@@ -21,7 +20,6 @@ import qualified Data.Text as T
 import           Effect
 import           Events
 import           Text.Printf
-import           Text.RawString.QQ
 import           Text.Regex
 
 type Bot = Event -> Effect ()
@@ -47,17 +45,10 @@ builtinCommands =
                , ("vote", ("Vote for a poll option", voteCommand))
                , ("uptime", ("Show stream uptime", uptimeCommand))
                , ("rq", ("Get random quote from your log", randomLogRecordCommand))
-               , ("scoods", ([r|OMGScoods ☝🏻|], \_ _ -> say [r|OMGScoods ☝🏻|]))
-               , ("schedule", ("Link to the schedule", \_ _ -> say "Hey! Checkout the new schedule thingy! \
-                                                                   \https://tsoding.github.io/schedule-beta/ \
-                                                                   \For questions/bug reports please file an issue \
-                                                                   \https://github.com/tsoding/schedule-beta/issues/new \
-                                                                   \Thanks!" ))
                , ("nope", ("Timeout yourself for 1 second", \sender _ -> say
                                                                            $ T.pack
                                                                            $ printf "/timeout %s 1"
                                                                            $ senderName sender))
-               , ("lit", ("LIT AF", \_ _ -> say [r|😂 👌 💯 🔥 LIT AF|]))
                , ("addperiodic", ("Add periodic message", authorizeCommand [ "tsoding"
                                                                            , "r3x1m"
                                                                            ]
