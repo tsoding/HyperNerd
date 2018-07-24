@@ -128,19 +128,15 @@ getEntityById conn name ident =
                           , ":entityId" := ident
                           ]
 
-getAllEntityIds :: Connection -> T.Text -> IO [Int]
-getAllEntityIds conn name =
-    map fromOnly
-      <$> queryNamed conn [r| SELECT entityId
-                              FROM EntityProperty
-                              WHERE entityName = :entityName
-                              GROUP BY entityId
-                              ORDER BY entityId |]
-                          [ ":entityName" := name ]
-
 selectEntities :: Connection -> T.Text -> Selector -> IO [Entity]
 selectEntities conn name All =
-    do ids <- getAllEntityIds conn name
+    do ids <- map fromOnly
+                <$> queryNamed conn [r| SELECT entityId
+                                        FROM EntityProperty
+                                        WHERE entityName = :entityName
+                                        GROUP BY entityId
+                                        ORDER BY entityId |]
+                                    [ ":entityName" := name ]
        fromMaybe [] . traverse id <$> traverse (getEntityById conn name) ids
 selectEntities conn name (Filter (PropertyEquals propertyName propertyValue) All) =
     filter (\e -> M.lookup propertyName (entityProperties e) == return propertyValue)
