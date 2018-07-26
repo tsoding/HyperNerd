@@ -101,11 +101,14 @@ handleIrcMessage b botState msg =
          (Privmsg userInfo target msgText) ->
              SQLite.withTransaction (bsSqliteConn botState)
                $ applyEffect botState (b $ Msg Sender { senderName = idText $ userNick userInfo
-                                                         , senderChannel = idText target
-                                                         , senderSubscriber = maybe False (\(TagEntry _ value) -> value == "1")
-                                                                                $ find (\(TagEntry ident _) -> ident == "subscriber")
-                                                                                $ _msgTags msg
-                                                         }
+                                                      , senderChannel = idText target
+                                                      , senderSubscriber = maybe False (\(TagEntry _ value) -> value == "1")
+                                                                             $ find (\(TagEntry ident _) -> ident == "subscriber")
+                                                                             $ _msgTags msg
+                                                      , senderMod = maybe False (\(TagEntry _ value) -> value == "1")
+                                                                      $ find (\(TagEntry ident _) -> ident == "mod")
+                                                                      $ _msgTags msg
+                                                      }
                                           msgText)
          _ -> return botState
 

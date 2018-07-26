@@ -5,6 +5,7 @@ import qualified Data.Text as T
 data Sender = Sender { senderName :: T.Text
                      , senderChannel :: T.Text
                      , senderSubscriber :: Bool
+                     , senderMod :: Bool
                      }
 
 data Event = Join
