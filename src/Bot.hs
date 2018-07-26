@@ -100,7 +100,7 @@ textContainsLink t = isJust
                        $ T.unpack t
 
 senderIsPleb :: Sender -> Bool
-senderIsPleb sender = (not $ senderSubscriber sender) && (not $ senderMod sender)
+senderIsPleb sender = not (senderSubscriber sender) && not (senderMod sender)
 
 forbidLinksForPlebs :: Event -> Maybe (Effect())
 forbidLinksForPlebs (Msg sender text)
