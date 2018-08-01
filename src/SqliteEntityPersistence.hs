@@ -5,6 +5,7 @@ module SqliteEntityPersistence ( prepareSchema
                                , getEntityById
                                , selectEntities
                                , deleteEntities
+                               , updateEntities
                                , nextEntityId
                                ) where
 
@@ -13,7 +14,7 @@ import           Data.Maybe
 import qualified Data.Text as T
 import           Data.Time
 import           Database.SQLite.Simple
-import           Effect (Selector(..), Condition(..))
+import           Effect (Selector(..), Condition(..), Action(..))
 import           Entity
 import           Property
 import           Text.RawString.QQ
@@ -217,3 +218,11 @@ deleteEntities :: Connection    -- conn
 deleteEntities conn name selector =
     do ids <- selectEntityIds conn name selector
        length <$> traverse (deleteEntityById conn name) ids
+
+-- TODO: SEP.updateEntities is not implemented
+updateEntities :: Connection    -- conn
+               -> T.Text        -- name
+               -> Selector      -- selector
+               -> Action        -- action
+               -> IO Int
+updateEntities _ _ _ _ = return 0
