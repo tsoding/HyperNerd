@@ -8,6 +8,7 @@ module Effect ( Effect
               , logMsg
               , createEntity
               , getEntityById
+              , updateEntityById
               , selectEntities
               , deleteEntities
               , updateEntities
@@ -40,6 +41,7 @@ data EffectF s = Say T.Text s
                | ErrorEff T.Text
                | CreateEntity T.Text Properties (Entity Properties -> s)
                | GetEntityById T.Text Int (Maybe (Entity Properties) -> s)
+               | UpdateEntityById T.Text Int Properties (Maybe (Entity Properties) -> s)
                | SelectEntities T.Text Selector ([Entity Properties] -> s)
                | DeleteEntities T.Text Selector (Int -> s)
                | UpdateEntities T.Text Selector Properties (Int -> s)
@@ -56,6 +58,8 @@ instance Functor EffectF where
     fmap _ (ErrorEff text) = ErrorEff text
     fmap f (GetEntityById name ident h) =
         GetEntityById name ident (f . h)
+    fmap f (UpdateEntityById name ident properties h) =
+        UpdateEntityById name ident properties (f . h)
     fmap f (SelectEntities name selector h) =
         SelectEntities name selector (f . h)
     fmap f (DeleteEntities name selector h) =
@@ -85,6 +89,10 @@ createEntity name entity =
 
 getEntityById :: T.Text -> Int -> Effect (Maybe (Entity Properties))
 getEntityById name ident = liftF $ GetEntityById name ident id
+
+updateEntityById :: T.Text -> Int -> Properties -> Effect (Maybe (Entity Properties))
+updateEntityById name ident properties =
+    liftF $ UpdateEntityById name ident properties id
 
 selectEntities :: T.Text -> Selector -> Effect [Entity Properties]
 selectEntities name selector = liftF $ SelectEntities name selector id
