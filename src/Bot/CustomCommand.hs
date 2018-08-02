@@ -35,10 +35,10 @@ instance IsEntity CustomCommand where
                                                                      }
                                return (const customCommand <$> entity)
 
-customCommandByName :: T.Text -> Effect (Maybe CustomCommand)
+customCommandByName :: T.Text -> Effect (Maybe (Entity CustomCommand))
 customCommandByName name =
     do entities <- selectEntities "CustomCommand" (Filter (PropertyEquals "name" $ PropertyText name) All)
-       return $ fmap entityPayload (listToMaybe entities >>= fromProperties)
+       return (listToMaybe entities >>= fromProperties)
 
 addCustomCommand :: CommandTable a -> CommandHandler (T.Text, T.Text)
 addCustomCommand builtinCommands sender (name, message) =
@@ -72,12 +72,16 @@ expandCustomCommandVars customCommand =
     where message = customCommandMessage customCommand
           times = fromMaybe 0 $ customCommandTimes customCommand
 
--- TODO(#183): customCommandTime is not increamented on dispatch
+bumpCustomCommandTimes :: CustomCommand -> CustomCommand
+bumpCustomCommandTimes customCommand =
+    customCommand { customCommandTimes = return $ fromMaybe 0 (customCommandTimes customCommand) + 1 }
+
 dispatchCustomCommand :: Sender -> Command T.Text -> Effect ()
 dispatchCustomCommand _ command =
-    do customCommand <- customCommandByName $ commandName command
+    do customCommand <- customCommandByName (commandName command)
        maybe (return ())
-             (say . customCommandMessage . expandCustomCommandVars)
+             (\c -> do _ <- updateEntityById (bumpCustomCommandTimes <$> c)
+                       say $ customCommandMessage $ expandCustomCommandVars $ entityPayload c)
              customCommand
 
 -- TODO(#170): There is no way to update a custom command
