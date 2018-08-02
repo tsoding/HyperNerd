@@ -71,7 +71,7 @@ expandCustomCommandVars customCommand =
     where message = customCommandMessage customCommand
           times = fromMaybe 0 $ customCommandTimes customCommand
 
--- TODO: customCommandTime is not increamented on dispatch
+-- TODO(#183): customCommandTime is not increamented on dispatch
 dispatchCustomCommand :: Sender -> Command T.Text -> Effect ()
 dispatchCustomCommand _ command =
     do customCommand <- customCommandByName $ commandName command
