@@ -38,9 +38,9 @@ data Selector = All
 data EffectF s = Say T.Text s
                | LogMsg T.Text s
                | ErrorEff T.Text
-               | CreateEntity T.Text Properties (Entity -> s)
-               | GetEntityById T.Text Int (Maybe Entity -> s)
-               | SelectEntities T.Text Selector ([Entity] -> s)
+               | CreateEntity T.Text Properties (Entity Properties -> s)
+               | GetEntityById T.Text Int (Maybe (Entity Properties) -> s)
+               | SelectEntities T.Text Selector ([Entity Properties] -> s)
                | DeleteEntities T.Text Selector (Int -> s)
                | UpdateEntities T.Text Selector Properties (Int -> s)
                | Now (UTCTime -> s)
@@ -79,14 +79,14 @@ say msg = liftF $ Say msg ()
 logMsg :: T.Text -> Effect ()
 logMsg msg = liftF $ LogMsg msg ()
 
-createEntity :: IsEntity e => T.Text -> e -> Effect Entity
+createEntity :: IsEntity e => T.Text -> e -> Effect (Entity Properties)
 createEntity name entity =
     liftF $ CreateEntity name (toProperties entity) id
 
-getEntityById :: T.Text -> Int -> Effect (Maybe Entity)
+getEntityById :: T.Text -> Int -> Effect (Maybe (Entity Properties))
 getEntityById name ident = liftF $ GetEntityById name ident id
 
-selectEntities :: T.Text -> Selector -> Effect [Entity]
+selectEntities :: T.Text -> Selector -> Effect [Entity Properties]
 selectEntities name selector = liftF $ SelectEntities name selector id
 
 deleteEntities :: T.Text -> Selector -> Effect Int
