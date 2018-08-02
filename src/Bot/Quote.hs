@@ -28,10 +28,11 @@ instance IsEntity Quote where
     fromEntity entity = do content <- extractProperty "content" entity
                            quoter <- extractProperty "quoter" entity
                            timestamp <- extractProperty "timestamp" entity
-                           return Quote { quoteContent = content
-                                        , quoteQuoter = quoter
-                                        , quoteTimestamp = timestamp
-                                        }
+                           quote <- return Quote { quoteContent = content
+                                                 , quoteQuoter = quoter
+                                                 , quoteTimestamp = timestamp
+                                                 }
+                           return (const quote <$> entity)
 
 addQuoteCommand :: Sender -> T.Text -> Effect ()
 addQuoteCommand sender content =
@@ -65,4 +66,4 @@ quoteFoundReply :: T.Text -> Maybe (Entity Properties) -> Effect ()
 quoteFoundReply user Nothing = replyToUser user "Couldn't find any quotes"
 quoteFoundReply user (Just entity) =
     do quote <- fromEntity entity
-       replyToUser user $ T.pack $ printf "%s (%d)" (quoteContent quote) (entityId entity)
+       replyToUser user $ T.pack $ printf "%s (%d)" (quoteContent $ entityPayload quote) (entityId entity)

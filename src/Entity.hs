@@ -18,6 +18,12 @@ data Entity a = Entity { entityId :: Int
                        , entityPayload :: a
                        } deriving (Eq, Show)
 
+instance Functor Entity where
+    fmap f entity = Entity { entityId = entityId entity
+                           , entityName = entityName entity
+                           , entityPayload = f $ entityPayload entity
+                           }
+
 extractProperty :: (IsProperty a, MonadThrow m) => T.Text -> Entity Properties -> m a
 extractProperty fieldName entity =
     do property <- maybe (throwM $ PropertyException (T.pack $ printf "No field '%s' in entity '%s' with id %d"
@@ -30,7 +36,7 @@ extractProperty fieldName entity =
 
 class IsEntity e where
     toProperties :: e -> Properties
-    fromEntity :: MonadThrow m => Entity Properties -> m e
+    fromEntity :: MonadThrow m => Entity Properties -> m (Entity e)
 
 restoreEntity :: T.Text
               -> Int

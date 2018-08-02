@@ -26,10 +26,11 @@ instance IsEntity PeriodicMessage where
     fromEntity e = do text      <- extractProperty "text" e
                       author    <- extractProperty "author" e
                       createdAt <- extractProperty "createdAt" e
-                      return PeriodicMessage { pmText = text
-                                             , pmAuthor = author
-                                             , pmCreatedAt = createdAt
-                                             }
+                      periodicMessage <- return PeriodicMessage { pmText = text
+                                                                , pmAuthor = author
+                                                                , pmCreatedAt = createdAt
+                                                                }
+                      return (const periodicMessage <$> e)
 
 addPeriodicMessage :: Sender -> T.Text -> Effect ()
 addPeriodicMessage sender message =
@@ -45,6 +46,6 @@ startPeriodicMessages =
     do maybeEntity <- listToMaybe <$> selectEntities "PeriodicMessage" (Take 1 $ Shuffle All)
        maybePm <- return (maybeEntity >>= fromEntity)
        maybe (return ())
-             (say . pmText)
+             (say . pmText . entityPayload)
              maybePm
        timeout (20 * 60 * 1000) startPeriodicMessages
