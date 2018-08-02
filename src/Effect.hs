@@ -41,7 +41,7 @@ data EffectF s = Say T.Text s
                | ErrorEff T.Text
                | CreateEntity T.Text Properties (Entity Properties -> s)
                | GetEntityById T.Text Int (Maybe (Entity Properties) -> s)
-               | UpdateEntityById T.Text Int Properties (Maybe (Entity Properties) -> s)
+               | UpdateEntityById (Entity Properties) (Maybe (Entity Properties) -> s)
                | SelectEntities T.Text Selector ([Entity Properties] -> s)
                | DeleteEntities T.Text Selector (Int -> s)
                | UpdateEntities T.Text Selector Properties (Int -> s)
@@ -58,8 +58,8 @@ instance Functor EffectF where
     fmap _ (ErrorEff text) = ErrorEff text
     fmap f (GetEntityById name ident h) =
         GetEntityById name ident (f . h)
-    fmap f (UpdateEntityById name ident properties h) =
-        UpdateEntityById name ident properties (f . h)
+    fmap f (UpdateEntityById entity h) =
+        UpdateEntityById entity (f . h)
     fmap f (SelectEntities name selector h) =
         SelectEntities name selector (f . h)
     fmap f (DeleteEntities name selector h) =
@@ -92,10 +92,9 @@ createEntity name entity =
 getEntityById :: T.Text -> Int -> Effect (Maybe (Entity Properties))
 getEntityById name ident = liftF $ GetEntityById name ident id
 
--- TODO: updateEntityById should have type `IsEntity e => Entity e -> Effect (Maybe (Entity e))`
-updateEntityById :: T.Text -> Int -> Properties -> Effect (Maybe (Entity Properties))
-updateEntityById name ident properties =
-    liftF $ UpdateEntityById name ident properties id
+updateEntityById :: IsEntity e => Entity e -> Effect (Maybe (Entity e))
+updateEntityById entity =
+    fmap (>>= fromProperties) $ liftF $ UpdateEntityById (toProperties <$> entity) id
 
 -- TODO: selectEntities shoudl have type `IsEntity e => T.Text -> Selector -> Effect [Entity e]`
 selectEntities :: T.Text -> Selector -> Effect [Entity Properties]
