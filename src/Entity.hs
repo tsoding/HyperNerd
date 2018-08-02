@@ -36,7 +36,8 @@ extractProperty fieldName entity =
 
 class IsEntity e where
     toProperties :: e -> Properties
-    fromEntity :: MonadThrow m => Entity Properties -> m (Entity e)
+    -- TODO: fromProperties should have type `MonadThrow m => Properties -> m e`
+    fromProperties :: MonadThrow m => Entity Properties -> m (Entity e)
 
 restoreEntity :: T.Text
               -> Int

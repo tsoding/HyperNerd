@@ -26,7 +26,7 @@ instance IsEntity LogRecord where
                    , ("msg", PropertyText $ lrMsg lr)
                    , ("timestamp", PropertyUTCTime $ lrTimestamp lr)
                    ]
-    fromEntity entity =
+    fromProperties entity =
         do user      <- extractProperty "user" entity
            channel   <- extractProperty "channel" entity
            msg       <- extractProperty "msg" entity
@@ -61,5 +61,5 @@ randomLogRecordCommand sender rawName =
                                                      $ Filter (PropertyEquals "user" $ PropertyText user)
                                                        All)
        maybe (return ())
-             (fromEntity >=> replyToUser user . lrMsg . entityPayload)
+             (fromProperties >=> replyToUser user . lrMsg . entityPayload)
              entity

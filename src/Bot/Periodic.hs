@@ -23,14 +23,14 @@ instance IsEntity PeriodicMessage where
                    , ("author", PropertyText $ pmAuthor pm)
                    , ("createdAt", PropertyUTCTime $ pmCreatedAt pm)
                    ]
-    fromEntity e = do text      <- extractProperty "text" e
-                      author    <- extractProperty "author" e
-                      createdAt <- extractProperty "createdAt" e
-                      periodicMessage <- return PeriodicMessage { pmText = text
-                                                                , pmAuthor = author
-                                                                , pmCreatedAt = createdAt
-                                                                }
-                      return (const periodicMessage <$> e)
+    fromProperties e = do text      <- extractProperty "text" e
+                          author    <- extractProperty "author" e
+                          createdAt <- extractProperty "createdAt" e
+                          periodicMessage <- return PeriodicMessage { pmText = text
+                                                                    , pmAuthor = author
+                                                                    , pmCreatedAt = createdAt
+                                                                    }
+                          return (const periodicMessage <$> e)
 
 addPeriodicMessage :: Sender -> T.Text -> Effect ()
 addPeriodicMessage sender message =
@@ -44,7 +44,7 @@ addPeriodicMessage sender message =
 startPeriodicMessages :: Effect ()
 startPeriodicMessages =
     do maybeEntity <- listToMaybe <$> selectEntities "PeriodicMessage" (Take 1 $ Shuffle All)
-       maybePm <- return (maybeEntity >>= fromEntity)
+       maybePm <- return (maybeEntity >>= fromProperties)
        maybe (return ())
              (say . pmText . entityPayload)
              maybePm

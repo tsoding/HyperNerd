@@ -26,19 +26,19 @@ instance IsEntity CustomCommand where
                    , ("message", PropertyText $ customCommandMessage customCommand)
                    , ("times", PropertyInt $ fromMaybe 0 (customCommandTimes customCommand))
                    ]
-    fromEntity entity = do name    <-          extractProperty "name" entity
-                           message <-          extractProperty "message" entity
-                           times   <- return $ extractProperty "times" entity
-                           customCommand <- return CustomCommand { customCommandName = name
-                                                                 , customCommandMessage = message
-                                                                 , customCommandTimes = times
-                                                                 }
-                           return (const customCommand <$> entity)
+    fromProperties entity = do name    <-          extractProperty "name" entity
+                               message <-          extractProperty "message" entity
+                               times   <- return $ extractProperty "times" entity
+                               customCommand <- return CustomCommand { customCommandName = name
+                                                                     , customCommandMessage = message
+                                                                     , customCommandTimes = times
+                                                                     }
+                               return (const customCommand <$> entity)
 
 customCommandByName :: T.Text -> Effect (Maybe CustomCommand)
 customCommandByName name =
     do entities <- selectEntities "CustomCommand" (Filter (PropertyEquals "name" $ PropertyText name) All)
-       return $ fmap entityPayload (listToMaybe entities >>= fromEntity)
+       return $ fmap entityPayload (listToMaybe entities >>= fromProperties)
 
 addCustomCommand :: CommandTable a -> CommandHandler (T.Text, T.Text)
 addCustomCommand builtinCommands sender (name, message) =
