@@ -11,6 +11,7 @@ import           Data.Time
 import           Property
 import           Text.Printf
 
+-- TODO: Properties should have IsEntity instnace
 type Properties = M.Map T.Text Property
 
 data Entity a = Entity { entityId :: Int

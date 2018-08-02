@@ -60,7 +60,7 @@ applyEffect botState (Free (GetEntityById name entityId s)) =
        applyEffect botState (s entity)
 -- TODO: UpdateEntityById is not interpreted by applyEffect
 applyEffect botState (Free (UpdateEntityById _ _ _ s)) =
-    do applyEffect botState (s Nothing)
+    applyEffect botState (s Nothing)
 applyEffect botState (Free (SelectEntities name selector s)) =
     do entities <- SEP.selectEntities (bsSqliteConn botState) name selector
        applyEffect botState (s entities)
