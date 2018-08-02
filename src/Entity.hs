@@ -11,7 +11,6 @@ import           Data.Time
 import           Property
 import           Text.Printf
 
--- TODO: Properties should have IsEntity instnace
 type Properties = M.Map T.Text Property
 
 data Entity a = Entity { entityId :: Int
@@ -52,3 +51,7 @@ restoreEntity name ident rawProperties =
                         , entityId = ident
                         , entityPayload = M.fromList properties
                         }
+
+instance IsEntity Properties where
+    toProperties = id
+    fromProperties = return

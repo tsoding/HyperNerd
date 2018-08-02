@@ -84,28 +84,20 @@ logMsg :: T.Text -> Effect ()
 logMsg msg = liftF $ LogMsg msg ()
 
 -- TODO: createEntity should have type `IsEntity e => T.Text -> e -> Effect (Entity e)`
---
--- Depends on IsEntity Properties
 createEntity :: IsEntity e => T.Text -> e -> Effect (Entity Properties)
 createEntity name entity =
     liftF $ CreateEntity name (toProperties entity) id
 
 -- TODO: getEntityById should have type `IsEntity e => T.Text -> Int -> Effect (Maybe Entity e)`
---
--- Depends on IsEntity Properties
 getEntityById :: T.Text -> Int -> Effect (Maybe (Entity Properties))
 getEntityById name ident = liftF $ GetEntityById name ident id
 
 -- TODO: updateEntityById should have type `IsEntity e => Entity e -> Effect (Maybe (Entity e))`
---
--- Depends on IsEntity Properties
 updateEntityById :: T.Text -> Int -> Properties -> Effect (Maybe (Entity Properties))
 updateEntityById name ident properties =
     liftF $ UpdateEntityById name ident properties id
 
 -- TODO: selectEntities shoudl have type `IsEntity e => T.Text -> Selector -> Effect [Entity e]`
---
--- Depends on IsEntity Properties
 selectEntities :: T.Text -> Selector -> Effect [Entity Properties]
 selectEntities name selector = liftF $ SelectEntities name selector id
 
