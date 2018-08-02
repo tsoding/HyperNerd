@@ -88,7 +88,7 @@ createEntity :: IsEntity e => T.Text -> e -> Effect (Entity Properties)
 createEntity name entity =
     liftF $ CreateEntity name (toProperties entity) id
 
--- TODO: getEntityById should have type `IsEntity e => T.Text -> Int -> Effect (Maybe Entity e)`
+-- TODO(#187): getEntityById should have type `IsEntity e => T.Text -> Int -> Effect (Maybe Entity e)`
 getEntityById :: T.Text -> Int -> Effect (Maybe (Entity Properties))
 getEntityById name ident = liftF $ GetEntityById name ident id
 
