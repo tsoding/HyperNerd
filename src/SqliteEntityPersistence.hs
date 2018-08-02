@@ -219,7 +219,7 @@ deleteEntities conn name selector =
     do ids <- selectEntityIds conn name selector
        length <$> traverse (deleteEntityById conn name) ids
 
--- TODO: SEP.updateEntities is not implemented
+-- TODO(#184): SEP.updateEntities is not implemented
 updateEntities :: Connection    -- conn
                -> T.Text        -- name
                -> Selector      -- selector
