@@ -26,16 +26,17 @@ instance IsEntity LogRecord where
                    , ("msg", PropertyText $ lrMsg lr)
                    , ("timestamp", PropertyUTCTime $ lrTimestamp lr)
                    ]
-    fromEntity entity =
+    fromProperties entity =
         do user      <- extractProperty "user" entity
            channel   <- extractProperty "channel" entity
            msg       <- extractProperty "msg" entity
            timestamp <- extractProperty "timestamp" entity
-           return LogRecord { lrUser = user
-                            , lrChannel = channel
-                            , lrMsg = msg
-                            , lrTimestamp = timestamp
-                            }
+           logRecord <- return LogRecord { lrUser = user
+                                         , lrChannel = channel
+                                         , lrMsg = msg
+                                         , lrTimestamp = timestamp
+                                         }
+           return (const logRecord <$> entity)
 
 recordUserMsg :: Sender -> T.Text -> Effect ()
 recordUserMsg sender msg =
@@ -60,5 +61,5 @@ randomLogRecordCommand sender rawName =
                                                      $ Filter (PropertyEquals "user" $ PropertyText user)
                                                        All)
        maybe (return ())
-             (fromEntity >=> replyToUser user . lrMsg)
+             (fromProperties >=> replyToUser user . lrMsg . entityPayload)
              entity

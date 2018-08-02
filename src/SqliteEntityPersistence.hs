@@ -104,17 +104,17 @@ prepareSchema conn =
                           entityId INTEGER NOT NULL DEFAULT 0
                         ); |]
 
-createEntity :: Connection -> T.Text -> Properties -> IO Entity
+createEntity :: Connection -> T.Text -> Properties -> IO (Entity Properties)
 createEntity conn name properties =
     do
       ident <- nextEntityId conn name
       mapM_ (uncurry $ createEntityProperty conn name ident) $ M.toList properties
       return Entity { entityId = ident
                     , entityName = name
-                    , entityProperties = properties
+                    , entityPayload = properties
                     }
 
-getEntityById :: Connection -> T.Text -> Int -> IO (Maybe Entity)
+getEntityById :: Connection -> T.Text -> Int -> IO (Maybe (Entity Properties))
 getEntityById conn name ident =
     restoreEntity name ident
       <$> queryNamed conn [r| SELECT propertyName,
@@ -139,7 +139,7 @@ deleteEntityById conn name ident =
                       , ":entityId" := ident
                       ]
 
-selectEntities :: Connection -> T.Text -> Selector -> IO [Entity]
+selectEntities :: Connection -> T.Text -> Selector -> IO [Entity Properties]
 selectEntities conn name selector =
     do ids <- selectEntityIds conn name selector
        fromMaybe [] . traverse id <$> traverse (getEntityById conn name) ids

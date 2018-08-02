@@ -25,21 +25,23 @@ instance IsEntity Poll where
     toProperties poll = M.fromList [ ("author", PropertyText $ pollAuthor poll)
                                    , ("startedAt", PropertyUTCTime $ pollStartedAt poll)
                                    ]
-    fromEntity entity = do author    <- extractProperty "author" entity
-                           startedAt <- extractProperty "startedAt" entity
-                           return Poll { pollAuthor = author
-                                       , pollStartedAt = startedAt
-                                       }
+    fromProperties entity = do author    <- extractProperty "author" entity
+                               startedAt <- extractProperty "startedAt" entity
+                               poll      <- return Poll { pollAuthor = author
+                                                        , pollStartedAt = startedAt
+                                                        }
+                               return (const poll <$> entity)
 
 instance IsEntity PollOption where
     toProperties pollOption = M.fromList [ ("pollId", PropertyInt $ poPollId pollOption)
                                          , ("name", PropertyText $ poName pollOption)
                                          ]
-    fromEntity entity = do pollId <- extractProperty "pollId" entity
-                           name   <- extractProperty "name" entity
-                           return PollOption { poPollId = pollId
-                                             , poName = name
-                                             }
+    fromProperties entity = do pollId <- extractProperty "pollId" entity
+                               name   <- extractProperty "name" entity
+                               pollOption <- return PollOption { poPollId = pollId
+                                                               , poName = name
+                                                               }
+                               return (const pollOption <$> entity)
 
 pollCommand :: Sender -> [T.Text] -> Effect ()
 pollCommand sender options =

@@ -26,18 +26,19 @@ instance IsEntity CustomCommand where
                    , ("message", PropertyText $ customCommandMessage customCommand)
                    , ("times", PropertyInt $ fromMaybe 0 (customCommandTimes customCommand))
                    ]
-    fromEntity entity = do name    <-          extractProperty "name" entity
-                           message <-          extractProperty "message" entity
-                           times   <- return $ extractProperty "times" entity
-                           return CustomCommand { customCommandName = name
-                                                , customCommandMessage = message
-                                                , customCommandTimes = times
-                                                }
+    fromProperties entity = do name    <-          extractProperty "name" entity
+                               message <-          extractProperty "message" entity
+                               times   <- return $ extractProperty "times" entity
+                               customCommand <- return CustomCommand { customCommandName = name
+                                                                     , customCommandMessage = message
+                                                                     , customCommandTimes = times
+                                                                     }
+                               return (const customCommand <$> entity)
 
-customCommandByName :: T.Text -> Effect (Maybe CustomCommand)
+customCommandByName :: T.Text -> Effect (Maybe (Entity CustomCommand))
 customCommandByName name =
     do entities <- selectEntities "CustomCommand" (Filter (PropertyEquals "name" $ PropertyText name) All)
-       return (listToMaybe entities >>= fromEntity)
+       return (listToMaybe entities >>= fromProperties)
 
 addCustomCommand :: CommandTable a -> CommandHandler (T.Text, T.Text)
 addCustomCommand builtinCommands sender (name, message) =
@@ -71,12 +72,16 @@ expandCustomCommandVars customCommand =
     where message = customCommandMessage customCommand
           times = fromMaybe 0 $ customCommandTimes customCommand
 
--- TODO(#183): customCommandTime is not increamented on dispatch
+bumpCustomCommandTimes :: CustomCommand -> CustomCommand
+bumpCustomCommandTimes customCommand =
+    customCommand { customCommandTimes = return $ fromMaybe 0 (customCommandTimes customCommand) + 1 }
+
 dispatchCustomCommand :: Sender -> Command T.Text -> Effect ()
 dispatchCustomCommand _ command =
-    do customCommand <- customCommandByName $ commandName command
+    do customCommand <- customCommandByName (commandName command)
        maybe (return ())
-             (say . customCommandMessage . expandCustomCommandVars)
+             (\c -> do _ <- updateEntityById (bumpCustomCommandTimes <$> c)
+                       say $ customCommandMessage $ expandCustomCommandVars $ entityPayload c)
              customCommand
 
 -- TODO(#170): There is no way to update a custom command
