@@ -83,7 +83,7 @@ say msg = liftF $ Say msg ()
 logMsg :: T.Text -> Effect ()
 logMsg msg = liftF $ LogMsg msg ()
 
--- TODO: createEntity should have type `IsEntity e => T.Text -> e -> Effect (Entity e)`
+-- TODO(#186): createEntity should have type `IsEntity e => T.Text -> e -> Effect (Entity e)`
 createEntity :: IsEntity e => T.Text -> e -> Effect (Entity Properties)
 createEntity name entity =
     liftF $ CreateEntity name (toProperties entity) id
