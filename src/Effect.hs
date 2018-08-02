@@ -4,7 +4,6 @@ module Effect ( Effect
               , EffectF (..)
               , Selector (..)
               , Condition (..)
-              , Action (..)
               , say
               , logMsg
               , createEntity
@@ -36,10 +35,6 @@ data Selector = All
               | Take Int Selector
                 deriving Show
 
-data Action = SetProperty T.Text Property
-            | RemoveProperty T.Text
-            | ActionSequence [Action]
-
 data EffectF s = Say T.Text s
                | LogMsg T.Text s
                | ErrorEff T.Text
@@ -47,7 +42,7 @@ data EffectF s = Say T.Text s
                | GetEntityById T.Text Int (Maybe Entity -> s)
                | SelectEntities T.Text Selector ([Entity] -> s)
                | DeleteEntities T.Text Selector (Int -> s)
-               | UpdateEntities T.Text Selector Action (Int -> s)
+               | UpdateEntities T.Text Selector Properties (Int -> s)
                | Now (UTCTime -> s)
                | HttpRequest Request (Response B8.ByteString -> s)
                | TwitchApiRequest Request (Response B8.ByteString -> s)
@@ -65,8 +60,8 @@ instance Functor EffectF where
         SelectEntities name selector (f . h)
     fmap f (DeleteEntities name selector h) =
         DeleteEntities name selector (f . h)
-    fmap f (UpdateEntities name selector action h) =
-        UpdateEntities name selector action (f . h)
+    fmap f (UpdateEntities name selector properties h) =
+        UpdateEntities name selector properties (f . h)
     fmap f (Now h) = Now (f . h)
     fmap f (HttpRequest r h) = HttpRequest r (f . h)
     fmap f (TwitchApiRequest r h) = TwitchApiRequest r (f . h)
@@ -97,8 +92,8 @@ selectEntities name selector = liftF $ SelectEntities name selector id
 deleteEntities :: T.Text -> Selector -> Effect Int
 deleteEntities name selector = liftF $ DeleteEntities name selector id
 
-updateEntities :: T.Text -> Selector -> Action -> Effect Int
-updateEntities name selector action = liftF $ UpdateEntities name selector action id
+updateEntities :: T.Text -> Selector -> Properties -> Effect Int
+updateEntities name selector properties = liftF $ UpdateEntities name selector properties id
 
 now :: Effect UTCTime
 now = liftF $ Now id

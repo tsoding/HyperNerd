@@ -64,8 +64,8 @@ applyEffect botState (Free (SelectEntities name selector s)) =
 applyEffect botState (Free (DeleteEntities name selector s)) =
     do n <- SEP.deleteEntities (bsSqliteConn botState) name selector
        applyEffect botState (s n)
-applyEffect botState (Free (UpdateEntities name selector action s)) =
-    do n <- SEP.updateEntities (bsSqliteConn botState) name selector action
+applyEffect botState (Free (UpdateEntities name selector properties s)) =
+    do n <- SEP.updateEntities (bsSqliteConn botState) name selector properties
        applyEffect botState (s n)
 applyEffect botState (Free (HttpRequest request s)) =
     do response <- httpLBS request

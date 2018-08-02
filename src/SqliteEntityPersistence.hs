@@ -14,7 +14,7 @@ import           Data.Maybe
 import qualified Data.Text as T
 import           Data.Time
 import           Database.SQLite.Simple
-import           Effect (Selector(..), Condition(..), Action(..))
+import           Effect (Selector(..), Condition(..))
 import           Entity
 import           Property
 import           Text.RawString.QQ
@@ -223,6 +223,6 @@ deleteEntities conn name selector =
 updateEntities :: Connection    -- conn
                -> T.Text        -- name
                -> Selector      -- selector
-               -> Action        -- action
+               -> Properties    -- properties
                -> IO Int
 updateEntities _ _ _ _ = return 0
