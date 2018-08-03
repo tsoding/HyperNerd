@@ -84,6 +84,7 @@ bumpCustomCommandTimes customCommand =
 
 
 {-# ANN dispatchCustomCommand ("HLint: ignore Use fmap" :: String) #-}
+{-# ANN dispatchCustomCommand ("HLint: ignore Use <$>" :: String) #-}
 dispatchCustomCommand :: Sender -> Command T.Text -> Effect ()
 dispatchCustomCommand _ command =
   do customCommand <- runMaybeT (customCommandByName (commandName command)
