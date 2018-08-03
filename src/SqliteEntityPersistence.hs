@@ -229,7 +229,7 @@ updateEntities :: Connection    -- conn
                -> IO Int
 updateEntities _ _ _ _ = return 0
 
--- TODO: updateEntityProperty is not implemented
+-- TODO(#194): updateEntityProperty is not implemented
 updateEntityProperty :: T.Text   -- entityName
                      -> Int      -- entityId
                      -> T.Text   -- propertyName
