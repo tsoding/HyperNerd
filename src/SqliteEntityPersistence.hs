@@ -235,7 +235,8 @@ updateEntityProperty :: T.Text   -- entityName
                      -> T.Text   -- propertyName
                      -> Property -- propertyValue
                      -> IO (Maybe (T.Text, Property))
-updateEntityProperty = undefined
+updateEntityProperty _ _ propertyName propertyValue =
+    return $ return (propertyName, propertyValue)
 
 updateEntityById :: Connection        -- conn
                  -> Entity Properties -- entity
