@@ -238,6 +238,8 @@ updateEntityProperty :: T.Text   -- entityName
 updateEntityProperty _ _ propertyName propertyValue =
     return $ return (propertyName, propertyValue)
 
+{-# ANN updateEntityById ("HLint: ignore Use fmap" :: String) #-}
+{-# ANN updateEntityById ("HLint: ignore Use <$>" :: String) #-}
 updateEntityById :: Connection        -- conn
                  -> Entity Properties -- entity
                  -> IO (Maybe (Entity Properties))
