@@ -3,6 +3,7 @@
 module SqliteEntityPersistence ( prepareSchema
                                , createEntity
                                , getEntityById
+                               , updateEntityById
                                , selectEntities
                                , deleteEntities
                                , updateEntities
@@ -226,3 +227,8 @@ updateEntities :: Connection    -- conn
                -> Properties    -- properties
                -> IO Int
 updateEntities _ _ _ _ = return 0
+
+updateEntityById :: Connection        -- con
+                 -> Entity Properties -- entity
+                 -> IO (Maybe (Entity Properties))
+updateEntityById _ entity = return $ return entity
