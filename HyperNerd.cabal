@@ -102,6 +102,7 @@ executable HyperNerd
                      , stm
                      , text
                      , time
+                     , transformers
                      , unordered-containers
                      , uri-encode
   
