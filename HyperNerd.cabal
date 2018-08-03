@@ -131,15 +131,16 @@ test-suite HyperNerdTest
                      , file-embed
                      , free
                      , http-conduit
+                     , HUnit
                      , raw-strings-qq
                      , safe
                      , sqlite-simple
                      , temporary
                      , text
                      , time
+                     , transformers
                      , unordered-containers
                      , uri-encode
-                     , HUnit
 
   other-modules:       Bot.BttvFfz
                      , Bot.Replies

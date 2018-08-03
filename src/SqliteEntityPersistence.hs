@@ -3,12 +3,14 @@
 module SqliteEntityPersistence ( prepareSchema
                                , createEntity
                                , getEntityById
+                               , updateEntityById
                                , selectEntities
                                , deleteEntities
                                , updateEntities
                                , nextEntityId
                                ) where
 
+import           Control.Monad.Trans.Maybe
 import qualified Data.Map as M
 import           Data.Maybe
 import qualified Data.Text as T
@@ -226,3 +228,25 @@ updateEntities :: Connection    -- conn
                -> Properties    -- properties
                -> IO Int
 updateEntities _ _ _ _ = return 0
+
+-- TODO(#194): updateEntityProperty is not implemented
+updateEntityProperty :: T.Text   -- entityName
+                     -> Int      -- entityId
+                     -> T.Text   -- propertyName
+                     -> Property -- propertyValue
+                     -> IO (Maybe (T.Text, Property))
+updateEntityProperty _ _ propertyName propertyValue =
+    return $ return (propertyName, propertyValue)
+
+{-# ANN updateEntityById ("HLint: ignore Use fmap" :: String) #-}
+{-# ANN updateEntityById ("HLint: ignore Use <$>" :: String) #-}
+updateEntityById :: Connection        -- conn
+                 -> Entity Properties -- entity
+                 -> IO (Maybe (Entity Properties))
+updateEntityById conn entity =
+    runMaybeT (MaybeT (getEntityById conn (entityName entity) (entityId entity))
+                 >>= return . M.toList . entityPayload
+                 >>= traverse (MaybeT . uncurry (updateEntityProperty name ident))
+                 >>= return . Entity ident name . M.fromList)
+    where name = entityName entity
+          ident = entityId entity
