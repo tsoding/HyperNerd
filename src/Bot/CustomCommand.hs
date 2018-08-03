@@ -6,6 +6,8 @@ module Bot.CustomCommand ( addCustomCommand
 
 import           Bot.Replies
 import           Command
+import           Control.Monad
+import           Control.Monad.Trans.Maybe
 import qualified Data.Map as M
 import           Data.Maybe
 import qualified Data.Text as T
@@ -35,15 +37,19 @@ instance IsEntity CustomCommand where
                                                                      }
                                return (const customCommand <$> entity)
 
-customCommandByName :: T.Text -> Effect (Maybe (Entity CustomCommand))
+{-# ANN customCommandByName ("HLint: ignore Use <$>" :: String) #-}
+customCommandByName :: T.Text -> MaybeT Effect (Entity CustomCommand)
 customCommandByName name =
-    do entities <- selectEntities "CustomCommand" (Filter (PropertyEquals "name" $ PropertyText name) All)
-       return (listToMaybe entities >>= fromProperties)
+    MaybeT
+      $ fmap (listToMaybe >=> fromProperties)
+      $ selectEntities "CustomCommand"
+      $ Filter (PropertyEquals "name" $ PropertyText name) All
 
 addCustomCommand :: CommandTable a -> CommandHandler (T.Text, T.Text)
 addCustomCommand builtinCommands sender (name, message) =
-    do customCommand  <- customCommandByName name
+    do customCommand  <- runMaybeT $ customCommandByName name
        builtinCommand <- return $ M.lookup name builtinCommands
+
        if isJust customCommand || isJust builtinCommand
        then replyToUser (senderName sender)
               $ T.pack
@@ -56,7 +62,7 @@ addCustomCommand builtinCommands sender (name, message) =
 
 deleteCustomCommand :: CommandTable a -> CommandHandler T.Text
 deleteCustomCommand builtinCommands sender name =
-    do customCommand  <- customCommandByName name
+    do customCommand  <- runMaybeT $ customCommandByName name
        builtinCommand <- return $ M.lookup name builtinCommands
 
        if isJust customCommand
@@ -76,12 +82,17 @@ bumpCustomCommandTimes :: CustomCommand -> CustomCommand
 bumpCustomCommandTimes customCommand =
     customCommand { customCommandTimes = return $ fromMaybe 0 (customCommandTimes customCommand) + 1 }
 
+
+{-# ANN dispatchCustomCommand ("HLint: ignore Use fmap" :: String) #-}
+{-# ANN dispatchCustomCommand ("HLint: ignore Use <$>" :: String) #-}
 dispatchCustomCommand :: Sender -> Command T.Text -> Effect ()
 dispatchCustomCommand _ command =
-    do customCommand <- customCommandByName (commandName command)
-       maybe (return ())
-             (\c -> do _ <- updateEntityById (bumpCustomCommandTimes <$> c)
-                       say $ customCommandMessage $ expandCustomCommandVars $ entityPayload c)
-             customCommand
+  do customCommand <- runMaybeT (customCommandByName (commandName command)
+                                   >>= return . fmap bumpCustomCommandTimes
+                                   >>= MaybeT . updateEntityById
+                                   >>= return . fmap expandCustomCommandVars)
+     maybe (return ())
+           (say . customCommandMessage . entityPayload)
+           customCommand
 
 -- TODO(#170): There is no way to update a custom command
