@@ -37,6 +37,7 @@ instance IsEntity CustomCommand where
                                                                      }
                                return (const customCommand <$> entity)
 
+{-# ANN customCommandByName ("HLint: ignore Use <$>" :: String) #-}
 customCommandByName :: T.Text -> MaybeT Effect (Entity CustomCommand)
 customCommandByName name =
     MaybeT
