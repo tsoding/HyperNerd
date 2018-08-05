@@ -2,7 +2,7 @@ module Main where
 
 import qualified BotSpec.BttvFfzSpec as BFS
 import qualified CommandSpec as CS
-import qualified SqliteEntityPersistenceSpec as SEPS
+import qualified Sqlite.EntityPersistenceSpec as SEPS
 import           System.Exit
 import           Test.HUnit
 

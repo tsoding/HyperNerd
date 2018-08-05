@@ -1,5 +1,5 @@
 {-# LANGUAGE OverloadedStrings #-}
-module SqliteEntityPersistenceSpec where
+module Sqlite.EntityPersistenceSpec where
 
 import           Control.Monad
 import           Data.List
@@ -9,7 +9,7 @@ import qualified Database.SQLite.Simple as SQLite
 import           Effect (Selector(..), Condition(..))
 import           Entity
 import           Property
-import qualified SqliteEntityPersistence as SEP
+import qualified Sqlite.EntityPersistence as SEP
 import           System.IO.Temp
 import           Test.HUnit
 

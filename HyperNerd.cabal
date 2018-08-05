@@ -75,7 +75,8 @@ executable HyperNerd
                      , Events
                      , IrcTransport
                      , Property
-                     , SqliteEntityPersistence
+                     , Sqlite.EntityPersistence
+                     , Sqlite.Migration
   
   -- LANGUAGE extensions used by modules in this package.
   other-extensions:    OverloadedStrings
@@ -151,7 +152,8 @@ test-suite HyperNerdTest
                      , Entity
                      , Events
                      , Property
-                     , SqliteEntityPersistence
-                     , SqliteEntityPersistenceSpec
+                     , Sqlite.EntityPersistence
+                     , Sqlite.EntityPersistenceSpec
+                     , Sqlite.Migration
 
   default-language:    Haskell2010

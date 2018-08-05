@@ -1,14 +1,14 @@
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE QuasiQuotes #-}
-module SqliteEntityPersistence ( prepareSchema
-                               , createEntity
-                               , getEntityById
-                               , updateEntityById
-                               , selectEntities
-                               , deleteEntities
-                               , updateEntities
-                               , nextEntityId
-                               ) where
+module Sqlite.EntityPersistence ( prepareSchema
+                                , createEntity
+                                , getEntityById
+                                , updateEntityById
+                                , selectEntities
+                                , deleteEntities
+                                , updateEntities
+                                , nextEntityId
+                                ) where
 
 import           Control.Monad.Trans.Maybe
 import qualified Data.Map as M
@@ -19,6 +19,7 @@ import           Database.SQLite.Simple
 import           Effect (Selector(..), Condition(..))
 import           Entity
 import           Property
+import           Sqlite.Migration
 import           Text.RawString.QQ
 
 data EntityIdEntry = EntityIdEntry T.Text Int
@@ -86,25 +87,26 @@ createEntityProperty conn name ident propertyName property =
                  , ":propertyUTCTime" := (fromProperty property :: Maybe UTCTime)
                  ]
 
--- TODO(#53): The SQLite schema is not migrated automatically
+
 prepareSchema :: Connection -> IO ()
 prepareSchema conn =
-    do
-      -- TODO(#54): propertyType field of EntityProperty table of SQLiteEntityPersistence may contain incorrect values
-      execute_ conn [r| CREATE TABLE IF NOT EXISTS EntityProperty (
-                          id INTEGER PRIMARY KEY,
-                          entityName TEXT NOT NULL,
-                          entityId INTEGER NOT NULL,
-                          propertyName TEXT NOT NULL,
-                          propertyType TEXT NOT NULL,
-                          propertyInt INTEGER,
-                          propertyText TEXT,
-                          propertyUTCTime DATETIME
-                        ) |]
-      execute_ conn [r| CREATE TABLE IF NOT EXISTS EntityId (
-                          entityName TEXT NOT NULL UNIQUE,
-                          entityId INTEGER NOT NULL DEFAULT 0
-                        ); |]
+    -- TODO(#54): propertyType field of EntityProperty table of SQLiteEntityPersistence may contain incorrect values
+    migrateDatabase conn
+                    [ [r| CREATE TABLE IF NOT EXISTS EntityProperty (
+                            id INTEGER PRIMARY KEY,
+                            entityName TEXT NOT NULL,
+                            entityId INTEGER NOT NULL,
+                            propertyName TEXT NOT NULL,
+                            propertyType TEXT NOT NULL,
+                            propertyInt INTEGER,
+                            propertyText TEXT,
+                            propertyUTCTime DATETIME
+                          ) |]
+                    , [r| CREATE TABLE IF NOT EXISTS EntityId (
+                            entityName TEXT NOT NULL UNIQUE,
+                            entityId INTEGER NOT NULL DEFAULT 0
+                          ); |]
+                    ]
 
 createEntity :: Connection -> T.Text -> Properties -> IO (Entity Properties)
 createEntity conn name properties =
