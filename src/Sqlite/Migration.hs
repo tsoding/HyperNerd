@@ -10,6 +10,7 @@ import           Data.String
 import qualified Data.Text as T
 import           Database.SQLite.Simple
 import           Text.RawString.QQ
+import           Text.Printf
 
 newtype Migration = Migration { migrationQuery :: Query } deriving Eq
 
@@ -30,15 +31,16 @@ filterUnappliedMigrations :: Connection -> [Migration] -> IO [Migration]
 filterUnappliedMigrations conn migrations =
     do appliedMigrations <- query_ conn [r| SELECT migrationQuery
                                             FROM Migrations |]
-       maybe (error [r| Inconsistent migrations state!
-                        List of already applied migrations
-                        is not a prefix of required migrations. |])
+       maybe (error "Inconsistent migrations state! \
+                    \List of already applied migrations \
+                    \is not a prefix of required migrations.")
              return
              (stripPrefix appliedMigrations migrations)
 
 applyMigration :: Connection -> Migration -> IO ()
 applyMigration conn migration =
-    do execute_ conn $ migrationQuery migration
+    do printf "Applying migration: %s\n" $ fromQuery $ migrationQuery $ migration
+       execute_ conn $ migrationQuery migration
        executeNamed conn
                     [r| INSERT INTO Migrations (
                           migrationQuery
