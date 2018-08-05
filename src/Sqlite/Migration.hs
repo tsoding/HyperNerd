@@ -5,20 +5,24 @@ module Sqlite.Migration ( migrateDatabase
                         ) where
 
 import           Data.Foldable
+import           Data.Function
 import           Data.List
 import           Data.String
 import qualified Data.Text as T
 import           Database.SQLite.Simple
-import           Text.RawString.QQ
 import           Text.Printf
+import           Text.RawString.QQ
 
-newtype Migration = Migration { migrationQuery :: Query } deriving Eq
+newtype Migration = Migration { migrationQuery :: Query }
 
 instance IsString Migration where
     fromString = Migration . fromString
 
 instance FromRow Migration where
     fromRow = fromString <$> field
+
+instance Eq Migration where
+    (==) = (==) `on` (T.unwords . T.words . fromQuery . migrationQuery)
 
 createMigrationTablesIfNeeded :: Connection -> IO ()
 createMigrationTablesIfNeeded conn =

@@ -88,25 +88,27 @@ createEntityProperty conn name ident propertyName property =
                  ]
 
 
+-- TODO(#54): propertyType field of EntityProperty table of SQLiteEntityPersistence may contain incorrect values
+entityMigrations :: [Migration]
+entityMigrations =
+    [ [r| CREATE TABLE IF NOT EXISTS EntityProperty (
+            id INTEGER PRIMARY KEY,
+            entityName TEXT NOT NULL,
+            entityId INTEGER NOT NULL,
+            propertyName TEXT NOT NULL,
+            propertyType TEXT NOT NULL,
+            propertyInt INTEGER,
+            propertyText TEXT,
+            propertyUTCTime DATETIME
+          ) |]
+    , [r| CREATE TABLE IF NOT EXISTS EntityId (
+            entityName TEXT NOT NULL UNIQUE,
+            entityId INTEGER NOT NULL DEFAULT 0
+          ); |]
+    ]
+
 prepareSchema :: Connection -> IO ()
-prepareSchema conn =
-    -- TODO(#54): propertyType field of EntityProperty table of SQLiteEntityPersistence may contain incorrect values
-    migrateDatabase conn
-                    [ [r| CREATE TABLE IF NOT EXISTS EntityProperty (
-                            id INTEGER PRIMARY KEY,
-                            entityName TEXT NOT NULL,
-                            entityId INTEGER NOT NULL,
-                            propertyName TEXT NOT NULL,
-                            propertyType TEXT NOT NULL,
-                            propertyInt INTEGER,
-                            propertyText TEXT,
-                            propertyUTCTime DATETIME
-                          ) |]
-                    , [r| CREATE TABLE IF NOT EXISTS EntityId (
-                            entityName TEXT NOT NULL UNIQUE,
-                            entityId INTEGER NOT NULL DEFAULT 0
-                          ); |]
-                    ]
+prepareSchema conn = migrateDatabase conn entityMigrations
 
 createEntity :: Connection -> T.Text -> Properties -> IO (Entity Properties)
 createEntity conn name properties =
