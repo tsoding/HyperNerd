@@ -39,7 +39,7 @@ filterUnappliedMigrations conn migrations =
 
 applyMigration :: Connection -> Migration -> IO ()
 applyMigration conn migration =
-    do printf "Applying migration: %s\n" $ fromQuery $ migrationQuery $ migration
+    do printf "Applying migration: %s\n" $ fromQuery $ migrationQuery migration
        execute_ conn $ migrationQuery migration
        executeNamed conn
                     [r| INSERT INTO Migrations (
