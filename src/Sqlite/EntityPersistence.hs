@@ -1,14 +1,14 @@
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE QuasiQuotes #-}
-module SqliteEntityPersistence ( prepareSchema
-                               , createEntity
-                               , getEntityById
-                               , updateEntityById
-                               , selectEntities
-                               , deleteEntities
-                               , updateEntities
-                               , nextEntityId
-                               ) where
+module Sqlite.EntityPersistence ( prepareSchema
+                                , createEntity
+                                , getEntityById
+                                , updateEntityById
+                                , selectEntities
+                                , deleteEntities
+                                , updateEntities
+                                , nextEntityId
+                                ) where
 
 import           Control.Monad.Trans.Maybe
 import qualified Data.Map as M

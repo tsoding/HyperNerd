@@ -21,7 +21,7 @@ import           Irc.RawIrcMsg (RawIrcMsg(..), TagEntry(..))
 import           Irc.UserInfo (userNick)
 import           IrcTransport
 import           Network.HTTP.Simple
-import qualified SqliteEntityPersistence as SEP
+import qualified Sqlite.EntityPersistence as SEP
 import           System.Clock
 import           System.Environment
 import           Text.Printf
