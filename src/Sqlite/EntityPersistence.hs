@@ -258,12 +258,13 @@ updateEntities :: Connection    -- conn
 updateEntities _ _ _ _ = return 0
 
 -- TODO(#194): updateEntityProperty is not implemented
-updateEntityProperty :: T.Text   -- entityName
-                     -> Int      -- entityId
-                     -> T.Text   -- propertyName
-                     -> Property -- propertyValue
+updateEntityProperty :: Connection -- conn
+                     -> T.Text     -- entityName
+                     -> Int        -- entityId
+                     -> T.Text     -- propertyName
+                     -> Property   -- propertyValue
                      -> IO (Maybe (T.Text, Property))
-updateEntityProperty _ _ propertyName propertyValue =
+updateEntityProperty _ _ _ propertyName propertyValue =
     return $ return (propertyName, propertyValue)
 
 {-# ANN updateEntityById ("HLint: ignore Use fmap" :: String) #-}
@@ -274,7 +275,7 @@ updateEntityById :: Connection        -- conn
 updateEntityById conn entity =
     runMaybeT (MaybeT (getEntityById conn (entityName entity) (entityId entity))
                  >>= return . M.toList . entityPayload
-                 >>= traverse (MaybeT . uncurry (updateEntityProperty name ident))
+                 >>= traverse (MaybeT . uncurry (updateEntityProperty conn name ident))
                  >>= return . Entity ident name . M.fromList)
     where name = entityName entity
           ident = entityId entity
