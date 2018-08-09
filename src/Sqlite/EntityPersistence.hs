@@ -66,34 +66,40 @@ nextEntityId conn name =
          _ -> ioError (userError "EntityId table contains duplicate entries")
 
 
-createEntityProperty :: Connection -> T.Text -> Int -> T.Text -> Property -> IO ()
+createEntityProperty :: Connection
+                     -> T.Text
+                     -> Int
+                     -> T.Text
+                     -> Property
+                     -> IO (Maybe (T.Text, Property))
 createEntityProperty conn name ident propertyName property =
-    executeNamed conn
-                 [r| INSERT INTO EntityProperty (
-                       entityName,
-                       entityId,
-                       propertyName,
-                       propertyType,
-                       propertyInt,
-                       propertyText,
-                       propertyUTCTime
-                     ) VALUES (
-                       :entityName,
-                       :entityId,
-                       :propertyName,
-                       :propertyType,
-                       :propertyInt,
-                       :propertyText,
-                       :propertyUTCTime
-                     ) |]
-                 [ ":entityName" := name
-                 , ":entityId" := ident
-                 , ":propertyName" := propertyName
-                 , ":propertyType" := propertyTypeName property
-                 , ":propertyInt" := (fromProperty property :: Maybe Int)
-                 , ":propertyText" := (fromProperty property :: Maybe T.Text)
-                 , ":propertyUTCTime" := (fromProperty property :: Maybe UTCTime)
-                 ]
+    do executeNamed conn
+                    [r| INSERT INTO EntityProperty (
+                          entityName,
+                          entityId,
+                          propertyName,
+                          propertyType,
+                          propertyInt,
+                          propertyText,
+                          propertyUTCTime
+                        ) VALUES (
+                          :entityName,
+                          :entityId,
+                          :propertyName,
+                          :propertyType,
+                          :propertyInt,
+                          :propertyText,
+                          :propertyUTCTime
+                        ) |]
+                    [ ":entityName" := name
+                    , ":entityId" := ident
+                    , ":propertyName" := propertyName
+                    , ":propertyType" := propertyTypeName property
+                    , ":propertyInt" := (fromProperty property :: Maybe Int)
+                    , ":propertyText" := (fromProperty property :: Maybe T.Text)
+                    , ":propertyUTCTime" := (fromProperty property :: Maybe UTCTime)
+                    ]
+       return $ return (propertyName, property)
 
 
 -- TODO(#54): propertyType field of EntityProperty table of SQLiteEntityPersistence may contain incorrect values
@@ -257,16 +263,6 @@ updateEntities :: Connection    -- conn
                -> IO Int
 updateEntities _ _ _ _ = return 0
 
--- TODO(#194): updateEntityProperty is not implemented
-updateEntityProperty :: Connection -- conn
-                     -> T.Text     -- entityName
-                     -> Int        -- entityId
-                     -> T.Text     -- propertyName
-                     -> Property   -- propertyValue
-                     -> IO (Maybe (T.Text, Property))
-updateEntityProperty _ _ _ propertyName propertyValue =
-    return $ return (propertyName, propertyValue)
-
 {-# ANN updateEntityById ("HLint: ignore Use fmap" :: String) #-}
 {-# ANN updateEntityById ("HLint: ignore Use <$>" :: String) #-}
 updateEntityById :: Connection        -- conn
@@ -275,7 +271,7 @@ updateEntityById :: Connection        -- conn
 updateEntityById conn entity =
     runMaybeT (MaybeT (getEntityById conn (entityName entity) (entityId entity))
                  >>= return . M.toList . entityPayload
-                 >>= traverse (MaybeT . uncurry (updateEntityProperty conn name ident))
+                 >>= traverse (MaybeT . uncurry (createEntityProperty conn name ident))
                  >>= return . Entity ident name . M.fromList)
     where name = entityName entity
           ident = entityId entity
