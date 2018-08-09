@@ -1,3 +1,4 @@
+{-# LANGUAGE DeriveFunctor #-}
 {-# LANGUAGE InstanceSigs #-}
 {-# LANGUAGE FlexibleInstances #-}
 module Effect ( Effect
@@ -49,27 +50,7 @@ data EffectF s = Say T.Text s
                | HttpRequest Request (Response B8.ByteString -> s)
                | TwitchApiRequest Request (Response B8.ByteString -> s)
                | Timeout Integer (Effect ()) s
-
-instance Functor EffectF where
-    fmap f (Say msg s) = Say msg (f s)
-    fmap f (LogMsg msg s) = LogMsg msg (f s)
-    fmap f (CreateEntity name properties h) =
-        CreateEntity name properties (f . h)
-    fmap _ (ErrorEff text) = ErrorEff text
-    fmap f (GetEntityById name ident h) =
-        GetEntityById name ident (f . h)
-    fmap f (UpdateEntityById entity h) =
-        UpdateEntityById entity (f . h)
-    fmap f (SelectEntities name selector h) =
-        SelectEntities name selector (f . h)
-    fmap f (DeleteEntities name selector h) =
-        DeleteEntities name selector (f . h)
-    fmap f (UpdateEntities name selector properties h) =
-        UpdateEntities name selector properties (f . h)
-    fmap f (Now h) = Now (f . h)
-    fmap f (HttpRequest r h) = HttpRequest r (f . h)
-    fmap f (TwitchApiRequest r h) = TwitchApiRequest r (f . h)
-    fmap f (Timeout t e h) = Timeout t e (f h)
+                 deriving Functor
 
 type Effect = Free EffectF
 
