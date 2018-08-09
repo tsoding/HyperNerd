@@ -84,7 +84,7 @@ executable HyperNerd
   -- Other library packages from which modules are imported.
   build-depends:       aeson
                      , async
-                     , base >=4.9 && <4.10
+                     , base >=4.11 && <4.12
                      , bytestring
                      , clock
                      , containers
@@ -96,6 +96,7 @@ executable HyperNerd
                      , http-conduit
                      , ini
                      , irc-core
+                     , network
                      , raw-strings-qq
                      , regex-compat-tdfa
                      , safe

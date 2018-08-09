@@ -15,6 +15,7 @@ import           Irc.Commands ( ircPass
                               , ircCapReq
                               )
 import           Irc.RawIrcMsg (RawIrcMsg, parseRawIrcMsg, asUtf8, renderRawIrcMsg)
+import           Network.Socket (Family(..))
 import           Text.Printf
 
 type IncomingQueue = TQueue Irc.RawIrcMsg.RawIrcMsg
@@ -40,6 +41,7 @@ twitchConnectionParams =
                                               , tpInsecure = False
                                               }
                      , cpSocks = Nothing
+                     , cpFamily = AF_INET
                      }
 
 sendMsg :: Connection -> RawIrcMsg -> IO ()
