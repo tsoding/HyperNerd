@@ -19,21 +19,21 @@ import           Text.Printf
 
 data CustomCommand = CustomCommand { customCommandName :: T.Text
                                    , customCommandMessage :: T.Text
-                                   , customCommandTimes :: Maybe Int
+                                   , customCommandTimes :: Int
                                    }
 
 instance IsEntity CustomCommand where
     toProperties customCommand =
         M.fromList [ ("name", PropertyText $ customCommandName customCommand)
                    , ("message", PropertyText $ customCommandMessage customCommand)
-                   , ("times", PropertyInt $ fromMaybe 0 (customCommandTimes customCommand))
+                   , ("times", PropertyInt $ customCommandTimes customCommand)
                    ]
-    fromProperties entity = do name    <-          extractProperty "name" entity
-                               message <-          extractProperty "message" entity
-                               times   <- return $ extractProperty "times" entity
+    fromProperties entity = do name    <- extractProperty "name" entity
+                               message <- extractProperty "message" entity
+                               times   <- return (extractProperty "times" entity)
                                customCommand <- return CustomCommand { customCommandName = name
                                                                      , customCommandMessage = message
-                                                                     , customCommandTimes = times
+                                                                     , customCommandTimes = fromMaybe 0 times
                                                                      }
                                return (const customCommand <$> entity)
 
@@ -56,7 +56,7 @@ addCustomCommand builtinCommands sender (name, message) =
               $ printf "Command '%s' already exists" name
        else do _ <- createEntity "CustomCommand" CustomCommand { customCommandName = name
                                                                , customCommandMessage = message
-                                                               , customCommandTimes = Just 0
+                                                               , customCommandTimes = 0
                                                                }
                replyToUser (senderName sender) $ T.pack $ printf "Add command '%s'" name
 
@@ -76,11 +76,11 @@ expandCustomCommandVars :: CustomCommand -> CustomCommand
 expandCustomCommandVars customCommand =
     customCommand { customCommandMessage = T.replace "%times" (T.pack $ show times) message }
     where message = customCommandMessage customCommand
-          times = fromMaybe 0 $ customCommandTimes customCommand
+          times = customCommandTimes customCommand
 
 bumpCustomCommandTimes :: CustomCommand -> CustomCommand
 bumpCustomCommandTimes customCommand =
-    customCommand { customCommandTimes = return $ fromMaybe 0 (customCommandTimes customCommand) + 1 }
+    customCommand { customCommandTimes = customCommandTimes customCommand + 1 }
 
 
 {-# ANN dispatchCustomCommand ("HLint: ignore Use fmap" :: String) #-}

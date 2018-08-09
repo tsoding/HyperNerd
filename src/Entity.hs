@@ -1,3 +1,5 @@
+{-# LANGUAGE DeriveFunctor #-}
+{-# LANGUAGE DeriveGeneric #-}
 {-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE TypeSynonymInstances #-}
 {-# LANGUAGE OverloadedStrings #-}
@@ -8,6 +10,7 @@ import qualified Data.Map as M
 import           Data.Maybe
 import qualified Data.Text as T
 import           Data.Time
+import           GHC.Generics
 import           Property
 import           Text.Printf
 
@@ -16,13 +19,7 @@ type Properties = M.Map T.Text Property
 data Entity a = Entity { entityId :: Int
                        , entityName :: T.Text
                        , entityPayload :: a
-                       } deriving (Eq, Show)
-
-instance Functor Entity where
-    fmap f entity = Entity { entityId = entityId entity
-                           , entityName = entityName entity
-                           , entityPayload = f $ entityPayload entity
-                           }
+                       } deriving (Eq, Show, Generic, Functor)
 
 extractProperty :: (IsProperty a, MonadThrow m) => T.Text -> Entity Properties -> m a
 extractProperty fieldName entity =

@@ -8,9 +8,10 @@ module Sqlite.EntityPersistence ( prepareSchema
                                 , deleteEntities
                                 , updateEntities
                                 , nextEntityId
+                                , entityNames
                                 ) where
 
-import           Control.Monad.Trans.Maybe
+import           Data.Foldable
 import qualified Data.Map as M
 import           Data.Maybe
 import qualified Data.Text as T
@@ -26,6 +27,13 @@ data EntityIdEntry = EntityIdEntry T.Text Int
 
 instance FromRow EntityIdEntry where
   fromRow = EntityIdEntry <$> field <*> field
+
+entityNames :: Connection -> IO [T.Text]
+entityNames conn =
+    map fromOnly
+      <$> query_ conn [r| SELECT DISTINCT entityName
+                          FROM EntityProperty
+                          GROUP BY entityName |]
 
 nextEntityId :: Connection -> T.Text -> IO Int
 nextEntityId conn name =
@@ -58,7 +66,12 @@ nextEntityId conn name =
          _ -> ioError (userError "EntityId table contains duplicate entries")
 
 
-createEntityProperty :: Connection -> T.Text -> Int -> T.Text -> Property -> IO ()
+createEntityProperty :: Connection
+                     -> T.Text
+                     -> Int
+                     -> T.Text
+                     -> Property
+                     -> IO ()
 createEntityProperty conn name ident propertyName property =
     executeNamed conn
                  [r| INSERT INTO EntityProperty (
@@ -87,7 +100,6 @@ createEntityProperty conn name ident propertyName property =
                  , ":propertyUTCTime" := (fromProperty property :: Maybe UTCTime)
                  ]
 
-
 -- TODO(#54): propertyType field of EntityProperty table of SQLiteEntityPersistence may contain incorrect values
 entityMigrations :: [Migration]
 entityMigrations =
@@ -105,6 +117,22 @@ entityMigrations =
             entityName TEXT NOT NULL UNIQUE,
             entityId INTEGER NOT NULL DEFAULT 0
           ); |]
+    , [r| CREATE TABLE IF NOT EXISTS EntityProperty_Unique (
+            id INTEGER PRIMARY KEY,
+            entityName TEXT NOT NULL,
+            entityId INTEGER NOT NULL,
+            propertyName TEXT NOT NULL,
+            propertyType TEXT NOT NULL,
+            propertyInt INTEGER,
+            propertyText TEXT,
+            propertyUTCTime DATETIME,
+            UNIQUE(entityName, entityId, propertyName) ON CONFLICT REPLACE
+          ); |]
+    , [r| INSERT INTO EntityProperty_Unique
+          SELECT * FROM EntityProperty; |]
+    , [r| DROP TABLE EntityProperty; |]
+    , [r| ALTER TABLE EntityProperty_Unique
+          RENAME TO EntityProperty; |]
     ]
 
 prepareSchema :: Connection -> IO ()
@@ -233,24 +261,18 @@ updateEntities :: Connection    -- conn
                -> IO Int
 updateEntities _ _ _ _ = return 0
 
--- TODO(#194): updateEntityProperty is not implemented
-updateEntityProperty :: T.Text   -- entityName
-                     -> Int      -- entityId
-                     -> T.Text   -- propertyName
-                     -> Property -- propertyValue
-                     -> IO (Maybe (T.Text, Property))
-updateEntityProperty _ _ propertyName propertyValue =
-    return $ return (propertyName, propertyValue)
-
 {-# ANN updateEntityById ("HLint: ignore Use fmap" :: String) #-}
 {-# ANN updateEntityById ("HLint: ignore Use <$>" :: String) #-}
 updateEntityById :: Connection        -- conn
                  -> Entity Properties -- entity
                  -> IO (Maybe (Entity Properties))
 updateEntityById conn entity =
-    runMaybeT (MaybeT (getEntityById conn (entityName entity) (entityId entity))
-                 >>= return . M.toList . entityPayload
-                 >>= traverse (MaybeT . uncurry (updateEntityProperty name ident))
-                 >>= return . Entity ident name . M.fromList)
+    do oldEntity <- getEntityById conn (entityName entity) (entityId entity)
+       maybe (return Nothing)
+             (\_ -> do traverse_ (uncurry (createEntityProperty conn name ident))
+                         $ M.toList
+                         $ entityPayload entity
+                       return $ Just entity)
+             oldEntity
     where name = entityName entity
           ident = entityId entity
