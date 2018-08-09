@@ -122,7 +122,7 @@ entityMigrations =
             propertyInt INTEGER,
             propertyText TEXT,
             propertyUTCTime DATETIME,
-            UNIQUE(entityId, propertyName) ON CONFLICT REPLACE
+            UNIQUE(entityName, entityId, propertyName) ON CONFLICT REPLACE
           ); |]
     , [r| INSERT INTO EntityProperty_Unique
           SELECT * FROM EntityProperty; |]
