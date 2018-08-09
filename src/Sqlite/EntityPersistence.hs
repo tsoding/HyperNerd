@@ -113,6 +113,22 @@ entityMigrations =
             entityName TEXT NOT NULL UNIQUE,
             entityId INTEGER NOT NULL DEFAULT 0
           ); |]
+    , [r| CREATE TABLE IF NOT EXISTS EntityProperty_Unique (
+            id INTEGER PRIMARY KEY,
+            entityName TEXT NOT NULL,
+            entityId INTEGER NOT NULL,
+            propertyName TEXT NOT NULL,
+            propertyType TEXT NOT NULL,
+            propertyInt INTEGER,
+            propertyText TEXT,
+            propertyUTCTime DATETIME,
+            UNIQUE(entityId, propertyName) ON CONFLICT REPLACE
+          ); |]
+    , [r| INSERT INTO EntityProperty_Unique
+          SELECT * FROM EntityProperty; |]
+    , [r| DROP TABLE EntityProperty; |]
+    , [r| ALTER TABLE EntityProperty_Unique
+          RENAME TO EntityProperty; |]
     ]
 
 prepareSchema :: Connection -> IO ()
