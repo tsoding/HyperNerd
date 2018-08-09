@@ -11,6 +11,7 @@ module Sqlite.EntityPersistence ( prepareSchema
                                 , entityNames
                                 ) where
 
+import           Data.Foldable
 import qualified Data.Map as M
 import           Data.Maybe
 import qualified Data.Text as T
@@ -268,9 +269,9 @@ updateEntityById :: Connection        -- conn
 updateEntityById conn entity =
     do oldEntity <- getEntityById conn (entityName entity) (entityId entity)
        maybe (return Nothing)
-             (\_ -> do _ <- traverse (uncurry (createEntityProperty conn name ident))
-                              $ M.toList
-                              $ entityPayload entity
+             (\_ -> do traverse_ (uncurry (createEntityProperty conn name ident))
+                         $ M.toList
+                         $ entityPayload entity
                        return $ Just entity)
              oldEntity
     where name = entityName entity
