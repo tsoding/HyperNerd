@@ -8,6 +8,7 @@ module Sqlite.EntityPersistence ( prepareSchema
                                 , deleteEntities
                                 , updateEntities
                                 , nextEntityId
+                                , entityNames
                                 ) where
 
 import           Control.Monad.Trans.Maybe
@@ -26,6 +27,13 @@ data EntityIdEntry = EntityIdEntry T.Text Int
 
 instance FromRow EntityIdEntry where
   fromRow = EntityIdEntry <$> field <*> field
+
+entityNames :: Connection -> IO [T.Text]
+entityNames conn =
+    map fromOnly
+      <$> query_ conn [r| SELECT DISTINCT entityName
+                          FROM EntityProperty
+                          GROUP BY entityName |]
 
 nextEntityId :: Connection -> T.Text -> IO Int
 nextEntityId conn name =
