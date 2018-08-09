@@ -11,7 +11,6 @@ module Sqlite.EntityPersistence ( prepareSchema
                                 , entityNames
                                 ) where
 
-import           Control.Monad.Trans.Maybe
 import qualified Data.Map as M
 import           Data.Maybe
 import qualified Data.Text as T
@@ -71,36 +70,34 @@ createEntityProperty :: Connection
                      -> Int
                      -> T.Text
                      -> Property
-                     -> IO (Maybe (T.Text, Property))
+                     -> IO ()
 createEntityProperty conn name ident propertyName property =
-    do executeNamed conn
-                    [r| INSERT INTO EntityProperty (
-                          entityName,
-                          entityId,
-                          propertyName,
-                          propertyType,
-                          propertyInt,
-                          propertyText,
-                          propertyUTCTime
-                        ) VALUES (
-                          :entityName,
-                          :entityId,
-                          :propertyName,
-                          :propertyType,
-                          :propertyInt,
-                          :propertyText,
-                          :propertyUTCTime
-                        ) |]
-                    [ ":entityName" := name
-                    , ":entityId" := ident
-                    , ":propertyName" := propertyName
-                    , ":propertyType" := propertyTypeName property
-                    , ":propertyInt" := (fromProperty property :: Maybe Int)
-                    , ":propertyText" := (fromProperty property :: Maybe T.Text)
-                    , ":propertyUTCTime" := (fromProperty property :: Maybe UTCTime)
-                    ]
-       return $ return (propertyName, property)
-
+    executeNamed conn
+                 [r| INSERT INTO EntityProperty (
+                       entityName,
+                       entityId,
+                       propertyName,
+                       propertyType,
+                       propertyInt,
+                       propertyText,
+                       propertyUTCTime
+                     ) VALUES (
+                       :entityName,
+                       :entityId,
+                       :propertyName,
+                       :propertyType,
+                       :propertyInt,
+                       :propertyText,
+                       :propertyUTCTime
+                     ) |]
+                 [ ":entityName" := name
+                 , ":entityId" := ident
+                 , ":propertyName" := propertyName
+                 , ":propertyType" := propertyTypeName property
+                 , ":propertyInt" := (fromProperty property :: Maybe Int)
+                 , ":propertyText" := (fromProperty property :: Maybe T.Text)
+                 , ":propertyUTCTime" := (fromProperty property :: Maybe UTCTime)
+                 ]
 
 -- TODO(#54): propertyType field of EntityProperty table of SQLiteEntityPersistence may contain incorrect values
 entityMigrations :: [Migration]
@@ -269,9 +266,12 @@ updateEntityById :: Connection        -- conn
                  -> Entity Properties -- entity
                  -> IO (Maybe (Entity Properties))
 updateEntityById conn entity =
-    runMaybeT (MaybeT (getEntityById conn (entityName entity) (entityId entity))
-                 >>= return . M.toList . entityPayload
-                 >>= traverse (MaybeT . uncurry (createEntityProperty conn name ident))
-                 >>= return . Entity ident name . M.fromList)
+    do oldEntity <- getEntityById conn (entityName entity) (entityId entity)
+       maybe (return Nothing)
+             (\_ -> do _ <- traverse (uncurry (createEntityProperty conn name ident))
+                              $ M.toList
+                              $ entityPayload entity
+                       return $ Just entity)
+             oldEntity
     where name = entityName entity
           ident = entityId entity
