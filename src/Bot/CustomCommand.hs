@@ -29,14 +29,15 @@ instance IsEntity CustomCommand where
                    , ("message", PropertyText $ customCommandMessage customCommand)
                    , ("times", PropertyInt $ customCommandTimes customCommand)
                    ]
-    fromProperties entity = do name    <- extractProperty "name" entity
-                               message <- extractProperty "message" entity
-                               times   <- return (extractProperty "times" entity)
-                               customCommand <- return CustomCommand { customCommandName = name
-                                                                     , customCommandMessage = message
-                                                                     , customCommandTimes = fromMaybe 0 times
-                                                                     }
-                               return (const customCommand <$> entity)
+    fromProperties entity =
+        do name    <- extractProperty "name" entity
+           message <- extractProperty "message" entity
+           times   <- return (extractProperty "times" entity)
+           customCommand <- return CustomCommand { customCommandName = name
+                                                 , customCommandMessage = message
+                                                 , customCommandTimes = fromMaybe 0 times
+                                                 }
+           return (const customCommand <$> entity)
 
 customCommandByName :: T.Text -> MaybeT Effect (Entity CustomCommand)
 customCommandByName name =
