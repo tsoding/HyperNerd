@@ -66,12 +66,24 @@ deleteCustomCommand builtinCommands sender name =
     do customCommand  <- runMaybeT $ customCommandByName name
        builtinCommand <- return $ M.lookup name builtinCommands
 
-       if isJust customCommand
-       then do _ <- deleteEntities "CustomCommand" (Filter (PropertyEquals "name" $ PropertyText name) All)
-               replyToSender sender $ T.pack $ printf "Command '%s' has been removed" name
-       else if isJust builtinCommand
-            then replyToSender sender $ T.pack $ printf "Command '%s' is builtin and can't be removed like that" name
-            else replyToSender sender $ T.pack $ printf "Command '%s' does not exist" name
+       case (customCommand, builtinCommand) of
+         (Just _, Nothing) ->
+             do _ <- deleteEntities "CustomCommand" (Filter (PropertyEquals "name" $ PropertyText name) All)
+                replyToSender sender
+                  $ T.pack
+                  $ printf "Command '%s' has been removed" name
+         (Nothing, Just _) ->
+             replyToSender sender
+               $ T.pack
+               $ printf "Command '%s' is builtin and can't be removed like that" name
+         (Just _, Just _) ->
+             errorEff
+               $ T.pack
+               $ printf "Custom command '%s' collide with a built in command"
+         (Nothing, Nothing) ->
+             replyToSender sender
+               $ T.pack
+               $ printf "Command '%s' does not exist" name
 
 updateCustomCommand :: CommandTable a -> CommandHandler (T.Text, T.Text)
 updateCustomCommand builtinCommands sender (name, message) =
