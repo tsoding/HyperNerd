@@ -90,7 +90,10 @@ updateCustomCommand builtinCommands sender (name, message) =
              errorEff
                $ T.pack
                $ printf "Custom command '%s' collide with a built in command"
-         _ -> replyToSender sender $ T.pack $ printf "Command '%s' does not exist" name
+         (Nothing, Nothing) ->
+             replyToSender sender
+               $ T.pack
+               $ printf "Command '%s' does not exist" name
 
 expandCustomCommandVars :: CustomCommand -> CustomCommand
 expandCustomCommandVars customCommand =
