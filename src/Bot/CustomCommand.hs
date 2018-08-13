@@ -78,16 +78,19 @@ updateCustomCommand builtinCommands sender (name, message) =
     do maybeCustomCommand <- runMaybeT $ customCommandByName name
        builtinCommand <- return $ M.lookup name builtinCommands
 
-       case maybeCustomCommand of
-         Just customCommand ->
-             do _ <- updateEntityById ((\cmd -> cmd { customCommandMessage = message }) <$> customCommand)
+       case (maybeCustomCommand, builtinCommand) of
+         (Just customCommand, Nothing) ->
+             do _ <- updateEntityById (replaceCustomCommandMessage message <$> customCommand)
                 replyToSender sender $ T.pack $ printf "Command '%s' has been updated" name
-         Nothing ->
-             if isJust builtinCommand
-             then replyToSender sender
-                    $ T.pack
-                    $ printf "Command '%s' is builtin and can't be updated like that" name
-             else replyToSender sender $ T.pack $ printf "Command '%s' does not exist" name
+         (Nothing, Just _) ->
+             replyToSender sender
+               $ T.pack
+               $ printf "Command '%s' is builtin and can't be updated like that" name
+         (Just _, Just _) ->
+             errorEff
+               $ T.pack
+               $ printf "Custom command '%s' collide with a built in command"
+         _ -> replyToSender sender $ T.pack $ printf "Command '%s' does not exist" name
 
 expandCustomCommandVars :: CustomCommand -> CustomCommand
 expandCustomCommandVars customCommand =
@@ -99,6 +102,9 @@ bumpCustomCommandTimes :: CustomCommand -> CustomCommand
 bumpCustomCommandTimes customCommand =
     customCommand { customCommandTimes = customCommandTimes customCommand + 1 }
 
+replaceCustomCommandMessage :: T.Text -> CustomCommand -> CustomCommand
+replaceCustomCommandMessage message customCommand =
+    customCommand { customCommandMessage = message }
 
 {-# ANN dispatchCustomCommand ("HLint: ignore Use fmap" :: String) #-}
 {-# ANN dispatchCustomCommand ("HLint: ignore Use <$>" :: String) #-}
