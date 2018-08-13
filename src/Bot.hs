@@ -63,6 +63,12 @@ builtinCommands =
                                                      $ addCustomCommand builtinCommands))
                , ("delcmd", ("Delete custom command", authorizeCommand ["tsoding", "r3x1m"]
                                                         $ deleteCustomCommand builtinCommands))
+               , ("updcmd", ("Update custom command", authorizeCommand [ "tsoding"
+                                                                       , "r3x1m"
+                                                                       ]
+                                                        $ regexArgsCommand "([a-zA-Z0-9]+) ?(.*)"
+                                                        $ pairArgsCommand
+                                                        $ updateCustomCommand builtinCommands))
                ]
 
 authorizeCommand :: [T.Text] -> CommandHandler a -> CommandHandler a

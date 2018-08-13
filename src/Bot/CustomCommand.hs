@@ -2,6 +2,7 @@
 module Bot.CustomCommand ( addCustomCommand
                          , deleteCustomCommand
                          , dispatchCustomCommand
+                         , updateCustomCommand
                          ) where
 
 import           Bot.Replies
@@ -71,6 +72,22 @@ deleteCustomCommand builtinCommands sender name =
        else if isJust builtinCommand
             then replyToSender sender $ T.pack $ printf "Command '%s' is builtin and can't be removed like that" name
             else replyToSender sender $ T.pack $ printf "Command '%s' does not exist" name
+
+updateCustomCommand :: CommandTable a -> CommandHandler (T.Text, T.Text)
+updateCustomCommand builtinCommands sender (name, message) =
+    do maybeCustomCommand <- runMaybeT $ customCommandByName name
+       builtinCommand <- return $ M.lookup name builtinCommands
+
+       case maybeCustomCommand of
+         Just customCommand ->
+             do _ <- updateEntityById ((\cmd -> cmd { customCommandMessage = message }) <$> customCommand)
+                replyToSender sender $ T.pack $ printf "Command '%s' has been updated" name
+         Nothing ->
+             if isJust builtinCommand
+             then replyToSender sender
+                    $ T.pack
+                    $ printf "Command '%s' is builtin and can't be updated like that" name
+             else replyToSender sender $ T.pack $ printf "Command '%s' does not exist" name
 
 expandCustomCommandVars :: CustomCommand -> CustomCommand
 expandCustomCommandVars customCommand =
