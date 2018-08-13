@@ -142,5 +142,3 @@ dispatchCustomCommand _ command =
      maybe (return ())
            (say . customCommandMessage . entityPayload)
            customCommand
-
--- TODO(#170): There is no way to update a custom command
