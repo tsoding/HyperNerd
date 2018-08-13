@@ -84,7 +84,7 @@ executable HyperNerd
   -- Other library packages from which modules are imported.
   build-depends:       aeson
                      , async
-                     , base >=4.11 && <4.12
+                     , base
                      , bytestring
                      , clock
                      , containers

@@ -9,15 +9,27 @@ Second iteration of [Tsoder][tsoder]. Chat bot for [Tsoding][tsoding] streams.
 
 ## Quick Start
 
+## NixOS
+
+```console
+$ nix-shell
+$ cabal configure
+$ cabal build
+$ cabal test
+$ cabal exec hlint .
+$ cabal run secret.ini database.db
+```
+
+## Stack
+
 Native dependencies:
 - OpenSSL
 - zlib
 
 ```console
-$ nix-shell
 $ stack build
 $ stack exec hlint .
-$ stack exec HyperNerd secret.ini
+$ stack exec HyperNerd secret.ini database.db
 ```
 
 ### Example of a secret.ini file
