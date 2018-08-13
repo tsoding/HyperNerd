@@ -51,15 +51,25 @@ addCustomCommand builtinCommands sender (name, message) =
     do customCommand  <- runMaybeT $ customCommandByName name
        builtinCommand <- return $ M.lookup name builtinCommands
 
-       if isJust customCommand || isJust builtinCommand
-       then replyToUser (senderName sender)
-              $ T.pack
-              $ printf "Command '%s' already exists" name
-       else do _ <- createEntity "CustomCommand" CustomCommand { customCommandName = name
+       case (customCommand, builtinCommand) of
+         (Just _, Nothing) ->
+           replyToUser (senderName sender)
+             $ T.pack
+             $ printf "Command '%s' already exists" name
+         (Nothing, Just _) ->
+           replyToUser (senderName sender)
+             $ T.pack
+             $ printf "There is already a builtin command with name '%s'" name
+         (Just _, Just _) ->
+             errorEff
+               $ T.pack
+               $ printf "Custom command '%s' collide with a built in command"
+         (Nothing, Nothing) ->
+             do _ <- createEntity "CustomCommand" CustomCommand { customCommandName = name
                                                                , customCommandMessage = message
                                                                , customCommandTimes = 0
                                                                }
-               replyToUser (senderName sender) $ T.pack $ printf "Add command '%s'" name
+                replyToUser (senderName sender) $ T.pack $ printf "Add command '%s'" name
 
 deleteCustomCommand :: CommandTable a -> CommandHandler T.Text
 deleteCustomCommand builtinCommands sender name =
