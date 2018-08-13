@@ -75,12 +75,12 @@ deleteCustomCommand builtinCommands sender name =
 
 updateCustomCommand :: CommandTable a -> CommandHandler (T.Text, T.Text)
 updateCustomCommand builtinCommands sender (name, message) =
-    do maybeCustomCommand <- runMaybeT $ customCommandByName name
+    do customCommand <- runMaybeT $ customCommandByName name
        builtinCommand <- return $ M.lookup name builtinCommands
 
-       case (maybeCustomCommand, builtinCommand) of
-         (Just customCommand, Nothing) ->
-             do _ <- updateEntityById (replaceCustomCommandMessage message <$> customCommand)
+       case (customCommand, builtinCommand) of
+         (Just cmd, Nothing) ->
+             do _ <- updateEntityById (replaceCustomCommandMessage message <$> cmd)
                 replyToSender sender $ T.pack $ printf "Command '%s' has been updated" name
          (Nothing, Just _) ->
              replyToSender sender
