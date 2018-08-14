@@ -29,16 +29,16 @@ instance IsEntity CustomCommand where
                    , ("message", PropertyText $ customCommandMessage customCommand)
                    , ("times", PropertyInt $ customCommandTimes customCommand)
                    ]
-    fromProperties entity = do name    <- extractProperty "name" entity
-                               message <- extractProperty "message" entity
-                               times   <- return (extractProperty "times" entity)
-                               customCommand <- return CustomCommand { customCommandName = name
-                                                                     , customCommandMessage = message
-                                                                     , customCommandTimes = fromMaybe 0 times
-                                                                     }
-                               return (const customCommand <$> entity)
+    fromProperties entity =
+        do name    <- extractProperty "name" entity
+           message <- extractProperty "message" entity
+           times   <- return (extractProperty "times" entity)
+           customCommand <- return CustomCommand { customCommandName = name
+                                                 , customCommandMessage = message
+                                                 , customCommandTimes = fromMaybe 0 times
+                                                 }
+           return (const customCommand <$> entity)
 
-{-# ANN customCommandByName ("HLint: ignore Use <$>" :: String) #-}
 customCommandByName :: T.Text -> MaybeT Effect (Entity CustomCommand)
 customCommandByName name =
     MaybeT
@@ -51,43 +51,71 @@ addCustomCommand builtinCommands sender (name, message) =
     do customCommand  <- runMaybeT $ customCommandByName name
        builtinCommand <- return $ M.lookup name builtinCommands
 
-       if isJust customCommand || isJust builtinCommand
-       then replyToUser (senderName sender)
-              $ T.pack
-              $ printf "Command '%s' already exists" name
-       else do _ <- createEntity "CustomCommand" CustomCommand { customCommandName = name
+       case (customCommand, builtinCommand) of
+         (Just _, Nothing) ->
+           replyToUser (senderName sender)
+             $ T.pack
+             $ printf "Command '%s' already exists" name
+         (Nothing, Just _) ->
+           replyToUser (senderName sender)
+             $ T.pack
+             $ printf "There is already a builtin command with name '%s'" name
+         (Just _, Just _) ->
+             errorEff
+               $ T.pack
+               $ printf "Custom command '%s' collide with a built in command"
+         (Nothing, Nothing) ->
+             do _ <- createEntity "CustomCommand" CustomCommand { customCommandName = name
                                                                , customCommandMessage = message
                                                                , customCommandTimes = 0
                                                                }
-               replyToUser (senderName sender) $ T.pack $ printf "Add command '%s'" name
+                replyToUser (senderName sender) $ T.pack $ printf "Add command '%s'" name
 
 deleteCustomCommand :: CommandTable a -> CommandHandler T.Text
 deleteCustomCommand builtinCommands sender name =
     do customCommand  <- runMaybeT $ customCommandByName name
        builtinCommand <- return $ M.lookup name builtinCommands
 
-       if isJust customCommand
-       then do _ <- deleteEntities "CustomCommand" (Filter (PropertyEquals "name" $ PropertyText name) All)
-               replyToSender sender $ T.pack $ printf "Command '%s' has been removed" name
-       else if isJust builtinCommand
-            then replyToSender sender $ T.pack $ printf "Command '%s' is builtin and can't be removed like that" name
-            else replyToSender sender $ T.pack $ printf "Command '%s' does not exist" name
+       case (customCommand, builtinCommand) of
+         (Just _, Nothing) ->
+             do _ <- deleteEntities "CustomCommand" (Filter (PropertyEquals "name" $ PropertyText name) All)
+                replyToSender sender
+                  $ T.pack
+                  $ printf "Command '%s' has been removed" name
+         (Nothing, Just _) ->
+             replyToSender sender
+               $ T.pack
+               $ printf "Command '%s' is builtin and can't be removed like that" name
+         (Just _, Just _) ->
+             errorEff
+               $ T.pack
+               $ printf "Custom command '%s' collide with a built in command"
+         (Nothing, Nothing) ->
+             replyToSender sender
+               $ T.pack
+               $ printf "Command '%s' does not exist" name
 
 updateCustomCommand :: CommandTable a -> CommandHandler (T.Text, T.Text)
 updateCustomCommand builtinCommands sender (name, message) =
-    do maybeCustomCommand <- runMaybeT $ customCommandByName name
+    do customCommand <- runMaybeT $ customCommandByName name
        builtinCommand <- return $ M.lookup name builtinCommands
 
-       case maybeCustomCommand of
-         Just customCommand ->
-             do _ <- updateEntityById ((\cmd -> cmd { customCommandMessage = message }) <$> customCommand)
+       case (customCommand, builtinCommand) of
+         (Just cmd, Nothing) ->
+             do _ <- updateEntityById (replaceCustomCommandMessage message <$> cmd)
                 replyToSender sender $ T.pack $ printf "Command '%s' has been updated" name
-         Nothing ->
-             if isJust builtinCommand
-             then replyToSender sender
-                    $ T.pack
-                    $ printf "Command '%s' is builtin and can't be updated like that" name
-             else replyToSender sender $ T.pack $ printf "Command '%s' does not exist" name
+         (Nothing, Just _) ->
+             replyToSender sender
+               $ T.pack
+               $ printf "Command '%s' is builtin and can't be updated like that" name
+         (Just _, Just _) ->
+             errorEff
+               $ T.pack
+               $ printf "Custom command '%s' collide with a built in command"
+         (Nothing, Nothing) ->
+             replyToSender sender
+               $ T.pack
+               $ printf "Command '%s' does not exist" name
 
 expandCustomCommandVars :: CustomCommand -> CustomCommand
 expandCustomCommandVars customCommand =
@@ -99,6 +127,9 @@ bumpCustomCommandTimes :: CustomCommand -> CustomCommand
 bumpCustomCommandTimes customCommand =
     customCommand { customCommandTimes = customCommandTimes customCommand + 1 }
 
+replaceCustomCommandMessage :: T.Text -> CustomCommand -> CustomCommand
+replaceCustomCommandMessage message customCommand =
+    customCommand { customCommandMessage = message }
 
 {-# ANN dispatchCustomCommand ("HLint: ignore Use fmap" :: String) #-}
 {-# ANN dispatchCustomCommand ("HLint: ignore Use <$>" :: String) #-}
@@ -111,5 +142,3 @@ dispatchCustomCommand _ command =
      maybe (return ())
            (say . customCommandMessage . entityPayload)
            customCommand
-
--- TODO(#170): There is no way to update a custom command
