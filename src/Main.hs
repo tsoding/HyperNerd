@@ -1,6 +1,7 @@
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE RankNTypes #-}
 {-# LANGUAGE RecordWildCards #-}
+{-# LANGUAGE ViewPatterns #-}
 module Main where
 
 import           Bot
@@ -101,13 +102,11 @@ runIO (Free (Timeout dt effect next)) s@BotState{..} =
 
 
 advanceTimeouts :: Integer -> BotState -> IO BotState
-advanceTimeouts dt botState =
-    foldl (\esIO e -> esIO >>= flip applyEffect e)
-          (return $ botState { bsTimeouts = unripe })
-      $ map snd ripe
-    where (ripe, unripe) = span ((< 0) . fst)
-                             $ map (\(t, e) -> (t - dt, e))
-                             $ bsTimeouts botState
+advanceTimeouts dt s@BotState{..} = foldM (flip runIO) s' ripe
+  where
+    (map snd -> ripe, unripe) = partition ((<=0) . fst) $ first (subtract dt) <$> bsTimeouts
+    s' = s { bsTimeouts = unripe }
+
 
 ircTransport :: Bot -> BotState -> IO ()
 ircTransport b botState =
