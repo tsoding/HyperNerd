@@ -8,10 +8,12 @@ module Bot.CustomCommand ( addCustomCommand
 import           Bot.Replies
 import           Command
 import           Control.Monad
+import           Control.Monad.Trans.Class
 import           Control.Monad.Trans.Maybe
 import qualified Data.Map as M
 import           Data.Maybe
 import qualified Data.Text as T
+import           Data.Time
 import           Effect
 import           Entity
 import           Events
@@ -21,6 +23,7 @@ import           Text.Printf
 data CustomCommand = CustomCommand { customCommandName :: T.Text
                                    , customCommandMessage :: T.Text
                                    , customCommandTimes :: Int
+                                   , customCommandLastUsed :: UTCTime
                                    }
 
 instance IsEntity CustomCommand where
@@ -28,14 +31,17 @@ instance IsEntity CustomCommand where
         M.fromList [ ("name", PropertyText $ customCommandName customCommand)
                    , ("message", PropertyText $ customCommandMessage customCommand)
                    , ("times", PropertyInt $ customCommandTimes customCommand)
+                   , ("lastUsed", PropertyUTCTime $ customCommandLastUsed customCommand)
                    ]
     fromProperties entity =
-        do name    <- extractProperty "name" entity
-           message <- extractProperty "message" entity
-           times   <- return (extractProperty "times" entity)
+        do name     <- extractProperty "name" entity
+           message  <- extractProperty "message" entity
+           times    <- return (extractProperty "times" entity)
+           lastUsed <- return (extractProperty "lastUsed" entity)
            customCommand <- return CustomCommand { customCommandName = name
                                                  , customCommandMessage = message
                                                  , customCommandTimes = fromMaybe 0 times
+                                                 , customCommandLastUsed = fromMaybe (UTCTime (ModifiedJulianDay 0) 0) lastUsed
                                                  }
            return (const customCommand <$> entity)
 
@@ -66,9 +72,10 @@ addCustomCommand builtinCommands sender (name, message) =
                $ printf "Custom command '%s' collide with a built in command"
          (Nothing, Nothing) ->
              do _ <- createEntity "CustomCommand" CustomCommand { customCommandName = name
-                                                               , customCommandMessage = message
-                                                               , customCommandTimes = 0
-                                                               }
+                                                                , customCommandMessage = message
+                                                                , customCommandTimes = 0
+                                                                , customCommandLastUsed = UTCTime (ModifiedJulianDay 0) 0
+                                                                }
                 replyToUser (senderName sender) $ T.pack $ printf "Add command '%s'" name
 
 deleteCustomCommand :: CommandTable a -> CommandHandler T.Text
@@ -131,11 +138,34 @@ replaceCustomCommandMessage :: T.Text -> CustomCommand -> CustomCommand
 replaceCustomCommandMessage message customCommand =
     customCommand { customCommandMessage = message }
 
+customCommandCooldown :: Double -> Entity CustomCommand -> MaybeT Effect (Entity CustomCommand)
+customCommandCooldown cooldownTimeout customCommand =
+    do currentTime <- lift now
+       diffTime    <- return
+                        $ diffUTCTime currentTime
+                        $ customCommandLastUsed
+                        $ entityPayload customCommand
+
+       if realToFrac diffTime > cooldownTimeout
+       then MaybeT
+              $ return
+              $ Just
+              $ fmap (\cmd -> cmd { customCommandLastUsed = currentTime }) customCommand
+       else do lift
+                 $ logMsg
+                 $ T.pack
+                 $ printf "Command '%s' has not cooled down yet"
+                 $ customCommandName
+                 $ entityPayload customCommand
+               MaybeT $ return Nothing
+
+
 {-# ANN dispatchCustomCommand ("HLint: ignore Use fmap" :: String) #-}
 {-# ANN dispatchCustomCommand ("HLint: ignore Use <$>" :: String) #-}
 dispatchCustomCommand :: Sender -> Command T.Text -> Effect ()
 dispatchCustomCommand _ command =
   do customCommand <- runMaybeT (customCommandByName (commandName command)
+                                   >>= customCommandCooldown 2.0
                                    >>= return . fmap bumpCustomCommandTimes
                                    >>= MaybeT . updateEntityById
                                    >>= return . fmap expandCustomCommandVars)
