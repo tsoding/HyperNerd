@@ -1,4 +1,6 @@
 {-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE RankNTypes #-}
+{-# LANGUAGE RecordWildCards #-}
 module Main where
 
 import           Bot
@@ -7,8 +9,10 @@ import           Control.Concurrent.STM
 import           Control.Monad
 import           Control.Monad.Free
 import           Data.List
-import           Data.String
+import           Data.Bifunctor
 import qualified Data.Text as T
+import qualified Data.Text.IO as T
+import qualified Data.Text.Encoding as T ( encodeUtf8 )
 import           Data.Time
 import qualified Database.SQLite.Simple as SQLite
 import           Effect
@@ -22,9 +26,9 @@ import           Irc.UserInfo (userNick)
 import           IrcTransport
 import           Network.HTTP.Simple
 import qualified Sqlite.EntityPersistence as SEP
+import           System.IO
 import           System.Clock
 import           System.Environment
-import           Text.Printf
 
 -- TODO(#15): utilize rate limits
 -- See https://github.com/glguy/irc-core/blob/6dd03dfed4affe6ae8cdd63ede68c88d70af9aac/bot/src/Main.hs#L32
@@ -37,48 +41,64 @@ data BotState =
              , bsOutcoming :: OutcomingQueue
              }
 
-applyEffect :: BotState -> Effect () -> IO BotState
-applyEffect botState (Pure _) = return botState
-applyEffect botState (Free (Say text s)) =
-    do atomically $ writeTQueue (bsOutcoming botState) (ircPrivmsg (configChannel $ bsConfig botState) text)
-       applyEffect botState s
-applyEffect botState (Free (LogMsg msg s)) =
-    do putStrLn $ T.unpack msg
-       applyEffect botState s
-applyEffect botState (Free (Now s)) =
-    do timestamp <- getCurrentTime
-       applyEffect botState (s timestamp)
-applyEffect botState (Free (ErrorEff msg)) =
-    do putStrLn $ printf "[ERROR] %s" msg
-       return botState
+-- Effect Monad interpreter in IO
 
-applyEffect botState (Free (CreateEntity name properties s)) =
-    do entityId <- SEP.createEntity (bsSqliteConn botState) name properties
-       applyEffect botState (s entityId)
-applyEffect botState (Free (GetEntityById name entityId s)) =
-    do entity <- SEP.getEntityById (bsSqliteConn botState) name entityId
-       applyEffect botState (s entity)
-applyEffect botState (Free (UpdateEntityById entity s)) =
-    do entity' <- SEP.updateEntityById (bsSqliteConn botState) entity
-       applyEffect botState (s entity')
-applyEffect botState (Free (SelectEntities name selector s)) =
-    do entities <- SEP.selectEntities (bsSqliteConn botState) name selector
-       applyEffect botState (s entities)
-applyEffect botState (Free (DeleteEntities name selector s)) =
-    do n <- SEP.deleteEntities (bsSqliteConn botState) name selector
-       applyEffect botState (s n)
-applyEffect botState (Free (UpdateEntities name selector properties s)) =
-    do n <- SEP.updateEntities (bsSqliteConn botState) name selector properties
-       applyEffect botState (s n)
-applyEffect botState (Free (HttpRequest request s)) =
-    do response <- httpLBS request
-       applyEffect botState (s response)
-applyEffect botState (Free (TwitchApiRequest request s)) =
-    do clientId <- return $ fromString $ T.unpack $ configClientId $ bsConfig botState
-       response <- httpLBS (addRequestHeader "Client-ID" clientId request)
-       applyEffect botState (s response)
-applyEffect botState (Free (Timeout ms e s)) =
-    applyEffect (botState { bsTimeouts = (ms, e) : bsTimeouts botState }) s
+runIO :: forall a. Effect a -> BotState -> IO BotState
+
+runIO (Pure _) s = return s
+
+runIO (Free (Say text next)) s@BotState{..} =
+  do atomically $ writeTQueue bsOutcoming $ ircPrivmsg (configChannel bsConfig) text
+     runIO next s
+
+runIO (Free (LogMsg text next)) s =
+  do T.putStrLn text
+     runIO next s
+
+runIO (Free (ErrorEff text)) s =
+  do T.hPutStrLn stderr $ T.append "[ERROR] " text
+     return s
+
+runIO (Free (CreateEntity name props next)) s@BotState{..} =
+  do entityID <- SEP.createEntity bsSqliteConn name props
+     runIO (next entityID) s
+
+runIO (Free (GetEntityById name entityID next)) s@BotState{..} =
+  do entity <- SEP.getEntityById bsSqliteConn name entityID
+     runIO (next entity) s
+
+runIO (Free (UpdateEntityById e next)) s@BotState{..} =
+  do e' <- SEP.updateEntityById bsSqliteConn e
+     runIO (next e') s
+
+runIO (Free (SelectEntities name sel next)) s@BotState{..} =
+  do es <- SEP.selectEntities bsSqliteConn name sel
+     runIO (next es) s
+
+runIO (Free (DeleteEntities name sel next)) s@BotState{..} =
+  do n <- SEP.deleteEntities bsSqliteConn name sel
+     runIO (next n) s
+
+runIO (Free (UpdateEntities name sel props next)) s@BotState{..} =
+  do n <- SEP.updateEntities bsSqliteConn name sel props
+     runIO (next n) s
+
+runIO (Free (Now next)) s =
+  do t <- getCurrentTime
+     runIO (next t) s
+
+runIO (Free (HttpRequest req next)) s =
+  do res <- httpLBS req
+     runIO (next res) s
+
+runIO (Free (TwitchApiRequest req next)) s@BotState{..} =
+  do clientID <- return $ T.encodeUtf8 $ configClientId bsConfig
+     res <- httpLBS (addRequestHeader "Client-ID" clientID req)
+     runIO (next res) s
+
+runIO (Free (Timeout dt effect next)) s@BotState{..} =
+  do runIO next (s { bsTimeouts = (dt,effect) : bsTimeouts })
+
 
 advanceTimeouts :: Integer -> BotState -> IO BotState
 advanceTimeouts dt botState =
