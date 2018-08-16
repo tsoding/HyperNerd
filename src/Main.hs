@@ -115,7 +115,7 @@ ircTransport b botState =
       (eventLoop b
           <$> getTime Monotonic
           <*> SQLite.withTransaction (bsSqliteConn botState)
-                (applyEffect botState $ b Join))
+                (runIO (b Join) botState))
 
 handleIrcMessage :: Bot -> BotState -> RawIrcMsg -> IO BotState
 handleIrcMessage b botState msg =
@@ -126,16 +126,16 @@ handleIrcMessage b botState msg =
                          return botState
          (Privmsg userInfo target msgText) ->
              SQLite.withTransaction (bsSqliteConn botState)
-               $ applyEffect botState (b $ Msg Sender { senderName = idText $ userNick userInfo
-                                                      , senderChannel = idText target
-                                                      , senderSubscriber = maybe False (\(TagEntry _ value) -> value == "1")
-                                                                             $ find (\(TagEntry ident _) -> ident == "subscriber")
-                                                                             $ _msgTags msg
-                                                      , senderMod = maybe False (\(TagEntry _ value) -> value == "1")
-                                                                      $ find (\(TagEntry ident _) -> ident == "mod")
-                                                                      $ _msgTags msg
-                                                      }
-                                          msgText)
+               $ flip runIO botState (b $ Msg Sender { senderName = idText $ userNick userInfo
+                                                     , senderChannel = idText target
+                                                     , senderSubscriber = maybe False (\(TagEntry _ value) -> value == "1")
+                                                                            $ find (\(TagEntry ident _) -> ident == "subscriber")
+                                                                            $ _msgTags msg
+                                                     , senderMod = maybe False (\(TagEntry _ value) -> value == "1")
+                                                                     $ find (\(TagEntry ident _) -> ident == "mod")
+                                                                     $ _msgTags msg
+                                                     }
+                                         msgText)
          _ -> return botState
 
 eventLoop :: Bot -> TimeSpec -> BotState -> IO ()
