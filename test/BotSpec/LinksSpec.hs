@@ -16,4 +16,5 @@ textContainsLinkSpec =
                    ,       textContainsLink "https://google.com/foo?baz=42#bar"
                    , not $ textContainsLink "hello"
                    ,       textContainsLink "Hello google.com World"
+                   ,       textContainsLink "Hello https://google.com World"
                    ]
