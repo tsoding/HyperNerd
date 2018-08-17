@@ -127,6 +127,7 @@ test-suite HyperNerdTest
                      , test
   build-depends:       aeson
                      , async
+                     , HUnit
                      , base
                      , bytestring
                      , containers
@@ -134,8 +135,8 @@ test-suite HyperNerdTest
                      , file-embed
                      , free
                      , http-conduit
-                     , HUnit
                      , raw-strings-qq
+                     , regex-compat-tdfa
                      , safe
                      , sqlite-simple
                      , temporary
@@ -146,8 +147,10 @@ test-suite HyperNerdTest
                      , uri-encode
 
   other-modules:       Bot.BttvFfz
+                     , Bot.Links
                      , Bot.Replies
                      , BotSpec.BttvFfzSpec
+                     , BotSpec.LinksSpec
                      , Command
                      , CommandSpec
                      , Effect

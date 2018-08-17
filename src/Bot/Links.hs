@@ -1,5 +1,5 @@
 {-# LANGUAGE OverloadedStrings #-}
-module Bot.Links (forbidLinksForPlebs) where
+module Bot.Links (forbidLinksForPlebs, textContainsLink) where
 
 import           Bot.Replies
 import           Data.Maybe

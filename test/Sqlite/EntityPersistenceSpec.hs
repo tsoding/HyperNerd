@@ -4,7 +4,6 @@ module Sqlite.EntityPersistenceSpec where
 import           Control.Monad
 import           Data.List
 import qualified Data.Map as M
-import qualified Data.Text as T
 import qualified Database.SQLite.Simple as SQLite
 import           Effect (Selector(..), Condition(..))
 import           Entity
