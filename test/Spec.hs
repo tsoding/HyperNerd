@@ -1,6 +1,7 @@
 module Main where
 
 import qualified BotSpec.BttvFfzSpec as BFS
+import qualified BotSpec.LinksSpec as BLS
 import qualified CommandSpec as CS
 import qualified Sqlite.EntityPersistenceSpec as SEPS
 import           System.Exit
@@ -9,15 +10,16 @@ import           Test.HUnit
 main :: IO Counts
 main = do results <- runTestTT $ TestList [ BFS.parseCorrectBttvEmoteList
                                           , BFS.parseCorrectFfzEmoteList
+                                          , BLS.textContainsLinkSpec
                                           , CS.commandWithGermanUmlauts
                                           , CS.commandWithRussians
                                           , SEPS.createEntityAndGetItById
                                           , SEPS.createSeveralEntityTypes
                                           , SEPS.deleteEntitiesWithPropertyEquals
+                                          , SEPS.doublePrepareSchemaSpec
                                           , SEPS.getRandomEntityIdWithPropertyEquals
                                           , SEPS.nextEntityId
                                           , SEPS.selectEntitiesWithPropertyEquals
-                                          , SEPS.doublePrepareSchemaSpec
                                           ]
           if errors results + failures results == 0
           then exitSuccess

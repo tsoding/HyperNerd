@@ -3,6 +3,7 @@ module Bot (Bot, bot, Event(..), Sender(..), TwitchStream(..)) where
 
 import           Bot.BttvFfz
 import           Bot.CustomCommand
+import           Bot.Links
 import           Bot.Log
 import           Bot.Periodic
 import           Bot.Poll
@@ -98,24 +99,6 @@ regexArgsCommand regexString commandHandler sender args =
 wordsArgsCommand :: CommandHandler [T.Text] -> CommandHandler T.Text
 wordsArgsCommand commandHandler sender args =
     commandHandler sender $ T.words args
-
--- TODO(#146): textContainsLink doesn't recognize URLs without schema
-textContainsLink :: T.Text -> Bool
-textContainsLink t = isJust
-                       $ matchRegex (mkRegex "[-a-zA-Z0-9@:%._\\+~#=]{2,256}\\.[a-z]{2,6}\\b([-a-zA-Z0-9@:%_\\+.~#?&\\/\\/=]*)")
-                       $ T.unpack t
-
-senderIsPleb :: Sender -> Bool
-senderIsPleb sender = not (senderSubscriber sender) && not (senderMod sender)
-
-forbidLinksForPlebs :: Event -> Maybe (Effect())
-forbidLinksForPlebs (Msg sender text)
-    | textContainsLink text && senderIsPleb sender =
-        return $ do say $ T.pack $ printf "/timeout %s 1" $ senderName sender
-                    replyToUser (senderName sender)
-                                "Only subs can post links, sorry."
-    | otherwise = Nothing
-forbidLinksForPlebs _ = Nothing
 
 textContainsWords :: [T.Text] -> T.Text -> Bool
 textContainsWords banwords text =

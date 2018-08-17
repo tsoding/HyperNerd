@@ -4,7 +4,6 @@ module Sqlite.EntityPersistenceSpec where
 import           Control.Monad
 import           Data.List
 import qualified Data.Map as M
-import qualified Data.Text as T
 import qualified Database.SQLite.Simple as SQLite
 import           Effect (Selector(..), Condition(..))
 import           Entity
@@ -117,7 +116,6 @@ getRandomEntityIdWithPropertyEquals =
              $ M.fromList [ ("foo", PropertyInt 42) ]
            createdEntity <- SEP.createEntity conn "entity"
                              $ M.fromList [ ("foo", PropertyInt 43) ]
-           SQLite.setTrace conn (Just (putStrLn . T.unpack))
            randomEntity <- SEP.selectEntities conn "entity" (Take 1
                                                                $ Shuffle
                                                                $ Filter (PropertyEquals "foo" (PropertyInt 43))
