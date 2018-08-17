@@ -99,7 +99,6 @@ wordsArgsCommand :: CommandHandler [T.Text] -> CommandHandler T.Text
 wordsArgsCommand commandHandler sender args =
     commandHandler sender $ T.words args
 
--- TODO(#146): textContainsLink doesn't recognize URLs without schema
 textContainsLink :: T.Text -> Bool
 textContainsLink t = isJust
                        $ matchRegex (mkRegex "[-a-zA-Z0-9@:%._\\+~#=]{2,256}\\.[a-z]{2,6}\\b([-a-zA-Z0-9@:%_\\+.~#?&\\/\\/=]*)")
