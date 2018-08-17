@@ -5,7 +5,7 @@ import           Bot.Links (textContainsLink)
 import qualified Data.Text as T
 import           Test.HUnit
 
--- TODO: Some textContainsLinkSpec cases fail
+-- TODO(#212): Some textContainsLinkSpec cases fail
 textContainsLinkSpec :: Test
 textContainsLinkSpec =
     TestLabel "Text Contains Link Test" $
