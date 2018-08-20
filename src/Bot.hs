@@ -27,11 +27,9 @@ builtinCommands :: CommandTable T.Text
 builtinCommands =
     M.fromList [ ("russify", ("Russify western spy text", russifyCommand))
                , ("addquote", ("Add quote to quote database",
-                               authorizeCommand [ "tsoding"
-                                                , "r3x1m"
-                                                , "bpaf"
-                                                , "voldyman"
-                                                ] addQuoteCommand))
+                               senderAuthorizedCommand (\sender -> senderMod sender || senderSubscriber sender)
+                                                       "Only subs and mods can add quotes, sorry."
+                                                       addQuoteCommand))
                , ("quote", ("Get a quote from the quote database", quoteCommand))
                , ("bttv", ("Show all available BTTV emotes", bttvCommand))
                , ("ffz", ("Show all available FFZ emotes", ffzCommand))
@@ -97,6 +95,15 @@ authorizeCommand authorizedPeople commandHandler sender args =
     then commandHandler sender args
     else replyToUser (senderName sender)
                      "You are not authorized to use this command! HyperNyard"
+
+senderAuthorizedCommand :: (Sender -> Bool) -- sender predicate
+                        -> T.Text           -- unauthorized response
+                        -> CommandHandler a -- command handler
+                        -> CommandHandler a
+senderAuthorizedCommand predicate unauthorizedResponse commandHandler sender args =
+    if predicate sender
+    then commandHandler sender args
+    else replyToUser (senderName sender) unauthorizedResponse
 
 pairArgsCommand :: CommandHandler (a, a) -> CommandHandler [a]
 pairArgsCommand commandHandler sender [x, y] = commandHandler sender (x, y)
