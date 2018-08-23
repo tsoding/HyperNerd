@@ -3,6 +3,7 @@ module Bot (Bot, bot, Event(..), Sender(..), TwitchStream(..)) where
 
 import           Bot.BttvFfz
 import           Bot.CustomCommand
+import           Bot.Dubtrack
 import           Bot.Log
 import           Bot.Periodic
 import           Bot.Poll
@@ -66,7 +67,12 @@ builtinCommands =
                                                         $ regexArgsCommand "([a-zA-Z0-9]+) ?(.*)"
                                                         $ pairArgsCommand
                                                         $ updateCustomCommand builtinCommands))
+               , ("song", ("Print currently playing song", noArgsCommand $ currentSongCommand))
                ]
+
+noArgsCommand :: CommandHandler () -> CommandHandler a
+noArgsCommand commandHandler sender _ =
+    commandHandler sender ()
 
 authorizeCommand :: [T.Text] -> CommandHandler a -> CommandHandler a
 authorizeCommand authorizedPeople commandHandler sender args =
