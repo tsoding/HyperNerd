@@ -18,6 +18,7 @@ module Effect ( Effect
               , timeout
               , errorEff
               , twitchApiRequest
+              , redirectSay
               ) where
 
 import           Control.Monad.Catch
@@ -50,6 +51,7 @@ data EffectF s = Say T.Text s
                | HttpRequest Request (Response B8.ByteString -> s)
                | TwitchApiRequest Request (Response B8.ByteString -> s)
                | Timeout Integer (Effect ()) s
+               | RedirectSay (Effect ()) ([T.Text] -> s)
                  deriving Functor
 
 type Effect = Free EffectF
@@ -101,3 +103,6 @@ timeout t e = liftF $ Timeout t e ()
 
 errorEff :: T.Text -> Effect a
 errorEff t = liftF $ ErrorEff t
+
+redirectSay :: Effect () -> Effect [T.Text]
+redirectSay effect = liftF $ RedirectSay effect id
