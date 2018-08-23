@@ -67,7 +67,7 @@ builtinCommands =
                                                         $ regexArgsCommand "([a-zA-Z0-9]+) ?(.*)"
                                                         $ pairArgsCommand
                                                         $ updateCustomCommand builtinCommands))
-               , ("song", ("Print currently playing song", noArgsCommand $ currentSongCommand))
+               , ("song", ("Print currently playing song", noArgsCommand currentSongCommand))
                ]
 
 noArgsCommand :: CommandHandler () -> CommandHandler a

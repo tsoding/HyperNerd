@@ -34,7 +34,7 @@ instance FromJSON Song where
         <*> v .: "name"
     parseJSON invalid = typeMismatch "Song" invalid
 
-data Room = Room { roomCurrentSong :: Maybe Song } deriving Show
+newtype Room = Room { roomCurrentSong :: Maybe Song } deriving Show
 
 instance FromJSON Room where
     parseJSON (Object v) = Room <$> v .: "currentSong"
