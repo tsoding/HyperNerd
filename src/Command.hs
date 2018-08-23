@@ -3,6 +3,7 @@ module Command where
 
 import           Data.Char
 import qualified Data.Map as M
+import           Data.Maybe
 import qualified Data.Text as T
 import           Effect
 import           Events
@@ -22,4 +23,4 @@ textAsCommand (T.uncons -> Just ('!', restText)) =
 textAsCommand _ = Nothing
 
 textAsPipe :: T.Text -> [Command T.Text]
-textAsPipe _ = []
+textAsPipe t = maybeToList $ textAsCommand t

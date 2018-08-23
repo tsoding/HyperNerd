@@ -106,9 +106,7 @@ bot :: Bot
 bot Join = startPeriodicMessages
 bot (Msg sender text) =
     do recordUserMsg sender text
-       maybe (return ())
-             (dispatchCommand sender)
-             (textAsCommand text)
+       dispatchPipe sender $ textAsPipe text
 
 helpCommand :: CommandTable T.Text -> CommandHandler T.Text
 helpCommand commandTable sender "" =
@@ -123,6 +121,12 @@ helpCommand commandTable sender command =
     maybe (replyToUser (senderName sender) "Cannot find your stupid command HyperNyard")
           (replyToUser (senderName sender))
           (fst <$> M.lookup command commandTable)
+
+dispatchPipe :: Sender -> [Command T.Text] -> Effect ()
+dispatchPipe sender [command] = dispatchCommand sender command
+dispatchPipe _ [] = return ()
+-- TODO: dispatchPipe doesn't support several commands
+dispatchPipe _ _ = return ()
 
 dispatchCommand :: Sender -> Command T.Text -> Effect ()
 dispatchCommand sender cmd =

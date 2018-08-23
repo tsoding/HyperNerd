@@ -15,6 +15,7 @@ main = do results <- runTestTT $ TestList [ BFS.parseCorrectBttvEmoteList
                                           , CS.commandWithRussians
                                           -- TODO: CS.textAsPipeSpec is failing
                                           -- , CS.textAsPipeSpec
+                                          , CS.textAsPipeSingleCommandSpec
                                           , SEPS.createEntityAndGetItById
                                           , SEPS.createSeveralEntityTypes
                                           , SEPS.deleteEntitiesWithPropertyEquals
