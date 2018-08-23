@@ -79,6 +79,9 @@ applyEffect botState (Free (TwitchApiRequest request s)) =
        applyEffect botState (s response)
 applyEffect botState (Free (Timeout ms e s)) =
     applyEffect (botState { bsTimeouts = (ms, e) : bsTimeouts botState }) s
+-- TODO(#224): RedirectSay effect is not interpreted
+applyEffect botState (Free (RedirectSay _ s)) =
+    applyEffect botState (s [])
 
 advanceTimeouts :: Integer -> BotState -> IO BotState
 advanceTimeouts dt botState =
