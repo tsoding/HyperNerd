@@ -13,7 +13,7 @@ main = do results <- runTestTT $ TestList [ BFS.parseCorrectBttvEmoteList
                                           , BLS.textContainsLinkSpec
                                           , CS.commandWithGermanUmlauts
                                           , CS.commandWithRussians
-                                          -- TODO: CS.textAsPipeSpec is failing
+                                          -- TODO(#225): CS.textAsPipeSpec is failing
                                           -- , CS.textAsPipeSpec
                                           , CS.textAsPipeSingleCommandSpec
                                           , SEPS.createEntityAndGetItById
