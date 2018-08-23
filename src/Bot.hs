@@ -125,7 +125,7 @@ helpCommand commandTable sender command =
 dispatchPipe :: Sender -> [Command T.Text] -> Effect ()
 dispatchPipe sender [command] = dispatchCommand sender command
 dispatchPipe _ [] = return ()
--- TODO: dispatchPipe doesn't support several commands
+-- TODO(#223): dispatchPipe doesn't support several commands
 dispatchPipe _ _ = return ()
 
 dispatchCommand :: Sender -> Command T.Text -> Effect ()
