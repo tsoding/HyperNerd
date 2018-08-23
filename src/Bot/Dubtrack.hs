@@ -63,7 +63,7 @@ songLink _ = error "This should never happen Kappa"
 
 currentSongCommand :: CommandHandler ()
 currentSongCommand sender _ =
-    -- TODO: Dubtrack room is hardcode
+    -- TODO(#221): Dubtrack room is hardcode
     do request <- parseRequest "https://api.dubtrack.fm/room/tsoding"
        response <- eitherDecode . getResponseBody
                      <$> httpRequest request
