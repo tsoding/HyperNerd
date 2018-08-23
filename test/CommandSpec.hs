@@ -21,3 +21,12 @@ commandWithRussians =
                                          , commandArgs = "водка"
                                          })
                            (textAsCommand "!russify водка")
+
+textAsPipeSpec :: Test
+textAsPipeSpec =
+    TestLabel "Parse Command Pipe" $
+    TestCase $ assertEqual "Unexpected parse result"
+                           ([ Command "rq" ""
+                            , Command "russify" ""
+                            ])
+                           (textAsPipe "!rq | !russify")

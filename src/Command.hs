@@ -20,3 +20,6 @@ textAsCommand (T.uncons -> Just ('!', restText)) =
                  , commandArgs = T.dropWhile isSpace $ T.dropWhile isAlphaNum restText
                  }
 textAsCommand _ = Nothing
+
+textAsPipe :: T.Text -> [Command T.Text]
+textAsPipe _ = []
