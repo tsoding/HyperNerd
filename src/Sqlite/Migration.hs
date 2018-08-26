@@ -10,7 +10,6 @@ import           Data.List
 import           Data.String
 import qualified Data.Text as T
 import           Database.SQLite.Simple
-import           Text.Printf
 import           Text.RawString.QQ
 
 newtype Migration = Migration { migrationQuery :: Query }
@@ -43,8 +42,7 @@ filterUnappliedMigrations conn migrations =
 
 applyMigration :: Connection -> Migration -> IO ()
 applyMigration conn migration =
-    do printf "Applying migration: %s\n" $ fromQuery $ migrationQuery migration
-       execute_ conn $ migrationQuery migration
+    do execute_ conn $ migrationQuery migration
        executeNamed conn
                     [r| INSERT INTO Migrations (
                           migrationQuery
