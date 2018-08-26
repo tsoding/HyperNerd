@@ -10,7 +10,6 @@ import           Data.List
 import           Data.String
 import qualified Data.Text as T
 import           Database.SQLite.Simple
-import           Text.Printf
 import           Text.RawString.QQ
 
 newtype Migration = Migration { migrationQuery :: Query }
