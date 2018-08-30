@@ -48,12 +48,12 @@ builtinCommands =
                                                                            $ T.pack
                                                                            $ printf "/timeout %s 1"
                                                                            $ senderName sender))
-               , ("addperiodic", ("Add periodic message", authorizeCommand [ "tsoding"
-                                                                           , "r3x1m"
-                                                                           ]
-                                                            $ \sender message -> do addPeriodicMessage sender message
-                                                                                    replyToUser (senderName sender)
-                                                                                                "Added the periodic message"))
+               , ("addperiodic", ("Add periodic command", authorizeCommand [ "tsoding"
+                                                                           , "r3x1m" ] $
+                                                          commandArgsCommand addPeriodicCommand))
+               , ("delperiodic", ("Delete periodic command", authorizeCommand [ "tsoding"
+                                                                              , "r3x1m" ]
+                                                                              removePeriodicCommand))
                , ("addcmd", ("Add custom command", authorizeCommand [ "tsoding"
                                                                     , "r3x1m"
                                                                     ]
@@ -80,6 +80,12 @@ builtinCommands =
                                                                         ]
                                                          removeAliasCommand))
                ]
+
+commandArgsCommand :: CommandHandler (Command T.Text) -> CommandHandler T.Text
+commandArgsCommand commandHandler sender text =
+    case textAsCommand text of
+      Just command -> commandHandler sender command
+      Nothing      -> replyToSender sender "Command as an argument is expected"
 
 noArgsCommand :: CommandHandler () -> CommandHandler a
 noArgsCommand commandHandler sender _ =
@@ -114,7 +120,7 @@ wordsArgsCommand commandHandler sender args =
     commandHandler sender $ T.words args
 
 bot :: Bot
-bot Join = startPeriodicMessages
+bot Join = startPeriodicCommands dispatchCommand
 bot (Msg sender text) =
     do recordUserMsg sender text
        mapM redirectAlias (textAsPipe text) >>= dispatchPipe sender
