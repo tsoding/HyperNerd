@@ -2,7 +2,6 @@
 {-# LANGUAGE DeriveGeneric #-}
 {-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE TypeSynonymInstances #-}
-{-# LANGUAGE OverloadedStrings #-}
 module Entity where
 
 import           Control.Monad.Catch
@@ -12,7 +11,6 @@ import qualified Data.Text as T
 import           Data.Time
 import           GHC.Generics
 import           Property
-import           Text.Printf
 
 type Properties = M.Map T.Text Property
 
@@ -21,20 +19,21 @@ data Entity a = Entity { entityId :: Int
                        , entityPayload :: a
                        } deriving (Eq, Show, Generic, Functor)
 
-extractProperty :: (IsProperty a, MonadThrow m) => T.Text -> Entity Properties -> m a
-extractProperty fieldName entity =
-    do property <- maybe (throwM $ PropertyException (T.pack $ printf "No field '%s' in entity '%s' with id %d"
-                                                                      fieldName
-                                                                      (entityName entity)
-                                                                      (entityId entity)))
+fromEntityProperties :: (IsEntity e, MonadThrow m) => Entity Properties -> m (Entity e)
+fromEntityProperties entity = do
+  payload <- fromProperties (entityPayload entity)
+  return $ fmap (const payload) entity
+
+extractProperty :: (IsProperty a, MonadThrow m) => T.Text -> Properties -> m a
+extractProperty fieldName properties =
+    do property <- maybe (throwM $ PropertyNotFound fieldName)
                    return
-                   (M.lookup fieldName $ entityPayload entity)
+                   (M.lookup fieldName properties)
        fromProperty property
 
 class IsEntity e where
     toProperties :: e -> Properties
-    -- TODO(#189): fromProperties should have type `MonadThrow m => Properties -> m e`
-    fromProperties :: MonadThrow m => Entity Properties -> m (Entity e)
+    fromProperties :: MonadThrow m => Properties -> m e
 
 restoreEntity :: T.Text
               -> Int

@@ -77,7 +77,7 @@ getEntityById name ident = liftF $ GetEntityById name ident id
 
 updateEntityById :: IsEntity e => Entity e -> Effect (Maybe (Entity e))
 updateEntityById entity =
-    fmap (>>= fromProperties) $ liftF $ UpdateEntityById (toProperties <$> entity) id
+    fmap (>>= fromEntityProperties) $ liftF $ UpdateEntityById (toProperties <$> entity) id
 
 -- TODO(#188): selectEntities shoudl have type `IsEntity e => T.Text -> Selector -> Effect [Entity e]`
 selectEntities :: T.Text -> Selector -> Effect [Entity Properties]
