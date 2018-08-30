@@ -61,4 +61,10 @@ addAliasCommand sender (name, redirect)
                                        $ printf "Alias '%s' has been created" name
 
 removeAliasCommand :: CommandHandler T.Text
-removeAliasCommand _ _ = say "Not implemented HyperNyard"
+removeAliasCommand sender name = do
+  alias <- getAliasByName name
+  case alias of
+    Just _ -> do
+      _ <- deleteEntities "Alias" (Filter (PropertyEquals "name" (PropertyText name)) $ All)
+      replyToSender sender $ T.pack $ printf "Alias '%s' has been removed" name
+    Nothing -> replyToSender sender $ T.pack $ printf "Alias '%s' does not exists" name
