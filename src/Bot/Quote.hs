@@ -62,8 +62,7 @@ quoteAddedReply user quoteId =
       $ T.pack
       $ printf "Added the quote under the number %d" quoteId
 
-quoteFoundReply :: T.Text -> Maybe (Entity Properties) -> Effect ()
+quoteFoundReply :: T.Text -> Maybe (Entity Quote) -> Effect ()
 quoteFoundReply user Nothing = replyToUser user "Couldn't find any quotes"
 quoteFoundReply user (Just entity) =
-    do quote <- fromEntityProperties entity
-       replyToUser user $ T.pack $ printf "%s (%d)" (quoteContent $ entityPayload quote) (entityId entity)
+    replyToUser user $ T.pack $ printf "%s (%d)" (quoteContent $ entityPayload entity) (entityId entity)

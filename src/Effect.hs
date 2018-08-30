@@ -71,17 +71,17 @@ createEntity :: IsEntity e => T.Text -> e -> Effect (Entity e)
 createEntity name entity =
     liftF (CreateEntity name (toProperties entity) id) >>= fromEntityProperties
 
--- TODO(#187): getEntityById should have type `IsEntity e => T.Text -> Int -> Effect (Maybe Entity e)`
-getEntityById :: T.Text -> Int -> Effect (Maybe (Entity Properties))
-getEntityById name ident = liftF $ GetEntityById name ident id
+getEntityById :: IsEntity e => T.Text -> Int -> Effect (Maybe (Entity e))
+getEntityById name ident =
+    fmap (>>= fromEntityProperties) $ liftF $ GetEntityById name ident id
 
 updateEntityById :: IsEntity e => Entity e -> Effect (Maybe (Entity e))
 updateEntityById entity =
     fmap (>>= fromEntityProperties) $ liftF $ UpdateEntityById (toProperties <$> entity) id
 
--- TODO(#188): selectEntities shoudl have type `IsEntity e => T.Text -> Selector -> Effect [Entity e]`
-selectEntities :: T.Text -> Selector -> Effect [Entity Properties]
-selectEntities name selector = liftF $ SelectEntities name selector id
+selectEntities :: IsEntity e => T.Text -> Selector -> Effect [Entity e]
+selectEntities name selector =
+    fmap (>>= fromEntityProperties) $ liftF $ SelectEntities name selector id
 
 deleteEntities :: T.Text -> Selector -> Effect Int
 deleteEntities name selector = liftF $ DeleteEntities name selector id
