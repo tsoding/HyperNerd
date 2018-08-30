@@ -27,9 +27,9 @@ instance IsEntity Alias where
            return (const alias <$> entity)
 
 getAliasByOrigin :: T.Text -> Effect (Maybe Alias)
-getAliasByOrigin origin = do
-  entity <- listToMaybe <$> selectEntities "Alias" (Take 1 $ Filter (PropertyEquals "origin" (PropertyText origin)) $ All)
-  return (entityPayload <$> (entity >>= fromProperties))
+getAliasByOrigin origin =
+  fmap entityPayload . (>>= fromProperties) . listToMaybe
+    <$> selectEntities "Alias" (Take 1 $ Filter (PropertyEquals "origin" (PropertyText origin)) $ All)
 
 redirectAlias :: Command a -> Effect (Command a)
 redirectAlias command =
