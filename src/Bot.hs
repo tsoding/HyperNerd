@@ -1,6 +1,7 @@
 {-# LANGUAGE OverloadedStrings #-}
 module Bot (Bot, bot, Event(..), Sender(..), TwitchStream(..)) where
 
+import           Bot.Alias
 import           Bot.BttvFfz
 import           Bot.CustomCommand
 import           Bot.Dubtrack
@@ -68,6 +69,16 @@ builtinCommands =
                                                         $ pairArgsCommand
                                                         $ updateCustomCommand builtinCommands))
                , ("song", ("Print currently playing song", noArgsCommand currentSongCommand))
+               , ("addalias", ("Add command alias", authorizeCommand [ "tsoding"
+                                                                     , "r3x1m"
+                                                                     ]
+                                                      $ regexArgsCommand "([a-zA-Z0-9]+) ([a-zA-Z0-9]+)"
+                                                      $ pairArgsCommand
+                                                        addAliasCommand))
+               , ("delalias", ("Remove command alias", authorizeCommand [ "tsoding"
+                                                                        , "r3x1m"
+                                                                        ]
+                                                         removeAliasCommand))
                ]
 
 noArgsCommand :: CommandHandler () -> CommandHandler a
@@ -106,7 +117,7 @@ bot :: Bot
 bot Join = startPeriodicMessages
 bot (Msg sender text) =
     do recordUserMsg sender text
-       dispatchPipe sender $ textAsPipe text
+       mapM redirectAlias (textAsPipe text) >>= dispatchPipe sender
 
 helpCommand :: CommandTable T.Text -> CommandHandler T.Text
 helpCommand commandTable sender "" =
