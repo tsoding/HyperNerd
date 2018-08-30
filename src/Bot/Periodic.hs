@@ -1,51 +1,82 @@
 {-# LANGUAGE OverloadedStrings #-}
-module Bot.Periodic ( addPeriodicMessage
-                    , startPeriodicMessages
+module Bot.Periodic ( startPeriodicCommands
+                    , addPeriodicCommand
+                    , removePeriodicCommand
                     ) where
 
+import           Bot.Replies
+import           Command
 import qualified Data.Map as M
 import           Data.Maybe
 import qualified Data.Text as T
-import           Data.Time
 import           Effect
 import           Entity
 import           Events
 import           Property
+import           Text.Printf
 
-data PeriodicMessage = PeriodicMessage { pmText :: T.Text
-                                       , pmAuthor :: T.Text
-                                       , pmCreatedAt :: UTCTime
-                                       }
+-- TODO(#238): Periodic command sender should be the bot itself
+god :: Sender
+god = Sender { senderName = "god"
+             , senderChannel = "dimension10"
+             , senderSubscriber = True
+             , senderMod = True
+             }
 
-instance IsEntity PeriodicMessage where
-    toProperties pm =
-        M.fromList [ ("text", PropertyText $ pmText pm)
-                   , ("author", PropertyText $ pmAuthor pm)
-                   , ("createdAt", PropertyUTCTime $ pmCreatedAt pm)
+newtype PeriodicCommand = PeriodicCommand { periodicCommand :: Command T.Text }
+
+instance IsEntity PeriodicCommand where
+    toProperties pc =
+        M.fromList [ ("name", PropertyText $ commandName command)
+                   , ("args", PropertyText $ commandArgs command)
                    ]
+        where command = periodicCommand pc
+
     fromProperties properties = do
-        text      <- extractProperty "text" properties
-        author    <- extractProperty "author" properties
-        createdAt <- extractProperty "createdAt" properties
-        return PeriodicMessage { pmText = text
-                               , pmAuthor = author
-                               , pmCreatedAt = createdAt
-                               }
+        name <- extractProperty "name" properties
+        args <- extractProperty "args" properties
+        return $ PeriodicCommand $ Command name args
 
-addPeriodicMessage :: Sender -> T.Text -> Effect ()
-addPeriodicMessage sender message =
-    do createAt <- now
-       _ <- createEntity "PeriodicMessage" PeriodicMessage { pmText = message
-                                                           , pmAuthor = senderName sender
-                                                           , pmCreatedAt = createAt
-                                                           }
-       return ()
+getPeriodicCommandByName :: T.Text -> Effect (Maybe (Entity PeriodicCommand))
+getPeriodicCommandByName name =
+  fmap listToMaybe $
+  selectEntities "PeriodicCommand" $
+  Take 1 $
+  Filter (PropertyEquals "name" (PropertyText name)) All
 
-startPeriodicMessages :: Effect ()
-startPeriodicMessages =
-    do maybeEntity <- listToMaybe <$> selectEntities "PeriodicMessage" (Take 1 $ Shuffle All)
-       maybePm <- return (maybeEntity >>= fromEntityProperties)
-       maybe (return ())
-             (say . pmText . entityPayload)
-             maybePm
-       timeout (20 * 60 * 1000) startPeriodicMessages
+startPeriodicCommands :: (Sender -> Command T.Text -> Effect ()) -> Effect ()
+startPeriodicCommands dispatchCommand = do
+  maybePc <- fmap listToMaybe $
+             selectEntities "PeriodicCommand" $
+             Take 1 $
+             Shuffle All
+  maybe (return ())
+        (dispatchCommand god . periodicCommand . entityPayload)
+        maybePc
+  timeout (20 * 60 * 1000) $ startPeriodicCommands dispatchCommand
+
+addPeriodicCommand :: CommandHandler (Command T.Text)
+addPeriodicCommand sender command =
+    do maybePc <- getPeriodicCommandByName name
+       case maybePc of
+         Just _ -> replyToSender sender $
+                   T.pack $
+                   printf "'%s' is aleady called periodically" name
+         Nothing -> do _ <- createEntity "PeriodicCommand" (PeriodicCommand command)
+                       replyToSender sender $
+                         T.pack $
+                         printf "'%s' has been scheduled to call periodically" name
+    where name = commandName command
+
+removePeriodicCommand :: CommandHandler T.Text
+removePeriodicCommand sender name = do
+  maybePc <- getPeriodicCommandByName name
+  case maybePc of
+    Just _ -> do _ <- deleteEntities "PeriodicCommand" $
+                      Filter (PropertyEquals "name" (PropertyText name)) All
+                 replyToSender sender $
+                   T.pack $
+                   printf "'%s' has been unscheduled" name
+    Nothing -> replyToSender sender $
+               T.pack $
+               printf "'%s' was not scheduled to begin with" name
