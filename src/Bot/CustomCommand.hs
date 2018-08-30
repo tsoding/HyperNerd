@@ -33,22 +33,21 @@ instance IsEntity CustomCommand where
                    , ("times", PropertyInt $ customCommandTimes customCommand)
                    , ("lastUsed", PropertyUTCTime $ customCommandLastUsed customCommand)
                    ]
-    fromProperties entity =
-        do name     <- extractProperty "name" entity
-           message  <- extractProperty "message" entity
-           times    <- return (extractProperty "times" entity)
-           lastUsed <- return (extractProperty "lastUsed" entity)
-           customCommand <- return CustomCommand { customCommandName = name
-                                                 , customCommandMessage = message
-                                                 , customCommandTimes = fromMaybe 0 times
-                                                 , customCommandLastUsed = fromMaybe (UTCTime (ModifiedJulianDay 0) 0) lastUsed
-                                                 }
-           return (const customCommand <$> entity)
+    fromProperties properties =
+        do name     <- extractProperty "name" properties
+           message  <- extractProperty "message" properties
+           times    <- return (extractProperty "times" properties)
+           lastUsed <- return (extractProperty "lastUsed" properties)
+           return CustomCommand { customCommandName = name
+                                , customCommandMessage = message
+                                , customCommandTimes = fromMaybe 0 times
+                                , customCommandLastUsed = fromMaybe (UTCTime (ModifiedJulianDay 0) 0) lastUsed
+                                }
 
 customCommandByName :: T.Text -> MaybeT Effect (Entity CustomCommand)
 customCommandByName name =
     MaybeT
-      $ fmap (listToMaybe >=> fromProperties)
+      $ fmap (listToMaybe >=> fromEntityProperties)
       $ selectEntities "CustomCommand"
       $ Filter (PropertyEquals "name" $ PropertyText name) All
 

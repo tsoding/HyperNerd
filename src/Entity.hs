@@ -19,17 +19,21 @@ data Entity a = Entity { entityId :: Int
                        , entityPayload :: a
                        } deriving (Eq, Show, Generic, Functor)
 
-extractProperty :: (IsProperty a, MonadThrow m) => T.Text -> Entity Properties -> m a
-extractProperty fieldName entity =
+fromEntityProperties :: (IsEntity e, MonadThrow m) => Entity Properties -> m (Entity e)
+fromEntityProperties entity = do
+  payload <- fromProperties (entityPayload entity)
+  return $ fmap (const payload) entity
+
+extractProperty :: (IsProperty a, MonadThrow m) => T.Text -> Properties -> m a
+extractProperty fieldName properties =
     do property <- maybe (throwM $ PropertyNotFound fieldName)
                    return
-                   (M.lookup fieldName $ entityPayload entity)
+                   (M.lookup fieldName properties)
        fromProperty property
 
 class IsEntity e where
     toProperties :: e -> Properties
-    -- TODO(#189): fromProperties should have type `MonadThrow m => Properties -> m e`
-    fromProperties :: MonadThrow m => Entity Properties -> m (Entity e)
+    fromProperties :: MonadThrow m => Properties -> m e
 
 restoreEntity :: T.Text
               -> Int

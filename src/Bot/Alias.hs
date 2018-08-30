@@ -23,17 +23,16 @@ instance IsEntity Alias where
         M.fromList [ ("name", PropertyText $ aliasName alias)
                    , ("redirect", PropertyText $ aliasRedirect alias)
                    ]
-    fromProperties entity =
-        do name   <- extractProperty "name" entity
-           redirect <- extractProperty "redirect" entity
-           alias    <- return Alias { aliasName = name
-                                    , aliasRedirect = redirect
-                                    }
-           return (const alias <$> entity)
+    fromProperties properties =
+        do name   <- extractProperty "name" properties
+           redirect <- extractProperty "redirect" properties
+           return Alias { aliasName = name
+                        , aliasRedirect = redirect
+                        }
 
 getAliasByName :: T.Text -> Effect (Maybe Alias)
 getAliasByName name =
-  fmap entityPayload . (>>= fromProperties) . listToMaybe
+  fmap entityPayload . (>>= fromEntityProperties) . listToMaybe
     <$> selectEntities "Alias" (Take 1 $ Filter (PropertyEquals "name" (PropertyText name)) All)
 
 -- TODO(#231): redirectAlias does not support transitive aliases
