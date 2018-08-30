@@ -34,7 +34,7 @@ instance IsEntity Alias where
 getAliasByName :: T.Text -> Effect (Maybe Alias)
 getAliasByName name =
   fmap entityPayload . (>>= fromProperties) . listToMaybe
-    <$> selectEntities "Alias" (Take 1 $ Filter (PropertyEquals "name" (PropertyText name)) $ All)
+    <$> selectEntities "Alias" (Take 1 $ Filter (PropertyEquals "name" (PropertyText name)) All)
 
 -- TODO: redirectAlias does not support transitive aliases
 redirectAlias :: Command a -> Effect (Command a)
@@ -53,9 +53,9 @@ addAliasCommand sender (name, redirect)
                        Just _ -> replyToSender sender
                                    $ T.pack
                                    $ printf "Alias '%s' already exists" name
-                       Nothing -> do _ <- createEntity "Alias" $ Alias { aliasName = name
-                                                                       , aliasRedirect = redirect
-                                                                       }
+                       Nothing -> do _ <- createEntity "Alias" Alias { aliasName = name
+                                                                     , aliasRedirect = redirect
+                                                                     }
                                      replyToSender sender
                                        $ T.pack
                                        $ printf "Alias '%s' has been created" name
@@ -65,6 +65,6 @@ removeAliasCommand sender name = do
   alias <- getAliasByName name
   case alias of
     Just _ -> do
-      _ <- deleteEntities "Alias" (Filter (PropertyEquals "name" (PropertyText name)) $ All)
+      _ <- deleteEntities "Alias" (Filter (PropertyEquals "name" (PropertyText name)) All)
       replyToSender sender $ T.pack $ printf "Alias '%s' has been removed" name
     Nothing -> replyToSender sender $ T.pack $ printf "Alias '%s' does not exists" name

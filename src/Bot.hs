@@ -78,7 +78,7 @@ builtinCommands =
                , ("delalias", ("Remove command alias", authorizeCommand [ "tsoding"
                                                                         , "r3x1m"
                                                                         ]
-                                                         $ removeAliasCommand))
+                                                         removeAliasCommand))
                ]
 
 noArgsCommand :: CommandHandler () -> CommandHandler a
@@ -117,7 +117,7 @@ bot :: Bot
 bot Join = startPeriodicMessages
 bot (Msg sender text) =
     do recordUserMsg sender text
-       (mapM redirectAlias $ textAsPipe text) >>= dispatchPipe sender
+       mapM redirectAlias (textAsPipe text) >>= dispatchPipe sender
 
 helpCommand :: CommandTable T.Text -> CommandHandler T.Text
 helpCommand commandTable sender "" =
