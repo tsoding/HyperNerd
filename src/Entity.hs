@@ -2,7 +2,6 @@
 {-# LANGUAGE DeriveGeneric #-}
 {-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE TypeSynonymInstances #-}
-{-# LANGUAGE OverloadedStrings #-}
 module Entity where
 
 import           Control.Monad.Catch
@@ -12,7 +11,6 @@ import qualified Data.Text as T
 import           Data.Time
 import           GHC.Generics
 import           Property
-import           Text.Printf
 
 type Properties = M.Map T.Text Property
 
@@ -23,10 +21,7 @@ data Entity a = Entity { entityId :: Int
 
 extractProperty :: (IsProperty a, MonadThrow m) => T.Text -> Entity Properties -> m a
 extractProperty fieldName entity =
-    do property <- maybe (throwM $ PropertyException (T.pack $ printf "No field '%s' in entity '%s' with id %d"
-                                                                      fieldName
-                                                                      (entityName entity)
-                                                                      (entityId entity)))
+    do property <- maybe (throwM $ PropertyNotFound fieldName)
                    return
                    (M.lookup fieldName $ entityPayload entity)
        fromProperty property

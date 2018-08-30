@@ -5,7 +5,9 @@ import           Control.Monad.Catch
 import qualified Data.Text as T
 import           Data.Time
 
-newtype PropertyException = PropertyException T.Text deriving Show
+data PropertyException = PropertyNotFound T.Text
+                       | UnexpectedPropertyType T.Text
+                         deriving Show
 
 instance Exception PropertyException
 
@@ -19,15 +21,15 @@ class IsProperty a where
 
 instance IsProperty Int where
     fromProperty (PropertyInt x) = return  x
-    fromProperty _ = throwM $ PropertyException "Could parse a field. Expected type Int"
+    fromProperty _ = throwM $ UnexpectedPropertyType "Int"
 
 instance IsProperty T.Text where
     fromProperty (PropertyText x) = return x
-    fromProperty _ = throwM $ PropertyException "Could parse a field. Expected type Text"
+    fromProperty _ = throwM $ UnexpectedPropertyType "Text"
 
 instance IsProperty UTCTime where
     fromProperty (PropertyUTCTime x) = return x
-    fromProperty _ = throwM $ PropertyException "Could parse a field. Expected type UTCTime"
+    fromProperty _ = throwM $ UnexpectedPropertyType "UTCTime"
 
 propertyTypeName :: Property -> String
 propertyTypeName (PropertyInt _) = "PropertyInt"
