@@ -66,7 +66,7 @@ say msg = liftF $ Say msg ()
 logMsg :: T.Text -> Effect ()
 logMsg msg = liftF $ LogMsg msg ()
 
--- TODO: the result of createEntity effect is always ignored
+-- TODO(#235): the result of createEntity effect is always ignored
 createEntity :: IsEntity e => T.Text -> e -> Effect (Entity e)
 createEntity name entity =
     liftF (CreateEntity name (toProperties entity) id) >>= fromEntityProperties
