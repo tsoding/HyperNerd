@@ -44,7 +44,7 @@ redirectAlias command =
                       (renameCommand command . aliasRedirect)
                       alias
 
--- TODO: addAliasCommand does not check for indirect loops
+-- TODO(#232): addAliasCommand does not check for indirect loops
 addAliasCommand :: CommandHandler (T.Text, T.Text)
 addAliasCommand sender (name, redirect)
     | name == redirect = replyToSender sender "Alias cannot redirect to itself"
