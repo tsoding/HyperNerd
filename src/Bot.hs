@@ -1,6 +1,7 @@
 {-# LANGUAGE OverloadedStrings #-}
 module Bot (Bot, bot, Event(..), Sender(..), TwitchStream(..)) where
 
+import           Bot.Alias
 import           Bot.BttvFfz
 import           Bot.CustomCommand
 import           Bot.Dubtrack
@@ -68,6 +69,14 @@ builtinCommands =
                                                         $ pairArgsCommand
                                                         $ updateCustomCommand builtinCommands))
                , ("song", ("Print currently playing song", noArgsCommand currentSongCommand))
+               , ("addalias", ("Add command alias", authorizeCommand [ "tsoding"
+                                                                     , "r3x1m"
+                                                                     ]
+                                                      $ addAliasCommand))
+               , ("delalias", ("Remove command alias", authorizeCommand [ "tsoding"
+                                                                        , "r3x1m"
+                                                                        ]
+                                                         $ removeAliasCommand))
                ]
 
 noArgsCommand :: CommandHandler () -> CommandHandler a

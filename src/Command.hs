@@ -15,6 +15,12 @@ data Command a = Command { commandName :: T.Text
                          , commandArgs :: a
                          } deriving (Eq, Show)
 
+renameCommand :: Command a -> T.Text -> Command a
+renameCommand command name =
+    command { commandName = name
+            , commandArgs = commandArgs command
+            }
+
 textAsCommand :: T.Text -> Maybe (Command T.Text)
 textAsCommand (T.uncons -> Just ('!', restText)) =
     Just Command { commandName = T.takeWhile isAlphaNum restText
