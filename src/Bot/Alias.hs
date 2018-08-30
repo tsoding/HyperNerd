@@ -1,5 +1,8 @@
 {-# LANGUAGE OverloadedStrings #-}
-module Bot.Alias where
+module Bot.Alias ( redirectAlias
+                 , addAliasCommand
+                 , removeAliasCommand
+                 ) where
 
 import           Command
 import qualified Data.Map as M

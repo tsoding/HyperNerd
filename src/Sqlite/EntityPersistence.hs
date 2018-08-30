@@ -203,6 +203,24 @@ selectEntityIds conn name (Filter (PropertyEquals propertyName property) All) =
                           , ":propertyTextValue" := (fromProperty property :: Maybe T.Text)
                           , ":propertyUTCTime" := (fromProperty property :: Maybe UTCTime)
                           ]
+selectEntityIds conn name (Take n (Filter (PropertyEquals propertyName property) All)) =
+    map fromOnly
+      <$> queryNamed conn [r| SELECT entityId
+                              FROM EntityProperty
+                              WHERE entityName = :entityName
+                                AND propertyName = :propertyName
+                                AND propertyInt IS :propertyIntValue
+                                AND propertyText IS :propertyTextValue
+                                AND propertyUTCTime IS :propertyUTCTime
+                              GROUP BY entityId
+                              LIMIT :n|]
+                          [ ":entityName" := name
+                          , ":propertyName" := propertyName
+                          , ":propertyIntValue" := (fromProperty property :: Maybe Int)
+                          , ":propertyTextValue" := (fromProperty property :: Maybe T.Text)
+                          , ":propertyUTCTime" := (fromProperty property :: Maybe UTCTime)
+                          , ":n" := n
+                          ]
 selectEntityIds conn name (Shuffle All) =
     map fromOnly
       <$> queryNamed conn [r| SELECT entityId

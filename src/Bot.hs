@@ -115,7 +115,7 @@ bot :: Bot
 bot Join = startPeriodicMessages
 bot (Msg sender text) =
     do recordUserMsg sender text
-       dispatchPipe sender $ textAsPipe text
+       (mapM redirectAlias $ textAsPipe text) >>= dispatchPipe sender
 
 helpCommand :: CommandTable T.Text -> CommandHandler T.Text
 helpCommand commandTable sender "" =
