@@ -15,7 +15,7 @@ import           Events
 import           Property
 import           Text.Printf
 
--- TODO: Periodic command sender should be the bot itself
+-- TODO(#238): Periodic command sender should be the bot itself
 god :: Sender
 god = Sender { senderName = "god"
              , senderChannel = "dimension10"
