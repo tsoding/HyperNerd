@@ -72,7 +72,9 @@ builtinCommands =
                , ("addalias", ("Add command alias", authorizeCommand [ "tsoding"
                                                                      , "r3x1m"
                                                                      ]
-                                                      $ addAliasCommand))
+                                                      $ regexArgsCommand "([a-zA-Z0-9]+) ([a-zA-Z0-9]+)"
+                                                      $ pairArgsCommand
+                                                        addAliasCommand))
                , ("delalias", ("Remove command alias", authorizeCommand [ "tsoding"
                                                                         , "r3x1m"
                                                                         ]
