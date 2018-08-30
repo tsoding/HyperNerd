@@ -36,7 +36,7 @@ getAliasByName name =
   fmap entityPayload . (>>= fromProperties) . listToMaybe
     <$> selectEntities "Alias" (Take 1 $ Filter (PropertyEquals "name" (PropertyText name)) All)
 
--- TODO: redirectAlias does not support transitive aliases
+-- TODO(#231): redirectAlias does not support transitive aliases
 redirectAlias :: Command a -> Effect (Command a)
 redirectAlias command =
     do alias <- getAliasByName $ commandName command
