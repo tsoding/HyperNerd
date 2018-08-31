@@ -9,7 +9,7 @@ Second iteration of [Tsoder][tsoder]. Chat bot for [Tsoding][tsoding] streams.
 
 ## Quick Start
 
-## NixOS
+### NixOS
 
 ```console
 $ nix-shell
@@ -20,7 +20,7 @@ $ cabal exec hlint .
 $ cabal run secret.ini database.db
 ```
 
-## Stack
+### Stack
 
 Native dependencies:
 - OpenSSL
@@ -41,6 +41,33 @@ password = 12345
 channel = Tsoding
 clientId = <client-id-token>
 ```
+
+## Command Aliases
+
+You can assign a command alias to any command:
+
+```
+<user> !test
+<bot> test
+<user> !addalias foo test
+<user> !foo
+<user> test
+```
+
+The aliases are "redirected" only one level deep meaning that transitive aliases are not supported:
+
+```
+<user> !addalias bar foo
+<user> !bar
+*nothing, because !bar is redirected to !foo, but further redirect from !foo to !test does not happen*
+```
+
+Motivation to not support transitive aliases is the following:
+- They are not needed in most of the cases. Generally you just have a
+  main command and a bunch of aliases to it.
+- Support for transitive aliases requires to traverse and maintain a
+  "tree" of aliases, which complicates the logic and degrades the
+  performance.
 
 ## Support
 
