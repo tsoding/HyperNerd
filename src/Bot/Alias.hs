@@ -35,7 +35,6 @@ getAliasByName name =
   fmap entityPayload . (>>= fromEntityProperties) . listToMaybe
     <$> selectEntities "Alias" (Take 1 $ Filter (PropertyEquals "name" (PropertyText name)) All)
 
--- TODO(#231): redirectAlias does not support transitive aliases
 redirectAlias :: Command a -> Effect (Command a)
 redirectAlias command =
     do alias <- getAliasByName $ commandName command
@@ -43,7 +42,6 @@ redirectAlias command =
                       (renameCommand command . aliasRedirect)
                       alias
 
--- TODO(#232): addAliasCommand does not check for indirect loops
 addAliasCommand :: CommandHandler (T.Text, T.Text)
 addAliasCommand sender (name, redirect)
     | name == redirect = replyToSender sender "Alias cannot redirect to itself"
