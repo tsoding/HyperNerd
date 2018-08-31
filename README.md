@@ -51,7 +51,7 @@ You can assign a command alias to any command:
 <bot> test
 <user> !addalias foo test
 <user> !foo
-<user> test
+<bot> test
 ```
 
 The aliases are "redirected" only one level deep meaning that transitive aliases are not supported:
