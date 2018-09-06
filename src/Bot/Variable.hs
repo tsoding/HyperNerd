@@ -34,7 +34,7 @@ expandVariables = return
 addVariable :: CommandHandler T.Text
 addVariable _ _ = return ()
 
--- TODO: deleteVariable is not implemented
+-- TODO(#245): deleteVariable is not implemented
 deleteVariable :: CommandHandler T.Text
 deleteVariable _ _ = return ()
 
