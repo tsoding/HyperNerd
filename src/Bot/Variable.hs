@@ -2,6 +2,7 @@
 module Bot.Variable ( expandVariables
                     , addVariable
                     , deleteVariable
+                    , updateVariable
                     ) where
 
 import           Command
@@ -36,3 +37,7 @@ addVariable _ _ = return ()
 -- TODO: deleteVariable is not implemented
 deleteVariable :: CommandHandler T.Text
 deleteVariable _ _ = return ()
+
+-- TODO: updateVariable is not implemented
+updateVariable :: CommandHandler (T.Text, T.Text)
+updateVariable _ _ = return ()
