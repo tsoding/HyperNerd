@@ -69,6 +69,12 @@ Motivation to not support transitive aliases is the following:
   "tree" of aliases, which complicates the logic and degrades the
   performance.
 
+## Quote Database
+
+- `!addquote <quote-text>` -- Add a quote to the quote database. Available only to subs and mods.
+- `!delquote <quote-id>` -- Delete quote by id. Available only to Tsoding.
+- `!quote [quote-id]` -- Query quote from the quote database.
+
 ## Support
 
 You can support my work via
