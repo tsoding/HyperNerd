@@ -30,7 +30,7 @@ instance IsEntity Variable where
 expandVariables :: T.Text -> Effect T.Text
 expandVariables = return
 
--- TODO: addVariable is not implemented
+-- TODO(#244): addVariable is not implemented
 addVariable :: CommandHandler T.Text
 addVariable _ _ = return ()
 
