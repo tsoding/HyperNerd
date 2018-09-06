@@ -6,6 +6,7 @@ module Bot.CustomCommand ( addCustomCommand
                          ) where
 
 import           Bot.Replies
+import           Bot.Variable
 import           Command
 import           Control.Monad
 import           Control.Monad.Trans.Class
@@ -123,11 +124,12 @@ updateCustomCommand builtinCommands sender (name, message) =
                $ T.pack
                $ printf "Command '%s' does not exist" name
 
-expandCustomCommandVars :: CustomCommand -> CustomCommand
-expandCustomCommandVars customCommand =
-    customCommand { customCommandMessage = T.replace "%times" (T.pack $ show times) message }
-    where message = customCommandMessage customCommand
-          times = customCommandTimes customCommand
+expandCustomCommandVars :: CustomCommand -> Effect CustomCommand
+expandCustomCommandVars customCommand = do
+  let message = customCommandMessage customCommand
+  let times = customCommandTimes customCommand
+  expandedMessage <- expandVariables $ T.replace "%times" (T.pack $ show times) message
+  return $ customCommand { customCommandMessage = expandedMessage }
 
 bumpCustomCommandTimes :: CustomCommand -> CustomCommand
 bumpCustomCommandTimes customCommand =
@@ -167,7 +169,8 @@ dispatchCustomCommand _ command =
                                    >>= customCommandCooldown 2.0
                                    >>= return . fmap bumpCustomCommandTimes
                                    >>= MaybeT . updateEntityById
-                                   >>= return . fmap expandCustomCommandVars)
+                                   >>= return . entityPayload
+                                   >>= lift   . expandCustomCommandVars)
      maybe (return ())
-           (say . customCommandMessage . entityPayload)
+           (say . customCommandMessage)
            customCommand

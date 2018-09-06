@@ -12,6 +12,7 @@ import           Bot.Quote
 import           Bot.Replies
 import           Bot.Russify
 import           Bot.Twitch
+import           Bot.Variable
 import           Command
 import           Data.List
 import qualified Data.Map as M
@@ -81,6 +82,11 @@ builtinCommands =
                                                                         , "r3x1m"
                                                                         ]
                                                          removeAliasCommand))
+               , ("addvar", ("Add variable", authorizeCommand ["tsoding", "r3x1m"] addVariable))
+               , ("updvar", ("Update variable", authorizeCommand ["tsoding", "r3x1m"] $
+                                                regexArgsCommand "([a-zA-Z0-9]+) ?(.*)" $
+                                                pairArgsCommand updateVariable))
+               , ("delvar", ("Delete variable", authorizeCommand ["tsoding", "r3x1m"] deleteVariable))
                ]
 
 commandArgsCommand :: CommandHandler (Command T.Text) -> CommandHandler T.Text
