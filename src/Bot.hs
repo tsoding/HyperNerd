@@ -30,6 +30,10 @@ builtinCommands =
                                senderAuthorizedCommand (\sender -> senderMod sender || senderSubscriber sender)
                                                        "Only subs and mods can add quotes, sorry."
                                                        addQuoteCommand))
+               , ("delquote", ("Delete quote from quote database",
+                               authorizeCommand [ "tsoding"
+                                                , "r3x1m"
+                                                ] deleteQuoteCommand))
                , ("quote", ("Get a quote from the quote database", quoteCommand))
                , ("bttv", ("Show all available BTTV emotes", bttvCommand))
                , ("ffz", ("Show all available FFZ emotes", ffzCommand))

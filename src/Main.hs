@@ -58,6 +58,9 @@ applyEffect botState (Free (CreateEntity name properties s)) =
 applyEffect botState (Free (GetEntityById name entityId s)) =
     do entity <- SEP.getEntityById (bsSqliteConn botState) name entityId
        applyEffect botState (s entity)
+applyEffect botState (Free (DeleteEntityById name entityId s)) =
+    do SEP.deleteEntityById (bsSqliteConn botState) name entityId
+       applyEffect botState s
 applyEffect botState (Free (UpdateEntityById entity s)) =
     do entity' <- SEP.updateEntityById (bsSqliteConn botState) entity
        applyEffect botState (s entity')

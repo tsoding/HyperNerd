@@ -9,6 +9,7 @@ module Effect ( Effect
               , logMsg
               , createEntity
               , getEntityById
+              , deleteEntityById
               , updateEntityById
               , selectEntities
               , deleteEntities
@@ -43,6 +44,7 @@ data EffectF s = Say T.Text s
                | ErrorEff T.Text
                | CreateEntity T.Text Properties (Entity Properties -> s)
                | GetEntityById T.Text Int (Maybe (Entity Properties) -> s)
+               | DeleteEntityById T.Text Int s
                | UpdateEntityById (Entity Properties) (Maybe (Entity Properties) -> s)
                | SelectEntities T.Text Selector ([Entity Properties] -> s)
                | DeleteEntities T.Text Selector (Int -> s)
@@ -74,6 +76,10 @@ createEntity name entity =
 getEntityById :: IsEntity e => T.Text -> Int -> Effect (Maybe (Entity e))
 getEntityById name ident =
     fmap (>>= fromEntityProperties) $ liftF $ GetEntityById name ident id
+
+deleteEntityById :: T.Text -> Int -> Effect ()
+deleteEntityById name ident =
+    liftF $ DeleteEntityById name ident ()
 
 updateEntityById :: IsEntity e => Entity e -> Effect (Maybe (Entity e))
 updateEntityById entity =
