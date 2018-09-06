@@ -7,6 +7,7 @@ module Sqlite.EntityPersistence ( prepareSchema
                                 , selectEntities
                                 , deleteEntities
                                 , updateEntities
+                                , deleteEntityById
                                 , nextEntityId
                                 , entityNames
                                 ) where

@@ -2,6 +2,7 @@
 module Bot.Quote where
 
 import           Bot.Replies
+import           Command
 import           Control.Monad
 import qualified Data.Map as M
 import           Data.Maybe
@@ -34,7 +35,14 @@ instance IsEntity Quote where
                      , quoteTimestamp = timestamp
                      }
 
-addQuoteCommand :: Sender -> T.Text -> Effect ()
+deleteQuoteCommand :: CommandHandler T.Text
+deleteQuoteCommand sender quoteIdText =
+  case readMaybe $ T.unpack quoteIdText of
+    Just quoteId -> do deleteEntityById "quote" quoteId
+                       replyToSender sender "Quote has been deleted"
+    Nothing -> replyToSender sender "Could not find quote with such id"
+
+addQuoteCommand :: CommandHandler T.Text
 addQuoteCommand sender content =
     do timestamp <- now
        quoter    <- return $ senderName sender
@@ -46,7 +54,7 @@ addQuoteCommand sender content =
 
        quoteAddedReply quoter $ entityId entity
 
-quoteCommand :: Sender -> T.Text -> Effect ()
+quoteCommand :: CommandHandler T.Text
 quoteCommand sender "" =
     fmap listToMaybe (selectEntities "quote" (Take 1 $ Shuffle All))
       >>= quoteFoundReply (senderName sender)
