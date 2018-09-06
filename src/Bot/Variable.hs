@@ -26,7 +26,7 @@ instance IsEntity Variable where
            value <- extractProperty "value" properties
            return $ Variable name value
 
--- TODO: expandVariables is not implemented
+-- TODO(#243): expandVariables is not implemented
 expandVariables :: T.Text -> Effect T.Text
 expandVariables = return
 
