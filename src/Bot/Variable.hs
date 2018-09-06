@@ -38,6 +38,6 @@ addVariable _ _ = return ()
 deleteVariable :: CommandHandler T.Text
 deleteVariable _ _ = return ()
 
--- TODO: updateVariable is not implemented
+-- TODO(#246): updateVariable is not implemented
 updateVariable :: CommandHandler (T.Text, T.Text)
 updateVariable _ _ = return ()
