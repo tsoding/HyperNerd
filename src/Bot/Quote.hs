@@ -36,7 +36,7 @@ instance IsEntity Quote where
                      }
 
 deleteQuoteCommand :: CommandHandler T.Text
-deleteQuoteCommand sender quoteIdText = do
+deleteQuoteCommand sender quoteIdText =
   case readMaybe $ T.unpack quoteIdText of
     Just quoteId -> do deleteEntityById "quote" quoteId
                        replyToSender sender "Quote has been deleted"
