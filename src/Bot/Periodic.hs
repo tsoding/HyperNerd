@@ -53,7 +53,7 @@ startPeriodicCommands dispatchCommand = do
   maybe (return ())
         (dispatchCommand god . periodicCommand . entityPayload)
         maybePc
-  timeout (20 * 60 * 1000) $ startPeriodicCommands dispatchCommand
+  timeout (10 * 60 * 1000) $ startPeriodicCommands dispatchCommand
 
 addPeriodicCommand :: CommandHandler (Command T.Text)
 addPeriodicCommand sender command =
