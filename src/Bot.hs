@@ -14,10 +14,13 @@ import           Bot.Russify
 import           Bot.Twitch
 import           Bot.Variable
 import           Command
+import           Data.Foldable
 import           Data.List
 import qualified Data.Map as M
+import           Data.Maybe
 import qualified Data.Text as T
 import           Effect
+import           Entity
 import           Events
 import           Text.Printf
 import           Text.Regex
@@ -87,6 +90,17 @@ builtinCommands =
                                                 regexArgsCommand "([a-zA-Z0-9]+) ?(.*)" $
                                                 pairArgsCommand updateVariable))
                , ("delvar", ("Delete variable", authorizeCommand ["tsoding", "r3x1m"] deleteVariable))
+               , ("ban", ("", authorizeCommand ["tsoding", "r3x1m"] $
+                              regexArgsCommand "([0-9]+) (.*)" $
+                              pairArgsCommand $ \_ (strN, regexStr) ->
+                                  do n     <- return $ read $ T.unpack strN
+                                     regex <- return $ mkRegex $ T.unpack regexStr
+                                     logs  <- selectEntities "LogRecord" $
+                                              Take n $
+                                              DescSortBy "timestamp" All
+                                     traverse_ (\user -> say $ T.concat ["/ban ", user]) $
+                                       map (lrUser . entityPayload) $
+                                       filter (isJust . matchRegex regex . T.unpack . lrMsg . entityPayload) logs))
                ]
 
 commandArgsCommand :: CommandHandler (Command T.Text) -> CommandHandler T.Text

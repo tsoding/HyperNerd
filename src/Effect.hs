@@ -37,6 +37,7 @@ data Selector = All
               | Filter Condition Selector
               | Shuffle Selector
               | Take Int Selector
+              | DescSortBy T.Text Selector
                 deriving Show
 
 data EffectF s = Say T.Text s
