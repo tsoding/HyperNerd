@@ -36,8 +36,5 @@ t4(eid) as (                    -- SortTextBy "msg"
              where entityId is eid
                and propertyName is "msg") ASC
 )
-select propertyText
-from EntityProperty
-inner join t4 on entityId = t4.eid
-where propertyName is "msg";
+select * from t4;
 ```
