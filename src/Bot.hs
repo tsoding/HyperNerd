@@ -98,8 +98,7 @@ builtinCommands =
                                      logs  <- selectEntities "LogRecord" $
                                               Take n $
                                               DescSortBy "timestamp" All
-                                     traverse_ (\user -> say $ T.concat ["/ban ", user]) $
-                                       map (lrUser . entityPayload) $
+                                     traverse_ (say . T.pack . printf "/ban %s" . lrUser . entityPayload) $
                                        filter (isJust . matchRegex regex . T.unpack . lrMsg . entityPayload) logs))
                ]
 
