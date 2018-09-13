@@ -174,7 +174,7 @@ deleteEntityById conn name ident =
                       , ":entityId" := ident
                       ]
 
--- TODO: reimplement selectEntities with Sqlite.Compiler.compileSelector when it's done
+-- TODO(#251): reimplement selectEntities with Sqlite.Compiler.compileSelector when it's done
 selectEntities :: Connection -> T.Text -> Selector -> IO [Entity Properties]
 selectEntities conn name selector =
     do ids <- selectEntityIds conn name selector
