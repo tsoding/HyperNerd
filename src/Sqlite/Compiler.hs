@@ -6,7 +6,7 @@ import           Database.SQLite.Simple
 import           Effect
 import           Text.Printf
 
--- TODO: compileCteChain is not implemented
+-- TODO(#250): compileCteChain is not implemented
 compileCteChain :: Selector -> (T.Text, Query, [NamedParam])
 compileCteChain = undefined
 
