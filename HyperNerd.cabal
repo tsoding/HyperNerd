@@ -79,6 +79,7 @@ executable HyperNerd
                      , Events
                      , IrcTransport
                      , Property
+                     , Sqlite.Compiler
                      , Sqlite.EntityPersistence
                      , Sqlite.Migration
   
