@@ -260,7 +260,7 @@ selectEntityIds conn name (Take n (Shuffle (Filter (PropertyEquals propertyName 
                           , ":propertyUTCTime" := (fromProperty property :: Maybe UTCTime)
                           , ":n" := n
                           ]
--- TODO: DescSortBy selector supports only UTCTime properties
+-- TODO(#248): DescSortBy selector supports only UTCTime properties
 selectEntityIds conn name (Take n (DescSortBy propertyName All)) =
     map fromOnly
       <$> queryNamed conn [r| SELECT entityId
