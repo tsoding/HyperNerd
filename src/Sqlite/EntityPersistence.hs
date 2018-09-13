@@ -260,6 +260,20 @@ selectEntityIds conn name (Take n (Shuffle (Filter (PropertyEquals propertyName 
                           , ":propertyUTCTime" := (fromProperty property :: Maybe UTCTime)
                           , ":n" := n
                           ]
+-- TODO(#248): DescSortBy selector supports only UTCTime properties
+selectEntityIds conn name (Take n (DescSortBy propertyName All)) =
+    map fromOnly
+      <$> queryNamed conn [r| SELECT entityId
+                              FROM EntityProperty
+                              WHERE entityName = :entityName
+                                AND propertyName is :propertyName
+                              GROUP BY entityId
+                              ORDER BY propertyUTCTime DESC
+                              LIMIT :n |]
+                          [ ":entityName" := name
+                          , ":propertyName" := propertyName
+                          , ":n" := n
+                          ]
 -- TODO(#178): SEP.selectEntityIds doesn't support arbitrary selector combination
 selectEntityIds _ _ selector =
     error ("Unsupported selector combination " ++ show selector)
