@@ -18,7 +18,7 @@ import           Data.Maybe
 import qualified Data.Text as T
 import           Data.Time
 import           Database.SQLite.Simple
-import           Effect (Selector(..), Condition(..))
+import           Effect (Selector(..), Condition(..), Order(..))
 import           Entity
 import           Property
 import           Sqlite.Migration
@@ -261,8 +261,9 @@ selectEntityIds conn name (Take n (Shuffle (Filter (PropertyEquals propertyName 
                           , ":propertyUTCTime" := (fromProperty property :: Maybe UTCTime)
                           , ":n" := n
                           ]
--- TODO(#248): DescSortBy selector supports only UTCTime properties
-selectEntityIds conn name (Take n (DescSortBy propertyName All)) =
+-- TODO(#255): SortBy selector supports only UTCTime properties
+-- TODO(#256): SortBy selector supports only Desc order
+selectEntityIds conn name (Take n (SortBy propertyName Desc All)) =
     map fromOnly
       <$> queryNamed conn [r| SELECT entityId
                               FROM EntityProperty

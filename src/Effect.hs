@@ -5,6 +5,7 @@ module Effect ( Effect
               , EffectF (..)
               , Selector (..)
               , Condition (..)
+              , Order(..)
               , say
               , logMsg
               , createEntity
@@ -33,11 +34,13 @@ import           Property
 
 data Condition = PropertyEquals T.Text Property deriving Show
 
+data Order = Asc | Desc deriving Show
+
 data Selector = All
               | Filter Condition Selector
               | Shuffle Selector
               | Take Int Selector
-              | DescSortBy T.Text Selector
+              | SortBy T.Text Order Selector
                 deriving Show
 
 data EffectF s = Say T.Text s
