@@ -75,7 +75,7 @@ compileCteChain name (E.Take n input) =
                    , [ [qm| :n{takeCteId} |] := n ] ) <> inputQuery)
     where (inputCteId, inputQuery) = compileCteChain name input
           takeCteId = inputCteId + 1
--- TODO: compileCteChain for SortBy only supports propertyUTCTime
+-- TODO(#254): compileCteChain for SortBy only supports propertyUTCTime
 compileCteChain name (E.SortBy propertyName order input) =
     (sortByCteId, ( [qms| t{sortByCteId}(eid) as (
                             select eid
