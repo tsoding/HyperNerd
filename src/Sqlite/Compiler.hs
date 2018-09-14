@@ -1,20 +1,25 @@
 {-# LANGUAGE OverloadedStrings #-}
-module Sqlite.Compiler where
+module Sqlite.Compiler (compileSelector) where
 
+import           Data.Monoid
 import qualified Data.Text as T
 import           Database.SQLite.Simple
 import           Effect
 import           Text.Printf
 
--- TODO(#250): compileCteChain is not implemented
-compileCteChain :: Selector -> (T.Text, Query, [NamedParam])
-compileCteChain = undefined
+type NamedQuery = (Query, [NamedParam])
 
-compileSelector :: Selector -> (Query, [NamedParam])
-compileSelector selector =
-    ( Query $ T.unlines [ header, fromQuery cteChainQuery, footer ]
-    , namedParams
-    )
-    where header = "with"
-          footer = T.pack $ printf "select * from %s" rootCte
-          (rootCte, cteChainQuery, namedParams) = compileCteChain selector
+header :: NamedQuery
+header = ("with ", [])
+
+footer :: Int -> NamedQuery
+footer cteId = (Query $ T.pack $ printf " select * from t%d" cteId, [])
+
+-- TODO(#250): compileCteChain is not implemented
+compileCteChain :: T.Text -> Selector -> (Int, NamedQuery)
+compileCteChain _ _ = undefined
+
+compileSelector :: T.Text -> Selector -> NamedQuery
+compileSelector name selector =
+    header <> body <> footer cteId
+    where (cteId, body) = compileCteChain name selector
