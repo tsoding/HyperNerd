@@ -261,7 +261,7 @@ selectEntityIds conn name (Take n (Shuffle (Filter (PropertyEquals propertyName 
                           , ":propertyUTCTime" := (fromProperty property :: Maybe UTCTime)
                           , ":n" := n
                           ]
--- TODO: SortBy selector supports only UTCTime properties
+-- TODO(#255): SortBy selector supports only UTCTime properties
 -- TODO: SortBy selector supports only Desc order
 selectEntityIds conn name (Take n (SortBy propertyName Desc All)) =
     map fromOnly
