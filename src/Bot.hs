@@ -97,7 +97,7 @@ builtinCommands =
                                      regex <- return $ mkRegex $ T.unpack regexStr
                                      logs  <- selectEntities "LogRecord" $
                                               Take n $
-                                              DescSortBy "timestamp" All
+                                              SortBy "timestamp" Desc All
                                      traverse_ (say . T.pack . printf "/ban %s" . lrUser . entityPayload) $
                                        filter (isJust . matchRegex regex . T.unpack . lrMsg . entityPayload) logs))
                ]
