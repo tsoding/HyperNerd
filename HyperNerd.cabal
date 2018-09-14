@@ -112,6 +112,7 @@ executable HyperNerd
                      , transformers
                      , unordered-containers
                      , uri-encode
+                     , qm-interpolated-string
   
   -- Directories containing source files.
   hs-source-dirs:      src
