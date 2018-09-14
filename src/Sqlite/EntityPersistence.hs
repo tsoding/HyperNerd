@@ -262,7 +262,7 @@ selectEntityIds conn name (Take n (Shuffle (Filter (PropertyEquals propertyName 
                           , ":n" := n
                           ]
 -- TODO(#255): SortBy selector supports only UTCTime properties
--- TODO: SortBy selector supports only Desc order
+-- TODO(#256): SortBy selector supports only Desc order
 selectEntityIds conn name (Take n (SortBy propertyName Desc All)) =
     map fromOnly
       <$> queryNamed conn [r| SELECT entityId
