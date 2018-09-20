@@ -100,6 +100,7 @@ builtinCommands =
                                               SortBy "timestamp" Desc All
                                      traverse_ (say . T.pack . printf "/ban %s" . lrUser . entityPayload) $
                                        filter (isJust . matchRegex regex . T.unpack . lrMsg . entityPayload) logs))
+               , ("reverse", ("", \sender -> replyToSender sender . T.reverse))
                ]
 
 commandArgsCommand :: CommandHandler (Command T.Text) -> CommandHandler T.Text
