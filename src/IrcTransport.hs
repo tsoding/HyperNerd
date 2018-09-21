@@ -107,3 +107,6 @@ ircTransportEntry incoming outcoming configFilePath =
                            Left  (Left e) -> throwIO e
                            Right (Left e) -> throwIO e
        return ()
+
+-- TODO(#15): utilize rate limits
+-- See https://github.com/glguy/irc-core/blob/6dd03dfed4affe6ae8cdd63ede68c88d70af9aac/bot/src/Main.hs#L32
