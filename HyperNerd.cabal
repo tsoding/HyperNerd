@@ -60,8 +60,8 @@ executable HyperNerd
   
   -- Modules included in this executable, other than Main.
   other-modules:       Bot
-                     , Bot.BttvFfz
                      , Bot.Alias
+                     , Bot.BttvFfz
                      , Bot.CustomCommand
                      , Bot.Dubtrack
                      , Bot.Links
@@ -73,6 +73,7 @@ executable HyperNerd
                      , Bot.Russify
                      , Bot.Twitch
                      , Bot.Variable
+                     , BotState
                      , Command
                      , Effect
                      , Entity
