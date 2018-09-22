@@ -6,20 +6,20 @@ import           Bot.BttvFfz
 import           Data.Aeson
 import           Data.Aeson.Types
 import           Test.HUnit
-import           Text.RawString.QQ
+import           Text.InterpolatedString.QM
 
 parseCorrectBttvEmoteList :: Test
 parseCorrectBttvEmoteList =
     TestLabel "Parse Correct BTTV Emote List" $
     TestCase $ assertEqual "Couldn't parse emote list"
                             (Right ["foo", "bar", "baz"])
-                            (eitherDecode [r| {
+                            (eitherDecode [qn| {
                                                   "emotes": [
                                                       {"code": "foo"},
                                                       {"code": "bar"},
                                                       {"code": "baz"}
                                                   ]
-                                              } |]
+                                                } |]
                                >>= parseEither bttvApiResponseAsEmoteList)
 
 parseCorrectFfzEmoteList :: Test
@@ -27,7 +27,7 @@ parseCorrectFfzEmoteList =
     TestLabel "Parse Correct FFZ Emote List" $
     TestCase $ assertEqual "Couldn't parse emote list"
                            (Right ["hello", "world"])
-                           (eitherDecode [r| {
+                           (eitherDecode [qn| {
                                                  "room": {"set": 42},
                                                  "sets": {
                                                      "42": {
