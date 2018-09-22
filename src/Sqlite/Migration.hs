@@ -10,7 +10,7 @@ import           Data.List
 import           Data.String
 import qualified Data.Text as T
 import           Database.SQLite.Simple
-import           Text.RawString.QQ
+import           Text.InterpolatedString.QM
 
 newtype Migration = Migration { migrationQuery :: Query }
 
@@ -23,16 +23,20 @@ instance FromRow Migration where
 instance Eq Migration where
     (==) = (==) `on` (T.unwords . T.words . fromQuery . migrationQuery)
 
+instance Monoid Migration where
+    mempty = Migration mempty
+    mappend x y = Migration (migrationQuery x `mappend` migrationQuery y)
+
 createMigrationTablesIfNeeded :: Connection -> IO ()
 createMigrationTablesIfNeeded conn =
-    execute_ conn [r| CREATE TABLE IF NOT EXISTS Migrations (
+    execute_ conn [qms| CREATE TABLE IF NOT EXISTS Migrations (
                         id INTEGER PRIMARY KEY,
                         migrationQuery TEXT NOT NULL
                       ) |]
 
 filterUnappliedMigrations :: Connection -> [Migration] -> IO [Migration]
 filterUnappliedMigrations conn migrations =
-    do appliedMigrations <- query_ conn [r| SELECT migrationQuery
+    do appliedMigrations <- query_ conn [qms| SELECT migrationQuery
                                             FROM Migrations |]
        maybe (error "Inconsistent migrations state! \
                     \List of already applied migrations \
@@ -44,7 +48,7 @@ applyMigration :: Connection -> Migration -> IO ()
 applyMigration conn migration =
     do execute_ conn $ migrationQuery migration
        executeNamed conn
-                    [r| INSERT INTO Migrations (
+                    [qms| INSERT INTO Migrations (
                           migrationQuery
                         ) VALUES (
                           :migrationQuery

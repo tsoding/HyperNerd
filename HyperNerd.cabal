@@ -103,7 +103,6 @@ executable HyperNerd
                      , ini
                      , irc-core
                      , network
-                     , raw-strings-qq
                      , regex-compat-tdfa
                      , safe
                      , sqlite-simple
@@ -141,7 +140,6 @@ test-suite HyperNerdTest
                      , file-embed
                      , free
                      , http-conduit
-                     , raw-strings-qq
                      , regex-compat-tdfa
                      , safe
                      , sqlite-simple
@@ -151,6 +149,7 @@ test-suite HyperNerdTest
                      , transformers
                      , unordered-containers
                      , uri-encode
+                     , qm-interpolated-string
 
   other-modules:       Bot.BttvFfz
                      , Bot.Links

@@ -22,7 +22,7 @@ import           Effect (Selector(..), Condition(..), Order(..))
 import           Entity
 import           Property
 import           Sqlite.Migration
-import           Text.RawString.QQ
+import           Text.InterpolatedString.QM
 
 data EntityIdEntry = EntityIdEntry T.Text Int
 
@@ -32,19 +32,19 @@ instance FromRow EntityIdEntry where
 entityNames :: Connection -> IO [T.Text]
 entityNames conn =
     map fromOnly
-      <$> query_ conn [r| SELECT DISTINCT entityName
+      <$> query_ conn [qms| SELECT DISTINCT entityName
                           FROM EntityProperty
                           GROUP BY entityName |]
 
 nextEntityId :: Connection -> T.Text -> IO Int
 nextEntityId conn name =
-    do e <- queryNamed conn [r| SELECT entityName, entityId
+    do e <- queryNamed conn [qms| SELECT entityName, entityId
                                 FROM EntityId
                                 WHERE entityName = :entityName |]
                             [ ":entityName" := name ]
        case e of
          [] -> do executeNamed conn
-                               [r| INSERT INTO EntityId (
+                               [qms| INSERT INTO EntityId (
                                      entityName,
                                      entityId
                                    ) VALUES (
@@ -57,7 +57,7 @@ nextEntityId conn name =
                   return 1
          [EntityIdEntry _ ident] -> do
                 executeNamed conn
-                             [r| UPDATE EntityId
+                             [qms| UPDATE EntityId
                                  SET entityId = :entityId
                                  WHERE entityName = :entityName |]
                              [ ":entityName" := name
@@ -75,7 +75,7 @@ createEntityProperty :: Connection
                      -> IO ()
 createEntityProperty conn name ident propertyName property =
     executeNamed conn
-                 [r| INSERT INTO EntityProperty (
+                 [qms| INSERT INTO EntityProperty (
                        entityName,
                        entityId,
                        propertyName,
@@ -104,7 +104,7 @@ createEntityProperty conn name ident propertyName property =
 -- TODO(#54): propertyType field of EntityProperty table of SQLiteEntityPersistence may contain incorrect values
 entityMigrations :: [Migration]
 entityMigrations =
-    [ [r| CREATE TABLE IF NOT EXISTS EntityProperty (
+    [ [qms| CREATE TABLE IF NOT EXISTS EntityProperty (
             id INTEGER PRIMARY KEY,
             entityName TEXT NOT NULL,
             entityId INTEGER NOT NULL,
@@ -114,11 +114,11 @@ entityMigrations =
             propertyText TEXT,
             propertyUTCTime DATETIME
           ) |]
-    , [r| CREATE TABLE IF NOT EXISTS EntityId (
+    , [qms| CREATE TABLE IF NOT EXISTS EntityId (
             entityName TEXT NOT NULL UNIQUE,
             entityId INTEGER NOT NULL DEFAULT 0
           ); |]
-    , [r| CREATE TABLE IF NOT EXISTS EntityProperty_Unique (
+    , [qms| CREATE TABLE IF NOT EXISTS EntityProperty_Unique (
             id INTEGER PRIMARY KEY,
             entityName TEXT NOT NULL,
             entityId INTEGER NOT NULL,
@@ -129,10 +129,10 @@ entityMigrations =
             propertyUTCTime DATETIME,
             UNIQUE(entityName, entityId, propertyName) ON CONFLICT REPLACE
           ); |]
-    , [r| INSERT INTO EntityProperty_Unique
+    , [qms| INSERT INTO EntityProperty_Unique
           SELECT * FROM EntityProperty; |]
-    , [r| DROP TABLE EntityProperty; |]
-    , [r| ALTER TABLE EntityProperty_Unique
+    , [qms| DROP TABLE EntityProperty; |]
+    , [qms| ALTER TABLE EntityProperty_Unique
           RENAME TO EntityProperty; |]
     ]
 
@@ -152,7 +152,7 @@ createEntity conn name properties =
 getEntityById :: Connection -> T.Text -> Int -> IO (Maybe (Entity Properties))
 getEntityById conn name ident =
     restoreEntity name ident
-      <$> queryNamed conn [r| SELECT propertyName,
+      <$> queryNamed conn [qms| SELECT propertyName,
                                      propertyType,
                                      propertyInt,
                                      propertyText,
@@ -166,7 +166,7 @@ getEntityById conn name ident =
 
 deleteEntityById :: Connection -> T.Text -> Int -> IO ()
 deleteEntityById conn name ident =
-    executeNamed conn [r| DELETE
+    executeNamed conn [qms| DELETE
                           FROM EntityProperty
                           WHERE entityName=:entityName AND
                                 entityId=:entityId |]
@@ -183,7 +183,7 @@ selectEntities conn name selector =
 selectEntityIds :: Connection -> T.Text -> Selector -> IO [Int]
 selectEntityIds conn name All =
     map fromOnly
-      <$> queryNamed conn [r| SELECT entityId
+      <$> queryNamed conn [qms| SELECT entityId
                               FROM EntityProperty
                               WHERE entityName = :entityName
                               GROUP BY entityId
@@ -191,7 +191,7 @@ selectEntityIds conn name All =
                           [ ":entityName" := name ]
 selectEntityIds conn name (Filter (PropertyEquals propertyName property) All) =
     map fromOnly
-      <$> queryNamed conn [r| SELECT entityId
+      <$> queryNamed conn [qms| SELECT entityId
                               FROM EntityProperty
                               WHERE entityName = :entityName
                                 AND propertyName = :propertyName
@@ -207,7 +207,7 @@ selectEntityIds conn name (Filter (PropertyEquals propertyName property) All) =
                           ]
 selectEntityIds conn name (Take n (Filter (PropertyEquals propertyName property) All)) =
     map fromOnly
-      <$> queryNamed conn [r| SELECT entityId
+      <$> queryNamed conn [qms| SELECT entityId
                               FROM EntityProperty
                               WHERE entityName = :entityName
                                 AND propertyName = :propertyName
@@ -225,7 +225,7 @@ selectEntityIds conn name (Take n (Filter (PropertyEquals propertyName property)
                           ]
 selectEntityIds conn name (Shuffle All) =
     map fromOnly
-      <$> queryNamed conn [r| SELECT entityId
+      <$> queryNamed conn [qms| SELECT entityId
                               FROM EntityProperty
                               WHERE entityName = :entityName
                               GROUP BY entityId
@@ -233,7 +233,7 @@ selectEntityIds conn name (Shuffle All) =
                           [ ":entityName" := name ]
 selectEntityIds conn name (Take n (Shuffle All)) =
     map fromOnly
-      <$> queryNamed conn [r| SELECT entityId
+      <$> queryNamed conn [qms| SELECT entityId
                               FROM EntityProperty
                               WHERE entityName = :entityName
                               GROUP BY entityId
@@ -244,7 +244,7 @@ selectEntityIds conn name (Take n (Shuffle All)) =
                           ]
 selectEntityIds conn name (Take n (Shuffle (Filter (PropertyEquals propertyName property) All))) =
     map fromOnly
-      <$> queryNamed conn [r| SELECT entityId
+      <$> queryNamed conn [qms| SELECT entityId
                               FROM EntityProperty
                               WHERE entityName = :entityName
                                 AND propertyName = :propertyName
@@ -265,7 +265,7 @@ selectEntityIds conn name (Take n (Shuffle (Filter (PropertyEquals propertyName 
 -- TODO(#256): SortBy selector supports only Desc order
 selectEntityIds conn name (Take n (SortBy propertyName Desc All)) =
     map fromOnly
-      <$> queryNamed conn [r| SELECT entityId
+      <$> queryNamed conn [qms| SELECT entityId
                               FROM EntityProperty
                               WHERE entityName = :entityName
                                 AND propertyName is :propertyName
