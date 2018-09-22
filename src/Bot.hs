@@ -1,4 +1,5 @@
 {-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE TupleSections #-}
 module Bot (Bot, bot, Event(..), Sender(..), TwitchStream(..)) where
 
 import           Bot.Alias
@@ -14,6 +15,7 @@ import           Bot.Russify
 import           Bot.Twitch
 import           Bot.Variable
 import           Command
+import           Data.Char
 import           Data.Foldable
 import           Data.List
 import qualified Data.Map as M
@@ -101,6 +103,7 @@ builtinCommands =
                                      traverse_ (say . T.pack . printf "/ban %s" . lrUser . entityPayload) $
                                        filter (isJust . matchRegex regex . T.unpack . lrMsg . entityPayload) logs))
                , ("reverse", ("", \sender -> replyToSender sender . T.reverse))
+               , ("cycle", ("", \sender -> replyToSender sender . snd . T.mapAccumL (\t -> (not t ,) . if t then Data.Char.toUpper else Data.Char.toLower) True))
                ]
 
 commandArgsCommand :: CommandHandler (Command T.Text) -> CommandHandler T.Text
