@@ -24,7 +24,7 @@ instance Eq Migration where
     (==) = (==) `on` (T.unwords . T.words . fromQuery . migrationQuery)
 
 instance Monoid Migration where
-    mempty = Migration $ mempty
+    mempty = Migration mempty
     mappend x y = Migration (migrationQuery x `mappend` migrationQuery y)
 
 createMigrationTablesIfNeeded :: Connection -> IO ()
