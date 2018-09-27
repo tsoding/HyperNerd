@@ -102,7 +102,6 @@ builtinCommands =
                                               SortBy "timestamp" Desc All
                                      traverse_ (say . T.pack . printf "/ban %s" . lrUser . entityPayload) $
                                        filter (isJust . matchRegex regex . T.unpack . lrMsg . entityPayload) logs))
-               , ("reverse", ("", \sender -> replyToSender sender . T.reverse))
                , ("cycle", ("", \sender -> replyToSender sender . snd . T.mapAccumL (\t -> (not t ,) . if t then Data.Char.toUpper else Data.Char.toLower) True))
                ]
 
