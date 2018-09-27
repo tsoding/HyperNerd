@@ -108,6 +108,7 @@ builtinCommands =
                -- TODO(#268): Trust management is not accessible to mods
                , ("trust", ("Makes the user trusted", authorizeCommand ["tsoding", "r3x1m"] trustCommand))
                , ("untrust", ("Untrusts the user", authorizeCommand ["tsoding", "r3x1m"] untrustCommand))
+               , ("amitrusted", ("Check if you are a trusted user", noArgsCommand amitrustedCommand))
                ]
 
 commandArgsCommand :: CommandHandler (Command T.Text) -> CommandHandler T.Text
