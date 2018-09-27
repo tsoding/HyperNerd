@@ -25,15 +25,13 @@ instance IsEntity TrustedUser where
     toProperties trustedUser =
         M.fromList [ ("user", PropertyText $ trustedUserName trustedUser) ]
     fromProperties properties =
-        do user <- extractProperty "user" properties
-           return $ TrustedUser user
+        TrustedUser <$> extractProperty "user" properties
 
 findTrustedUser :: T.Text -> Effect (Maybe (Entity TrustedUser))
 findTrustedUser name =
     fmap listToMaybe $
     selectEntities "TrustedUser" $
-    Filter (PropertyEquals "user" $ PropertyText name) $
-    All
+    Filter (PropertyEquals "user" $ PropertyText name) All
 
 textContainsLink :: T.Text -> Bool
 textContainsLink t = isJust

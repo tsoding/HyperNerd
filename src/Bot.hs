@@ -1,6 +1,5 @@
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE TupleSections #-}
-{-# LANGUAGE QuasiQuotes #-}
 module Bot (Bot, bot, Event(..), Sender(..), TwitchStream(..)) where
 
 import           Bot.Alias
@@ -106,8 +105,7 @@ builtinCommands =
                                      traverse_ (say . T.pack . printf "/ban %s" . lrUser . entityPayload) $
                                        filter (isJust . matchRegex regex . T.unpack . lrMsg . entityPayload) logs))
                , ("cycle", ("", \sender -> replyToSender sender . snd . T.mapAccumL (\t -> (not t ,) . if t then Data.Char.toUpper else Data.Char.toLower) True))
-               , ("trust", ("Marks the user as trusted", authorizeCommand ["tsoding", "r3x1m"] $
-                                                         trustCommand))
+               , ("trust", ("Marks the user as trusted", authorizeCommand ["tsoding", "r3x1m"] trustCommand))
                ]
 
 commandArgsCommand :: CommandHandler (Command T.Text) -> CommandHandler T.Text
@@ -162,7 +160,7 @@ bot Join = startPeriodicCommands dispatchCommand
 bot event@(Msg sender text) = do
   recordUserMsg sender text
   forbidden <- forbidLinksForPlebs event
-  when (not forbidden) $
+  unless forbidden $
     mapM redirectAlias (textAsPipe text) >>= dispatchPipe sender
 
 helpCommand :: CommandTable T.Text -> CommandHandler T.Text
