@@ -151,6 +151,7 @@ test-suite HyperNerdTest
                      , transformers
                      , unordered-containers
                      , uri-encode
+                     , qm-interpolated-string
 
   other-modules:       Bot.BttvFfz
                      , Bot.Links
