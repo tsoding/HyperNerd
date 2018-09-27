@@ -18,7 +18,7 @@ import           Property
 import           Text.InterpolatedString.QM
 import           Text.Regex
 
--- TODO: trusted users system doesn't handle name changes
+-- TODO(#264): trusted users system doesn't handle name changes
 newtype TrustedUser = TrustedUser { trustedUserName :: T.Text }
 
 instance IsEntity TrustedUser where
