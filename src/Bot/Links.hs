@@ -64,5 +64,5 @@ trustCommand sender inputUser = do
     Nothing -> do _ <- createEntity "TrustedUser" $ TrustedUser user
                   replyToSender sender [qm|{user} is now trusted|]
 
--- TODO: !untrust command is not implemented
+-- TODO(#265): !untrust command is not implemented
 -- TODO: !amitrusted command is not implemented
