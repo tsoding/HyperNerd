@@ -4,6 +4,7 @@ module Bot.Links ( forbidLinksForPlebs
                  , textContainsLink
                  , trustCommand
                  , untrustCommand
+                 , amitrustedCommand
                  ) where
 
 import           Bot.Replies
@@ -73,4 +74,9 @@ untrustCommand sender inputUser = do
                             replyToSender sender [qm|{user} is not trusted anymore|]
     Nothing -> replyToSender sender [qm|{user} was not trusted in the first place|]
 
--- TODO(#266): !amitrusted command is not implemented
+amitrustedCommand :: CommandHandler ()
+amitrustedCommand sender () = do
+  trustedUser <- findTrustedUser $ senderName sender
+  case trustedUser of
+    Just _  -> replyToSender sender "Yes Pog"
+    Nothing -> replyToSender sender "No PepeHands"
