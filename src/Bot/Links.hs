@@ -65,4 +65,4 @@ trustCommand sender inputUser = do
                   replyToSender sender [qm|{user} is now trusted|]
 
 -- TODO(#265): !untrust command is not implemented
--- TODO: !amitrusted command is not implemented
+-- TODO(#266): !amitrusted command is not implemented
