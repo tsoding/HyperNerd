@@ -105,7 +105,8 @@ builtinCommands =
                                      traverse_ (say . T.pack . printf "/ban %s" . lrUser . entityPayload) $
                                        filter (isJust . matchRegex regex . T.unpack . lrMsg . entityPayload) logs))
                , ("cycle", ("", \sender -> replyToSender sender . snd . T.mapAccumL (\t -> (not t ,) . if t then Data.Char.toUpper else Data.Char.toLower) True))
-               , ("trust", ("Marks the user as trusted", authorizeCommand ["tsoding", "r3x1m"] trustCommand))
+               , ("trust", ("Makes the user trusted", authorizeCommand ["tsoding", "r3x1m"] trustCommand))
+               , ("untrust", ("Untrusts the user", authorizeCommand ["tsoding", "r3x1m"] untrustCommand))
                ]
 
 commandArgsCommand :: CommandHandler (Command T.Text) -> CommandHandler T.Text

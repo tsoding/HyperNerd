@@ -2,8 +2,8 @@
 {-# LANGUAGE QuasiQuotes #-}
 module Bot.Links ( forbidLinksForPlebs
                  , textContainsLink
-                 , findTrustedUser
                  , trustCommand
+                 , untrustCommand
                  ) where
 
 import           Bot.Replies
@@ -60,9 +60,17 @@ trustCommand sender inputUser = do
   let user = T.toLower inputUser
   trustedUser <- findTrustedUser user
   case trustedUser of
-    Just _  -> replyToSender sender [qm|The user is already trusted|]
+    Just _  -> replyToSender sender [qm|{user} is already trusted|]
     Nothing -> do _ <- createEntity "TrustedUser" $ TrustedUser user
                   replyToSender sender [qm|{user} is now trusted|]
 
--- TODO(#265): !untrust command is not implemented
+untrustCommand :: CommandHandler T.Text
+untrustCommand sender inputUser = do
+  let user = T.toLower inputUser
+  trustedUser <- findTrustedUser user
+  case trustedUser of
+    Just trustedUser' -> do deleteEntityById "TrustedUser" $ entityId trustedUser'
+                            replyToSender sender [qm|{user} is not trusted anymore|]
+    Nothing -> replyToSender sender [qm|{user} was not trusted in the first place|]
+
 -- TODO(#266): !amitrusted command is not implemented
