@@ -24,11 +24,8 @@ instance IsEntity Alias where
                    , ("redirect", PropertyText $ aliasRedirect alias)
                    ]
     fromProperties properties =
-        do name   <- extractProperty "name" properties
-           redirect <- extractProperty "redirect" properties
-           return Alias { aliasName = name
-                        , aliasRedirect = redirect
-                        }
+        Alias <$> extractProperty "name" properties
+              <*> extractProperty "redirect" properties
 
 getAliasByName :: T.Text -> Effect (Maybe Alias)
 getAliasByName name =
