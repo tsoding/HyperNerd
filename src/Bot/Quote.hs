@@ -26,14 +26,10 @@ instance IsEntity Quote where
                    , ("quoter", PropertyText $ quoteQuoter quote)
                    , ("timestamp", PropertyUTCTime $ quoteTimestamp quote)
                    ]
-    fromProperties properties = do
-        content   <- extractProperty "content" properties
-        quoter    <- extractProperty "quoter" properties
-        timestamp <- extractProperty "timestamp" properties
-        return Quote { quoteContent = content
-                     , quoteQuoter = quoter
-                     , quoteTimestamp = timestamp
-                     }
+    fromProperties properties =
+        Quote <$> extractProperty "content" properties
+              <*> extractProperty "quoter" properties
+              <*> extractProperty "timestamp" properties
 
 deleteQuoteCommand :: CommandHandler T.Text
 deleteQuoteCommand sender quoteIdText =

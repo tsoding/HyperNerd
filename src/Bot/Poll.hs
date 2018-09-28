@@ -25,23 +25,17 @@ instance IsEntity Poll where
     toProperties poll = M.fromList [ ("author", PropertyText $ pollAuthor poll)
                                    , ("startedAt", PropertyUTCTime $ pollStartedAt poll)
                                    ]
-    fromProperties properties = do
-        author    <- extractProperty "author" properties
-        startedAt <- extractProperty "startedAt" properties
-        return Poll { pollAuthor = author
-                    , pollStartedAt = startedAt
-                    }
+    fromProperties properties =
+        Poll <$> extractProperty "author" properties
+             <*> extractProperty "startedAt" properties
 
 instance IsEntity PollOption where
     toProperties pollOption = M.fromList [ ("pollId", PropertyInt $ poPollId pollOption)
                                          , ("name", PropertyText $ poName pollOption)
                                          ]
-    fromProperties properties = do
-        pollId <- extractProperty "pollId" properties
-        name   <- extractProperty "name" properties
-        return PollOption { poPollId = pollId
-                          , poName = name
-                          }
+    fromProperties properties =
+        PollOption <$> extractProperty "pollId" properties
+                   <*> extractProperty "name" properties
 
 pollCommand :: Sender -> [T.Text] -> Effect ()
 pollCommand sender options =

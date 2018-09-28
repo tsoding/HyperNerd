@@ -35,15 +35,11 @@ instance IsEntity CustomCommand where
                    , ("lastUsed", PropertyUTCTime $ customCommandLastUsed customCommand)
                    ]
     fromProperties properties =
-        do name     <- extractProperty "name" properties
-           message  <- extractProperty "message" properties
-           times    <- return (extractProperty "times" properties)
-           lastUsed <- return (extractProperty "lastUsed" properties)
-           return CustomCommand { customCommandName = name
-                                , customCommandMessage = message
-                                , customCommandTimes = fromMaybe 0 times
-                                , customCommandLastUsed = fromMaybe (UTCTime (ModifiedJulianDay 0) 0) lastUsed
-                                }
+        CustomCommand <$> extractProperty "name" properties
+                      <*> extractProperty "message" properties
+                      <*> return (fromMaybe 0 $ extractProperty "times" properties)
+                      <*> return (fromMaybe dayZero $ extractProperty "lastUsed" properties)
+        where dayZero = UTCTime (ModifiedJulianDay 0) 0
 
 customCommandByName :: T.Text -> MaybeT Effect (Entity CustomCommand)
 customCommandByName name =

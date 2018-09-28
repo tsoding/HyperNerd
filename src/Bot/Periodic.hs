@@ -32,10 +32,9 @@ instance IsEntity PeriodicCommand where
                    ]
         where command = periodicCommand pc
 
-    fromProperties properties = do
-        name <- extractProperty "name" properties
-        args <- extractProperty "args" properties
-        return $ PeriodicCommand $ Command name args
+    fromProperties properties =
+        PeriodicCommand <$> (Command <$> extractProperty "name" properties
+                                     <*> extractProperty "args" properties)
 
 getPeriodicCommandByName :: T.Text -> Effect (Maybe (Entity PeriodicCommand))
 getPeriodicCommandByName name =

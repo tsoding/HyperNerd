@@ -22,9 +22,8 @@ instance IsEntity Variable where
                    , ("value", PropertyText $ variableValue variable)
                    ]
     fromProperties properties =
-        do name <- extractProperty "name" properties
-           value <- extractProperty "value" properties
-           return $ Variable name value
+        Variable <$> extractProperty "name" properties
+                 <*> extractProperty "value" properties
 
 -- TODO(#243): expandVariables is not implemented
 expandVariables :: T.Text -> Effect T.Text

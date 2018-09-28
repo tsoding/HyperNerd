@@ -27,15 +27,10 @@ instance IsEntity LogRecord where
                    , ("timestamp", PropertyUTCTime $ lrTimestamp lr)
                    ]
     fromProperties properties =
-        do user      <- extractProperty "user" properties
-           channel   <- extractProperty "channel" properties
-           msg       <- extractProperty "msg" properties
-           timestamp <- extractProperty "timestamp" properties
-           return LogRecord { lrUser = user
-                            , lrChannel = channel
-                            , lrMsg = msg
-                            , lrTimestamp = timestamp
-                            }
+        LogRecord <$> extractProperty "user" properties
+                  <*> extractProperty "channel" properties
+                  <*> extractProperty "msg" properties
+                  <*> extractProperty "timestamp" properties
 
 recordUserMsg :: Sender -> T.Text -> Effect ()
 recordUserMsg sender msg =
