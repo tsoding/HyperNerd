@@ -32,7 +32,7 @@ instance IsEntity PeriodicCommand where
                    ]
         where command = periodicCommand pc
 
-    fromProperties properties = do
+    fromProperties properties =
         PeriodicCommand <$> (Command <$> extractProperty "name" properties
                                      <*> extractProperty "args" properties)
 

@@ -25,7 +25,7 @@ instance IsEntity Poll where
     toProperties poll = M.fromList [ ("author", PropertyText $ pollAuthor poll)
                                    , ("startedAt", PropertyUTCTime $ pollStartedAt poll)
                                    ]
-    fromProperties properties = do
+    fromProperties properties =
         Poll <$> extractProperty "author" properties
              <*> extractProperty "startedAt" properties
 
@@ -33,7 +33,7 @@ instance IsEntity PollOption where
     toProperties pollOption = M.fromList [ ("pollId", PropertyInt $ poPollId pollOption)
                                          , ("name", PropertyText $ poName pollOption)
                                          ]
-    fromProperties properties = do
+    fromProperties properties =
         PollOption <$> extractProperty "pollId" properties
                    <*> extractProperty "name" properties
 

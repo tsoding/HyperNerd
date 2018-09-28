@@ -26,7 +26,7 @@ instance IsEntity Quote where
                    , ("quoter", PropertyText $ quoteQuoter quote)
                    , ("timestamp", PropertyUTCTime $ quoteTimestamp quote)
                    ]
-    fromProperties properties = do
+    fromProperties properties =
         Quote <$> extractProperty "content" properties
               <*> extractProperty "quoter" properties
               <*> extractProperty "timestamp" properties
