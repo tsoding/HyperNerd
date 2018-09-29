@@ -1,4 +1,5 @@
 {-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE QuasiQuotes #-}
 module Bot.Poll where
 
 import           Bot.Replies
@@ -11,7 +12,7 @@ import           Effect
 import           Entity
 import           Events
 import           Property
-import           Text.Printf
+import           Text.InterpolatedString.QM
 
 data PollOption = PollOption { poPollId :: Int
                              , poName :: T.Text
@@ -41,13 +42,11 @@ pollCommand :: Sender -> [T.Text] -> Effect ()
 pollCommand sender options =
     do poll <- currentPoll
        case poll of
-         Just _ -> replyToUser (senderName sender) "Cannot create a poll while another poll is in place"
+         Just _ -> replyToSender sender "Cannot create a poll while another poll is in place"
          Nothing -> do pollId <- startPoll (senderName sender) options
-                       say
-                         $ T.pack
-                         $ printf "The poll has been started. Vote for one of the options: %s"
-                         $ T.concat
-                         $ intersperse ", " options
+                       optionsList <- return $ T.concat $ intersperse ", " options
+                       say [qms|The poll has been started.
+                                Vote for one of the options: {optionsList}|]
                        timeout 10000 $ announcePollResults pollId
 
 voteCommand :: Sender -> T.Text -> Effect ()
