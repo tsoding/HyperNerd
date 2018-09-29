@@ -1,4 +1,5 @@
 {-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE QuasiQuotes #-}
 module Bot.CustomCommand ( addCustomCommand
                          , deleteCustomCommand
                          , dispatchCustomCommand
@@ -19,7 +20,7 @@ import           Effect
 import           Entity
 import           Events
 import           Property
-import           Text.Printf
+import           Text.InterpolatedString.QM
 
 data CustomCommand = CustomCommand { customCommandName :: T.Text
                                    , customCommandMessage :: T.Text
@@ -54,25 +55,19 @@ addCustomCommand builtinCommands sender (name, message) =
        builtinCommand <- return $ M.lookup name builtinCommands
 
        case (customCommand, builtinCommand) of
-         (Just _, Nothing) ->
-           replyToUser (senderName sender)
-             $ T.pack
-             $ printf "Command '%s' already exists" name
-         (Nothing, Just _) ->
-           replyToUser (senderName sender)
-             $ T.pack
-             $ printf "There is already a builtin command with name '%s'" name
-         (Just _, Just _) ->
-             errorEff
-               $ T.pack
-               $ printf "Custom command '%s' collide with a built in command"
+         (Just _, Nothing) -> replyToSender sender [qms|Command '{name}' already
+                                                        exists|]
+         (Nothing, Just _) -> replyToSender sender [qms|There is already a builtin
+                                                        command with name '{name}'|]
+         (Just _, Just _)  -> errorEff [qms|Custom command '{name}' collide with
+                                            a built in command|]
          (Nothing, Nothing) ->
              do _ <- createEntity "CustomCommand" CustomCommand { customCommandName = name
                                                                 , customCommandMessage = message
                                                                 , customCommandTimes = 0
                                                                 , customCommandLastUsed = UTCTime (ModifiedJulianDay 0) 0
                                                                 }
-                replyToUser (senderName sender) $ T.pack $ printf "Add command '%s'" name
+                replyToSender sender [qms|Added command '{name}'|]
 
 deleteCustomCommand :: CommandTable a -> CommandHandler T.Text
 deleteCustomCommand builtinCommands sender name =
@@ -81,22 +76,14 @@ deleteCustomCommand builtinCommands sender name =
 
        case (customCommand, builtinCommand) of
          (Just _, Nothing) ->
-             do _ <- deleteEntities "CustomCommand" (Filter (PropertyEquals "name" $ PropertyText name) All)
-                replyToSender sender
-                  $ T.pack
-                  $ printf "Command '%s' has been removed" name
-         (Nothing, Just _) ->
-             replyToSender sender
-               $ T.pack
-               $ printf "Command '%s' is builtin and can't be removed like that" name
-         (Just _, Just _) ->
-             errorEff
-               $ T.pack
-               $ printf "Custom command '%s' collide with a built in command"
-         (Nothing, Nothing) ->
-             replyToSender sender
-               $ T.pack
-               $ printf "Command '%s' does not exist" name
+             do _ <- deleteEntities "CustomCommand" $
+                     Filter (PropertyEquals "name" $ PropertyText name) All
+                replyToSender sender [qms|Command '{name}' has been removed|]
+         (Nothing, Just _)  -> replyToSender sender [qms|Command '{name}' is builtin
+                                                         and can't be removed like that|]
+         (Just _, Just _)   -> errorEff [qms|Custom command '{name}' collide with a
+                                             built in command|]
+         (Nothing, Nothing) -> replyToSender sender [qms|Command '{name}' does not exist|]
 
 updateCustomCommand :: CommandTable a -> CommandHandler (T.Text, T.Text)
 updateCustomCommand builtinCommands sender (name, message) =
@@ -106,19 +93,12 @@ updateCustomCommand builtinCommands sender (name, message) =
        case (customCommand, builtinCommand) of
          (Just cmd, Nothing) ->
              do _ <- updateEntityById (replaceCustomCommandMessage message <$> cmd)
-                replyToSender sender $ T.pack $ printf "Command '%s' has been updated" name
-         (Nothing, Just _) ->
-             replyToSender sender
-               $ T.pack
-               $ printf "Command '%s' is builtin and can't be updated like that" name
-         (Just _, Just _) ->
-             errorEff
-               $ T.pack
-               $ printf "Custom command '%s' collide with a built in command"
-         (Nothing, Nothing) ->
-             replyToSender sender
-               $ T.pack
-               $ printf "Command '%s' does not exist" name
+                replyToSender sender [qms|Command '{name}' has been updated|]
+         (Nothing, Just _)  -> replyToSender sender [qms|Command '{name}' is builtin and
+                                                         can't be updated like that|]
+         (Just _, Just _)   -> errorEff [qms|Custom command '{name}' collide with
+                                            a built in command|]
+         (Nothing, Nothing) -> replyToSender sender [qms|Command '{name}' does not exist|]
 
 expandCustomCommandVars :: CustomCommand -> Effect CustomCommand
 expandCustomCommandVars customCommand = do
@@ -148,12 +128,8 @@ customCommandCooldown cooldownTimeout customCommand =
               $ return
               $ Just
               $ fmap (\cmd -> cmd { customCommandLastUsed = currentTime }) customCommand
-       else do lift
-                 $ logMsg
-                 $ T.pack
-                 $ printf "Command '%s' has not cooled down yet"
-                 $ customCommandName
-                 $ entityPayload customCommand
+       else do let name = customCommandName $ entityPayload customCommand
+               lift $ logMsg [qms|Command '{name}' has not cooled down yet|]
                MaybeT $ return Nothing
 
 
