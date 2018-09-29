@@ -109,6 +109,10 @@ builtinCommands =
                , ("trust", ("Makes the user trusted", authorizeCommand ["tsoding", "r3x1m"] trustCommand))
                , ("untrust", ("Untrusts the user", authorizeCommand ["tsoding", "r3x1m"] untrustCommand))
                , ("amitrusted", ("Check if you are a trusted user", noArgsCommand amitrustedCommand))
+               , ("istrusted", ("Check if the user is trusted", authorizeCommand ["tsoding", "r3x1m"] $
+                                                                regexArgsCommand "(.+)" $
+                                                                firstArgCommand
+                                                                istrustedCommand))
                ]
 
 commandArgsCommand :: CommandHandler (Command T.Text) -> CommandHandler T.Text
@@ -120,6 +124,11 @@ commandArgsCommand commandHandler sender text =
 noArgsCommand :: CommandHandler () -> CommandHandler a
 noArgsCommand commandHandler sender _ =
     commandHandler sender ()
+
+firstArgCommand :: CommandHandler a -> CommandHandler [a]
+firstArgCommand _ sender [] = replyToSender sender "Not enough arguments"
+firstArgCommand commandHandler sender (arg:_) =
+    commandHandler sender arg
 
 authorizeCommand :: [T.Text] -> CommandHandler a -> CommandHandler a
 authorizeCommand authorizedPeople commandHandler sender args =
