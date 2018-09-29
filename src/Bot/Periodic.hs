@@ -1,4 +1,5 @@
 {-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE QuasiQuotes #-}
 module Bot.Periodic ( startPeriodicCommands
                     , addPeriodicCommand
                     , removePeriodicCommand
@@ -13,7 +14,7 @@ import           Effect
 import           Entity
 import           Events
 import           Property
-import           Text.Printf
+import           Text.InterpolatedString.QM
 
 -- TODO(#238): Periodic command sender should be the bot itself
 god :: Sender
@@ -58,13 +59,12 @@ addPeriodicCommand :: CommandHandler (Command T.Text)
 addPeriodicCommand sender command =
     do maybePc <- getPeriodicCommandByName name
        case maybePc of
-         Just _ -> replyToSender sender $
-                   T.pack $
-                   printf "'%s' is aleady called periodically" name
-         Nothing -> do _ <- createEntity "PeriodicCommand" (PeriodicCommand command)
-                       replyToSender sender $
-                         T.pack $
-                         printf "'%s' has been scheduled to call periodically" name
+         Just _ -> replyToSender sender [qms|'{name}' is aleady
+                                             called periodically|]
+         Nothing -> do _ <- createEntity "PeriodicCommand" $
+                            PeriodicCommand command
+                       replyToSender sender [qms|'{name}' has been scheduled
+                                                 to call periodically|]
     where name = commandName command
 
 removePeriodicCommand :: CommandHandler T.Text
@@ -73,9 +73,6 @@ removePeriodicCommand sender name = do
   case maybePc of
     Just _ -> do _ <- deleteEntities "PeriodicCommand" $
                       Filter (PropertyEquals "name" (PropertyText name)) All
-                 replyToSender sender $
-                   T.pack $
-                   printf "'%s' has been unscheduled" name
-    Nothing -> replyToSender sender $
-               T.pack $
-               printf "'%s' was not scheduled to begin with" name
+                 replyToSender sender [qms|'{name}' has been unscheduled|]
+    Nothing -> replyToSender sender [qms|'{name}' was not scheduled to
+                                         begin with|]
