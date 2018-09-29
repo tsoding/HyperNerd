@@ -179,8 +179,7 @@ helpCommand commandTable sender "" =
                         M.keys commandTable
 helpCommand commandTable sender command =
     replyToSender sender $
-    fromMaybe "Cannot find such command FeelsBadMan" $
-    fmap fst $
+    maybe "Cannot find such command FeelsBadMan" fst $
     M.lookup command commandTable
 
 dispatchPipe :: Sender -> [Command T.Text] -> Effect ()
