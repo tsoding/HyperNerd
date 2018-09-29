@@ -75,6 +75,7 @@ executable HyperNerd
                      , Bot.Variable
                      , BotState
                      , Command
+                     , Config
                      , Effect
                      , Entity
                      , Events

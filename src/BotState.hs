@@ -2,6 +2,7 @@
 module BotState where
 
 import           Bot
+import           Config
 import           Control.Concurrent.STM
 import           Control.Monad.Free
 import           Data.List
