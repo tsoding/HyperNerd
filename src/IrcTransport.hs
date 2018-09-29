@@ -16,7 +16,6 @@ import           Irc.Commands ( ircPass
                               )
 import           Irc.RawIrcMsg (RawIrcMsg, parseRawIrcMsg, asUtf8, renderRawIrcMsg)
 import           Network.Socket (Family(..))
-import           Text.Printf
 
 type IncomingQueue = TQueue Irc.RawIrcMsg.RawIrcMsg
 type OutcomingQueue = TQueue Irc.RawIrcMsg.RawIrcMsg
@@ -61,15 +60,10 @@ configFromFile :: FilePath -> IO Config
 configFromFile filePath =
     do ini <- readIniFile filePath
        either (ioError . userError) return $
-         do nick     <- ini >>= lookupValue "User" "nick"
-            password <- ini >>= lookupValue "User" "password"
-            channel  <- ini >>= lookupValue "User" "channel"
-            clientId <- ini >>= lookupValue "User" "clientId"
-            return Config { configNick = nick
-                          , configPass = password
-                          , configChannel = T.pack $ printf "#%s" channel
-                          , configClientId = clientId
-                          }
+         Config <$> (ini >>= lookupValue "User" "nick")
+                <*> (ini >>= lookupValue "User" "password")
+                <*> (T.cons '#' <$> (ini >>= lookupValue "User" "channel"))
+                <*> (ini >>= lookupValue "User" "clientId")
 
 readIrcLine :: Connection -> IO (Maybe RawIrcMsg)
 readIrcLine conn =
