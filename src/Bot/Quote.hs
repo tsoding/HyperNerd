@@ -1,4 +1,5 @@
 {-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE QuasiQuotes #-}
 module Bot.Quote where
 
 import           Bot.Replies
@@ -12,8 +13,8 @@ import           Effect
 import           Entity
 import           Events
 import           Property
-import           Text.Printf
 import           Text.Read
+import           Text.InterpolatedString.QM
 
 data Quote = Quote { quoteContent :: T.Text
                    , quoteQuoter :: T.Text
@@ -62,11 +63,10 @@ quoteCommand sender quoteIdText =
 
 quoteAddedReply :: T.Text -> Int -> Effect ()
 quoteAddedReply user quoteId =
-    replyToUser user
-      $ T.pack
-      $ printf "Added the quote under the number %d" quoteId
+    replyToUser user [qms|Added the quote under the number {quoteId}|]
 
 quoteFoundReply :: T.Text -> Maybe (Entity Quote) -> Effect ()
 quoteFoundReply user Nothing = replyToUser user "Couldn't find any quotes"
-quoteFoundReply user (Just entity) =
-    replyToUser user $ T.pack $ printf "%s (%d)" (quoteContent $ entityPayload entity) (entityId entity)
+quoteFoundReply user (Just entity) = replyToUser user [qms|{content} {quoteId}|]
+    where quoteId = entityId entity
+          content = quoteContent $ entityPayload entity
