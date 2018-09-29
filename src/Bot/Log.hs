@@ -11,7 +11,6 @@ import           Effect
 import           Entity
 import           Events
 import           Property
-import           Text.Printf
 
 data LogRecord = LogRecord { lrUser :: T.Text
                            , lrChannel :: T.Text
@@ -48,7 +47,6 @@ randomLogRecordCommand sender rawName =
        user   <- if T.null name
                  then return $ senderName sender
                  else return name
-       logMsg $ T.pack $ printf "The requested user is %s" user
        entity <- listToMaybe
                    <$> selectEntities "LogRecord" (Take 1
                                                      $ Shuffle
