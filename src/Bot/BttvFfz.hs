@@ -1,4 +1,5 @@
 {-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE QuasiQuotes #-}
 module Bot.BttvFfz where
 
 import           Bot.Replies
@@ -12,6 +13,9 @@ import           Network.HTTP.Simple
 import qualified Network.URI.Encode as URI
 import           Safe
 import           Text.Printf
+import           Text.InterpolatedString.QM
+
+-- TODO: FFZ and BTTV emotes are not cached
 
 requestEmoteList :: String -> (Object -> Parser [T.Text]) -> Effect [T.Text]
 requestEmoteList url emoteListExtractor =
@@ -36,11 +40,8 @@ ffzApiResponseAsEmoteList obj =
 
 ffzCommand :: Sender -> T.Text -> Effect ()
 ffzCommand sender _ = do emotes <- requestEmoteList url ffzApiResponseAsEmoteList
-                         replyToUser (senderName sender)
-                           $ T.pack
-                           $ printf "Available FFZ emotes: %s"
-                           $ T.concat
-                           $ intersperse " " emotes
+                         emoteList <- return $ T.concat $ intersperse " " emotes
+                         replyToSender sender [qms|Available FFZ emotes: {emoteList}|]
     where
       url = maybe "tsoding"
                   (printf "https://api.frankerfacez.com/v1/room/%s" . URI.encode)
@@ -48,11 +49,8 @@ ffzCommand sender _ = do emotes <- requestEmoteList url ffzApiResponseAsEmoteLis
 
 bttvCommand :: Sender -> T.Text -> Effect ()
 bttvCommand sender _ = do emotes <- requestEmoteList url bttvApiResponseAsEmoteList
-                          replyToUser (senderName sender)
-                            $ T.pack
-                            $ printf "Available BTTV emotes: %s"
-                            $ T.concat
-                            $ intersperse " " emotes
+                          emoteList <- return $ T.concat $ intersperse " " emotes
+                          replyToSender sender [qms|Available BTTV emotes: {emoteList}|]
     where
       url = maybe "tsoding"
                   (printf "https://api.betterttv.net/2/channels/%s" . URI.encode)
