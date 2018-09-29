@@ -5,6 +5,7 @@ module Bot.Links ( forbidLinksForPlebs
                  , trustCommand
                  , untrustCommand
                  , amitrustedCommand
+                 , istrustedCommand
                  ) where
 
 import           Bot.Replies
@@ -80,3 +81,11 @@ amitrustedCommand sender () = do
   case trustedUser of
     Just _  -> replyToSender sender "Yes Pog"
     Nothing -> replyToSender sender "No PepeHands"
+
+istrustedCommand :: CommandHandler T.Text
+istrustedCommand sender inputUser = do
+  let user = T.toLower inputUser
+  trustedUser <- findTrustedUser user
+  case trustedUser of
+    Just _ -> replyToSender sender [qm|{user} is trusted Pog|]
+    Nothing -> replyToSender sender [qm|{user} is not trusted PepeHands|]
