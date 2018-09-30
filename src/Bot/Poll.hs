@@ -59,7 +59,7 @@ voteCommand sender option =
 
 alivePoll :: UTCTime -> Entity Poll -> Bool
 alivePoll timeRef poll =
-    (realToFrac $ diffUTCTime timeRef $ pollStartedAt $ entityPayload poll) < pollLifeTime
+    realToFrac (diffUTCTime timeRef $ pollStartedAt $ entityPayload poll) < pollLifeTime
     where pollLifeTime = 10.0 :: Double
 
 currentPoll :: Effect (Maybe (Entity Poll))

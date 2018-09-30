@@ -16,8 +16,7 @@ whisperToUser :: T.Text -> T.Text -> Effect ()
 whisperToUser user msg = say [qms|/w {user} {msg}|]
 
 whisperToSender :: Sender -> T.Text -> Effect ()
-whisperToSender sender msg =
-    whisperToUser (senderName sender) msg
+whisperToSender sender = whisperToUser (senderName sender)
 
 banUser :: T.Text -> Effect ()
 banUser user = say [qms|/ban {user}|]
