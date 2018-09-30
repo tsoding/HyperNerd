@@ -12,6 +12,12 @@ replyToUser user text = say [qms|@{user} {text}|]
 replyToSender :: Sender -> T.Text -> Effect ()
 replyToSender sender = replyToUser (senderName sender)
 
+whisperToUser :: T.Text -> T.Text -> Effect ()
+whisperToUser user msg = say [qms|/w {user} {msg}|]
+
+whisperToSender :: Sender -> T.Text -> Effect ()
+whisperToSender sender = whisperToUser (senderName sender)
+
 banUser :: T.Text -> Effect ()
 banUser user = say [qms|/ban {user}|]
 

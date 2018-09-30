@@ -6,6 +6,7 @@ import           Bot.Replies
 import           Data.Foldable
 import           Data.List
 import qualified Data.Map as M
+import           Data.Maybe
 import qualified Data.Text as T
 import           Data.Time
 import           Effect
@@ -21,6 +22,24 @@ data PollOption = PollOption { poPollId :: Int
 data Poll = Poll { pollAuthor :: T.Text
                  , pollStartedAt :: UTCTime
                  }
+
+data Vote = Vote { votePollId :: Int
+                 , voteOptionId :: Int
+                 , voteUser :: T.Text
+                 , voteTimestamp :: UTCTime
+                 }
+
+instance IsEntity Vote where
+    toProperties vote = M.fromList [ ("pollId", PropertyInt $ votePollId vote)
+                                   , ("optionId", PropertyInt $ voteOptionId vote)
+                                   , ("user", PropertyText $ voteUser vote)
+                                   , ("timestamp", PropertyUTCTime $ voteTimestamp vote)
+                                   ]
+    fromProperties properties =
+        Vote <$> extractProperty "pollId" properties
+             <*> extractProperty "optionId" properties
+             <*> extractProperty "user" properties
+             <*> extractProperty "timestamp" properties
 
 instance IsEntity Poll where
     toProperties poll = M.fromList [ ("author", PropertyText $ pollAuthor poll)
@@ -53,12 +72,21 @@ voteCommand :: Sender -> T.Text -> Effect ()
 voteCommand sender option =
     do poll <- currentPoll
        case poll of
-         Just pollId -> registerVote pollId (senderName sender) option
-         Nothing -> replyToUser (senderName sender) "No polls are in place"
+         Just poll' -> registerVote poll' sender option
+         Nothing -> replyToSender sender "No polls are in place"
 
--- TODO(#86): currentPoll is not implemented yet
-currentPoll :: Effect (Maybe Int)
-currentPoll = return Nothing
+alivePoll :: UTCTime -> Entity Poll -> Bool
+alivePoll timeRef poll =
+    realToFrac (diffUTCTime timeRef $ pollStartedAt $ entityPayload poll) < pollLifeTime
+    where pollLifeTime = 10.0 :: Double
+
+currentPoll :: Effect (Maybe (Entity Poll))
+currentPoll = do
+  timeRef <- now
+  fmap (listToMaybe . filter (alivePoll timeRef)) $
+    selectEntities "Poll" $
+    Take 1 $
+    SortBy "startedAt" Desc All
 
 startPoll :: T.Text -> [T.Text] -> Effect Int
 startPoll author options =
@@ -73,10 +101,35 @@ startPoll author options =
                                                 }
        return pollId
 
--- TODO(#88): announcePollResults is not implemented
 announcePollResults :: Int -> Effect ()
-announcePollResults _ = return ()
+announcePollResults pollId = do
+  poll <- getEntityById "Poll" pollId :: Effect (Maybe (Entity Poll))
+  case poll of
+    Just _ -> do
+      votes <- selectEntities "Vote" $
+               Filter (PropertyEquals "pollId" (PropertyInt pollId)) All
+      let winner = listToMaybe $
+                   sortBy (flip compare) $
+                   map length $
+                   group $
+                   sort $
+                   map (voteOptionId . entityPayload) votes
+      case winner of
+        Just optionId -> do option <- getEntityById "PollOption" optionId
+                            maybe (errorEff "Couldn't find the winner option")
+                                  (\o -> say [qms|The winner is {poName $ entityPayload o}|])
+                                  option
+        Nothing -> errorEff "Winner list is empty"
+    Nothing -> return ()
 
--- TODO(#89): voteCommand is not implemented
-registerVote :: Int -> T.Text -> T.Text -> Effect ()
-registerVote _ _ _ = return ()
+registerVote :: Entity Poll -> Sender -> T.Text -> Effect ()
+registerVote poll sender optionName = do
+  let pollId = entityId poll
+  timestamp <- now
+  options <- selectEntities "PollOption" $
+             Filter (PropertyEquals "pollId" (PropertyInt pollId)) All
+  case find ((== optionName) . poName . entityPayload) options of
+    Just option -> do _ <- createEntity "Vote" $
+                           Vote pollId (entityId option) (senderName sender) timestamp
+                      return ()
+    Nothing -> errorEff [qms|{senderName sender} voted for unexisting option {optionName}|]
