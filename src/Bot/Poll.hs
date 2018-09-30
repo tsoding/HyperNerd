@@ -103,14 +103,13 @@ startPoll author options =
 
 announcePollResults :: Int -> Effect ()
 announcePollResults pollId = do
-  poll <- (getEntityById "Poll" pollId) :: Effect (Maybe (Entity Poll))
+  poll <- getEntityById "Poll" pollId :: Effect (Maybe (Entity Poll))
   case poll of
     Just _ -> do
       votes <- selectEntities "Vote" $
                Filter (PropertyEquals "pollId" (PropertyInt pollId)) All
       let winner = listToMaybe $
-                   reverse $
-                   sort $
+                   sortBy (flip compare) $
                    map length $
                    group $
                    sort $
