@@ -16,6 +16,6 @@ configFromFile filePath =
        either (ioError . userError) return $
          Config <$> (ini >>= lookupValue "User" "nick")
                 <*> (ini >>= lookupValue "User" "password")
-                -- TODO: do we actually need to prepend '#' at the config level?
+                -- TODO(#275): do we actually need to prepend '#' at the config level?
                 <*> (T.cons '#' <$> (ini >>= lookupValue "User" "channel"))
                 <*> (ini >>= lookupValue "User" "clientId")
