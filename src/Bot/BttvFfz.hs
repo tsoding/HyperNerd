@@ -15,7 +15,7 @@ import           Safe
 import           Text.Printf
 import           Text.InterpolatedString.QM
 
--- TODO: FFZ and BTTV emotes are not cached
+-- TODO(#274): FFZ and BTTV emotes are not cached
 
 requestEmoteList :: String -> (Object -> Parser [T.Text]) -> Effect [T.Text]
 requestEmoteList url emoteListExtractor =
