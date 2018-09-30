@@ -101,9 +101,27 @@ startPoll author options =
                                                 }
        return pollId
 
--- TODO(#88): announcePollResults is not implemented
 announcePollResults :: Int -> Effect ()
-announcePollResults _ = return ()
+announcePollResults pollId = do
+  poll <- (getEntityById "Poll" pollId) :: Effect (Maybe (Entity Poll))
+  case poll of
+    Just _ -> do
+      votes <- selectEntities "Vote" $
+               Filter (PropertyEquals "pollId" (PropertyInt pollId)) All
+      let winner = listToMaybe $
+                   reverse $
+                   sort $
+                   map length $
+                   group $
+                   sort $
+                   map (voteOptionId . entityPayload) votes
+      case winner of
+        Just optionId -> do option <- getEntityById "PollOption" optionId
+                            maybe (errorEff "Couldn't find the winner option")
+                                  (\o -> say [qms|The winner is {poName $ entityPayload o}|])
+                                  option
+        Nothing -> errorEff "Winner list is empty"
+    Nothing -> return ()
 
 registerVote :: Entity Poll -> Sender -> T.Text -> Effect ()
 registerVote poll sender optionName = do
@@ -115,4 +133,4 @@ registerVote poll sender optionName = do
     Just option -> do _ <- createEntity "Vote" $
                            Vote pollId (entityId option) (senderName sender) timestamp
                       return ()
-    Nothing -> return ()
+    Nothing -> errorEff [qms|{senderName sender} voted for unexisting option {optionName}|]
