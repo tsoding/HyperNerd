@@ -11,6 +11,7 @@ import           IrcTransport
 import qualified Sqlite.EntityPersistence as SEP
 import           System.Clock
 import           System.Environment
+import           Config
 
 ircTransport :: Bot -> BotState -> IO ()
 ircTransport b botState =

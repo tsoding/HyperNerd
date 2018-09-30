@@ -1,6 +1,8 @@
 {-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE QuasiQuotes #-}
 module Bot.Twitch where
 
+import           Bot.Replies
 import           Data.Aeson
 import           Data.Aeson.Types
 import           Data.Maybe
@@ -11,8 +13,8 @@ import           Events
 import           Network.HTTP.Simple
 import qualified Network.URI.Encode as URI
 import           Safe
+import           Text.InterpolatedString.QM
 import           Text.Printf
-import           Bot.Replies
 
 data TwitchStream = TwitchStream { tsStartedAt :: UTCTime
                                  , tsTitle :: T.Text
@@ -29,10 +31,10 @@ twitchStreamsParser obj =
 
 twitchStreamByLogin :: T.Text -> Effect (Maybe TwitchStream)
 twitchStreamByLogin login =
-    do request <- parseRequest
-                    $ printf "https://api.twitch.tv/helix/streams?user_login=%s"
-                    $ URI.encode
-                    $ T.unpack login
+    do request <- parseRequest $
+                  printf "https://api.twitch.tv/helix/streams?user_login=%s" $
+                  URI.encode $
+                  T.unpack login
        response <- twitchApiRequest request
        payload  <- return $ eitherDecode $ getResponseBody response
        either (errorEff . T.pack)
@@ -43,7 +45,7 @@ humanReadableDiffTime :: NominalDiffTime -> T.Text
 humanReadableDiffTime t =
     T.pack
       $ unwords
-      $ map (\(name, amount) -> printf "%d %s" amount name)
+      $ map (\(name, amount) -> [qms|{amount} {name}|])
       $ filter ((> 0) . snd) components
     where s :: Int
           s = round t
@@ -58,21 +60,19 @@ humanReadableDiffTime t =
 
 uptimeCommand :: Sender -> T.Text -> Effect ()
 uptimeCommand sender _ =
-    do channel  <- return
-                     $ T.pack
-                     $ fromMaybe "tsoding"
-                     $ tailMay
-                     $ T.unpack
-                     $ senderChannel sender
-       name     <- return $ senderName sender
+    do channel  <- return $
+                   T.pack $
+                   fromMaybe "tsoding" $
+                   tailMay $
+                   T.unpack $
+                   senderChannel sender
        response <- twitchStreamByLogin channel
-       maybe (replyToUser name "Not even streaming LUL")
+       maybe (replyToSender sender "Not even streaming LUL")
              (\twitchStream ->
-                do streamStartTime <- return $ tsStartedAt twitchStream
-                   currentTime     <- now
-                   replyToUser name
-                     $ T.pack
-                     $ printf "Streaming for %s"
-                     $ humanReadableDiffTime
-                     $ diffUTCTime currentTime streamStartTime)
+                do streamStartTime   <- return $ tsStartedAt twitchStream
+                   currentTime       <- now
+                   humanReadableDiff <- return $
+                                        humanReadableDiffTime $
+                                        diffUTCTime currentTime streamStartTime
+                   replyToSender sender [qms|Streaming for {humanReadableDiff}|])
              response

@@ -9,7 +9,6 @@ import           Database.SQLite.Simple
 import qualified Effect as E
 import           Property
 import           Text.InterpolatedString.QM
-import           Text.Printf
 
 type NamedQuery = (Query, [NamedParam])
 
@@ -17,7 +16,7 @@ header :: NamedQuery
 header = ("with ", [])
 
 footer :: Int -> NamedQuery
-footer cteId = (Query $ T.pack $ printf " select * from t%d" cteId, [])
+footer cteId = (Query [qm|\ select * from t{cteId}|], [])
 
 compileCondition :: Int -> E.Condition -> NamedQuery
 compileCondition cteId (E.PropertyEquals propertyName property) =

@@ -1,5 +1,6 @@
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE TupleSections #-}
+{-# LANGUAGE QuasiQuotes #-}
 module Bot (Bot, bot, Event(..), Sender(..), TwitchStream(..)) where
 
 import           Bot.Alias
@@ -26,7 +27,7 @@ import qualified Data.Text as T
 import           Effect
 import           Entity
 import           Events
-import           Text.Printf
+import           Text.InterpolatedString.QM
 import           Text.Regex
 
 type Bot = Event -> Effect ()
@@ -54,10 +55,7 @@ builtinCommands =
                , ("vote", ("Vote for a poll option", voteCommand))
                , ("uptime", ("Show stream uptime", uptimeCommand))
                , ("rq", ("Get random quote from your log", randomLogRecordCommand))
-               , ("nope", ("Timeout yourself for 1 second", \sender _ -> say
-                                                                           $ T.pack
-                                                                           $ printf "/timeout %s 1"
-                                                                           $ senderName sender))
+               , ("nope", ("Timeout yourself for 1 second", \sender _ -> timeoutSender 1 sender))
                , ("addperiodic", ("Add periodic command", authorizeCommand [ "tsoding"
                                                                            , "r3x1m" ] $
                                                           commandArgsCommand addPeriodicCommand))
@@ -102,7 +100,7 @@ builtinCommands =
                                      logs  <- selectEntities "LogRecord" $
                                               Take n $
                                               SortBy "timestamp" Desc All
-                                     traverse_ (say . T.pack . printf "/ban %s" . lrUser . entityPayload) $
+                                     traverse_ (banUser . lrUser . entityPayload) $
                                        filter (isJust . matchRegex regex . T.unpack . lrMsg . entityPayload) logs))
                , ("cycle", ("", \sender -> replyToSender sender . snd . T.mapAccumL (\t -> (not t ,) . if t then Data.Char.toUpper else Data.Char.toLower) True))
                -- TODO(#268): Trust management is not accessible to mods
@@ -149,16 +147,13 @@ senderAuthorizedCommand predicate unauthorizedResponse commandHandler sender arg
 pairArgsCommand :: CommandHandler (a, a) -> CommandHandler [a]
 pairArgsCommand commandHandler sender [x, y] = commandHandler sender (x, y)
 pairArgsCommand _ sender args =
-    replyToUser (senderName sender)
-      $ T.pack
-      $ printf "Expected two arguments but got %d"
-      $ length args
+    replyToSender sender [qm|Expected two arguments
+                             but got {length args}|]
 
 regexArgsCommand :: String -> CommandHandler [T.Text] -> CommandHandler T.Text
 regexArgsCommand regexString commandHandler sender args =
-    maybe (replyToUser (senderName sender)
-             $ T.pack
-             $ printf "Command doesn't match '%s' regex" regexString)
+    maybe (replyToSender sender [qms|Command doesn't match
+                                     '{regexString}' regex|])
           (commandHandler sender . map T.pack)
       $ matchRegex (mkRegex regexString)
       $ T.unpack args
@@ -177,17 +172,15 @@ bot event@(Msg sender text) = do
 
 helpCommand :: CommandTable T.Text -> CommandHandler T.Text
 helpCommand commandTable sender "" =
-    replyToUser (senderName sender)
-      $ T.pack
-      $ printf "Available commands: %s"
-      $ T.concat
-      $ intersperse (T.pack ", ")
-      $ map (\x -> T.concat [T.pack "!", x])
-      $ M.keys commandTable
+    replyToSender sender [qm|Available commands: {commandList}|]
+    where commandList = T.concat $
+                        intersperse (T.pack ", ") $
+                        map (\x -> T.concat [T.pack "!", x]) $
+                        M.keys commandTable
 helpCommand commandTable sender command =
-    maybe (replyToUser (senderName sender) "Cannot find your stupid command HyperNyard")
-          (replyToUser (senderName sender))
-          (fst <$> M.lookup command commandTable)
+    replyToSender sender $
+    maybe "Cannot find such command FeelsBadMan" fst $
+    M.lookup command commandTable
 
 dispatchPipe :: Sender -> [Command T.Text] -> Effect ()
 dispatchPipe sender [command] = dispatchCommand sender command

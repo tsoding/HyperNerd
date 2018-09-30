@@ -1,12 +1,11 @@
 {-# LANGUAGE OverloadedStrings #-}
 module IrcTransport where
 
+import           Config
 import           Control.Concurrent.Async
 import           Control.Concurrent.STM
 import           Control.Exception
 import           Data.Foldable
-import           Data.Ini
-import qualified Data.Text as T
 import           Data.Traversable
 import           Hookup
 import           Irc.Commands ( ircPass
@@ -16,16 +15,9 @@ import           Irc.Commands ( ircPass
                               )
 import           Irc.RawIrcMsg (RawIrcMsg, parseRawIrcMsg, asUtf8, renderRawIrcMsg)
 import           Network.Socket (Family(..))
-import           Text.Printf
 
 type IncomingQueue = TQueue Irc.RawIrcMsg.RawIrcMsg
 type OutcomingQueue = TQueue Irc.RawIrcMsg.RawIrcMsg
-
-data Config = Config { configNick :: T.Text
-                     , configPass :: T.Text
-                     , configChannel :: T.Text
-                     , configClientId :: T.Text
-                     } deriving Show
 
 maxIrcMessage :: Int
 maxIrcMessage = 1000
@@ -56,20 +48,6 @@ authorize conf conn =
 
 withConnection :: ConnectionParams -> (Connection -> IO a) -> IO a
 withConnection params = bracket (connect params) close
-
-configFromFile :: FilePath -> IO Config
-configFromFile filePath =
-    do ini <- readIniFile filePath
-       either (ioError . userError) return $
-         do nick     <- ini >>= lookupValue "User" "nick"
-            password <- ini >>= lookupValue "User" "password"
-            channel  <- ini >>= lookupValue "User" "channel"
-            clientId <- ini >>= lookupValue "User" "clientId"
-            return Config { configNick = nick
-                          , configPass = password
-                          , configChannel = T.pack $ printf "#%s" channel
-                          , configClientId = clientId
-                          }
 
 readIrcLine :: Connection -> IO (Maybe RawIrcMsg)
 readIrcLine conn =

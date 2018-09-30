@@ -1,4 +1,5 @@
 {-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE QuasiQuotes #-}
 module Bot.Alias ( redirectAlias
                  , addAliasCommand
                  , removeAliasCommand
@@ -12,7 +13,7 @@ import qualified Data.Text as T
 import           Effect
 import           Entity
 import           Property
-import           Text.Printf
+import           Text.InterpolatedString.QM
 
 data Alias = Alias { aliasName :: T.Text
                    , aliasRedirect :: T.Text
@@ -44,15 +45,11 @@ addAliasCommand sender (name, redirect)
     | name == redirect = replyToSender sender "Alias cannot redirect to itself"
     | otherwise = do alias <- getAliasByName name
                      case alias of
-                       Just _ -> replyToSender sender
-                                   $ T.pack
-                                   $ printf "Alias '%s' already exists" name
+                       Just _ -> replyToSender sender [qms|Alias '{name}' already exists|]
                        Nothing -> do _ <- createEntity "Alias" Alias { aliasName = name
                                                                      , aliasRedirect = redirect
                                                                      }
-                                     replyToSender sender
-                                       $ T.pack
-                                       $ printf "Alias '%s' has been created" name
+                                     replyToSender sender [qms|Alias '{name}' has been created|]
 
 removeAliasCommand :: CommandHandler T.Text
 removeAliasCommand sender name = do
@@ -60,5 +57,5 @@ removeAliasCommand sender name = do
   case alias of
     Just _ -> do
       _ <- deleteEntities "Alias" (Filter (PropertyEquals "name" (PropertyText name)) All)
-      replyToSender sender $ T.pack $ printf "Alias '%s' has been removed" name
-    Nothing -> replyToSender sender $ T.pack $ printf "Alias '%s' does not exists" name
+      replyToSender sender [qms|Alias '{name}' has been removed|]
+    Nothing -> replyToSender sender [qms|Alias '{name}' does not exists"|]

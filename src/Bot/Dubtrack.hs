@@ -1,5 +1,6 @@
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE ViewPatterns #-}
+{-# LANGUAGE QuasiQuotes #-}
 module Bot.Dubtrack where
 
 import           Bot.Replies
@@ -9,7 +10,7 @@ import           Data.Aeson.Types
 import qualified Data.Text as T
 import           Effect
 import           Network.HTTP.Simple
-import           Text.Printf
+import           Text.InterpolatedString.QM
 
 data SongType = SongTypeYoutube
               | SongTypeSoundcloud
@@ -55,7 +56,7 @@ instance FromJSON a => FromJSON (DubtrackResponse a) where
 
 songLink :: Song -> T.Text
 songLink song@(songType -> SongTypeYoutube) =
-    T.pack $ printf "https://www.youtube.com/watch?v=%s" $ songFkId song
+    [qms|https://www.youtube.com/watch?v={songFkId song}|]
 -- TODO(#220): Soundcloud links are not supported yet
 songLink (songType -> SongTypeSoundcloud) =
     "Soundcloud links are not supported yet"
@@ -71,5 +72,5 @@ currentSongCommand sender _ =
          Left message -> errorEff $ T.pack message
          Right dubtrackResponse ->
              maybe (replyToSender sender "Nothing is playing right now")
-                   (\song -> replyToSender sender $ T.pack $ printf "%s: %s" (songName song) (songLink song))
+                   (\song -> replyToSender sender [qms|"{songName song}: {songLink song}"|])
                    (roomCurrentSong $ drData dubtrackResponse)

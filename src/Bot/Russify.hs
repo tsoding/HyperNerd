@@ -1,4 +1,5 @@
 {-# LANGUAGE TemplateHaskell #-}
+{-# LANGUAGE QuasiQuotes #-}
 module Bot.Russify (russifyCommand) where
 
 import           Bot.Replies
@@ -11,14 +12,11 @@ import qualified Data.Text as T
 import           Data.Text.Encoding
 import           Effect
 import           Events
-import           Text.Printf
+import           Text.InterpolatedString.QM
 
 russifyCommand :: Sender -> T.Text -> Effect ()
 russifyCommand sender westernSpyMsg =
-    replyToUser (senderName sender)
-    $ T.pack
-    $ printf "%s KKomrade"
-    $ russify westernSpyMsg
+    replyToSender sender [qms|{russify westernSpyMsg} KKomrade|]
 
 mazarusha :: M.Map T.Text T.Text
 mazarusha =
