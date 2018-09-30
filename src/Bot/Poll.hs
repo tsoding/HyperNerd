@@ -23,6 +23,24 @@ data Poll = Poll { pollAuthor :: T.Text
                  , pollStartedAt :: UTCTime
                  }
 
+data Vote = Vote { votePollId :: Int
+                 , voteOptionId :: Int
+                 , voteUser :: T.Text
+                 , voteTimestamp :: UTCTime
+                 }
+
+instance IsEntity Vote where
+    toProperties vote = M.fromList [ ("pollId", PropertyInt $ votePollId vote)
+                                   , ("optionId", PropertyInt $ voteOptionId vote)
+                                   , ("user", PropertyText $ voteUser vote)
+                                   , ("timestamp", PropertyUTCTime $ voteTimestamp vote)
+                                   ]
+    fromProperties properties =
+        Vote <$> extractProperty "pollId" properties
+             <*> extractProperty "optionId" properties
+             <*> extractProperty "user" properties
+             <*> extractProperty "timestamp" properties
+
 instance IsEntity Poll where
     toProperties poll = M.fromList [ ("author", PropertyText $ pollAuthor poll)
                                    , ("startedAt", PropertyUTCTime $ pollStartedAt poll)
@@ -54,7 +72,7 @@ voteCommand :: Sender -> T.Text -> Effect ()
 voteCommand sender option =
     do poll <- currentPoll
        case poll of
-         Just poll' -> registerVote poll' (senderName sender) option
+         Just poll' -> registerVote poll' sender option
          Nothing -> replyToSender sender "No polls are in place"
 
 alivePoll :: UTCTime -> Entity Poll -> Bool
@@ -87,6 +105,14 @@ startPoll author options =
 announcePollResults :: Int -> Effect ()
 announcePollResults _ = return ()
 
--- TODO(#89): voteCommand is not implemented
-registerVote :: Entity Poll -> T.Text -> T.Text -> Effect ()
-registerVote _ _ _ = return ()
+registerVote :: Entity Poll -> Sender -> T.Text -> Effect ()
+registerVote poll sender optionName = do
+  let pollId = entityId poll
+  timestamp <- now
+  options <- selectEntities "PollOption" $
+             Filter (PropertyEquals "pollId" (PropertyInt pollId)) All
+  case find ((== optionName) . poName . entityPayload) options of
+    Just option -> do _ <- createEntity "Vote" $
+                           Vote pollId (entityId option) (senderName sender) timestamp
+                      return ()
+    Nothing -> return ()
