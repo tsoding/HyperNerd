@@ -6,6 +6,7 @@ import           Bot.Replies
 import           Data.Foldable
 import           Data.List
 import qualified Data.Map as M
+import           Data.Maybe
 import qualified Data.Text as T
 import           Data.Time
 import           Effect
@@ -53,12 +54,21 @@ voteCommand :: Sender -> T.Text -> Effect ()
 voteCommand sender option =
     do poll <- currentPoll
        case poll of
-         Just pollId -> registerVote pollId (senderName sender) option
-         Nothing -> replyToUser (senderName sender) "No polls are in place"
+         Just poll' -> registerVote poll' (senderName sender) option
+         Nothing -> replyToSender sender "No polls are in place"
 
--- TODO(#86): currentPoll is not implemented yet
-currentPoll :: Effect (Maybe Int)
-currentPoll = return Nothing
+alivePoll :: UTCTime -> Entity Poll -> Bool
+alivePoll timeRef poll =
+    (realToFrac $ diffUTCTime timeRef $ pollStartedAt $ entityPayload poll) < pollLifeTime
+    where pollLifeTime = 10.0 :: Double
+
+currentPoll :: Effect (Maybe (Entity Poll))
+currentPoll = do
+  timeRef <- now
+  fmap (listToMaybe . filter (alivePoll timeRef)) $
+    selectEntities "Poll" $
+    Take 1 $
+    SortBy "startedAt" Desc All
 
 startPoll :: T.Text -> [T.Text] -> Effect Int
 startPoll author options =
@@ -78,5 +88,5 @@ announcePollResults :: Int -> Effect ()
 announcePollResults _ = return ()
 
 -- TODO(#89): voteCommand is not implemented
-registerVote :: Int -> T.Text -> T.Text -> Effect ()
+registerVote :: Entity Poll -> T.Text -> T.Text -> Effect ()
 registerVote _ _ _ = return ()
