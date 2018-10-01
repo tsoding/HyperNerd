@@ -95,7 +95,7 @@ valueOfTag (TagEntry _ value) = value
 handleIrcMessage :: Bot -> BotState -> RawIrcMsg -> IO BotState
 handleIrcMessage b botState msg =
     do cookedMsg <- return $ cookIrcMsg msg
-       print $ cookedMsg
+       print cookedMsg
        case cookedMsg of
          (Ping xs) -> do atomically $ writeTQueue (bsOutcoming botState) (ircPong xs)
                          return botState
