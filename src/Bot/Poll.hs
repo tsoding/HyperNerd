@@ -6,6 +6,7 @@ import           Bot.Replies
 import           Data.Foldable
 import           Data.List
 import qualified Data.Map as M
+import           Data.Maybe
 import qualified Data.Text as T
 import           Data.Time
 import           Effect
@@ -13,6 +14,7 @@ import           Entity
 import           Events
 import           Property
 import           Text.InterpolatedString.QM
+import           Command
 
 data PollOption = PollOption { poPollId :: Int
                              , poName :: T.Text
@@ -50,15 +52,41 @@ pollCommand sender options =
                        timeout 10000 $ announcePollResults pollId
 
 voteCommand :: Sender -> T.Text -> Effect ()
-voteCommand sender option =
-    do poll <- currentPoll
-       case poll of
-         Just pollId -> registerVote pollId (senderName sender) option
-         Nothing -> replyToUser (senderName sender) "No polls are in place"
+voteCommand sender option = do
+  poll <- currentPoll
+  case poll of
+    Just poll' -> registerVote poll' (senderName sender) option
+    Nothing    -> replyToSender sender "No polls are in place"
 
--- TODO(#86): currentPoll is not implemented yet
-currentPoll :: Effect (Maybe Int)
-currentPoll = return Nothing
+pollLifetime :: UTCTime -> Entity Poll -> Double
+pollLifetime currentTime pollEntity =
+    realToFrac $
+    diffUTCTime currentTime $
+    pollStartedAt $
+    entityPayload pollEntity
+
+isPollAlive :: UTCTime -> Entity Poll -> Bool
+isPollAlive currentTime pollEntity =
+    pollLifetime currentTime pollEntity <= maxPollLifetime
+    where maxPollLifetime = 10.0 :: Double
+
+currentPollCommand :: CommandHandler ()
+currentPollCommand sender () = do
+  currentTime <- now
+  poll        <- currentPoll
+  case poll of
+    Just poll' -> replyToSender sender [qms|id: {entityId poll'},
+                                            {pollLifetime currentTime poll'}
+                                            secs ago|]
+    Nothing    -> replyToSender sender "No polls are in place"
+
+currentPoll :: Effect (Maybe (Entity Poll))
+currentPoll = do
+  currentTime <- now
+  fmap (listToMaybe . filter (isPollAlive currentTime)) $
+    selectEntities "Poll" $
+    Take 1 $
+    SortBy "startedAt" Desc All
 
 startPoll :: T.Text -> [T.Text] -> Effect Int
 startPoll author options =
@@ -78,5 +106,5 @@ announcePollResults :: Int -> Effect ()
 announcePollResults _ = return ()
 
 -- TODO(#89): voteCommand is not implemented
-registerVote :: Int -> T.Text -> T.Text -> Effect ()
+registerVote :: Entity Poll -> T.Text -> T.Text -> Effect ()
 registerVote _ _ _ = return ()
