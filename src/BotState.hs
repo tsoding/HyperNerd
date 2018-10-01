@@ -109,15 +109,9 @@ handleIrcMessage b botState msg =
              SQLite.withTransaction (bsSqliteConn botState)
                $ applyEffect botState (b $ Msg Sender { senderName = idText $ userNick userInfo
                                                       , senderChannel = idText target
-                                                      , senderSubscriber = fromMaybe False $
-                                                                           fmap (const True) $
-                                                                           find (T.isPrefixOf "subscriber") badges
-                                                      , senderMod = fromMaybe False $
-                                                                    fmap (const True) $
-                                                                    find (T.isPrefixOf "moderator") badges
-                                                      , senderBroadcaster = fromMaybe False $
-                                                                            fmap (const True) $
-                                                                            find (T.isPrefixOf "broadcaster") badges
+                                                      , senderSubscriber = isJust $ find (T.isPrefixOf "subscriber") badges
+                                                      , senderMod = isJust $ find (T.isPrefixOf "moderator") badges
+                                                      , senderBroadcaster = isJust $ find (T.isPrefixOf "broadcaster") badges
                                                       }
                                           msgText)
          _ -> return botState
