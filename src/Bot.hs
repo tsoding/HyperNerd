@@ -52,6 +52,10 @@ builtinCommands =
                                                              , "r3x1m"
                                                              ]
                                             $ wordsArgsCommand pollCommand))
+               , ("checkpoll", ("", authorizeCommand [ "tsoding"
+                                                     , "r3x1m"
+                                                     ] $
+                                    noArgsCommand currentPollCommand))
                , ("vote", ("Vote for a poll option", voteCommand))
                , ("uptime", ("Show stream uptime", uptimeCommand))
                , ("rq", ("Get random quote from your log", randomLogRecordCommand))
