@@ -116,7 +116,7 @@ startPoll author options =
 
 announcePollResults :: Int -> Effect ()
 announcePollResults pollId = do
-  optionIds <- fmap (map entityId) $
+  optionIds <- map entityId <$>
                (selectEntities "PollOption" $
                 Filter (PropertyEquals "pollId" $
                         PropertyInt pollId) All :: Effect [Entity PollOption])
@@ -126,8 +126,7 @@ announcePollResults pollId = do
   let results = sortBy (flip compare `on` length) votes
   case results of
     ((winnerVote:_):_) -> do winnerOption <- getEntityById "PollOption" (voteOptionId $
-                                                                         entityPayload $
-                                                                         winnerVote)
+                                                                         entityPayload winnerVote)
                              case winnerOption of
                                Just winnerOption' -> say [qms|The poll has finished! The winner is
                                                               {poName $ entityPayload $ winnerOption'}|]
