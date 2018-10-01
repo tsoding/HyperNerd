@@ -22,6 +22,7 @@ god = Sender { senderName = "god"
              , senderChannel = "dimension10"
              , senderSubscriber = True
              , senderMod = True
+             , senderBroadcaster = True
              }
 
 newtype PeriodicCommand = PeriodicCommand { periodicCommand :: Command T.Text }
