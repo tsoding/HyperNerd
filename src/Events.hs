@@ -6,6 +6,7 @@ data Sender = Sender { senderName :: T.Text
                      , senderChannel :: T.Text
                      , senderSubscriber :: Bool
                      , senderMod :: Bool
+                     , senderBroadcaster :: Bool
                      }
 
 data Event = Join

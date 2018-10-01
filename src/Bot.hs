@@ -108,14 +108,21 @@ builtinCommands =
                                        filter (isJust . matchRegex regex . T.unpack . lrMsg . entityPayload) logs))
                , ("cycle", ("", \sender -> replyToSender sender . snd . T.mapAccumL (\t -> (not t ,) . if t then Data.Char.toUpper else Data.Char.toLower) True))
                -- TODO(#268): Trust management is not accessible to mods
-               , ("trust", ("Makes the user trusted", authorizeCommand ["tsoding", "r3x1m"] trustCommand))
-               , ("untrust", ("Untrusts the user", authorizeCommand ["tsoding", "r3x1m"] untrustCommand))
+               , ("trust", ("Makes the user trusted", senderAuthorizedCommand senderAuthority "Only for mods" $
+                                                      regexArgsCommand "(.+)" $
+                                                      firstArgCommand trustCommand))
+               , ("untrust", ("Untrusts the user", senderAuthorizedCommand senderAuthority "Only for mods" $
+                                                   regexArgsCommand "(.+)" $
+                                                   firstArgCommand untrustCommand))
                , ("amitrusted", ("Check if you are a trusted user", noArgsCommand amitrustedCommand))
-               , ("istrusted", ("Check if the user is trusted", authorizeCommand ["tsoding", "r3x1m"] $
+               , ("istrusted", ("Check if the user is trusted", senderAuthorizedCommand senderAuthority "Only for mods" $
                                                                 regexArgsCommand "(.+)" $
-                                                                firstArgCommand
-                                                                istrustedCommand))
+                                                                firstArgCommand istrustedCommand))
                ]
+
+senderAuthority :: Sender -> Bool
+senderAuthority sender =
+    senderMod sender || senderBroadcaster sender
 
 commandArgsCommand :: CommandHandler (Command T.Text) -> CommandHandler T.Text
 commandArgsCommand commandHandler sender text =
@@ -133,11 +140,9 @@ firstArgCommand commandHandler sender (arg:_) =
     commandHandler sender arg
 
 authorizeCommand :: [T.Text] -> CommandHandler a -> CommandHandler a
-authorizeCommand authorizedPeople commandHandler sender args =
-    if senderName sender `elem` authorizedPeople
-    then commandHandler sender args
-    else replyToUser (senderName sender)
-                     "You are not authorized to use this command! HyperNyard"
+authorizeCommand authorizedPeople =
+    senderAuthorizedCommand (\sender -> senderName sender `elem` authorizedPeople)
+                            "You are not authorized to use this command! HyperNyard"
 
 senderAuthorizedCommand :: (Sender -> Bool) -- sender predicate
                         -> T.Text           -- unauthorized response

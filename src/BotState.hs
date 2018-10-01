@@ -6,6 +6,7 @@ import           Config
 import           Control.Concurrent.STM
 import           Control.Monad.Free
 import           Data.List
+import           Data.Maybe
 import           Data.String
 import qualified Data.Text as T
 import           Data.Time
@@ -88,6 +89,9 @@ advanceTimeouts dt botState =
                              $ map (\(t, e) -> (t - dt, e))
                              $ bsTimeouts botState
 
+valueOfTag :: TagEntry -> T.Text
+valueOfTag (TagEntry _ value) = value
+
 handleIrcMessage :: Bot -> BotState -> RawIrcMsg -> IO BotState
 handleIrcMessage b botState msg =
     do cookedMsg <- return $ cookIrcMsg msg
@@ -96,15 +100,18 @@ handleIrcMessage b botState msg =
          (Ping xs) -> do atomically $ writeTQueue (bsOutcoming botState) (ircPong xs)
                          return botState
          (Privmsg userInfo target msgText) ->
+             let badges = concat $
+                          maybeToList $
+                          fmap (T.splitOn "," . valueOfTag) $
+                          find (\(TagEntry ident _) -> ident == "badges") $
+                          _msgTags msg
+             in
              SQLite.withTransaction (bsSqliteConn botState)
                $ applyEffect botState (b $ Msg Sender { senderName = idText $ userNick userInfo
                                                       , senderChannel = idText target
-                                                      , senderSubscriber = maybe False (\(TagEntry _ value) -> value == "1")
-                                                                             $ find (\(TagEntry ident _) -> ident == "subscriber")
-                                                                             $ _msgTags msg
-                                                      , senderMod = maybe False (\(TagEntry _ value) -> value == "1")
-                                                                      $ find (\(TagEntry ident _) -> ident == "mod")
-                                                                      $ _msgTags msg
+                                                      , senderSubscriber = isJust $ find (T.isPrefixOf "subscriber") badges
+                                                      , senderMod = isJust $ find (T.isPrefixOf "moderator") badges
+                                                      , senderBroadcaster = isJust $ find (T.isPrefixOf "broadcaster") badges
                                                       }
                                           msgText)
          _ -> return botState
