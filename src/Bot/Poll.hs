@@ -60,8 +60,9 @@ pollCommand sender options =
          Just _ -> replyToSender sender "Cannot create a poll while another poll is in place"
          Nothing -> do pollId <- startPoll (senderName sender) options
                        optionsList <- return $ T.concat $ intersperse ", " options
-                       say [qms|The poll has been started. Use !vote command to
-                                vote for one of the options: {optionsList}|]
+                       say [qms|The poll has been started. You have 10 seconds.
+                                Use !vote command to vote for one of the options:
+                                {optionsList}|]
                        timeout 10500 $ announcePollResults pollId
 
 voteCommand :: Sender -> T.Text -> Effect ()
