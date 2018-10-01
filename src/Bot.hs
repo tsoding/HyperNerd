@@ -107,7 +107,6 @@ builtinCommands =
                                      traverse_ (banUser . lrUser . entityPayload) $
                                        filter (isJust . matchRegex regex . T.unpack . lrMsg . entityPayload) logs))
                , ("cycle", ("", \sender -> replyToSender sender . snd . T.mapAccumL (\t -> (not t ,) . if t then Data.Char.toUpper else Data.Char.toLower) True))
-               -- TODO(#268): Trust management is not accessible to mods
                , ("trust", ("Makes the user trusted", senderAuthorizedCommand senderAuthority "Only for mods" $
                                                       regexArgsCommand "(.+)" $
                                                       firstArgCommand trustCommand))
