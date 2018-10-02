@@ -1,3 +1,19 @@
+# Issues
+
+- Feel free to submit an issues in case of
+  - bug
+  - suggestion
+  - feature request
+  - question regarding the project
+  - unclear documentation
+  - unreadable or straight up bad code
+  - any problem that you ran into while setting up the project on your side
+- Do not submit **Tasks**. Submit **Problems**.
+  - Bad issue: "Rewrite everything in Rust"
+  - Good issue: "Using C makes the development difficult"
+  - We are engineers. We don't follow anybody's direction. We solve problems. Please submit problems.
+  - If you see any issues that look like tasks, feel free to point that out in the comments.
+
 # Pull Requests
 
 - Keep your PRs nice and small around 300 changes. PRs that are way over that threshold won't be merged.
