@@ -119,7 +119,7 @@ announcePollResults :: Int -> Effect ()
 announcePollResults pollId = do
   options <- selectEntities "PollOption" $
              Filter (PropertyEquals "pollId" $
-                     PropertyInt pollId) All :: Effect [Entity PollOption]
+                     PropertyInt pollId) All
   votes <- mapM (\option -> selectEntities "Vote" $
                             Filter (PropertyEquals "optionId" $
                                     PropertyInt $
