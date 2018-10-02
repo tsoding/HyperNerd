@@ -16,6 +16,7 @@
 
 # Pull Requests
 
+- Make sure the CI is passed.
 - Keep your PRs nice and small around 300 changes. PRs that are way over that threshold won't be merged.
   - If 300 changes is not enough,
     - make as many changes as you can according to the PR size limitation,
@@ -24,3 +25,5 @@
     - submit PR with the unfinished work and TODOs,
     - TODOs will be converted to separate issues
 - If you fix a bug, please don't forget to create a Unit Test that fails without your fix.
+- Neglected PRs older than two weeks are gonna be automatically closed.
+- Don't get discouraged if your PR was not merged. The Rules and CI are designed to keep the quality of the code high so you don't have to worry about it yourself. Keep experimenting, keep improving.
