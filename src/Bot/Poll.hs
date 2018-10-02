@@ -123,6 +123,7 @@ announcePollResults pollId = do
   votes <- mapM (\option -> selectEntities "Vote" $
                             Filter (PropertyEquals "optionId" $
                                     PropertyInt $
+                                    -- TODO(#282): how to get rid of type hint in announcePollResults?
                                     entityId option) All :: Effect [Entity Vote]) options
   let results = T.concat $
                 intersperse ", " $
