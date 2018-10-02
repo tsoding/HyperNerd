@@ -59,7 +59,7 @@ pollCommand sender options =
        case poll of
          Just _ -> replyToSender sender "Cannot create a poll while another poll is in place"
          Nothing -> do pollId <- startPoll (senderName sender) options
-                       optionsList <- return $ T.concat $ intersperse ", " options
+                       optionsList <- return $ T.concat $ intersperse " , " options
                        say [qms|The poll has been started. You have 10 seconds.
                                 Use !vote command to vote for one of the options:
                                 {optionsList}|]
@@ -117,24 +117,21 @@ startPoll author options =
 
 announcePollResults :: Int -> Effect ()
 announcePollResults pollId = do
-  optionIds <- map entityId <$>
-               (selectEntities "PollOption" $
-                Filter (PropertyEquals "pollId" $
-                        PropertyInt pollId) All :: Effect [Entity PollOption])
-  votes <- mapM (\optionId -> selectEntities "Vote" $
-                              Filter (PropertyEquals "optionId" $
-                                      PropertyInt optionId) All) optionIds
-  let results = sortBy (flip compare `on` length) votes
-  case results of
-    ((winnerVote:_):_) -> do winnerOption <- getEntityById "PollOption" (voteOptionId $
-                                                                         entityPayload winnerVote)
-                             case winnerOption of
-                               Just winnerOption' -> say [qms|The poll has finished! The winner is
-                                                              {poName $ entityPayload $ winnerOption'}|]
-                               Nothing            -> logMsg [qms|[WARNING] could not retrieve
-                                                                 winner option|]
-    _                  -> say [qms|Poll has finished but nobody voted
-                                   PepeHands Dead stream PepeHands|]
+  options <- selectEntities "PollOption" $
+             Filter (PropertyEquals "pollId" $
+                     PropertyInt pollId) All
+  votes <- mapM (\option -> selectEntities "Vote" $
+                            Filter (PropertyEquals "optionId" $
+                                    PropertyInt $
+                                    -- TODO(#282): how to get rid of type hint in announcePollResults?
+                                    entityId option) All :: Effect [Entity Vote]) options
+  let results = T.concat $
+                intersperse ", " $
+                map (\(option, count) -> [qms|{poName $ entityPayload $ option} : {count}|]) $
+                sortBy (flip compare `on` snd) $
+                zip options $
+                map length votes
+  say [qms|Poll has finished. The results are: {results}|]
 
 registerVote :: Entity Poll -> Sender -> T.Text -> Effect ()
 registerVote poll sender optionName = do

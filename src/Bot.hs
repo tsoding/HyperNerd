@@ -48,10 +48,8 @@ builtinCommands =
                , ("ffz", ("Show all available FFZ emotes", ffzCommand))
 
                , ("help", ("Send help", helpCommand builtinCommands))
-               , ("poll", ("Starts a poll", authorizeCommand [ "tsoding"
-                                                             , "r3x1m"
-                                                             ]
-                                            $ wordsArgsCommand pollCommand))
+               , ("poll", ("Starts a poll", senderAuthorizedCommand senderAuthority "Only for mods" $
+                                            wordsArgsCommand pollCommand))
                , ("checkpoll", ("", authorizeCommand [ "tsoding"
                                                      , "r3x1m"
                                                      ] $
