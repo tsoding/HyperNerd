@@ -59,7 +59,7 @@ pollCommand sender options =
        case poll of
          Just _ -> replyToSender sender "Cannot create a poll while another poll is in place"
          Nothing -> do pollId <- startPoll (senderName sender) options
-                       optionsList <- return $ T.concat $ intersperse ", " options
+                       optionsList <- return $ T.concat $ intersperse " , " options
                        say [qms|The poll has been started. You have 10 seconds.
                                 Use !vote command to vote for one of the options:
                                 {optionsList}|]
@@ -126,7 +126,7 @@ announcePollResults pollId = do
                                     entityId option) All :: Effect [Entity Vote]) options
   let results = T.concat $
                 intersperse ", " $
-                map (\(option, count) -> [qms|{poName $ entityPayload $ option}: {count}|]) $
+                map (\(option, count) -> [qms|{poName $ entityPayload $ option} : {count}|]) $
                 sortBy (flip compare `on` snd) $
                 zip options $
                 map length votes
