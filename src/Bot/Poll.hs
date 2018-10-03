@@ -3,7 +3,10 @@
 module Bot.Poll where
 
 import           Bot.Replies
+import           Command
+import           Control.Monad
 import           Data.Foldable
+import           Data.Function
 import           Data.List
 import qualified Data.Map as M
 import           Data.Maybe
@@ -14,8 +17,6 @@ import           Entity
 import           Events
 import           Property
 import           Text.InterpolatedString.QM
-import           Command
-import           Data.Function
 
 data PollOption = PollOption { poPollId :: Int
                              , poName :: T.Text
@@ -143,9 +144,9 @@ registerOptionVote option sender = do
   if any ((== senderName sender) . voteUser . entityPayload) existingVotes
   then logMsg [qms|[WARNING] User {senderName sender} already
                    voted for {poName $ entityPayload option}|]
-  else createEntity "Vote" Vote { voteUser = senderName sender
-                                , voteOptionId = entityId option
-                                } >> return ()
+  else void $ createEntity "Vote" Vote { voteUser = senderName sender
+                                       , voteOptionId = entityId option
+                                       }
 
 registerPollVote :: Entity Poll -> Sender -> T.Text -> Effect ()
 registerPollVote poll sender optionName = do
