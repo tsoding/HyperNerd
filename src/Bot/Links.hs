@@ -10,6 +10,7 @@ module Bot.Links ( forbidLinksForPlebs
 
 import           Bot.Replies
 import           Command
+import           Control.Monad
 import qualified Data.Map as M
 import           Data.Maybe
 import qualified Data.Text as T
@@ -63,7 +64,7 @@ trustCommand sender inputUser = do
   trustedUser <- findTrustedUser user
   case trustedUser of
     Just _  -> replyToSender sender [qm|{user} is already trusted|]
-    Nothing -> do _ <- createEntity "TrustedUser" $ TrustedUser user
+    Nothing -> do void $ createEntity "TrustedUser" $ TrustedUser user
                   replyToSender sender [qm|{user} is now trusted|]
 
 untrustCommand :: CommandHandler T.Text

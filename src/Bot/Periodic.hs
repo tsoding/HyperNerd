@@ -7,6 +7,7 @@ module Bot.Periodic ( startPeriodicCommands
 
 import           Bot.Replies
 import           Command
+import           Control.Monad
 import qualified Data.Map as M
 import           Data.Maybe
 import qualified Data.Text as T
@@ -62,8 +63,7 @@ addPeriodicCommand sender command =
        case maybePc of
          Just _ -> replyToSender sender [qms|'{name}' is aleady
                                              called periodically|]
-         Nothing -> do _ <- createEntity "PeriodicCommand" $
-                            PeriodicCommand command
+         Nothing -> do void $ createEntity "PeriodicCommand" $ PeriodicCommand command
                        replyToSender sender [qms|'{name}' has been scheduled
                                                  to call periodically|]
     where name = commandName command
@@ -72,8 +72,10 @@ removePeriodicCommand :: CommandHandler T.Text
 removePeriodicCommand sender name = do
   maybePc <- getPeriodicCommandByName name
   case maybePc of
-    Just _ -> do _ <- deleteEntities "PeriodicCommand" $
-                      Filter (PropertyEquals "name" (PropertyText name)) All
+    Just _ -> do void $
+                   deleteEntities "PeriodicCommand" $
+                   Filter (PropertyEquals "name" $
+                           PropertyText name) All
                  replyToSender sender [qms|'{name}' has been unscheduled|]
     Nothing -> replyToSender sender [qms|'{name}' was not scheduled to
                                          begin with|]

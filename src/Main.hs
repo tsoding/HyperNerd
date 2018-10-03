@@ -50,7 +50,7 @@ mainWithArgs [configPath, databasePath] =
     do incoming <- atomically newTQueue
        outcoming <- atomically newTQueue
        conf <- configFromFile configPath
-       _ <- forkIO $ ircTransportEntry incoming outcoming configPath
+       void $ forkIO $ ircTransportEntry incoming outcoming configPath
        logicEntry incoming outcoming conf databasePath
 mainWithArgs _ = error "./HyperNerd <config-file> <database-file>"
 

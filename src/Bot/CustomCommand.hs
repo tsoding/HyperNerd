@@ -62,11 +62,11 @@ addCustomCommand builtinCommands sender (name, message) =
          (Just _, Just _)  -> errorEff [qms|Custom command '{name}' collide with
                                             a built in command|]
          (Nothing, Nothing) ->
-             do _ <- createEntity "CustomCommand" CustomCommand { customCommandName = name
-                                                                , customCommandMessage = message
-                                                                , customCommandTimes = 0
-                                                                , customCommandLastUsed = UTCTime (ModifiedJulianDay 0) 0
-                                                                }
+             do void $ createEntity "CustomCommand" CustomCommand { customCommandName = name
+                                                                  , customCommandMessage = message
+                                                                  , customCommandTimes = 0
+                                                                  , customCommandLastUsed = UTCTime (ModifiedJulianDay 0) 0
+                                                                  }
                 replyToSender sender [qms|Added command '{name}'|]
 
 deleteCustomCommand :: CommandTable a -> CommandHandler T.Text
@@ -76,8 +76,10 @@ deleteCustomCommand builtinCommands sender name =
 
        case (customCommand, builtinCommand) of
          (Just _, Nothing) ->
-             do _ <- deleteEntities "CustomCommand" $
-                     Filter (PropertyEquals "name" $ PropertyText name) All
+             do void $
+                  deleteEntities "CustomCommand" $
+                  Filter (PropertyEquals "name" $
+                          PropertyText name) All
                 replyToSender sender [qms|Command '{name}' has been removed|]
          (Nothing, Just _)  -> replyToSender sender [qms|Command '{name}' is builtin
                                                          and can't be removed like that|]
@@ -92,7 +94,7 @@ updateCustomCommand builtinCommands sender (name, message) =
 
        case (customCommand, builtinCommand) of
          (Just cmd, Nothing) ->
-             do _ <- updateEntityById (replaceCustomCommandMessage message <$> cmd)
+             do void $ updateEntityById (replaceCustomCommandMessage message <$> cmd)
                 replyToSender sender [qms|Command '{name}' has been updated|]
          (Nothing, Just _)  -> replyToSender sender [qms|Command '{name}' is builtin and
                                                          can't be updated like that|]

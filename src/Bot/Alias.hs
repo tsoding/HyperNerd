@@ -7,6 +7,7 @@ module Bot.Alias ( redirectAlias
 
 import           Bot.Replies
 import           Command
+import           Control.Monad
 import qualified Data.Map as M
 import           Data.Maybe
 import qualified Data.Text as T
@@ -46,9 +47,9 @@ addAliasCommand sender (name, redirect)
     | otherwise = do alias <- getAliasByName name
                      case alias of
                        Just _ -> replyToSender sender [qms|Alias '{name}' already exists|]
-                       Nothing -> do _ <- createEntity "Alias" Alias { aliasName = name
-                                                                     , aliasRedirect = redirect
-                                                                     }
+                       Nothing -> do void $ createEntity "Alias" Alias { aliasName = name
+                                                                       , aliasRedirect = redirect
+                                                                       }
                                      replyToSender sender [qms|Alias '{name}' has been created|]
 
 removeAliasCommand :: CommandHandler T.Text
@@ -56,6 +57,6 @@ removeAliasCommand sender name = do
   alias <- getAliasByName name
   case alias of
     Just _ -> do
-      _ <- deleteEntities "Alias" (Filter (PropertyEquals "name" (PropertyText name)) All)
+      void $ deleteEntities "Alias" (Filter (PropertyEquals "name" (PropertyText name)) All)
       replyToSender sender [qms|Alias '{name}' has been removed|]
     Nothing -> replyToSender sender [qms|Alias '{name}' does not exists"|]

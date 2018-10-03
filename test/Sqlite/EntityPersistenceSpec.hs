@@ -42,18 +42,21 @@ createSeveralEntityTypes =
     TestCase $ do databaseFile <- emptySystemTempFile "database"
                   SQLite.withConnection databaseFile $ \conn ->
                       do SEP.prepareSchema conn
-                         _ <- SEP.createEntity conn "entity1"
-                                $ M.fromList [ ("foo", PropertyInt 42)
-                                             , ("bar", PropertyText "hello")
-                                             ]
-                         _ <- SEP.createEntity conn "entity2"
-                                $ M.fromList [ ("baz", PropertyInt 43)
-                                             , ("kamaz", PropertyText "world")
-                                             ]
-                         _ <- SEP.createEntity conn "entity2"
-                                $ M.fromList [ ("baz", PropertyInt 44)
-                                             , ("kamaz", PropertyText "ahaha")
-                                             ]
+                         void $
+                           SEP.createEntity conn "entity1" $
+                           M.fromList [ ("foo", PropertyInt 42)
+                                      , ("bar", PropertyText "hello")
+                                      ]
+                         void $
+                           SEP.createEntity conn "entity2" $
+                           M.fromList [ ("baz", PropertyInt 43)
+                                      , ("kamaz", PropertyText "world")
+                                      ]
+                         void $
+                           SEP.createEntity conn "entity2" $
+                           M.fromList [ ("baz", PropertyInt 44)
+                                      , ("kamaz", PropertyText "ahaha")
+                                      ]
                          entities <- SEP.selectEntities conn "entity2" All
                          assertEqual "Unexpected ids of entitities of second type" [1, 2] $ sort $ map entityId entities
 
