@@ -139,7 +139,7 @@ registerOptionVote option sender = do
                    Filter (PropertyEquals "optionId" $
                            PropertyInt $
                            entityId option) All
-  -- TODO: registerOptionVote filters existing votes on the haskell side
+  -- TODO(#289): registerOptionVote filters existing votes on the haskell side
   if any ((== senderName sender) . voteUser . entityPayload) existingVotes
   then logMsg [qms|[WARNING] User {senderName sender} already
                    voted for {poName $ entityPayload option}|]
