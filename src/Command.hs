@@ -3,6 +3,7 @@
 module Command where
 
 import           Data.Char
+import           Data.Foldable
 import qualified Data.Map as M
 import           Data.Maybe
 import qualified Data.Text as T
@@ -18,9 +19,7 @@ contramapCH :: (Sender -> a -> Effect (Maybe b))
             -> CommandHandler a
 contramapCH f commandHandler sender args = do
   args' <- f sender args
-  case args' of
-    Just args'' -> commandHandler sender args''
-    Nothing     -> return ()
+  forM_ args' (commandHandler sender)
 
 data Command a = Command { commandName :: T.Text
                          , commandArgs :: a

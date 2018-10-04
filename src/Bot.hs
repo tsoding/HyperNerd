@@ -53,7 +53,7 @@ builtinCommands =
                                             regexArgsCommand "([0-9]+) (.*)" $
                                             pairArgsCommand $
                                             contramapCH (\sender (duration, options) -> do
-                                                           let result = fmap (\d -> (d, T.words options)) $
+                                                           let result = fmap (, T.words options) $
                                                                         readMaybe $
                                                                         T.unpack duration
                                                            if isJust result
