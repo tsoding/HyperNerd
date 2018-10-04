@@ -60,6 +60,9 @@ builtinCommands =
                                                            then return result
                                                            else do replyToSender sender [qms|Could not parse duration|]
                                                                    return Nothing) pollCommand))
+               , ("cancelpoll", ("Cancels the current poll",
+                                 senderAuthorizedCommand senderAuthority "Only for mods" $
+                                 noArgsCommand cancelPollCommand))
                , ("checkpoll", ("", authorizeCommand [ "tsoding"
                                                      , "r3x1m"
                                                      ] $

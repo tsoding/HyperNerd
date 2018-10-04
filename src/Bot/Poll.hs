@@ -25,21 +25,33 @@ data PollOption = PollOption { poPollId :: Int
 data Poll = Poll { pollAuthor :: T.Text
                  , pollStartedAt :: UTCTime
                  , pollDuration :: Int
+                 -- TODO(#299): Entity doesn't support boolean types
+                 , pollCancelled :: Bool
                  }
 
 data Vote = Vote { voteUser :: T.Text
                  , voteOptionId :: Int
                  }
 
+intAsBool :: Int -> Bool
+intAsBool 0 = False
+intAsBool _ = True
+
+boolAsInt :: Bool -> Int
+boolAsInt True = 1
+boolAsInt False = 0
+
 instance IsEntity Poll where
     toProperties poll = M.fromList [ ("author", PropertyText $ pollAuthor poll)
                                    , ("startedAt", PropertyUTCTime $ pollStartedAt poll)
                                    , ("duration", PropertyInt $ pollDuration poll)
+                                   , ("cancelled", PropertyInt $ boolAsInt $ pollCancelled poll)
                                    ]
     fromProperties properties =
         Poll <$> extractProperty "author" properties
              <*> extractProperty "startedAt" properties
              <*> pure (fromMaybe 10000 $ extractProperty "duration" properties)
+             <*> pure (maybe False intAsBool $ extractProperty "cancelled" properties)
 
 instance IsEntity PollOption where
     toProperties pollOption = M.fromList [ ("pollId", PropertyInt $ poPollId pollOption)
@@ -56,6 +68,14 @@ instance IsEntity Vote where
     fromProperties properties =
         Vote <$> extractProperty "user" properties
              <*> extractProperty "optionId" properties
+
+cancelPollCommand :: CommandHandler ()
+cancelPollCommand sender () = do
+  poll <- currentPoll
+  case poll of
+    Just poll' -> do void $ updateEntityById $ fmap (\poll'' -> poll'' { pollCancelled = True }) poll'
+                     say [qms|TwitchVotes The current poll has been cancelled!|]
+    Nothing    -> replyToSender sender "No polls are in place"
 
 -- TODO(#294): poll duration doesn't have upper/lower limit
 pollCommand :: CommandHandler (Int, [T.Text])
@@ -89,8 +109,9 @@ pollLifetime currentTime pollEntity =
 
 isPollAlive :: UTCTime -> Entity Poll -> Bool
 isPollAlive currentTime pollEntity =
-    pollLifetime currentTime pollEntity <= maxPollLifetime
-    where maxPollLifetime = fromIntegral (pollDuration $ entityPayload pollEntity) * 0.001
+    pollLifetime currentTime pollEntity <= maxPollLifetime && not (pollCancelled poll)
+    where maxPollLifetime = fromIntegral (pollDuration poll) * 0.001
+          poll = entityPayload pollEntity
 
 currentPollCommand :: CommandHandler ()
 currentPollCommand sender () = do
@@ -116,6 +137,7 @@ startPoll sender options duration =
        poll   <- createEntity "Poll" Poll { pollAuthor = senderName sender
                                           , pollStartedAt = startedAt
                                           , pollDuration = duration
+                                          , pollCancelled = False
                                           }
        pollId <- return $ entityId poll
        for_ options $ \name ->
@@ -140,7 +162,10 @@ announcePollResults pollId = do
                 sortBy (flip compare `on` snd) $
                 zip options $
                 map length votes
-  say [qms|TwitchVotes Poll has finished. The results are: {results}|]
+
+  poll <- getEntityById "Poll" pollId
+  unless (maybe True (pollCancelled . entityPayload) poll) $
+    say [qms|TwitchVotes Poll has finished. The results are: {results}|]
 
 registerOptionVote :: Entity PollOption -> Sender -> Effect ()
 registerOptionVote option sender = do
