@@ -64,7 +64,7 @@ pollCommand sender (durationSecs, options) =
        let durationMs = durationSecs * 1000
        case poll of
          Just _ -> replyToSender sender "Cannot create a poll while another poll is in place"
-         -- TODO: passing duration of different units is not type safe
+         -- TODO(#295): passing duration of different units is not type safe
          Nothing -> do pollId <- startPoll sender options durationMs
                        optionsList <- return $ T.concat $ intersperse " , " options
                        -- TODO: duration of poll is not interpolated in poll start announcement
