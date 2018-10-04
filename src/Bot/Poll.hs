@@ -67,7 +67,7 @@ pollCommand sender (durationSecs, options) =
          -- TODO(#295): passing duration of different units is not type safe
          Nothing -> do pollId <- startPoll sender options durationMs
                        optionsList <- return $ T.concat $ intersperse " , " options
-                       -- TODO: duration of poll is not interpolated in poll start announcement
+                       -- TODO(#296): duration of poll is not interpolated in poll start announcement
                        say [qms|TwitchVotes The poll has been started. You have {durationSecs} seconds.
                                 Use !vote command to vote for one of the options:
                                 {optionsList}|]
