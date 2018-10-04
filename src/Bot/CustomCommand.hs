@@ -38,8 +38,8 @@ instance IsEntity CustomCommand where
     fromProperties properties =
         CustomCommand <$> extractProperty "name" properties
                       <*> extractProperty "message" properties
-                      <*> return (fromMaybe 0 $ extractProperty "times" properties)
-                      <*> return (fromMaybe dayZero $ extractProperty "lastUsed" properties)
+                      <*> pure (fromMaybe 0 $ extractProperty "times" properties)
+                      <*> pure (fromMaybe dayZero $ extractProperty "lastUsed" properties)
         where dayZero = UTCTime (ModifiedJulianDay 0) 0
 
 customCommandByName :: T.Text -> MaybeT Effect (Entity CustomCommand)
