@@ -54,7 +54,7 @@ instance IsEntity Vote where
         Vote <$> extractProperty "user" properties
              <*> extractProperty "optionId" properties
 
-pollCommand :: Sender -> [T.Text] -> Effect ()
+pollCommand :: CommandHandler [T.Text]
 pollCommand sender options =
     do poll <- currentPoll
        case poll of
@@ -66,7 +66,7 @@ pollCommand sender options =
                                 {optionsList}|]
                        timeout 30000 $ announcePollResults pollId
 
-voteCommand :: Sender -> T.Text -> Effect ()
+voteCommand :: CommandHandler T.Text
 voteCommand sender option = do
   poll <- currentPoll
   case poll of
