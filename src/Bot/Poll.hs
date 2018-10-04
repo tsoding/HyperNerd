@@ -90,7 +90,7 @@ pollLifetime currentTime pollEntity =
 isPollAlive :: UTCTime -> Entity Poll -> Bool
 isPollAlive currentTime pollEntity =
     pollLifetime currentTime pollEntity <= maxPollLifetime
-    where maxPollLifetime = (fromIntegral $ pollDuration $ entityPayload pollEntity) * 0.001
+    where maxPollLifetime = fromIntegral (pollDuration $ entityPayload pollEntity) * 0.001
 
 currentPollCommand :: CommandHandler ()
 currentPollCommand sender () = do

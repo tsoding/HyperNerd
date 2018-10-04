@@ -59,8 +59,7 @@ builtinCommands =
                                                            if isJust result
                                                            then return result
                                                            else do replyToSender sender [qms|Could not parse duration|]
-                                                                   return Nothing) $
-                                            pollCommand))
+                                                                   return Nothing) pollCommand))
                , ("checkpoll", ("", authorizeCommand [ "tsoding"
                                                      , "r3x1m"
                                                      ] $
