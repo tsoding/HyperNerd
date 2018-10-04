@@ -51,7 +51,7 @@ instance IsEntity Poll where
         Poll <$> extractProperty "author" properties
              <*> extractProperty "startedAt" properties
              <*> pure (fromMaybe 10000 $ extractProperty "duration" properties)
-             <*> (intAsBool <$> extractProperty "cancelled" properties)
+             <*> pure (maybe False intAsBool $ extractProperty "cancelled" properties)
 
 instance IsEntity PollOption where
     toProperties pollOption = M.fromList [ ("pollId", PropertyInt $ poPollId pollOption)
