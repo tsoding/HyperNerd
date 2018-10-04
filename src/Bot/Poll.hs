@@ -25,7 +25,7 @@ data PollOption = PollOption { poPollId :: Int
 data Poll = Poll { pollAuthor :: T.Text
                  , pollStartedAt :: UTCTime
                  , pollDuration :: Int
-                 -- TODO: Entity doesn't support boolean types
+                 -- TODO(#299): Entity doesn't support boolean types
                  , pollCancelled :: Bool
                  }
 
