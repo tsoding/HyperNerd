@@ -175,10 +175,6 @@ regexArgsCommand regexString commandHandler sender args =
       $ matchRegex (mkRegex regexString)
       $ T.unpack args
 
--- wordsArgsCommand :: CommandHandler [T.Text] -> CommandHandler T.Text
--- wordsArgsCommand commandHandler sender args =
---     commandHandler sender $ T.words args
-
 bot :: Bot
 bot Join = startPeriodicCommands dispatchCommand
 bot event@(Msg sender text) = do
