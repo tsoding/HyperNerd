@@ -1,4 +1,5 @@
 {-# LANGUAGE ViewPatterns #-}
+{-# LANGUAGE TypeSynonymInstances #-}
 module Command where
 
 import           Data.Char
@@ -10,6 +11,16 @@ import           Events
 
 type CommandHandler a = Sender -> a -> Effect ()
 type CommandTable a = M.Map T.Text (T.Text, CommandHandler a)
+
+-- TODO: contramapCH is not general enough
+contramapCH :: (Sender -> a -> Effect (Maybe b))
+            -> CommandHandler b
+            -> CommandHandler a
+contramapCH f commandHandler sender args = do
+  args' <- f sender args
+  case args' of
+    Just args'' -> commandHandler sender args''
+    Nothing     -> return ()
 
 data Command a = Command { commandName :: T.Text
                          , commandArgs :: a

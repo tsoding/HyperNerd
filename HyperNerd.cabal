@@ -104,6 +104,7 @@ executable HyperNerd
                      , ini
                      , irc-core
                      , network
+                     , qm-interpolated-string
                      , raw-strings-qq
                      , regex-compat-tdfa
                      , safe
@@ -114,7 +115,6 @@ executable HyperNerd
                      , transformers
                      , unordered-containers
                      , uri-encode
-                     , qm-interpolated-string
   
   -- Directories containing source files.
   hs-source-dirs:      src

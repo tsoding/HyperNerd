@@ -28,6 +28,7 @@ import           Effect
 import           Entity
 import           Events
 import           Text.InterpolatedString.QM
+import           Text.Read
 import           Text.Regex
 
 type Bot = Event -> Effect ()
@@ -49,7 +50,17 @@ builtinCommands =
 
                , ("help", ("Send help", helpCommand builtinCommands))
                , ("poll", ("Starts a poll", senderAuthorizedCommand senderAuthority "Only for mods" $
-                                            wordsArgsCommand pollCommand))
+                                            regexArgsCommand "([0-9]+) (.*)" $
+                                            pairArgsCommand $
+                                            contramapCH (\sender (duration, options) -> do
+                                                           let result = fmap (\d -> (d, T.words options)) $
+                                                                        readMaybe $
+                                                                        T.unpack duration
+                                                           if isJust result
+                                                           then return result
+                                                           else do replyToSender sender [qms|Could not parse duration|]
+                                                                   return Nothing) $
+                                            pollCommand))
                , ("checkpoll", ("", authorizeCommand [ "tsoding"
                                                      , "r3x1m"
                                                      ] $
@@ -164,9 +175,9 @@ regexArgsCommand regexString commandHandler sender args =
       $ matchRegex (mkRegex regexString)
       $ T.unpack args
 
-wordsArgsCommand :: CommandHandler [T.Text] -> CommandHandler T.Text
-wordsArgsCommand commandHandler sender args =
-    commandHandler sender $ T.words args
+-- wordsArgsCommand :: CommandHandler [T.Text] -> CommandHandler T.Text
+-- wordsArgsCommand commandHandler sender args =
+--     commandHandler sender $ T.words args
 
 bot :: Bot
 bot Join = startPeriodicCommands dispatchCommand
