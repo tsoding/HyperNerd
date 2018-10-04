@@ -12,7 +12,7 @@ import           Events
 type CommandHandler a = Sender -> a -> Effect ()
 type CommandTable a = M.Map T.Text (T.Text, CommandHandler a)
 
--- TODO: contramapCH is not general enough
+-- TODO(#297): contramapCH is not general enough
 contramapCH :: (Sender -> a -> Effect (Maybe b))
             -> CommandHandler b
             -> CommandHandler a
