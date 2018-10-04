@@ -3,7 +3,6 @@
 module Command where
 
 import           Data.Char
-import           Data.Foldable
 import qualified Data.Map as M
 import           Data.Maybe
 import qualified Data.Text as T
@@ -17,9 +16,8 @@ type CommandTable a = M.Map T.Text (T.Text, CommandHandler a)
 contramapCH :: (Sender -> a -> Effect (Maybe b))
             -> CommandHandler b
             -> CommandHandler a
-contramapCH f commandHandler sender args = do
-  args' <- f sender args
-  forM_ args' (commandHandler sender)
+contramapCH f commandHandler sender args =
+  f sender args >>= mapM_ (commandHandler sender)
 
 data Command a = Command { commandName :: T.Text
                          , commandArgs :: a
