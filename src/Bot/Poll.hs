@@ -24,6 +24,7 @@ data PollOption = PollOption { poPollId :: Int
 
 data Poll = Poll { pollAuthor :: T.Text
                  , pollStartedAt :: UTCTime
+                 , pollDuration :: Int
                  }
 
 data Vote = Vote { voteUser :: T.Text
@@ -33,10 +34,12 @@ data Vote = Vote { voteUser :: T.Text
 instance IsEntity Poll where
     toProperties poll = M.fromList [ ("author", PropertyText $ pollAuthor poll)
                                    , ("startedAt", PropertyUTCTime $ pollStartedAt poll)
+                                   , ("duration", PropertyInt $ pollDuration poll)
                                    ]
     fromProperties properties =
         Poll <$> extractProperty "author" properties
              <*> extractProperty "startedAt" properties
+             <*> pure (fromMaybe 10000 $ extractProperty "duration" properties)
 
 instance IsEntity PollOption where
     toProperties pollOption = M.fromList [ ("pollId", PropertyInt $ poPollId pollOption)
@@ -54,19 +57,23 @@ instance IsEntity Vote where
         Vote <$> extractProperty "user" properties
              <*> extractProperty "optionId" properties
 
-pollCommand :: Sender -> [T.Text] -> Effect ()
-pollCommand sender options =
+-- TODO(#294): poll duration doesn't have upper/lower limit
+pollCommand :: CommandHandler (Int, [T.Text])
+pollCommand sender (durationSecs, options) =
     do poll <- currentPoll
+       let durationMs = durationSecs * 1000
        case poll of
          Just _ -> replyToSender sender "Cannot create a poll while another poll is in place"
-         Nothing -> do pollId <- startPoll (senderName sender) options
+         -- TODO(#295): passing duration of different units is not type safe
+         Nothing -> do pollId <- startPoll sender options durationMs
                        optionsList <- return $ T.concat $ intersperse " , " options
-                       say [qms|TwitchVotes The poll has been started. You have 30 seconds.
+                       -- TODO(#296): duration of poll is not human-readable in poll start announcement
+                       say [qms|TwitchVotes The poll has been started. You have {durationSecs} seconds.
                                 Use !vote command to vote for one of the options:
                                 {optionsList}|]
-                       timeout 30000 $ announcePollResults pollId
+                       timeout (fromIntegral durationMs) $ announcePollResults pollId
 
-voteCommand :: Sender -> T.Text -> Effect ()
+voteCommand :: CommandHandler T.Text
 voteCommand sender option = do
   poll <- currentPoll
   case poll of
@@ -83,7 +90,7 @@ pollLifetime currentTime pollEntity =
 isPollAlive :: UTCTime -> Entity Poll -> Bool
 isPollAlive currentTime pollEntity =
     pollLifetime currentTime pollEntity <= maxPollLifetime
-    where maxPollLifetime = 30.0 :: Double
+    where maxPollLifetime = fromIntegral (pollDuration $ entityPayload pollEntity) * 0.001
 
 currentPollCommand :: CommandHandler ()
 currentPollCommand sender () = do
@@ -103,11 +110,12 @@ currentPoll = do
     Take 1 $
     SortBy "startedAt" Desc All
 
-startPoll :: T.Text -> [T.Text] -> Effect Int
-startPoll author options =
+startPoll :: Sender -> [T.Text] -> Int -> Effect Int
+startPoll sender options duration =
     do startedAt <- now
-       poll   <- createEntity "Poll" Poll { pollAuthor = author
+       poll   <- createEntity "Poll" Poll { pollAuthor = senderName sender
                                           , pollStartedAt = startedAt
+                                          , pollDuration = duration
                                           }
        pollId <- return $ entityId poll
        for_ options $ \name ->
