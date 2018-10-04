@@ -57,7 +57,7 @@ instance IsEntity Vote where
         Vote <$> extractProperty "user" properties
              <*> extractProperty "optionId" properties
 
--- TODO: poll duration doesn't have upper/lower limit
+-- TODO(#294): poll duration doesn't have upper/lower limit
 pollCommand :: CommandHandler (Int, [T.Text])
 pollCommand sender (durationSecs, options) =
     do poll <- currentPoll
