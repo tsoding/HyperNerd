@@ -18,7 +18,9 @@ import           Bot.Twitch
 import           Bot.Variable
 import           Command
 import           Control.Monad
+import           Data.Array
 import           Data.Char
+import           Data.Either
 import           Data.Foldable
 import           Data.List
 import qualified Data.Map as M
@@ -29,7 +31,9 @@ import           Entity
 import           Events
 import           Text.InterpolatedString.QM
 import           Text.Read
-import           Text.Regex
+import           Text.Regex.Base.RegexLike
+import           Text.Regex.TDFA (defaultCompOpt, defaultExecOpt)
+import           Text.Regex.TDFA.String
 
 type Bot = Event -> Effect ()
 
@@ -110,13 +114,18 @@ builtinCommands =
                , ("ban", ("", authorizeCommand ["tsoding", "r3x1m"] $
                               regexArgsCommand "([0-9]+) (.*)" $
                               pairArgsCommand $ \_ (strN, regexStr) ->
-                                  do n     <- return $ read $ T.unpack strN
-                                     regex <- return $ mkRegex $ T.unpack regexStr
-                                     logs  <- selectEntities "LogRecord" $
-                                              Take n $
-                                              SortBy "timestamp" Desc All
-                                     traverse_ (banUser . lrUser . entityPayload) $
-                                       filter (isJust . matchRegex regex . T.unpack . lrMsg . entityPayload) logs))
+                                  do let n             = read $ T.unpack strN
+                                     let compiledRegex = compile defaultCompOpt defaultExecOpt $
+                                                         T.unpack regexStr
+                                     case compiledRegex of
+                                       Left msg    -> logMsg [qms|[WARNING] Could not compile
+                                                                  regular expression: {msg}|]
+                                       Right regex -> do
+                                         logs  <- selectEntities "LogRecord" $
+                                                  Take n $
+                                                  SortBy "timestamp" Desc All
+                                         traverse_ (banUser . lrUser . entityPayload) $
+                                           filter (isRight . execute regex . T.unpack . lrMsg . entityPayload) logs))
                , ("cycle", ("", \sender -> replyToSender sender . snd . T.mapAccumL (\t -> (not t ,) . if t then Data.Char.toUpper else Data.Char.toLower) True))
                , ("trust", ("Makes the user trusted", senderAuthorizedCommand senderAuthority "Only for mods" $
                                                       regexArgsCommand "(.+)" $
@@ -166,16 +175,21 @@ senderAuthorizedCommand predicate unauthorizedResponse commandHandler sender arg
 pairArgsCommand :: CommandHandler (a, a) -> CommandHandler [a]
 pairArgsCommand commandHandler sender [x, y] = commandHandler sender (x, y)
 pairArgsCommand _ sender args =
-    replyToSender sender [qm|Expected two arguments
-                             but got {length args}|]
+    replyToSender sender [qms|Expected two arguments
+                              but got {length args}|]
 
 regexArgsCommand :: String -> CommandHandler [T.Text] -> CommandHandler T.Text
 regexArgsCommand regexString commandHandler sender args =
-    maybe (replyToSender sender [qms|Command doesn't match
-                                     '{regexString}' regex|])
-          (commandHandler sender . map T.pack)
-      $ matchRegex (mkRegex regexString)
-      $ T.unpack args
+    either (replyToSender sender . T.pack) (commandHandler sender) regexArgs
+    where regexArgs = do
+            regex  <- compile defaultCompOpt defaultExecOpt regexString
+            result <- execute regex stringArgs
+            case result of
+              Just matches -> case map (T.pack . flip extract stringArgs) $ elems matches of
+                                _:finalArgs -> Right finalArgs
+                                []          -> Left "Not enough arguments"
+              Nothing      -> Left [qms|Command doesn't match '{regexString}' regex|]
+          stringArgs = T.unpack args
 
 bot :: Bot
 bot Join = startPeriodicCommands dispatchCommand
