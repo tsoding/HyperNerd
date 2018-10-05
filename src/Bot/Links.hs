@@ -11,6 +11,7 @@ module Bot.Links ( forbidLinksForPlebs
 import           Bot.Replies
 import           Command
 import           Control.Monad
+import           Data.Either
 import qualified Data.Map as M
 import           Data.Maybe
 import qualified Data.Text as T
@@ -19,7 +20,8 @@ import           Entity
 import           Events
 import           Property
 import           Text.InterpolatedString.QM
-import           Text.Regex
+import           Text.Regex.TDFA (defaultCompOpt, defaultExecOpt)
+import           Text.Regex.TDFA.String
 
 -- TODO(#264): trusted users system doesn't handle name changes
 newtype TrustedUser = TrustedUser { trustedUserName :: T.Text }
@@ -37,9 +39,13 @@ findTrustedUser name =
     Filter (PropertyEquals "user" $ PropertyText name) All
 
 textContainsLink :: T.Text -> Bool
-textContainsLink t = isJust
-                       $ matchRegex (mkRegex "[-a-zA-Z0-9@:%._\\+~#=]{2,256}\\.[a-z]{2,6}\\b([-a-zA-Z0-9@:%_\\+.~#?&\\/\\/=]*)")
-                       $ T.unpack t
+textContainsLink t =
+  isRight $ do
+    regex <- compile defaultCompOpt defaultExecOpt "[-a-zA-Z0-9@:%._\\+~#=]{2,256}\\.[a-z]{2,6}\\b([-a-zA-Z0-9@:%_\\+.~#?&\\/\\/=]*)"
+    match <- execute regex $ T.unpack t
+    case match of
+      Just x -> Right x
+      Nothing -> Left "No match found"
 
 forbidLinksForPlebs :: Event -> Effect Bool
 forbidLinksForPlebs (Msg sender text)

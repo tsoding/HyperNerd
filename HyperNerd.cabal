@@ -90,6 +90,7 @@ executable HyperNerd
   
   -- Other library packages from which modules are imported.
   build-depends:       aeson
+                     , array
                      , async
                      , base
                      , bytestring
@@ -106,7 +107,8 @@ executable HyperNerd
                      , network
                      , qm-interpolated-string
                      , raw-strings-qq
-                     , regex-compat-tdfa
+                     , regex-base
+                     , regex-tdfa
                      , safe
                      , sqlite-simple
                      , stm
@@ -143,7 +145,7 @@ test-suite HyperNerdTest
                      , free
                      , http-conduit
                      , raw-strings-qq
-                     , regex-compat-tdfa
+                     , regex-tdfa
                      , safe
                      , sqlite-simple
                      , temporary
