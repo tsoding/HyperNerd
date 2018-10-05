@@ -113,7 +113,7 @@ builtinCommands =
                , ("delvar", ("Delete variable", authorizeCommand ["tsoding", "r3x1m"] deleteVariable))
                , ("nuke", ([qms|Looks at N previous messages and bans all of
                                 the users whose messages match provided regex|],
-                           authorizeCommand ["tsoding", "r3x1m"] $
+                           senderAuthorizedCommand senderAuthority "Only for mods" $
                            regexArgsCommand "([0-9]+) (.*)" $
                            pairArgsCommand $ \_ (strN, regexStr) ->
                                do let parsedN       = maybe (Left "Could not parse N") Right $
