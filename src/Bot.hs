@@ -116,13 +116,15 @@ builtinCommands =
                            authorizeCommand ["tsoding", "r3x1m"] $
                            regexArgsCommand "([0-9]+) (.*)" $
                            pairArgsCommand $ \_ (strN, regexStr) ->
-                               do let n             = read $ T.unpack strN
+                               do let parsedN       = maybe (Left "Could not parse N") Right $
+                                                      readMaybe $
+                                                      T.unpack strN
                                   let compiledRegex = compile defaultCompOpt defaultExecOpt $
                                                       T.unpack regexStr
-                                  case compiledRegex of
-                                    Left msg    -> logMsg [qms|[WARNING] Could not compile
-                                                               regular expression: {msg}|]
-                                    Right regex -> do
+                                  case liftM2 (,) parsedN compiledRegex of
+                                    Left msg    -> logMsg [qms|[WARNING] Could not parse
+                                                               arguments: {msg}|]
+                                    Right (n, regex) -> do
                                       logs  <- selectEntities "LogRecord" $
                                                Take n $
                                                SortBy "timestamp" Desc All
