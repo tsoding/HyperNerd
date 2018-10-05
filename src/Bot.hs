@@ -111,21 +111,25 @@ builtinCommands =
                                                 regexArgsCommand "([a-zA-Z0-9]+) ?(.*)" $
                                                 pairArgsCommand updateVariable))
                , ("delvar", ("Delete variable", authorizeCommand ["tsoding", "r3x1m"] deleteVariable))
-               , ("ban", ("", authorizeCommand ["tsoding", "r3x1m"] $
-                              regexArgsCommand "([0-9]+) (.*)" $
-                              pairArgsCommand $ \_ (strN, regexStr) ->
-                                  do let n             = read $ T.unpack strN
-                                     let compiledRegex = compile defaultCompOpt defaultExecOpt $
-                                                         T.unpack regexStr
-                                     case compiledRegex of
-                                       Left msg    -> logMsg [qms|[WARNING] Could not compile
-                                                                  regular expression: {msg}|]
-                                       Right regex -> do
-                                         logs  <- selectEntities "LogRecord" $
-                                                  Take n $
-                                                  SortBy "timestamp" Desc All
-                                         traverse_ (banUser . lrUser . entityPayload) $
-                                           filter (isRight . execute regex . T.unpack . lrMsg . entityPayload) logs))
+               , ("nuke", ([qms|Looks at N previous messages and bans all of
+                                the users whose messages match provided regex|],
+                           senderAuthorizedCommand senderAuthority "Only for mods" $
+                           regexArgsCommand "([0-9]+) (.*)" $
+                           pairArgsCommand $ \_ (strN, regexStr) ->
+                               do let parsedN       = maybe (Left "Could not parse N") Right $
+                                                      readMaybe $
+                                                      T.unpack strN
+                                  let compiledRegex = compile defaultCompOpt defaultExecOpt $
+                                                      T.unpack regexStr
+                                  case liftM2 (,) parsedN compiledRegex of
+                                    Left msg    -> logMsg [qms|[WARNING] Could not parse
+                                                               arguments: {msg}|]
+                                    Right (n, regex) -> do
+                                      logs  <- selectEntities "LogRecord" $
+                                               Take n $
+                                               SortBy "timestamp" Desc All
+                                      traverse_ (banUser . lrUser . entityPayload) $
+                                        filter (isRight . execute regex . T.unpack . lrMsg . entityPayload) logs))
                , ("cycle", ("", \sender -> replyToSender sender . snd . T.mapAccumL (\t -> (not t ,) . if t then Data.Char.toUpper else Data.Char.toLower) True))
                , ("trust", ("Makes the user trusted", senderAuthorizedCommand senderAuthority "Only for mods" $
                                                       regexArgsCommand "(.+)" $
