@@ -35,7 +35,9 @@ data BotState =
 applyEffect :: BotState -> Effect () -> IO BotState
 applyEffect botState (Pure _) = return botState
 applyEffect botState (Free (Say text s)) =
-    do atomically $ writeTQueue (bsOutcoming botState) (ircPrivmsg (configChannel $ bsConfig botState) text)
+    do atomically $
+         writeTQueue (bsOutcoming botState) $
+         ircPrivmsg (configChannel $ bsConfig botState) text
        applyEffect botState s
 applyEffect botState (Free (LogMsg msg s)) =
     do putStrLn $ T.unpack msg
