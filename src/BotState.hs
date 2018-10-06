@@ -95,25 +95,26 @@ valueOfTag :: TagEntry -> T.Text
 valueOfTag (TagEntry _ value) = value
 
 handleIrcMessage :: Bot -> BotState -> RawIrcMsg -> IO BotState
-handleIrcMessage b botState msg =
-    do cookedMsg <- return $ cookIrcMsg msg
-       print cookedMsg
-       case cookedMsg of
-         (Ping xs) -> do atomically $ writeTQueue (bsOutcoming botState) (ircPong xs)
-                         return botState
-         (Privmsg userInfo target msgText) ->
-             let badges = concat $
-                          maybeToList $
-                          fmap (T.splitOn "," . valueOfTag) $
-                          find (\(TagEntry ident _) -> ident == "badges") $
-                          _msgTags msg
-             in
-             SQLite.withTransaction (bsSqliteConn botState)
-               $ applyEffect botState (b $ Msg Sender { senderName = idText $ userNick userInfo
-                                                      , senderChannel = idText target
-                                                      , senderSubscriber = isJust $ find (T.isPrefixOf "subscriber") badges
-                                                      , senderMod = isJust $ find (T.isPrefixOf "moderator") badges
-                                                      , senderBroadcaster = isJust $ find (T.isPrefixOf "broadcaster") badges
-                                                      }
-                                          msgText)
-         _ -> return botState
+handleIrcMessage b botState msg = do
+  let badges = concat $
+               maybeToList $
+               fmap (T.splitOn "," . valueOfTag) $
+               find (\(TagEntry ident _) -> ident == "badges") $
+               _msgTags msg
+  cookedMsg <- return $ cookIrcMsg msg
+  print cookedMsg
+  case cookedMsg of
+    (Ping xs) -> do
+      atomically $ writeTQueue (bsOutcoming botState) (ircPong xs)
+      return botState
+    (Privmsg userInfo target msgText) ->
+      SQLite.withTransaction (bsSqliteConn botState) $
+      applyEffect botState $
+      b $
+      Msg Sender { senderName = idText $ userNick userInfo
+                 , senderChannel = idText target
+                 , senderSubscriber = any (T.isPrefixOf "subscriber") badges
+                 , senderMod = any (T.isPrefixOf "moderator") badges
+                 , senderBroadcaster = any (T.isPrefixOf "broadcaster") badges
+                 } msgText
+    _ -> return botState
