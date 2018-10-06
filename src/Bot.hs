@@ -130,7 +130,11 @@ builtinCommands =
                                                SortBy "timestamp" Desc All
                                       traverse_ (banUser . lrUser . entityPayload) $
                                         filter (isRight . execute regex . T.unpack . lrMsg . entityPayload) logs))
-               , ("cycle", ("", \sender -> replyToSender sender . snd . T.mapAccumL (\t -> (not t ,) . if t then Data.Char.toUpper else Data.Char.toLower) True))
+               , ("cycle", ("", \sender -> replyToSender sender .
+                                           snd .
+                                           T.mapAccumL (\t -> (not t ,) . if t
+                                                                          then Data.Char.toUpper
+                                                                          else Data.Char.toLower) True))
                , ("trust", ("Makes the user trusted", senderAuthorizedCommand senderAuthority "Only for mods" $
                                                       regexArgsCommand "(.+)" $
                                                       firstArgCommand trustCommand))
