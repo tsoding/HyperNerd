@@ -19,6 +19,7 @@ ircTransport b botState =
       (eventLoop b
           <$> getTime Monotonic
           <*> SQLite.withTransaction (bsSqliteConn botState)
+                -- TODO(#307): applyEffect should be private to BotState module
                 (applyEffect botState $ b Join))
 
 eventLoop :: Bot -> TimeSpec -> BotState -> IO ()
