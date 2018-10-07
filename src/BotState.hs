@@ -84,6 +84,7 @@ applyEffect botState (Free (RedirectSay _ s)) =
 
 advanceTimeouts :: Integer -> BotState -> IO BotState
 advanceTimeouts dt botState =
+    -- TODO(#306): applyEffect inside of advanceTimeouts is not performed under SQLite transaction
     foldl (\esIO e -> esIO >>= flip applyEffect e)
           (return $ botState { bsTimeouts = unripe })
       $ map snd ripe
