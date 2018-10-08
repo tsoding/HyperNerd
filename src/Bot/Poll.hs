@@ -86,7 +86,7 @@ pollCommand sender (durationSecs, options) =
          Just _ -> replyToSender sender "Cannot create a poll while another poll is in place"
          -- TODO(#295): passing duration of different units is not type safe
          Nothing -> do pollId <- startPoll sender options durationMs
-                       optionsList <- return $ T.concat $ intersperse " , " options
+                       let optionsList = T.concat $ intersperse " , " options
                        -- TODO(#296): duration of poll is not human-readable in poll start announcement
                        say [qms|TwitchVotes The poll has been started. You have {durationSecs} seconds.
                                 Use !vote command to vote for one of the options:
@@ -139,7 +139,7 @@ startPoll sender options duration =
                                           , pollDuration = duration
                                           , pollCancelled = False
                                           }
-       pollId <- return $ entityId poll
+       let pollId = entityId poll
        for_ options $ \name ->
            createEntity "PollOption" PollOption { poName = name
                                                 , poPollId = pollId

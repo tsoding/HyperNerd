@@ -36,7 +36,7 @@ twitchStreamByLogin login =
                   URI.encode $
                   T.unpack login
        response <- twitchApiRequest request
-       payload  <- return $ eitherDecode $ getResponseBody response
+       let payload = eitherDecode $ getResponseBody response
        either (errorEff . T.pack)
               (return . listToMaybe)
               (payload >>= parseEither twitchStreamsParser)
@@ -60,19 +60,17 @@ humanReadableDiffTime t =
 
 uptimeCommand :: Sender -> T.Text -> Effect ()
 uptimeCommand sender _ =
-    do channel  <- return $
-                   T.pack $
-                   fromMaybe "tsoding" $
-                   tailMay $
-                   T.unpack $
-                   senderChannel sender
+    do let channel = T.pack $
+                     fromMaybe "tsoding" $
+                     tailMay $
+                     T.unpack $
+                     senderChannel sender
        response <- twitchStreamByLogin channel
        maybe (replyToSender sender "Not even streaming LUL")
              (\twitchStream ->
-                do streamStartTime   <- return $ tsStartedAt twitchStream
-                   currentTime       <- now
-                   humanReadableDiff <- return $
-                                        humanReadableDiffTime $
-                                        diffUTCTime currentTime streamStartTime
+                do currentTime       <- now
+                   let streamStartTime = tsStartedAt twitchStream
+                   let humanReadableDiff = humanReadableDiffTime $
+                                           diffUTCTime currentTime streamStartTime
                    replyToSender sender [qms|Streaming for {humanReadableDiff}|])
              response

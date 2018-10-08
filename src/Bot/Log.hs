@@ -43,7 +43,7 @@ recordUserMsg sender msg =
 
 randomLogRecordCommand :: Sender -> T.Text -> Effect ()
 randomLogRecordCommand sender rawName =
-    do name   <- return $ T.toLower $ T.strip rawName
+    do let name = T.toLower $ T.strip rawName
        user   <- if T.null name
                  then return $ senderName sender
                  else return name
