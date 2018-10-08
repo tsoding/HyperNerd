@@ -113,7 +113,7 @@ getRandomEntityIdWithPropertyEquals =
            -- The amount of entities that should not be selected. If
            -- the test is broken, the probably of a false positive
            -- result of this test is equal to 1 / wrongEntitiesCount.
-           wrongEntitiesCount <- return 1000
+           let wrongEntitiesCount = 1000
            replicateM_ wrongEntitiesCount
              $ SEP.createEntity conn "entity"
              $ M.fromList [ ("foo", PropertyInt 42) ]

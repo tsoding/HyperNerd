@@ -40,7 +40,7 @@ restoreEntity :: T.Text
               -> [(T.Text, T.Text, Maybe Int, Maybe T.Text, Maybe UTCTime)]
               -> Maybe (Entity Properties)
 restoreEntity name ident rawProperties =
-    do properties <- return $ mapMaybe restoreProperty rawProperties
+    do let properties = mapMaybe restoreProperty rawProperties
        if null properties
        then Nothing
        else Just Entity { entityName = name

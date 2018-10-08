@@ -40,7 +40,7 @@ ffzApiResponseAsEmoteList obj =
 
 ffzCommand :: Sender -> T.Text -> Effect ()
 ffzCommand sender _ = do emotes <- requestEmoteList url ffzApiResponseAsEmoteList
-                         emoteList <- return $ T.concat $ intersperse " " emotes
+                         let emoteList = T.concat $ intersperse " " emotes
                          replyToSender sender [qms|Available FFZ emotes: {emoteList}|]
     where
       url = maybe "tsoding"
@@ -49,7 +49,7 @@ ffzCommand sender _ = do emotes <- requestEmoteList url ffzApiResponseAsEmoteLis
 
 bttvCommand :: Sender -> T.Text -> Effect ()
 bttvCommand sender _ = do emotes <- requestEmoteList url bttvApiResponseAsEmoteList
-                          emoteList <- return $ T.concat $ intersperse " " emotes
+                          let emoteList = T.concat $ intersperse " " emotes
                           replyToSender sender [qms|Available BTTV emotes: {emoteList}|]
     where
       url = maybe "tsoding"

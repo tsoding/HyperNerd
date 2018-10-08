@@ -42,11 +42,11 @@ deleteQuoteCommand sender quoteIdText =
 addQuoteCommand :: CommandHandler T.Text
 addQuoteCommand sender content =
     do timestamp <- now
-       quoter    <- return $ senderName sender
-       quote     <- return Quote { quoteContent = content
-                                 , quoteQuoter = quoter
-                                 , quoteTimestamp = timestamp
-                                 }
+       let quoter = senderName sender
+       let quote  = Quote { quoteContent = content
+                          , quoteQuoter = quoter
+                          , quoteTimestamp = timestamp
+                          }
        entity    <- createEntity "quote" quote
 
        quoteAddedReply quoter $ entityId entity

@@ -77,7 +77,7 @@ applyEffect botState (Free (HttpRequest request s)) =
     do response <- httpLBS request
        applyEffect botState (s response)
 applyEffect botState (Free (TwitchApiRequest request s)) =
-    do clientId <- return $ fromString $ T.unpack $ configClientId $ bsConfig botState
+    do let clientId = fromString $ T.unpack $ configClientId $ bsConfig botState
        response <- httpLBS (addRequestHeader "Client-ID" clientId request)
        applyEffect botState (s response)
 applyEffect botState (Free (Timeout ms e s)) =
