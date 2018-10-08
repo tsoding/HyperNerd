@@ -1,5 +1,9 @@
 {-# LANGUAGE OverloadedStrings #-}
-module BotState where
+module BotState ( joinChannel
+                , advanceTimeouts
+                , handleIrcMessage
+                , BotState (..)
+                ) where
 
 import           Bot
 import           Config
@@ -81,6 +85,13 @@ applyEffect botState (Free (Timeout ms e s)) =
 -- TODO(#224): RedirectSay effect is not interpreted
 applyEffect botState (Free (RedirectSay _ s)) =
     applyEffect botState (s [])
+
+joinChannel :: Bot -> BotState -> IO BotState
+joinChannel b botState =
+    SQLite.withTransaction conn $
+    applyEffect botState $
+    b Join
+    where conn = bsSqliteConn botState
 
 advanceTimeouts :: Integer -> BotState -> IO BotState
 advanceTimeouts dt botState =

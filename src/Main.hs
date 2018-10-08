@@ -13,38 +13,33 @@ import           System.Clock
 import           System.Environment
 import           Config
 
-ircTransport :: Bot -> BotState -> IO ()
-ircTransport b botState =
-    join
-      (eventLoop b
-          <$> getTime Monotonic
-          <*> SQLite.withTransaction (bsSqliteConn botState)
-                -- TODO(#307): applyEffect should be private to BotState module
-                (applyEffect botState $ b Join))
-
 eventLoop :: Bot -> TimeSpec -> BotState -> IO ()
-eventLoop b prevCPUTime botState =
-    do threadDelay 10000        -- to prevent busy looping
-       currCPUTime <- getTime Monotonic
-       let deltaTime = toNanoSecs (currCPUTime - prevCPUTime) `div` 1000000
-       mb <- atomically $ tryReadTQueue (bsIncoming botState)
-       maybe (return botState)
-             (handleIrcMessage b botState)
-             mb
-         >>= advanceTimeouts deltaTime
-         >>= eventLoop b currCPUTime
+eventLoop b prevCPUTime botState = do
+  threadDelay 10000        -- to prevent busy looping
+  currCPUTime <- getTime Monotonic
+  let deltaTime = toNanoSecs (currCPUTime - prevCPUTime) `div` 1000000
+  mb <- atomically $ tryReadTQueue (bsIncoming botState)
+  maybe (return botState)
+        (handleIrcMessage b botState)
+        mb >>=
+    advanceTimeouts deltaTime >>=
+    eventLoop b currCPUTime
 
 logicEntry :: IncomingQueue -> OutcomingQueue -> Config -> String -> IO ()
 logicEntry incoming outcoming conf databasePath =
     SQLite.withConnection databasePath
-      $ \sqliteConn -> do SEP.prepareSchema sqliteConn
-                          ircTransport bot
-                             BotState { bsConfig = conf
-                                      , bsSqliteConn = sqliteConn
-                                      , bsTimeouts = []
-                                      , bsIncoming = incoming
-                                      , bsOutcoming = outcoming
-                                      }
+      $ \sqliteConn -> do
+        SEP.prepareSchema sqliteConn
+        currCPUTime <- getTime Monotonic
+        let botState = BotState {
+                         bsConfig = conf,
+                         bsSqliteConn = sqliteConn,
+                         bsTimeouts = [],
+                         bsIncoming = incoming,
+                         bsOutcoming = outcoming
+                       }
+        joinChannel bot botState >>=
+          eventLoop bot currCPUTime
 
 mainWithArgs :: [String] -> IO ()
 mainWithArgs [configPath, databasePath] =
