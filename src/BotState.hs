@@ -91,11 +91,7 @@ applyEffectInTransaction botState =
     SQLite.withTransaction (bsSqliteConn botState) . applyEffect botState
 
 joinChannel :: Bot -> BotState -> IO BotState
-joinChannel b botState =
-    SQLite.withTransaction conn $
-    applyEffect botState $
-    b Join
-    where conn = bsSqliteConn botState
+joinChannel b botState = applyEffectInTransaction botState $ b Join
 
 advanceTimeouts :: Integer -> BotState -> IO BotState
 advanceTimeouts dt botState =
@@ -122,8 +118,7 @@ handleIrcMessage b msg botState = do
       atomically $ writeTQueue (bsOutcoming botState) (ircPong xs)
       return botState
     (Privmsg userInfo target msgText) ->
-      SQLite.withTransaction (bsSqliteConn botState) $
-      applyEffect botState $
+      applyEffectInTransaction botState $
       b $
       Msg Sender { senderName = idText $ userNick userInfo
                  , senderChannel = idText target
