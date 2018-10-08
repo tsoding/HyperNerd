@@ -1,5 +1,9 @@
 {-# LANGUAGE OverloadedStrings #-}
-module BotState where
+module BotState ( joinChannel
+                , advanceTimeouts
+                , handleIrcMessage
+                , BotState (..)
+                ) where
 
 import           Bot
 import           Config
@@ -82,6 +86,13 @@ applyEffect botState (Free (Timeout ms e s)) =
 applyEffect botState (Free (RedirectSay _ s)) =
     applyEffect botState (s [])
 
+joinChannel :: Bot -> BotState -> IO BotState
+joinChannel b botState =
+    SQLite.withTransaction conn $
+    applyEffect botState $
+    b Join
+    where conn = bsSqliteConn botState
+
 advanceTimeouts :: Integer -> BotState -> IO BotState
 advanceTimeouts dt botState =
     -- TODO(#306): applyEffect inside of advanceTimeouts is not performed under SQLite transaction
@@ -95,14 +106,14 @@ advanceTimeouts dt botState =
 valueOfTag :: TagEntry -> T.Text
 valueOfTag (TagEntry _ value) = value
 
-handleIrcMessage :: Bot -> BotState -> RawIrcMsg -> IO BotState
-handleIrcMessage b botState msg = do
+handleIrcMessage :: Bot -> RawIrcMsg -> BotState -> IO BotState
+handleIrcMessage b msg botState = do
   let badges = concat $
                maybeToList $
                fmap (T.splitOn "," . valueOfTag) $
                find (\(TagEntry ident _) -> ident == "badges") $
                _msgTags msg
-  cookedMsg <- return $ cookIrcMsg msg
+  let cookedMsg = cookIrcMsg msg
   print cookedMsg
   case cookedMsg of
     (Ping xs) -> do
