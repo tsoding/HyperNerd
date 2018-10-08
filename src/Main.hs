@@ -18,10 +18,9 @@ eventLoop b prevCPUTime botState = do
   threadDelay 10000        -- to prevent busy looping
   currCPUTime <- getTime Monotonic
   let deltaTime = toNanoSecs (currCPUTime - prevCPUTime) `div` 1000000
-  mb <- atomically $ tryReadTQueue (bsIncoming botState)
-  maybe (return botState)
-        (handleIrcMessage b botState)
-        mb >>=
+  pollMessage <- maybe return (handleIrcMessage b) <$>
+                 atomically (tryReadTQueue $ bsIncoming botState)
+  pollMessage botState >>=
     advanceTimeouts deltaTime >>=
     eventLoop b currCPUTime
 
@@ -42,12 +41,12 @@ logicEntry incoming outcoming conf databasePath =
           eventLoop bot currCPUTime
 
 mainWithArgs :: [String] -> IO ()
-mainWithArgs [configPath, databasePath] =
-    do incoming <- atomically newTQueue
-       outcoming <- atomically newTQueue
-       conf <- configFromFile configPath
-       void $ forkIO $ ircTransportEntry incoming outcoming configPath
-       logicEntry incoming outcoming conf databasePath
+mainWithArgs [configPath, databasePath] = do
+  incoming <- atomically newTQueue
+  outcoming <- atomically newTQueue
+  conf <- configFromFile configPath
+  void $ forkIO $ ircTransportEntry incoming outcoming configPath
+  logicEntry incoming outcoming conf databasePath
 mainWithArgs _ = error "./HyperNerd <config-file> <database-file>"
 
 main :: IO ()

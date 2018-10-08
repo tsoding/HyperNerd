@@ -106,14 +106,14 @@ advanceTimeouts dt botState =
 valueOfTag :: TagEntry -> T.Text
 valueOfTag (TagEntry _ value) = value
 
-handleIrcMessage :: Bot -> BotState -> RawIrcMsg -> IO BotState
-handleIrcMessage b botState msg = do
+handleIrcMessage :: Bot -> RawIrcMsg -> BotState -> IO BotState
+handleIrcMessage b msg botState = do
   let badges = concat $
                maybeToList $
                fmap (T.splitOn "," . valueOfTag) $
                find (\(TagEntry ident _) -> ident == "badges") $
                _msgTags msg
-  cookedMsg <- return $ cookIrcMsg msg
+  let cookedMsg = cookIrcMsg msg
   print cookedMsg
   case cookedMsg of
     (Ping xs) -> do
