@@ -9,7 +9,7 @@ import           Bot
 import           Config
 import           Control.Concurrent.STM
 import           Control.Monad.Free
-import           Data.List
+import           Data.Foldable
 import           Data.Maybe
 import           Data.String
 import qualified Data.Text as T
@@ -86,22 +86,20 @@ applyEffect botState (Free (Timeout ms e s)) =
 applyEffect botState (Free (RedirectSay _ s)) =
     applyEffect botState (s [])
 
+applyEffectInTransaction :: BotState -> Effect () -> IO BotState
+applyEffectInTransaction botState =
+    SQLite.withTransaction (bsSqliteConn botState) . applyEffect botState
+
 joinChannel :: Bot -> BotState -> IO BotState
-joinChannel b botState =
-    SQLite.withTransaction conn $
-    applyEffect botState $
-    b Join
-    where conn = bsSqliteConn botState
+joinChannel b botState = applyEffectInTransaction botState $ b Join
 
 advanceTimeouts :: Integer -> BotState -> IO BotState
 advanceTimeouts dt botState =
-    -- TODO(#306): applyEffect inside of advanceTimeouts is not performed under SQLite transaction
-    foldl (\esIO e -> esIO >>= flip applyEffect e)
-          (return $ botState { bsTimeouts = unripe })
-      $ map snd ripe
-    where (ripe, unripe) = span ((< 0) . fst)
-                             $ map (\(t, e) -> (t - dt, e))
-                             $ bsTimeouts botState
+    foldlM applyEffectInTransaction (botState { bsTimeouts = unripe }) $
+    map snd ripe
+    where (ripe, unripe) = span ((< 0) . fst) $
+                           map (\(t, e) -> (t - dt, e)) $
+                           bsTimeouts botState
 
 valueOfTag :: TagEntry -> T.Text
 valueOfTag (TagEntry _ value) = value
@@ -120,8 +118,7 @@ handleIrcMessage b msg botState = do
       atomically $ writeTQueue (bsOutcoming botState) (ircPong xs)
       return botState
     (Privmsg userInfo target msgText) ->
-      SQLite.withTransaction (bsSqliteConn botState) $
-      applyEffect botState $
+      applyEffectInTransaction botState $
       b $
       Msg Sender { senderName = idText $ userNick userInfo
                  , senderChannel = idText target
