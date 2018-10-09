@@ -1,1 +1,25 @@
-
+# TODO: unsafe functions of Data.Text are not forbidden
+- functions:
+  - {name: abort, within: []}
+  - {name: assert, within: []}
+  - {name: "!!", within: []}
+  - {name: cycle, within: []}
+  - {name: foldl1, within: []}
+  - {name: "foldl1'", within: []}
+  - {name: foldr1, within: []}
+  - {name: "foldr1'", within: []}
+  - {name: fromJust, within: []}
+  - {name: head, within: []}
+  - {name: index, within: []}
+  - {name: init, within: []}
+  - {name: last, within: []}
+  - {name: maximumBy, within: []}
+  - {name: maximum, within: []}
+  - {name: minimumBy, within: []}
+  - {name: minimum, within: []}
+  - {name: pred, within: []}
+  - {name: read, within: []}
+  - {name: scanl1, within: []}
+  - {name: scanr1, within: []}
+  - {name: tail, within: []}
+  - {name: toEnum, within: []}
