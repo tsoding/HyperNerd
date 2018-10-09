@@ -1,4 +1,4 @@
-# TODO: unsafe functions of Data.Text are not forbidden
+# TODO(#313): unsafe functions of Data.Text are not forbidden
 - functions:
   - {name: abort, within: []}
   - {name: assert, within: []}
