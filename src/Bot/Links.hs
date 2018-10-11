@@ -52,15 +52,19 @@ forbidLinksForPlebs (Msg sender text)
     | textContainsLink text = do
         trustedUser <- findTrustedUser $ senderName sender
         case trustedUser of
-          Just _ -> return False
-          Nothing -> do say [qm|/timeout {senderName sender} 1|]
-                        say [qms|/w {senderName sender} You have been timed out because
-                                 I thought you sent a link. Only trusted users are allowed
-                                 to send links. Sometimes I get things wrong. In that case feel
-                                 free to file an issue at https://github.com/tsoding/HyperNerd/issues.
-                                 Ask Tsoding to make you a trusted user.|]
-                        say [qm|@{senderName sender} check your whispers.|]
-                        return True
+          Nothing | not (senderSubscriber sender) && not (senderAuthority sender) -> do
+            timeoutSender 1 sender
+            whisperToSender sender [qms|You have been timed out because
+                                        I thought you sent a link. Only
+                                        trusted users are allowed
+                                        to send links. Sometimes I get
+                                        things wrong. In that case feel
+                                        free to file an issue at
+                                        https://github.com/tsoding/HyperNerd/issues .
+                                        Ask Tsoding to make you a trusted user.|]
+            replyToSender sender "check your whispers."
+            return True
+          _ -> return False
     | otherwise = return False
 forbidLinksForPlebs _ = return False
 

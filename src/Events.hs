@@ -9,5 +9,9 @@ data Sender = Sender { senderName :: T.Text
                      , senderBroadcaster :: Bool
                      }
 
+senderAuthority :: Sender -> Bool
+senderAuthority sender =
+    senderMod sender || senderBroadcaster sender
+
 data Event = Join
            | Msg Sender T.Text

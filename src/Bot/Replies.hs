@@ -20,3 +20,9 @@ timeoutUser t user = say [qms|/timeout {user} {t}|]
 
 timeoutSender :: Int -> Sender -> Effect ()
 timeoutSender t sender = timeoutUser t (senderName sender)
+
+whisperToUser :: T.Text -> T.Text -> Effect ()
+whisperToUser user message = say [qms|/w {user} {message}|]
+
+whisperToSender :: Sender -> T.Text -> Effect ()
+whisperToSender = whisperToUser . senderName
