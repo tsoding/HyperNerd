@@ -147,10 +147,6 @@ builtinCommands =
                                                                 firstArgCommand istrustedCommand))
                ]
 
-senderAuthority :: Sender -> Bool
-senderAuthority sender =
-    senderMod sender || senderBroadcaster sender
-
 commandArgsCommand :: CommandHandler (Command T.Text) -> CommandHandler T.Text
 commandArgsCommand commandHandler sender text =
     case textAsCommand text of
