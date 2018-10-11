@@ -202,6 +202,6 @@ announceRunningPoll = do
                                                  entityId pollEntity) All
                           let optionsList = T.concat $ intersperse " , " $
                                             map (poName . entityPayload) pollOptions
-                          say [qms|The poll is still going. Use !vote command to vote for
+                          say [qms|TwitchVotes The poll is still going. Use !vote command to vote for
                                    one of the options: {optionsList}|]
     Nothing          -> return ()
