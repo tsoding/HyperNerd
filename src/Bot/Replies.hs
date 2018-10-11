@@ -25,4 +25,4 @@ whisperToUser :: T.Text -> T.Text -> Effect ()
 whisperToUser user message = say [qms|/w {user} {message}|]
 
 whisperToSender :: Sender -> T.Text -> Effect ()
-whisperToSender sender message = whisperToUser (senderName sender) message
+whisperToSender = whisperToUser . senderName

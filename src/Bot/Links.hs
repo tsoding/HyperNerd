@@ -52,7 +52,7 @@ forbidLinksForPlebs (Msg sender text)
     | textContainsLink text = do
         trustedUser <- findTrustedUser $ senderName sender
         case trustedUser of
-          Nothing | (not $ senderSubscriber sender) && (not $ senderAuthority sender) -> do
+          Nothing | not (senderSubscriber sender) && not (senderAuthority sender) -> do
             timeoutSender 1 sender
             whisperToSender sender [qms|You have been timed out because
                                         I thought you sent a link. Only
