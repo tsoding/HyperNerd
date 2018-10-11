@@ -191,3 +191,17 @@ registerPollVote poll sender optionName = do
     Just option -> registerOptionVote option sender
     Nothing -> logMsg [qms|[WARNING] {senderName sender} voted for
                            unexisting option {optionName}|]
+
+announceRunningPoll :: Effect ()
+announceRunningPoll = do
+  poll <- currentPoll
+  case poll of
+    Just pollEntity -> do pollOptions <- selectEntities "PollOption" $
+                                         Filter (PropertyEquals "pollId" $
+                                                 PropertyInt $
+                                                 entityId pollEntity) All
+                          let optionsList = T.concat $ intersperse " , " $
+                                            map (poName . entityPayload) pollOptions
+                          say [qms|TwitchVotes The poll is still going. Use !vote command to vote for
+                                   one of the options: {optionsList}|]
+    Nothing          -> return ()

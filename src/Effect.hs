@@ -21,6 +21,7 @@ module Effect ( Effect
               , errorEff
               , twitchApiRequest
               , redirectSay
+              , periodicEffect
               ) where
 
 import           Control.Monad.Catch
@@ -116,3 +117,8 @@ errorEff t = liftF $ ErrorEff t
 
 redirectSay :: Effect () -> Effect [T.Text]
 redirectSay effect = liftF $ RedirectSay effect id
+
+periodicEffect :: Integer -> Effect () -> Effect ()
+periodicEffect period effect = do
+  effect
+  timeout period $ periodicEffect period effect

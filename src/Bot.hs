@@ -196,7 +196,9 @@ regexArgsCommand regexString commandHandler sender args =
           stringArgs = T.unpack args
 
 bot :: Bot
-bot Join = startPeriodicCommands dispatchCommand
+bot Join = do
+  startPeriodicCommands dispatchCommand
+  periodicEffect (60 * 1000) announceRunningPoll
 bot event@(Msg sender text) = do
   recordUserMsg sender text
   forbidden <- forbidLinksForPlebs event

@@ -10,6 +10,8 @@ import           Config
 import           Control.Concurrent.STM
 import           Control.Monad.Free
 import           Data.Foldable
+import           Data.Function
+import           Data.List
 import           Data.Maybe
 import           Data.String
 import qualified Data.Text as T
@@ -97,7 +99,8 @@ advanceTimeouts :: Integer -> BotState -> IO BotState
 advanceTimeouts dt botState =
     foldlM applyEffectInTransaction (botState { bsTimeouts = unripe }) $
     map snd ripe
-    where (ripe, unripe) = span ((< 0) . fst) $
+    where (ripe, unripe) = span ((<= 0) . fst) $
+                           sortBy (compare `on` fst) $
                            map (\(t, e) -> (t - dt, e)) $
                            bsTimeouts botState
 
