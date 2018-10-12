@@ -67,50 +67,35 @@ builtinCommands =
                , ("cancelpoll", ("Cancels the current poll",
                                  senderAuthorizedCommand senderAuthority "Only for mods" $
                                  voidCommand cancelPollCommand))
-               , ("checkpoll", ("", authorizeCommand [ "tsoding"
-                                                     , "r3x1m"
-                                                     ] $
+               , ("checkpoll", ("", modCommand $
                                     voidCommand currentPollCommand))
                , ("vote", ("Vote for a poll option", voteCommand))
                , ("uptime", ("Show stream uptime", voidCommand uptimeCommand))
                , ("rq", ("Get random quote from your log", randomLogRecordCommand))
                , ("nope", ("Timeout yourself for 1 second", timeoutMessage 1))
-               , ("addperiodic", ("Add periodic command", authorizeCommand [ "tsoding"
-                                                                           , "r3x1m" ] $
+               , ("addperiodic", ("Add periodic command", modCommand $
                                                           commandArgsCommand addPeriodicCommand))
-               , ("delperiodic", ("Delete periodic command", authorizeCommand [ "tsoding"
-                                                                              , "r3x1m" ]
-                                                                              removePeriodicCommand))
-               , ("addcmd", ("Add custom command", authorizeCommand [ "tsoding"
-                                                                    , "r3x1m"
-                                                                    ]
-                                                     $ regexArgsCommand "([a-zA-Z0-9]+) ?(.*)"
-                                                     $ pairArgsCommand
-                                                     $ addCustomCommand builtinCommands))
-               , ("delcmd", ("Delete custom command", authorizeCommand ["tsoding", "r3x1m"]
-                                                        $ deleteCustomCommand builtinCommands))
-               , ("updcmd", ("Update custom command", authorizeCommand [ "tsoding"
-                                                                       , "r3x1m"
-                                                                       ]
-                                                        $ regexArgsCommand "([a-zA-Z0-9]+) ?(.*)"
-                                                        $ pairArgsCommand
-                                                        $ updateCustomCommand builtinCommands))
+               , ("delperiodic", ("Delete periodic command", modCommand removePeriodicCommand))
+               , ("addcmd", ("Add custom command", modCommand $
+                                                   regexArgsCommand "([a-zA-Z0-9]+) ?(.*)" $
+                                                   pairArgsCommand $
+                                                   addCustomCommand builtinCommands))
+               , ("delcmd", ("Delete custom command", modCommand $
+                                                      deleteCustomCommand builtinCommands))
+               , ("updcmd", ("Update custom command", modCommand $
+                                                      regexArgsCommand "([a-zA-Z0-9]+) ?(.*)" $
+                                                      pairArgsCommand $
+                                                      updateCustomCommand builtinCommands))
                , ("song", ("Print currently playing song", voidCommand currentSongCommand))
-               , ("addalias", ("Add command alias", authorizeCommand [ "tsoding"
-                                                                     , "r3x1m"
-                                                                     ]
-                                                      $ regexArgsCommand "([a-zA-Z0-9]+) ([a-zA-Z0-9]+)"
-                                                      $ pairArgsCommand
-                                                        addAliasCommand))
-               , ("delalias", ("Remove command alias", authorizeCommand [ "tsoding"
-                                                                        , "r3x1m"
-                                                                        ]
-                                                         removeAliasCommand))
-               , ("addvar", ("Add variable", authorizeCommand ["tsoding", "r3x1m"] addVariable))
-               , ("updvar", ("Update variable", authorizeCommand ["tsoding", "r3x1m"] $
+               , ("addalias", ("Add command alias", modCommand $
+                                                    regexArgsCommand "([a-zA-Z0-9]+) ([a-zA-Z0-9]+)" $
+                                                    pairArgsCommand addAliasCommand))
+               , ("delalias", ("Remove command alias", modCommand removeAliasCommand))
+               , ("addvar", ("Add variable", modCommand addVariable))
+               , ("updvar", ("Update variable", modCommand $
                                                 regexArgsCommand "([a-zA-Z0-9]+) ?(.*)" $
                                                 pairArgsCommand updateVariable))
-               , ("delvar", ("Delete variable", authorizeCommand ["tsoding", "r3x1m"] deleteVariable))
+               , ("delvar", ("Delete variable", modCommand deleteVariable))
                , ("nuke", ([qms|Looks at N previous messages and bans all of
                                 the users whose messages match provided regex|],
                            senderAuthorizedCommand senderAuthority "Only for mods" $
@@ -177,10 +162,8 @@ firstArgCommand _ message@Message { messageContent = [] } =
 firstArgCommand commandHandler message@Message { messageContent = args:_ } =
     commandHandler $ fmap (const args) message
 
-authorizeCommand :: [T.Text] -> CommandHandler a -> CommandHandler a
-authorizeCommand authorizedPeople =
-    senderAuthorizedCommand (\sender -> senderName sender `elem` authorizedPeople)
-                            "You are not authorized to use this command! HyperNyard"
+modCommand :: CommandHandler a -> CommandHandler a
+modCommand = senderAuthorizedCommand senderAuthority "Only for mods"
 
 senderAuthorizedCommand :: (Sender -> Bool) -- sender predicate
                         -> T.Text           -- unauthorized response
