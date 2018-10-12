@@ -12,11 +12,10 @@ import qualified Data.Text as T
 import           Data.Text.Encoding
 import           Effect
 import           Events
-import           Text.InterpolatedString.QM
 
-russifyCommand :: Sender -> T.Text -> Effect ()
-russifyCommand sender westernSpyMsg =
-    replyToSender sender [qms|{russify westernSpyMsg} KKomrade|]
+russifyCommand :: Message T.Text -> Effect ()
+russifyCommand message =
+    replyMessage (russify <$> message)
 
 mazarusha :: M.Map T.Text T.Text
 mazarusha =

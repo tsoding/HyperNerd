@@ -12,6 +12,11 @@ replyToUser user text = say [qms|@{user} {text}|]
 replyToSender :: Sender -> T.Text -> Effect ()
 replyToSender sender = replyToUser (senderName sender)
 
+replyMessage :: Message T.Text -> Effect ()
+replyMessage Message { messageSender = sender
+                     , messageContent = text
+                     } = replyToSender sender text
+
 banUser :: T.Text -> Effect ()
 banUser user = say [qms|/ban {user}|]
 
@@ -19,7 +24,10 @@ timeoutUser :: Int -> T.Text -> Effect ()
 timeoutUser t user = say [qms|/timeout {user} {t}|]
 
 timeoutSender :: Int -> Sender -> Effect ()
-timeoutSender t sender = timeoutUser t (senderName sender)
+timeoutSender t = timeoutUser t . senderName
+
+timeoutMessage :: Int -> Message a -> Effect ()
+timeoutMessage t = timeoutSender t . messageSender
 
 whisperToUser :: T.Text -> T.Text -> Effect ()
 whisperToUser user message = say [qms|/w {user} {message}|]

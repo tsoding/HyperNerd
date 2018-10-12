@@ -68,8 +68,11 @@ forbidLinksForPlebs (Msg sender text)
     | otherwise = return False
 forbidLinksForPlebs _ = return False
 
+
 trustCommand :: CommandHandler T.Text
-trustCommand sender inputUser = do
+trustCommand Message { messageSender = sender
+                     , messageContent = inputUser
+                     } = do
   let user = T.toLower inputUser
   trustedUser <- findTrustedUser user
   case trustedUser of
@@ -78,7 +81,9 @@ trustCommand sender inputUser = do
                   replyToSender sender [qm|{user} is now trusted|]
 
 untrustCommand :: CommandHandler T.Text
-untrustCommand sender inputUser = do
+untrustCommand Message { messageSender = sender
+                       , messageContent = inputUser
+                       } = do
   let user = T.toLower inputUser
   trustedUser <- findTrustedUser user
   case trustedUser of
@@ -87,14 +92,16 @@ untrustCommand sender inputUser = do
     Nothing -> replyToSender sender [qm|{user} was not trusted in the first place|]
 
 amitrustedCommand :: CommandHandler ()
-amitrustedCommand sender () = do
+amitrustedCommand Message { messageSender = sender } = do
   trustedUser <- findTrustedUser $ senderName sender
   case trustedUser of
     Just _  -> replyToSender sender "Yes Pog"
     Nothing -> replyToSender sender "No PepeHands"
 
 istrustedCommand :: CommandHandler T.Text
-istrustedCommand sender inputUser = do
+istrustedCommand Message { messageSender = sender
+                         , messageContent = inputUser
+                         } = do
   let user = T.toLower inputUser
   trustedUser <- findTrustedUser user
   case trustedUser of

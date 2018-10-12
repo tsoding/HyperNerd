@@ -9,6 +9,7 @@ import           Data.Aeson
 import           Data.Aeson.Types
 import qualified Data.Text as T
 import           Effect
+import           Events
 import           Network.HTTP.Simple
 import           Text.InterpolatedString.QM
 
@@ -63,14 +64,14 @@ songLink (songType -> SongTypeSoundcloud) =
 songLink _ = error "This should never happen Kappa"
 
 currentSongCommand :: CommandHandler ()
-currentSongCommand sender _ =
-    -- TODO(#221): Dubtrack room is hardcode
-    do request <- parseRequest "https://api.dubtrack.fm/room/tsoding"
-       response <- eitherDecode . getResponseBody
-                     <$> httpRequest request
-       case response of
-         Left message -> errorEff $ T.pack message
-         Right dubtrackResponse ->
-             maybe (replyToSender sender "Nothing is playing right now")
-                   (\song -> replyToSender sender [qms|"{songName song}: {songLink song}"|])
-                   (roomCurrentSong $ drData dubtrackResponse)
+currentSongCommand Message { messageSender = sender } = do
+  -- TODO(#221): Dubtrack room is hardcode
+  request <- parseRequest "https://api.dubtrack.fm/room/tsoding"
+  response <- eitherDecode . getResponseBody <$>
+              httpRequest request
+  case response of
+    Left message -> errorEff $ T.pack message
+    Right dubtrackResponse ->
+        maybe (replyToSender sender "Nothing is playing right now")
+              (\song -> replyToSender sender [qms|"{songName song}: {songLink song}"|])
+              (roomCurrentSong $ drData dubtrackResponse)

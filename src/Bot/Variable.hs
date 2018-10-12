@@ -31,12 +31,12 @@ expandVariables = return
 
 -- TODO(#244): addVariable is not implemented
 addVariable :: CommandHandler T.Text
-addVariable _ _ = return ()
+addVariable _ = return ()
 
 -- TODO(#245): deleteVariable is not implemented
 deleteVariable :: CommandHandler T.Text
-deleteVariable _ _ = return ()
+deleteVariable _ = return ()
 
 -- TODO(#246): updateVariable is not implemented
 updateVariable :: CommandHandler (T.Text, T.Text)
-updateVariable _ _ = return ()
+updateVariable _ = return ()

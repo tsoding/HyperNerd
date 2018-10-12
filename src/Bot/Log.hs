@@ -2,6 +2,7 @@
 module Bot.Log where
 
 import           Bot.Replies
+import           Command
 import           Control.Monad
 import qualified Data.Map as M
 import           Data.Maybe
@@ -41,8 +42,10 @@ recordUserMsg sender msg =
                                                        }
        return ()
 
-randomLogRecordCommand :: Sender -> T.Text -> Effect ()
-randomLogRecordCommand sender rawName =
+randomLogRecordCommand :: CommandHandler T.Text
+randomLogRecordCommand Message { messageSender = sender
+                               , messageContent = rawName
+                               } =
     do let name = T.toLower $ T.strip rawName
        user   <- if T.null name
                  then return $ senderName sender
