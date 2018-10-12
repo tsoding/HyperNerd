@@ -44,10 +44,9 @@ builtinCommands =
                                                        "Only subs and mods can add quotes, sorry."
                                                        addQuoteCommand))
                , ("delquote", ("Delete quote from quote database",
-                               authorizeCommand [ "tsoding"
-                                                , "r3x1m"
-                                                ] $
-                               intCommand deleteQuoteCommand))
+                               senderAuthorizedCommand senderAuthority "Only for mods" $
+                               readCommand $
+                               justCommand deleteQuoteCommand))
                , ("quote", ("Get a quote from the quote database", readCommand quoteCommand))
                , ("bttv", ("Show all available BTTV emotes", voidCommand bttvCommand))
                , ("ffz", ("Show all available FFZ emotes", voidCommand ffzCommand))
@@ -159,9 +158,6 @@ justCommand commandHandler message@Message { messageContent = Just arg } =
     commandHandler $ fmap (const arg) message
 justCommand _ message =
     replyMessage $ fmap (const "Could not parse arguments") message
-
-intCommand :: CommandHandler Int -> CommandHandler T.Text
-intCommand = readCommand . justCommand
 
 commandArgsCommand :: CommandHandler (Command T.Text) -> CommandHandler T.Text
 commandArgsCommand commandHandler message@Message { messageContent = text } =
