@@ -44,7 +44,7 @@ builtinCommands =
                                                        "Only subs and mods can add quotes, sorry."
                                                        addQuoteCommand))
                , ("delquote", ("Delete quote from quote database",
-                               senderAuthorizedCommand senderAuthority "Only for mods" $
+                               modCommand $
                                readCommand $
                                justCommand deleteQuoteCommand))
                , ("quote", ("Get a quote from the quote database", readCommand quoteCommand))
@@ -52,7 +52,7 @@ builtinCommands =
                , ("ffz", ("Show all available FFZ emotes", voidCommand ffzCommand))
 
                , ("help", ("Send help", helpCommand builtinCommands))
-               , ("poll", ("Starts a poll", senderAuthorizedCommand senderAuthority "Only for mods" $
+               , ("poll", ("Starts a poll", modCommand $
                                             regexArgsCommand "([0-9]+) (.*)" $
                                             pairArgsCommand $
                                             contramapCH (\Message { messageSender = sender
@@ -65,7 +65,7 @@ builtinCommands =
                                                              T.unpack duration) $
                                             justCommand pollCommand))
                , ("cancelpoll", ("Cancels the current poll",
-                                 senderAuthorizedCommand senderAuthority "Only for mods" $
+                                 modCommand $
                                  voidCommand cancelPollCommand))
                , ("checkpoll", ("", modCommand $
                                     voidCommand currentPollCommand))
@@ -98,7 +98,7 @@ builtinCommands =
                , ("delvar", ("Delete variable", modCommand deleteVariable))
                , ("nuke", ([qms|Looks at N previous messages and bans all of
                                 the users whose messages match provided regex|],
-                           senderAuthorizedCommand senderAuthority "Only for mods" $
+                           modCommand $
                            regexArgsCommand "([0-9]+) (.*)" $
                            pairArgsCommand $ \Message { messageContent = (strN, regexStr) } ->
                                do let parsedN       = maybe (Left "Could not parse N") Right $
@@ -116,14 +116,14 @@ builtinCommands =
                                       traverse_ (banUser . lrUser . entityPayload) $
                                         filter (isRight . execute regex . T.unpack . lrMsg . entityPayload) logs))
                , ("cycle", ("Mock the message", replyMessage . fmap mockMessage))
-               , ("trust", ("Makes the user trusted", senderAuthorizedCommand senderAuthority "Only for mods" $
+               , ("trust", ("Makes the user trusted", modCommand $
                                                       regexArgsCommand "(.+)" $
                                                       firstArgCommand trustCommand))
-               , ("untrust", ("Untrusts the user", senderAuthorizedCommand senderAuthority "Only for mods" $
+               , ("untrust", ("Untrusts the user", modCommand $
                                                    regexArgsCommand "(.+)" $
                                                    firstArgCommand untrustCommand))
                , ("amitrusted", ("Check if you are a trusted user", voidCommand amitrustedCommand))
-               , ("istrusted", ("Check if the user is trusted", senderAuthorizedCommand senderAuthority "Only for mods" $
+               , ("istrusted", ("Check if the user is trusted", modCommand $
                                                                 regexArgsCommand "(.+)" $
                                                                 firstArgCommand istrustedCommand))
                ]
