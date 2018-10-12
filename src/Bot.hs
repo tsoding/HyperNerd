@@ -24,7 +24,6 @@ import           Data.Either
 import           Data.Foldable
 import           Data.List
 import qualified Data.Map as M
-import           Data.Maybe
 import qualified Data.Text as T
 import           Effect
 import           Entity
@@ -60,13 +59,12 @@ builtinCommands =
                                             contramapCH (\Message { messageSender = sender
                                                                   , messageContent = (duration, options)
                                                                   } -> do
-                                                           let result = fmap (, T.words options) $
-                                                                        readMaybe $
-                                                                        T.unpack duration
-                                                           if isJust result
-                                                           then return $ fmap (Message sender) result
-                                                           else do replyToSender sender [qms|Could not parse duration|]
-                                                                   return Nothing) pollCommand))
+                                                           return $
+                                                             Message sender $
+                                                             fmap (, T.words options) $
+                                                             readMaybe $
+                                                             T.unpack duration) $
+                                            justCommand pollCommand))
                , ("cancelpoll", ("Cancels the current poll",
                                  senderAuthorizedCommand senderAuthority "Only for mods" $
                                  voidCommand cancelPollCommand))
