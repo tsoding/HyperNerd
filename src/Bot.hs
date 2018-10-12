@@ -57,7 +57,7 @@ builtinCommands =
                                             pairArgsCommand $
                                             contramapCH (\Message { messageSender = sender
                                                                   , messageContent = (duration, options)
-                                                                  } -> do
+                                                                  } ->
                                                            return $
                                                              Message sender $
                                                              fmap (, T.words options) $
