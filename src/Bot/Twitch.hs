@@ -3,6 +3,7 @@
 module Bot.Twitch where
 
 import           Bot.Replies
+import           Command
 import           Data.Aeson
 import           Data.Aeson.Types
 import           Data.Maybe
@@ -58,8 +59,8 @@ humanReadableDiffTime t =
           secondsInHour = 60 * secondsInMinute
           secondsInMinute = 60
 
-uptimeCommand :: Sender -> T.Text -> Effect ()
-uptimeCommand sender _ =
+uptimeCommand :: CommandHandler ()
+uptimeCommand Message { messageSender = sender } =
     do let channel = T.pack $
                      fromMaybe "tsoding" $
                      tailMay $

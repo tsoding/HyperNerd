@@ -1,3 +1,5 @@
+{-# LANGUAGE DeriveFunctor #-}
+
 module Events where
 
 import qualified Data.Text as T
@@ -15,3 +17,7 @@ senderAuthority sender =
 
 data Event = Join
            | Msg Sender T.Text
+
+data Message a = Message { messageSender :: Sender
+                         , messageContent :: a
+                         } deriving Functor

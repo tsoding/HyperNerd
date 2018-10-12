@@ -50,57 +50,63 @@ customCommandByName name =
       $ Filter (PropertyEquals "name" $ PropertyText name) All
 
 addCustomCommand :: CommandTable a -> CommandHandler (T.Text, T.Text)
-addCustomCommand builtinCommands sender (name, message) =
-    do customCommand  <- runMaybeT $ customCommandByName name
-       let builtinCommand = M.lookup name builtinCommands
+addCustomCommand builtinCommands Message { messageSender = sender
+                                         , messageContent = (name, message)
+                                         } = do
+  customCommand  <- runMaybeT $ customCommandByName name
+  let builtinCommand = M.lookup name builtinCommands
 
-       case (customCommand, builtinCommand) of
-         (Just _, Nothing) -> replyToSender sender [qms|Command '{name}' already
-                                                        exists|]
-         (Nothing, Just _) -> replyToSender sender [qms|There is already a builtin
-                                                        command with name '{name}'|]
-         (Just _, Just _)  -> errorEff [qms|Custom command '{name}' collide with
-                                            a built in command|]
-         (Nothing, Nothing) ->
-             do void $ createEntity "CustomCommand" CustomCommand { customCommandName = name
-                                                                  , customCommandMessage = message
-                                                                  , customCommandTimes = 0
-                                                                  , customCommandLastUsed = UTCTime (ModifiedJulianDay 0) 0
-                                                                  }
-                replyToSender sender [qms|Added command '{name}'|]
+  case (customCommand, builtinCommand) of
+    (Just _, Nothing) -> replyToSender sender [qms|Command '{name}' already
+                                                   exists|]
+    (Nothing, Just _) -> replyToSender sender [qms|There is already a builtin
+                                                   command with name '{name}'|]
+    (Just _, Just _)  -> errorEff [qms|Custom command '{name}' collide with
+                                       a built in command|]
+    (Nothing, Nothing) ->
+        do void $ createEntity "CustomCommand" CustomCommand { customCommandName = name
+                                                             , customCommandMessage = message
+                                                             , customCommandTimes = 0
+                                                             , customCommandLastUsed = UTCTime (ModifiedJulianDay 0) 0
+                                                             }
+           replyToSender sender [qms|Added command '{name}'|]
 
 deleteCustomCommand :: CommandTable a -> CommandHandler T.Text
-deleteCustomCommand builtinCommands sender name =
-    do customCommand  <- runMaybeT $ customCommandByName name
-       let builtinCommand = M.lookup name builtinCommands
+deleteCustomCommand builtinCommands Message { messageSender = sender
+                                            , messageContent = name
+                                            } = do
+  customCommand  <- runMaybeT $ customCommandByName name
+  let builtinCommand = M.lookup name builtinCommands
 
-       case (customCommand, builtinCommand) of
-         (Just _, Nothing) ->
-             do void $
-                  deleteEntities "CustomCommand" $
-                  Filter (PropertyEquals "name" $
-                          PropertyText name) All
-                replyToSender sender [qms|Command '{name}' has been removed|]
-         (Nothing, Just _)  -> replyToSender sender [qms|Command '{name}' is builtin
-                                                         and can't be removed like that|]
-         (Just _, Just _)   -> errorEff [qms|Custom command '{name}' collide with a
-                                             built in command|]
-         (Nothing, Nothing) -> replyToSender sender [qms|Command '{name}' does not exist|]
+  case (customCommand, builtinCommand) of
+    (Just _, Nothing) ->
+        do void $
+             deleteEntities "CustomCommand" $
+             Filter (PropertyEquals "name" $
+                     PropertyText name) All
+           replyToSender sender [qms|Command '{name}' has been removed|]
+    (Nothing, Just _)  -> replyToSender sender [qms|Command '{name}' is builtin
+                                                    and can't be removed like that|]
+    (Just _, Just _)   -> errorEff [qms|Custom command '{name}' collide with a
+                                        built in command|]
+    (Nothing, Nothing) -> replyToSender sender [qms|Command '{name}' does not exist|]
 
 updateCustomCommand :: CommandTable a -> CommandHandler (T.Text, T.Text)
-updateCustomCommand builtinCommands sender (name, message) =
-    do customCommand <- runMaybeT $ customCommandByName name
-       let builtinCommand = M.lookup name builtinCommands
+updateCustomCommand builtinCommands Message { messageSender = sender
+                                            , messageContent = (name, message)
+                                            } = do
+  customCommand <- runMaybeT $ customCommandByName name
+  let builtinCommand = M.lookup name builtinCommands
 
-       case (customCommand, builtinCommand) of
-         (Just cmd, Nothing) ->
-             do void $ updateEntityById (replaceCustomCommandMessage message <$> cmd)
-                replyToSender sender [qms|Command '{name}' has been updated|]
-         (Nothing, Just _)  -> replyToSender sender [qms|Command '{name}' is builtin and
-                                                         can't be updated like that|]
-         (Just _, Just _)   -> errorEff [qms|Custom command '{name}' collide with
-                                            a built in command|]
-         (Nothing, Nothing) -> replyToSender sender [qms|Command '{name}' does not exist|]
+  case (customCommand, builtinCommand) of
+    (Just cmd, Nothing) ->
+        do void $ updateEntityById (replaceCustomCommandMessage message <$> cmd)
+           replyToSender sender [qms|Command '{name}' has been updated|]
+    (Nothing, Just _)  -> replyToSender sender [qms|Command '{name}' is builtin and
+                                                    can't be updated like that|]
+    (Just _, Just _)   -> errorEff [qms|Custom command '{name}' collide with
+                                       a built in command|]
+    (Nothing, Nothing) -> replyToSender sender [qms|Command '{name}' does not exist|]
 
 expandCustomCommandVars :: CustomCommand -> Effect CustomCommand
 expandCustomCommandVars customCommand = do
@@ -134,8 +140,8 @@ customCommandCooldown cooldownTimeout customCommand =
 
 {-# ANN dispatchCustomCommand ("HLint: ignore Use fmap" :: String) #-}
 {-# ANN dispatchCustomCommand ("HLint: ignore Use <$>" :: String) #-}
-dispatchCustomCommand :: Sender -> Command T.Text -> Effect ()
-dispatchCustomCommand _ command =
+dispatchCustomCommand :: Message (Command T.Text) -> Effect ()
+dispatchCustomCommand Message { messageContent = command } =
   do customCommand <- runMaybeT (customCommandByName (commandName command)
                                    >>= customCommandCooldown 2.0
                                    >>= return . fmap bumpCustomCommandTimes

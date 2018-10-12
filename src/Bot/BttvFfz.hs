@@ -3,6 +3,7 @@
 module Bot.BttvFfz where
 
 import           Bot.Replies
+import           Command
 import           Data.Aeson
 import           Data.Aeson.Types
 import           Data.List
@@ -12,8 +13,8 @@ import           Events
 import           Network.HTTP.Simple
 import qualified Network.URI.Encode as URI
 import           Safe
-import           Text.Printf
 import           Text.InterpolatedString.QM
+import           Text.Printf
 
 -- TODO(#274): FFZ and BTTV emotes are not cached
 
@@ -38,20 +39,20 @@ ffzApiResponseAsEmoteList obj =
          >>= (.: "emoticons")
          >>= mapM (.: "name")
 
-ffzCommand :: Sender -> T.Text -> Effect ()
-ffzCommand sender _ = do emotes <- requestEmoteList url ffzApiResponseAsEmoteList
-                         let emoteList = T.concat $ intersperse " " emotes
-                         replyToSender sender [qms|Available FFZ emotes: {emoteList}|]
-    where
-      url = maybe "tsoding"
+ffzCommand :: CommandHandler ()
+ffzCommand Message { messageSender = sender } = do
+  let url = maybe "tsoding"
                   (printf "https://api.frankerfacez.com/v1/room/%s" . URI.encode)
                   (tailMay $ T.unpack $ senderChannel sender)
+  emotes <- requestEmoteList url ffzApiResponseAsEmoteList
+  let emoteList = T.concat $ intersperse " " emotes
+  replyToSender sender [qms|Available FFZ emotes: {emoteList}|]
 
-bttvCommand :: Sender -> T.Text -> Effect ()
-bttvCommand sender _ = do emotes <- requestEmoteList url bttvApiResponseAsEmoteList
-                          let emoteList = T.concat $ intersperse " " emotes
-                          replyToSender sender [qms|Available BTTV emotes: {emoteList}|]
-    where
-      url = maybe "tsoding"
+bttvCommand :: CommandHandler ()
+bttvCommand Message { messageSender = sender } = do
+  let url = maybe "tsoding"
                   (printf "https://api.betterttv.net/2/channels/%s" . URI.encode)
                   (tailMay $ T.unpack $ senderChannel sender)
+  emotes <- requestEmoteList url bttvApiResponseAsEmoteList
+  let emoteList = T.concat $ intersperse " " emotes
+  replyToSender sender [qms|Available BTTV emotes: {emoteList}|]

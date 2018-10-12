@@ -4,7 +4,6 @@ module Bot.Quote where
 
 import           Bot.Replies
 import           Command
-import           Control.Monad
 import qualified Data.Map as M
 import           Data.Maybe
 import qualified Data.Text as T
@@ -13,7 +12,6 @@ import           Effect
 import           Entity
 import           Events
 import           Property
-import           Text.Read
 import           Text.InterpolatedString.QM
 
 data Quote = Quote { quoteContent :: T.Text
@@ -32,41 +30,42 @@ instance IsEntity Quote where
               <*> extractProperty "quoter" properties
               <*> extractProperty "timestamp" properties
 
-deleteQuoteCommand :: CommandHandler T.Text
-deleteQuoteCommand sender quoteIdText =
-  case readMaybe $ T.unpack quoteIdText of
-    Just quoteId -> do deleteEntityById "quote" quoteId
-                       replyToSender sender "Quote has been deleted"
-    Nothing -> replyToSender sender "Could not find quote with such id"
+deleteQuoteCommand :: CommandHandler Int
+deleteQuoteCommand Message { messageSender = sender
+                           , messageContent = quoteId
+                           } = do
+  deleteEntityById "quote" quoteId
+  replyToSender sender "Quote has been deleted"
 
 addQuoteCommand :: CommandHandler T.Text
-addQuoteCommand sender content =
-    do timestamp <- now
-       let quoter = senderName sender
-       let quote  = Quote { quoteContent = content
-                          , quoteQuoter = quoter
-                          , quoteTimestamp = timestamp
-                          }
-       entity    <- createEntity "quote" quote
+addQuoteCommand Message { messageSender = sender
+                        , messageContent = content
+                        } = do
+  timestamp <- now
+  entity <- createEntity "quote" Quote { quoteContent = content
+                                       , quoteQuoter = senderName sender
+                                       , quoteTimestamp = timestamp
+                                       }
+  replyToSender sender [qms|Added the quote under the
+                            number {entityId entity}|]
 
-       quoteAddedReply quoter $ entityId entity
-
-quoteCommand :: CommandHandler T.Text
-quoteCommand sender "" =
+quoteCommand :: CommandHandler (Maybe Int)
+quoteCommand Message { messageSender = sender
+                     , messageContent = Nothing
+                     } =
     fmap listToMaybe (selectEntities "quote" (Take 1 $ Shuffle All))
-      >>= quoteFoundReply (senderName sender)
-quoteCommand sender quoteIdText =
-    maybe
-      (replyToUser (senderName sender) "Couldn't find any quotes")
-      (getEntityById "quote" >=> quoteFoundReply (senderName sender))
-      (readMaybe $ T.unpack quoteIdText)
+      >>= quoteFoundReply sender
+quoteCommand Message { messageSender = sender
+                     , messageContent = Just quoteId
+                     } = do
+  quote <- getEntityById "quote" quoteId
+  quoteFoundReply sender quote
 
-quoteAddedReply :: T.Text -> Int -> Effect ()
-quoteAddedReply user quoteId =
-    replyToUser user [qms|Added the quote under the number {quoteId}|]
-
-quoteFoundReply :: T.Text -> Maybe (Entity Quote) -> Effect ()
-quoteFoundReply user Nothing = replyToUser user "Couldn't find any quotes"
-quoteFoundReply user (Just entity) = replyToUser user [qms|{content} {quoteId}|]
-    where quoteId = entityId entity
-          content = quoteContent $ entityPayload entity
+quoteFoundReply :: Sender -> Maybe (Entity Quote) -> Effect ()
+quoteFoundReply sender Nothing =
+    replyToSender sender "Couldn't find any quotes"
+quoteFoundReply sender (Just Entity { entityId = quoteId
+                                    , entityPayload =
+                                        Quote { quoteContent = content }
+                                    }) =
+    replyToSender sender [qms|{content} {quoteId}|]

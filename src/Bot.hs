@@ -24,7 +24,6 @@ import           Data.Either
 import           Data.Foldable
 import           Data.List
 import qualified Data.Map as M
-import           Data.Maybe
 import qualified Data.Text as T
 import           Effect
 import           Entity
@@ -45,77 +44,63 @@ builtinCommands =
                                                        "Only subs and mods can add quotes, sorry."
                                                        addQuoteCommand))
                , ("delquote", ("Delete quote from quote database",
-                               authorizeCommand [ "tsoding"
-                                                , "r3x1m"
-                                                ] deleteQuoteCommand))
-               , ("quote", ("Get a quote from the quote database", quoteCommand))
-               , ("bttv", ("Show all available BTTV emotes", bttvCommand))
-               , ("ffz", ("Show all available FFZ emotes", ffzCommand))
+                               modCommand $
+                               readCommand $
+                               justCommand deleteQuoteCommand))
+               , ("quote", ("Get a quote from the quote database", readCommand quoteCommand))
+               , ("bttv", ("Show all available BTTV emotes", voidCommand bttvCommand))
+               , ("ffz", ("Show all available FFZ emotes", voidCommand ffzCommand))
 
                , ("help", ("Send help", helpCommand builtinCommands))
-               , ("poll", ("Starts a poll", senderAuthorizedCommand senderAuthority "Only for mods" $
+               , ("poll", ("Starts a poll", modCommand $
                                             regexArgsCommand "([0-9]+) (.*)" $
                                             pairArgsCommand $
-                                            contramapCH (\sender (duration, options) -> do
-                                                           let result = fmap (, T.words options) $
-                                                                        readMaybe $
-                                                                        T.unpack duration
-                                                           if isJust result
-                                                           then return result
-                                                           else do replyToSender sender [qms|Could not parse duration|]
-                                                                   return Nothing) pollCommand))
+                                            contramapCH (\Message { messageSender = sender
+                                                                  , messageContent = (duration, options)
+                                                                  } ->
+                                                           return $
+                                                             Message sender $
+                                                             fmap (, T.words options) $
+                                                             readMaybe $
+                                                             T.unpack duration) $
+                                            justCommand pollCommand))
                , ("cancelpoll", ("Cancels the current poll",
-                                 senderAuthorizedCommand senderAuthority "Only for mods" $
-                                 noArgsCommand cancelPollCommand))
-               , ("checkpoll", ("", authorizeCommand [ "tsoding"
-                                                     , "r3x1m"
-                                                     ] $
-                                    noArgsCommand currentPollCommand))
+                                 modCommand $
+                                 voidCommand cancelPollCommand))
+               , ("checkpoll", ("", modCommand $
+                                    voidCommand currentPollCommand))
                , ("vote", ("Vote for a poll option", voteCommand))
-               , ("uptime", ("Show stream uptime", uptimeCommand))
+               , ("uptime", ("Show stream uptime", voidCommand uptimeCommand))
                , ("rq", ("Get random quote from your log", randomLogRecordCommand))
-               , ("nope", ("Timeout yourself for 1 second", \sender _ -> timeoutSender 1 sender))
-               , ("addperiodic", ("Add periodic command", authorizeCommand [ "tsoding"
-                                                                           , "r3x1m" ] $
+               , ("nope", ("Timeout yourself for 1 second", timeoutMessage 1))
+               , ("addperiodic", ("Add periodic command", modCommand $
                                                           commandArgsCommand addPeriodicCommand))
-               , ("delperiodic", ("Delete periodic command", authorizeCommand [ "tsoding"
-                                                                              , "r3x1m" ]
-                                                                              removePeriodicCommand))
-               , ("addcmd", ("Add custom command", authorizeCommand [ "tsoding"
-                                                                    , "r3x1m"
-                                                                    ]
-                                                     $ regexArgsCommand "([a-zA-Z0-9]+) ?(.*)"
-                                                     $ pairArgsCommand
-                                                     $ addCustomCommand builtinCommands))
-               , ("delcmd", ("Delete custom command", authorizeCommand ["tsoding", "r3x1m"]
-                                                        $ deleteCustomCommand builtinCommands))
-               , ("updcmd", ("Update custom command", authorizeCommand [ "tsoding"
-                                                                       , "r3x1m"
-                                                                       ]
-                                                        $ regexArgsCommand "([a-zA-Z0-9]+) ?(.*)"
-                                                        $ pairArgsCommand
-                                                        $ updateCustomCommand builtinCommands))
-               , ("song", ("Print currently playing song", noArgsCommand currentSongCommand))
-               , ("addalias", ("Add command alias", authorizeCommand [ "tsoding"
-                                                                     , "r3x1m"
-                                                                     ]
-                                                      $ regexArgsCommand "([a-zA-Z0-9]+) ([a-zA-Z0-9]+)"
-                                                      $ pairArgsCommand
-                                                        addAliasCommand))
-               , ("delalias", ("Remove command alias", authorizeCommand [ "tsoding"
-                                                                        , "r3x1m"
-                                                                        ]
-                                                         removeAliasCommand))
-               , ("addvar", ("Add variable", authorizeCommand ["tsoding", "r3x1m"] addVariable))
-               , ("updvar", ("Update variable", authorizeCommand ["tsoding", "r3x1m"] $
+               , ("delperiodic", ("Delete periodic command", modCommand removePeriodicCommand))
+               , ("addcmd", ("Add custom command", modCommand $
+                                                   regexArgsCommand "([a-zA-Z0-9]+) ?(.*)" $
+                                                   pairArgsCommand $
+                                                   addCustomCommand builtinCommands))
+               , ("delcmd", ("Delete custom command", modCommand $
+                                                      deleteCustomCommand builtinCommands))
+               , ("updcmd", ("Update custom command", modCommand $
+                                                      regexArgsCommand "([a-zA-Z0-9]+) ?(.*)" $
+                                                      pairArgsCommand $
+                                                      updateCustomCommand builtinCommands))
+               , ("song", ("Print currently playing song", voidCommand currentSongCommand))
+               , ("addalias", ("Add command alias", modCommand $
+                                                    regexArgsCommand "([a-zA-Z0-9]+) ([a-zA-Z0-9]+)" $
+                                                    pairArgsCommand addAliasCommand))
+               , ("delalias", ("Remove command alias", modCommand removeAliasCommand))
+               , ("addvar", ("Add variable", modCommand addVariable))
+               , ("updvar", ("Update variable", modCommand $
                                                 regexArgsCommand "([a-zA-Z0-9]+) ?(.*)" $
                                                 pairArgsCommand updateVariable))
-               , ("delvar", ("Delete variable", authorizeCommand ["tsoding", "r3x1m"] deleteVariable))
+               , ("delvar", ("Delete variable", modCommand deleteVariable))
                , ("nuke", ([qms|Looks at N previous messages and bans all of
                                 the users whose messages match provided regex|],
-                           senderAuthorizedCommand senderAuthority "Only for mods" $
+                           modCommand $
                            regexArgsCommand "([0-9]+) (.*)" $
-                           pairArgsCommand $ \_ (strN, regexStr) ->
+                           pairArgsCommand $ \Message { messageContent = (strN, regexStr) } ->
                                do let parsedN       = maybe (Left "Could not parse N") Right $
                                                       readMaybe $
                                                       T.unpack strN
@@ -130,61 +115,79 @@ builtinCommands =
                                                SortBy "timestamp" Desc All
                                       traverse_ (banUser . lrUser . entityPayload) $
                                         filter (isRight . execute regex . T.unpack . lrMsg . entityPayload) logs))
-               , ("cycle", ("", \sender -> replyToSender sender .
-                                           snd .
-                                           T.mapAccumL (\t -> (not t ,) . if t
-                                                                          then Data.Char.toUpper
-                                                                          else Data.Char.toLower) True))
-               , ("trust", ("Makes the user trusted", senderAuthorizedCommand senderAuthority "Only for mods" $
+               , ("cycle", ("Mock the message", replyMessage . fmap mockMessage))
+               , ("trust", ("Makes the user trusted", modCommand $
                                                       regexArgsCommand "(.+)" $
                                                       firstArgCommand trustCommand))
-               , ("untrust", ("Untrusts the user", senderAuthorizedCommand senderAuthority "Only for mods" $
+               , ("untrust", ("Untrusts the user", modCommand $
                                                    regexArgsCommand "(.+)" $
                                                    firstArgCommand untrustCommand))
-               , ("amitrusted", ("Check if you are a trusted user", noArgsCommand amitrustedCommand))
-               , ("istrusted", ("Check if the user is trusted", senderAuthorizedCommand senderAuthority "Only for mods" $
+               , ("amitrusted", ("Check if you are a trusted user", voidCommand amitrustedCommand))
+               , ("istrusted", ("Check if the user is trusted", modCommand $
                                                                 regexArgsCommand "(.+)" $
                                                                 firstArgCommand istrustedCommand))
                ]
 
-commandArgsCommand :: CommandHandler (Command T.Text) -> CommandHandler T.Text
-commandArgsCommand commandHandler sender text =
-    case textAsCommand text of
-      Just command -> commandHandler sender command
-      Nothing      -> replyToSender sender "Command as an argument is expected"
+mockMessage :: T.Text -> T.Text
+mockMessage =
+    snd .
+    T.mapAccumL (\t -> (not t ,) . if t
+                                   then Data.Char.toUpper
+                                   else Data.Char.toLower) True
 
-noArgsCommand :: CommandHandler () -> CommandHandler a
-noArgsCommand commandHandler sender _ =
-    commandHandler sender ()
+readCommand :: Read a => CommandHandler (Maybe a) -> CommandHandler T.Text
+readCommand commandHandler = commandHandler . fmap (readMaybe . T.unpack)
+
+justCommand :: CommandHandler a -> CommandHandler (Maybe a)
+justCommand commandHandler message@Message { messageContent = Just arg } =
+    commandHandler $ fmap (const arg) message
+justCommand _ message =
+    replyMessage $ fmap (const "Could not parse arguments") message
+
+commandArgsCommand :: CommandHandler (Command T.Text) -> CommandHandler T.Text
+commandArgsCommand commandHandler message@Message { messageContent = text } =
+    case textAsCommand text of
+      Just command -> commandHandler $
+                      fmap (const command) message
+      Nothing      -> replyMessage $
+                      fmap (const "Command as an argument is expected") message
+
+voidCommand :: CommandHandler () -> CommandHandler a
+voidCommand commandHandler =
+    commandHandler . void
 
 firstArgCommand :: CommandHandler a -> CommandHandler [a]
-firstArgCommand _ sender [] = replyToSender sender "Not enough arguments"
-firstArgCommand commandHandler sender (arg:_) =
-    commandHandler sender arg
+firstArgCommand _ message@Message { messageContent = [] } =
+    replyMessage $ fmap (const "Not enough arguments") message
+firstArgCommand commandHandler message@Message { messageContent = args:_ } =
+    commandHandler $ fmap (const args) message
 
-authorizeCommand :: [T.Text] -> CommandHandler a -> CommandHandler a
-authorizeCommand authorizedPeople =
-    senderAuthorizedCommand (\sender -> senderName sender `elem` authorizedPeople)
-                            "You are not authorized to use this command! HyperNyard"
+modCommand :: CommandHandler a -> CommandHandler a
+modCommand = senderAuthorizedCommand senderAuthority "Only for mods"
 
 senderAuthorizedCommand :: (Sender -> Bool) -- sender predicate
                         -> T.Text           -- unauthorized response
                         -> CommandHandler a -- command handler
                         -> CommandHandler a
-senderAuthorizedCommand predicate unauthorizedResponse commandHandler sender args =
-    if predicate sender
-    then commandHandler sender args
-    else replyToUser (senderName sender) unauthorizedResponse
+senderAuthorizedCommand predicate unauthorizedResponse commandHandler message =
+    if predicate $ messageSender message
+    then commandHandler message
+    else replyMessage (const unauthorizedResponse <$> message)
 
 pairArgsCommand :: CommandHandler (a, a) -> CommandHandler [a]
-pairArgsCommand commandHandler sender [x, y] = commandHandler sender (x, y)
-pairArgsCommand _ sender args =
-    replyToSender sender [qms|Expected two arguments
-                              but got {length args}|]
+pairArgsCommand commandHandler message@Message { messageContent = [x, y] } =
+    commandHandler $
+    fmap (const (x, y)) message
+pairArgsCommand _ message@Message { messageContent = args } =
+    replyMessage $
+    fmap (const [qms|Expected two arguments
+                     but got {length args}|]) message
 
 regexArgsCommand :: String -> CommandHandler [T.Text] -> CommandHandler T.Text
-regexArgsCommand regexString commandHandler sender args =
-    either (replyToSender sender . T.pack) (commandHandler sender) regexArgs
+regexArgsCommand regexString commandHandler Message { messageSender = sender
+                                                    , messageContent = args
+                                                    } =
+    either (replyToSender sender . T.pack) (commandHandler . Message sender) regexArgs
     where regexArgs = do
             regex  <- compile defaultCompOpt defaultExecOpt regexString
             result <- execute regex stringArgs
@@ -203,33 +206,41 @@ bot event@(Msg sender text) = do
   recordUserMsg sender text
   forbidden <- forbidLinksForPlebs event
   unless forbidden $
-    mapM redirectAlias (textAsPipe text) >>= dispatchPipe sender
+    mapM redirectAlias (textAsPipe text) >>= dispatchPipe . Message sender
 
 helpCommand :: CommandTable T.Text -> CommandHandler T.Text
-helpCommand commandTable sender "" =
-    replyToSender sender [qm|Available commands: {commandList}|]
+helpCommand commandTable message@Message { messageContent = "" } =
+    replyMessage $
+    fmap (const [qm|Available commands: {commandList}|]) message
     where commandList = T.concat $
                         intersperse (T.pack ", ") $
                         map (\x -> T.concat [T.pack "!", x]) $
                         M.keys commandTable
-helpCommand commandTable sender command =
+helpCommand commandTable Message { messageSender = sender
+                                 , messageContent = command
+                                 } =
     replyToSender sender $
     maybe "Cannot find such command FeelsBadMan" fst $
     M.lookup command commandTable
 
-dispatchPipe :: Sender -> [Command T.Text] -> Effect ()
-dispatchPipe sender [command] = dispatchCommand sender command
-dispatchPipe _ [] = return ()
+dispatchPipe :: Message [Command T.Text] -> Effect ()
+dispatchPipe message@Message { messageContent = [command] } =
+    dispatchCommand $ fmap (const command) message
+dispatchPipe Message { messageContent = [] } = return ()
 -- TODO(#223): dispatchPipe doesn't support several commands
-dispatchPipe _ _ = return ()
+dispatchPipe _ = return ()
 
-dispatchCommand :: Sender -> Command T.Text -> Effect ()
-dispatchCommand sender cmd =
-    do dispatchBuiltinCommand sender cmd
-       dispatchCustomCommand sender cmd
+dispatchCommand :: Message (Command T.Text) -> Effect ()
+dispatchCommand message =
+    do dispatchBuiltinCommand message
+       dispatchCustomCommand message
 
-dispatchBuiltinCommand :: Sender -> Command T.Text -> Effect ()
-dispatchBuiltinCommand sender command =
+dispatchBuiltinCommand :: Message (Command T.Text) -> Effect ()
+dispatchBuiltinCommand message@Message { messageContent =
+                                             Command { commandName = name
+                                                     , commandArgs = args
+                                                     }
+                                       } =
     maybe (return ())
-          (\(_, f) -> f sender $ commandArgs command)
-          (M.lookup (commandName command) builtinCommands)
+          (\(_, f) -> f $ fmap (const args) message)
+          (M.lookup name builtinCommands)

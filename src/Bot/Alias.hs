@@ -13,6 +13,7 @@ import           Data.Maybe
 import qualified Data.Text as T
 import           Effect
 import           Entity
+import           Events
 import           Property
 import           Text.InterpolatedString.QM
 
@@ -42,7 +43,9 @@ redirectAlias command =
                       alias
 
 addAliasCommand :: CommandHandler (T.Text, T.Text)
-addAliasCommand sender (name, redirect)
+addAliasCommand Message { messageSender = sender
+                        , messageContent = (name, redirect)
+                        }
     | name == redirect = replyToSender sender "Alias cannot redirect to itself"
     | otherwise = do alias <- getAliasByName name
                      case alias of
@@ -53,7 +56,9 @@ addAliasCommand sender (name, redirect)
                                      replyToSender sender [qms|Alias '{name}' has been created|]
 
 removeAliasCommand :: CommandHandler T.Text
-removeAliasCommand sender name = do
+removeAliasCommand Message { messageSender = sender
+                           , messageContent = name
+                           } = do
   alias <- getAliasByName name
   case alias of
     Just _ -> do

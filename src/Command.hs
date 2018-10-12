@@ -2,6 +2,7 @@
 {-# LANGUAGE TypeSynonymInstances #-}
 module Command where
 
+import           Control.Arrow
 import           Data.Char
 import qualified Data.Map as M
 import           Data.Maybe
@@ -9,15 +10,14 @@ import qualified Data.Text as T
 import           Effect
 import           Events
 
-type CommandHandler a = Sender -> a -> Effect ()
+type CommandHandler a = Message a -> Effect ()
 type CommandTable a = M.Map T.Text (T.Text, CommandHandler a)
 
--- TODO(#297): contramapCH is not general enough
-contramapCH :: (Sender -> a -> Effect (Maybe b))
+contramapCH :: (Message a -> Effect (Message b))
             -> CommandHandler b
             -> CommandHandler a
-contramapCH f commandHandler sender args =
-  f sender args >>= mapM_ (commandHandler sender)
+contramapCH f commandHandler =
+  runKleisli (Kleisli f >>> Kleisli commandHandler)
 
 data Command a = Command { commandName :: T.Text
                          , commandArgs :: a
