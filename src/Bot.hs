@@ -123,8 +123,7 @@ builtinCommands =
                                                    regexArgsCommand "(.+)" $
                                                    firstArgCommand untrustCommand))
                , ("amitrusted", ("Check if you are a trusted user", voidCommand amitrustedCommand))
-               , ("istrusted", ("Check if the user is trusted", modCommand $
-                                                                regexArgsCommand "(.+)" $
+               , ("istrusted", ("Check if the user is trusted", regexArgsCommand "(.+)" $
                                                                 firstArgCommand istrustedCommand))
                ]
 
