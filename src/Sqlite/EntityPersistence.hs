@@ -276,7 +276,6 @@ selectEntityIds conn name (Take n (SortBy propertyName Desc All)) =
                           , ":propertyName" := propertyName
                           , ":n" := n
                           ]
--- TODO(#178): SEP.selectEntityIds doesn't support arbitrary selector combination
 selectEntityIds _ _ selector =
     error ("Unsupported selector combination " ++ show selector)
 
