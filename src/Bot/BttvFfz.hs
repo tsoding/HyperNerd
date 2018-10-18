@@ -67,14 +67,10 @@ ffzApiResponseAsEmoteList obj =
          >>= (.: "emoticons")
          >>= mapM (.: "name")
 
--- 😂 👌 💯 🔥
-(👌) :: (a -> b) -> a -> b
-f 👌 x = f x
-
 selectEmotes :: IsEntity a => T.Text -> CommandHandler [Entity a] -> CommandHandler ()
 selectEmotes name commandHandler message = do
   entities <- selectEntities name All
-  commandHandler 👌 fmap (const entities) message
+  commandHandler $ fmap (const entities) message
 
 emotesResponse :: Emote a => [Entity a] -> T.Text
 emotesResponse =
