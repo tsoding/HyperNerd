@@ -73,7 +73,8 @@ builtinCommands =
                                  voidCommand cancelPollCommand))
                , ("checkpoll", ("", modCommand $
                                     voidCommand currentPollCommand))
-               , ("vote", ("Vote for a poll option", voteCommand))
+               , ("vote", ("Vote for a poll option", wordsCommand $
+                                                     firstArgCommand voteCommand))
                , ("uptime", ("Show stream uptime", voidCommand uptimeCommand))
                , ("rq", ("Get random quote from your log", randomLogRecordCommand))
                , ("nope", ("Timeout yourself for 1 second", timeoutMessage 1))
@@ -159,6 +160,9 @@ commandArgsCommand commandHandler message@Message { messageContent = text } =
 voidCommand :: CommandHandler () -> CommandHandler a
 voidCommand commandHandler =
     commandHandler . void
+
+wordsCommand :: CommandHandler [T.Text] -> CommandHandler T.Text
+wordsCommand commandHandler = commandHandler . fmap T.words
 
 firstArgCommand :: CommandHandler a -> CommandHandler [a]
 firstArgCommand _ message@Message { messageContent = [] } =
