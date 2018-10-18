@@ -50,6 +50,10 @@ builtinCommands =
                , ("quote", ("Get a quote from the quote database", readCommand quoteCommand))
                , ("bttv", ("Show all available BTTV emotes", voidCommand bttvCommand))
                , ("ffz", ("Show all available FFZ emotes", voidCommand ffzCommand))
+               , ("updateffz", ("Update FFZ cache", modCommand $
+                                                    voidCommand updateFfzEmotesCommand))
+               , ("updatebttv", ("Update BTTV cache", modCommand $
+                                                      voidCommand updateBttvEmotesCommand))
 
                , ("help", ("Send help", helpCommand builtinCommands))
                , ("poll", ("Starts a poll", modCommand $
@@ -73,6 +77,7 @@ builtinCommands =
                , ("uptime", ("Show stream uptime", voidCommand uptimeCommand))
                , ("rq", ("Get random quote from your log", randomLogRecordCommand))
                , ("nope", ("Timeout yourself for 1 second", timeoutMessage 1))
+               , ("atme", ("At yourself", replyMessage . fmap (const "")))
                , ("addperiodic", ("Add periodic command", modCommand $
                                                           commandArgsCommand addPeriodicCommand))
                , ("delperiodic", ("Delete periodic command", modCommand removePeriodicCommand))
