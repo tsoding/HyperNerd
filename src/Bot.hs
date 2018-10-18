@@ -77,6 +77,7 @@ builtinCommands =
                , ("uptime", ("Show stream uptime", voidCommand uptimeCommand))
                , ("rq", ("Get random quote from your log", randomLogRecordCommand))
                , ("nope", ("Timeout yourself for 1 second", timeoutMessage 1))
+               , ("atme", ("At yourself", replyMessage . fmap (const "")))
                , ("addperiodic", ("Add periodic command", modCommand $
                                                           commandArgsCommand addPeriodicCommand))
                , ("delperiodic", ("Delete periodic command", modCommand removePeriodicCommand))
