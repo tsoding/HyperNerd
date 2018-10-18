@@ -50,6 +50,10 @@ builtinCommands =
                , ("quote", ("Get a quote from the quote database", readCommand quoteCommand))
                , ("bttv", ("Show all available BTTV emotes", voidCommand bttvCommand))
                , ("ffz", ("Show all available FFZ emotes", voidCommand ffzCommand))
+               , ("updateffz", ("Update FFZ cache", modCommand $
+                                                    voidCommand updateFfzEmotesCommand))
+               , ("updatebttv", ("Update BTTV cache", modCommand $
+                                                      voidCommand updateBttvEmotesCommand))
 
                , ("help", ("Send help", helpCommand builtinCommands))
                , ("poll", ("Starts a poll", modCommand $
