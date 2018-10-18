@@ -159,7 +159,6 @@ test-suite HyperNerdTest
   other-modules:       Bot.BttvFfz
                      , Bot.Links
                      , Bot.Replies
-                     , BotSpec.BttvFfzSpec
                      , BotSpec.LinksSpec
                      , Command
                      , CommandSpec

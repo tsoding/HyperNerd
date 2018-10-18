@@ -59,11 +59,7 @@ builtinCommands =
                , ("poll", ("Starts a poll", modCommand $
                                             regexArgsCommand "([0-9]+) (.*)" $
                                             pairArgsCommand $
-                                            contramapCH (\Message { messageSender = sender
-                                                                  , messageContent = (duration, options)
-                                                                  } ->
-                                                           return $
-                                                             Message sender $
+                                            contramapCH (\(duration, options) ->
                                                              fmap (, T.words options) $
                                                              readMaybe $
                                                              T.unpack duration) $

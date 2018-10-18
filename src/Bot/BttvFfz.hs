@@ -1,10 +1,15 @@
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE UnicodeSyntax #-}
-{-# LANGUAGE TypeApplications #-}
-module Bot.BttvFfz where
+{-# LANGUAGE FlexibleInstances #-}
+module Bot.BttvFfz ( ffzCommand
+                   , bttvCommand
+                   , updateFfzEmotesCommand
+                   , updateBttvEmotesCommand
+                   ) where
 
 import           Bot.Replies
 import           Command
+import           Control.Exception
 import           Control.Monad
 import           Data.Aeson
 import           Data.Aeson.Types
@@ -21,9 +26,6 @@ import           Property
 import           Safe
 import           Text.Printf
 
-class Emote e where
-    emoteName :: e -> T.Text
-
 newtype FfzEmote = FfzEmote { ffzName :: T.Text }
 
 instance IsEntity FfzEmote where
@@ -31,9 +33,6 @@ instance IsEntity FfzEmote where
         M.fromList [ ("name", PropertyText $ ffzName entity) ]
     fromProperties properties =
         FfzEmote <$> extractProperty "name" properties
-
-instance Emote FfzEmote where
-    emoteName = ffzName
 
 newtype BttvEmote = BttvEmote { bttvName :: T.Text }
 
@@ -43,78 +42,104 @@ instance IsEntity BttvEmote where
     fromProperties properties =
         BttvEmote <$> extractProperty "name" properties
 
-instance Emote BttvEmote where
-    emoteName = bttvName
+newtype BttvRes = BttvRes { bttvResEmotes :: [BttvEmote] }
 
-requestEmoteList :: String -> (Object -> Parser [T.Text]) -> Effect [T.Text]
-requestEmoteList url emoteListExtractor =
-    do request <- parseRequest url
-       response <- eitherDecode . getResponseBody
-                     <$> httpRequest request
-       either (errorEff . T.pack)
-              return
-              (response >>= parseEither emoteListExtractor)
+instance FromJSON BttvRes where
+    parseJSON (Object v) = BttvRes <$> v .: "emotes"
+    parseJSON invalid = typeMismatch "BttvRes" invalid
 
-bttvApiResponseAsEmoteList :: Object -> Parser [T.Text]
-bttvApiResponseAsEmoteList obj =
-    obj .: "emotes" >>= mapM (.: "code")
+instance FromJSON BttvEmote where
+    parseJSON (Object v) = BttvEmote <$> v .: "code"
+    parseJSON invalid = typeMismatch "BttvEmote" invalid
 
-ffzApiResponseAsEmoteList :: Object -> Parser [T.Text]
-ffzApiResponseAsEmoteList obj =
-    do setId <- obj .: "room" >>= (.: "set") :: Parser Int
-       obj .: "sets"
-         >>= (.: (T.pack $ show setId))
-         >>= (.: "emoticons")
-         >>= mapM (.: "name")
+newtype FfzRes = FfzRes { ffzResEmotes :: [FfzEmote] }
 
-selectEmotes :: IsEntity a => T.Text -> CommandHandler [Entity a] -> CommandHandler ()
-selectEmotes name commandHandler message = do
-  entities <- selectEntities name All
+instance FromJSON FfzEmote where
+    parseJSON (Object v) = FfzEmote <$> v .: "name"
+    parseJSON invalid = typeMismatch "FfzEmote" invalid
+
+instance FromJSON FfzRes where
+    parseJSON (Object v) = FfzRes <$>
+        do setId <- v .: "room" >>= (.: "set") :: Parser Int
+           v .: "sets"
+             >>= (.: (T.pack $ show setId))
+             >>= (.: "emoticons")
+    parseJSON invalid = typeMismatch "FfzRes" invalid
+
+selectEntitiesCH :: IsEntity a => T.Text
+                 -> Selector
+                 -> CommandHandler [Entity a]
+                 -> CommandHandler ()
+selectEntitiesCH name selector commandHandler message = do
+  entities <- selectEntities name selector
   commandHandler $ fmap (const entities) message
 
-emotesResponse :: Emote a => [Entity a] -> T.Text
-emotesResponse =
-    T.concat .
-    intersperse " " .
-    map (emoteName . entityPayload)
+urlAsRequest :: CommandHandler (Either SomeException Request)
+             -> CommandHandler String
+urlAsRequest next = next . fmap parseRequest
 
-replyEmotes :: Emote a => CommandHandler [Entity a]
-replyEmotes = replyMessage . fmap emotesResponse
+jsonHttpRequest :: FromJSON a => CommandHandler (Either String a)
+                -> CommandHandler Request
+jsonHttpRequest next message@Message { messageContent = request } = do
+  response <- eitherDecode . getResponseBody <$> httpRequest request
+  next $ fmap (const response) message
 
-ffzApiEmotes :: CommandHandler [FfzEmote] -> CommandHandler ()
-ffzApiEmotes commandHandler message@Message { messageSender = sender } = do
-  let url = maybe "tsoding"
-                  (printf "https://api.frankerfacez.com/v1/room/%s" . URI.encode)
-                  (tailMay $ T.unpack $ senderChannel sender)
-  emotes <- requestEmoteList url ffzApiResponseAsEmoteList
-  commandHandler $ fmap (const $ map FfzEmote emotes) message
+dropEither :: Show e => CommandHandler a
+           -> CommandHandler (Either e a)
+dropEither _ Message { messageContent = Left e } =
+    errorEff $ T.pack $ show e
+dropEither next message@Message { messageContent = Right a } =
+    next $ fmap (const a) message
 
-cacheFfzEmotes :: CommandHandler [FfzEmote]
-cacheFfzEmotes Message { messageContent = emotes } = do
-  void $ deleteEntities "FfzEmote" All
-  traverse_ (createEntity "FfzEmote") emotes
+ffzUrlString :: CommandHandler String
+             -> CommandHandler ()
+ffzUrlString next message@Message { messageSender = sender } =
+    next $ fmap (const url) message
+    where url = maybe "tsoding"
+                      (printf "https://api.frankerfacez.com/v1/room/%s" . URI.encode)
+                      (tailMay $ T.unpack $ senderChannel sender)
 
-bttvApiEmotes :: CommandHandler [BttvEmote] -> CommandHandler ()
-bttvApiEmotes commandHandler message@Message { messageSender = sender } = do
-  let url = maybe "tsoding"
-                  (printf "https://api.betterttv.net/2/channels/%s" . URI.encode)
-                  (tailMay $ T.unpack $ senderChannel sender)
-  emotes <- requestEmoteList url bttvApiResponseAsEmoteList
-  commandHandler $ fmap (const $ map BttvEmote emotes) message
+bttvUrlString :: CommandHandler String
+              -> CommandHandler ()
+bttvUrlString next message@Message { messageSender = sender } =
+    next $ fmap (const url) message
+    where url = maybe "tsoding"
+                      (printf "https://api.betterttv.net/2/channels/%s" . URI.encode)
+                      (tailMay $ T.unpack $ senderChannel sender)
 
-cacheBttvEmotes :: CommandHandler [BttvEmote]
-cacheBttvEmotes Message { messageContent = emotes } = do
-  void $ deleteEntities "BttvEmote" All
-  traverse_ (createEntity "BttvEmote") emotes
+replaceAllEntitiesCH :: IsEntity a => T.Text -> CommandHandler [a]
+replaceAllEntitiesCH name Message { messageContent = entities } = do
+  void $ deleteEntities name All
+  traverse_ (createEntity name) entities
 
 ffzCommand :: CommandHandler ()
-ffzCommand = selectEmotes "FfzEmote" $ replyEmotes @FfzEmote
+ffzCommand =
+    selectEntitiesCH "FfzEmote" All $
+    contramapCH (T.concat .
+                 intersperse " " .
+                 map (ffzName . entityPayload))
+    replyMessage
 
 bttvCommand :: CommandHandler ()
-bttvCommand = selectEmotes "BttvEmote" $ replyEmotes @BttvEmote
+bttvCommand =
+    selectEntitiesCH "BttvEmote" All $
+    contramapCH (T.concat .
+                 intersperse " " .
+                 map (bttvName . entityPayload))
+    replyMessage
 
 updateFfzEmotesCommand :: CommandHandler ()
-updateFfzEmotesCommand = ffzApiEmotes cacheFfzEmotes
+updateFfzEmotesCommand =
+    ffzUrlString    $
+    urlAsRequest    $ dropEither $
+    jsonHttpRequest $ dropEither $
+    contramapCH ffzResEmotes     $
+    replaceAllEntitiesCH "FfzEmote"
 
 updateBttvEmotesCommand :: CommandHandler ()
-updateBttvEmotesCommand = bttvApiEmotes cacheBttvEmotes
+updateBttvEmotesCommand =
+    bttvUrlString   $
+    urlAsRequest    $ dropEither $
+    jsonHttpRequest $ dropEither $
+    contramapCH bttvResEmotes    $
+    replaceAllEntitiesCH "BttvEmote"
