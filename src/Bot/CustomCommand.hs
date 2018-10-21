@@ -108,11 +108,20 @@ updateCustomCommand builtinCommands Message { messageSender = sender
                                        a built in command|]
     (Nothing, Nothing) -> replyToSender sender [qms|Command '{name}' does not exist|]
 
-expandCustomCommandVars :: CustomCommand -> Effect CustomCommand
-expandCustomCommandVars customCommand = do
+expandCustomCommandVars :: T.Text -> CustomCommand -> Effect CustomCommand
+expandCustomCommandVars args customCommand = do
+  (year, month, day) <- toGregorian . utctDay <$> now
   let message = customCommandMessage customCommand
   let times = customCommandTimes customCommand
-  expandedMessage <- expandVariables $ T.replace "%times" (T.pack $ show times) message
+  let vars = [ ("%times", [qms|{times}|])
+             , ("%1", args)
+             , ("%year", [qms|{year}|])
+             , ("%month", [qms|{month}|])
+             , ("%day", [qms|{day}|])
+             , ("%date", [qms|{day}.{month}.{year}|])
+             ]
+  expandedMessage <- expandVariables $
+                     foldl (flip $ uncurry T.replace) message vars
   return $ customCommand { customCommandMessage = expandedMessage }
 
 bumpCustomCommandTimes :: CustomCommand -> CustomCommand
@@ -141,13 +150,16 @@ customCommandCooldown cooldownTimeout customCommand =
 {-# ANN dispatchCustomCommand ("HLint: ignore Use fmap" :: String) #-}
 {-# ANN dispatchCustomCommand ("HLint: ignore Use <$>" :: String) #-}
 dispatchCustomCommand :: Message (Command T.Text) -> Effect ()
-dispatchCustomCommand Message { messageContent = command } =
-  do customCommand <- runMaybeT (customCommandByName (commandName command)
+dispatchCustomCommand Message { messageContent = Command { commandName = cmd
+                                                         , commandArgs = args
+                                                         }
+                              } =
+  do customCommand <- runMaybeT (customCommandByName cmd
                                    >>= customCommandCooldown 2.0
                                    >>= return . fmap bumpCustomCommandTimes
                                    >>= MaybeT . updateEntityById
                                    >>= return . entityPayload
-                                   >>= lift   . expandCustomCommandVars)
+                                   >>= lift   . expandCustomCommandVars args)
      maybe (return ())
            (say . customCommandMessage)
            customCommand
