@@ -108,8 +108,8 @@ updateCustomCommand builtinCommands Message { messageSender = sender
                                        a built in command|]
     (Nothing, Nothing) -> replyToSender sender [qms|Command '{name}' does not exist|]
 
-expandCustomCommandVars :: T.Text -> CustomCommand -> Effect CustomCommand
-expandCustomCommandVars args customCommand = do
+expandCustomCommandVars :: Sender -> T.Text -> CustomCommand -> Effect CustomCommand
+expandCustomCommandVars sender args customCommand = do
   (year, month, day) <- toGregorian . utctDay <$> now
   let message = customCommandMessage customCommand
   let times = customCommandTimes customCommand
@@ -119,6 +119,7 @@ expandCustomCommandVars args customCommand = do
              , ("%month", [qms|{month}|])
              , ("%day", [qms|{day}|])
              , ("%date", [qms|{day}.{month}.{year}|])
+             , ("%sender", [qms|{senderName sender}|])
              ]
   expandedMessage <- expandVariables $
                      foldl (flip $ uncurry T.replace) message vars
@@ -153,13 +154,14 @@ dispatchCustomCommand :: Message (Command T.Text) -> Effect ()
 dispatchCustomCommand Message { messageContent = Command { commandName = cmd
                                                          , commandArgs = args
                                                          }
+                              , messageSender = sender
                               } =
   do customCommand <- runMaybeT (customCommandByName cmd
                                    >>= customCommandCooldown 2.0
                                    >>= return . fmap bumpCustomCommandTimes
                                    >>= MaybeT . updateEntityById
                                    >>= return . entityPayload
-                                   >>= lift   . expandCustomCommandVars args)
+                                   >>= lift   . expandCustomCommandVars sender args)
      maybe (return ())
            (say . customCommandMessage)
            customCommand
