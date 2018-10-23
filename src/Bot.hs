@@ -86,6 +86,10 @@ builtinCommands =
                                                       regexArgsCommand "([a-zA-Z0-9]+) ?(.*)" $
                                                       pairArgsCommand $
                                                       updateCustomCommand builtinCommands))
+               , ("showcmd", ("Show custom command definition", modCommand $
+                                                                regexArgsCommand "([a-zA-Z0-9]+)" $
+                                                                firstArgCommand $
+                                                                showCustomCommand builtinCommands))
                , ("song", ("Print currently playing song", voidCommand currentSongCommand))
                , ("addalias", ("Add command alias", modCommand $
                                                     regexArgsCommand "([a-zA-Z0-9]+) ([a-zA-Z0-9]+)" $

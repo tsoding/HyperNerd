@@ -4,6 +4,7 @@ module Bot.CustomCommand ( addCustomCommand
                          , deleteCustomCommand
                          , dispatchCustomCommand
                          , updateCustomCommand
+                         , showCustomCommand
                          ) where
 
 import           Bot.Replies
@@ -91,6 +92,22 @@ deleteCustomCommand builtinCommands Message { messageSender = sender
                                         built in command|]
     (Nothing, Nothing) -> replyToSender sender [qms|Command '{name}' does not exist|]
 
+showCustomCommand :: CommandTable a -> CommandHandler T.Text
+showCustomCommand builtinCommands Message { messageContent = name
+                                          , messageSender = sender
+                                          } = do
+  customCommand <- runMaybeT $ customCommandByName name
+  let builtinCommand = M.lookup name builtinCommands
+
+  case (customCommand, builtinCommand) of
+    (Just cmd, Nothing) -> replyToSender sender [qms|Command '{name}' defined as
+                                                     '{customCommandMessage $ entityPayload cmd}'|]
+    (Nothing, Just _)   -> replyToSender sender [qms|Command '{name}' is builtin. Look into the code
+                                                     for the definition: https://github.com/tsoding/HyperNerd|]
+    (Just _, Just _)    -> errorEff [qms|Custom command '{name}' collide with
+                                         a built in command|]
+    (Nothing, Nothing)  -> replyToSender sender [qms|Command '{name}' does not exist|]
+
 updateCustomCommand :: CommandTable a -> CommandHandler (T.Text, T.Text)
 updateCustomCommand builtinCommands Message { messageSender = sender
                                             , messageContent = (name, message)
@@ -105,7 +122,7 @@ updateCustomCommand builtinCommands Message { messageSender = sender
     (Nothing, Just _)  -> replyToSender sender [qms|Command '{name}' is builtin and
                                                     can't be updated like that|]
     (Just _, Just _)   -> errorEff [qms|Custom command '{name}' collide with
-                                       a built in command|]
+                                        a built in command|]
     (Nothing, Nothing) -> replyToSender sender [qms|Command '{name}' does not exist|]
 
 expandCustomCommandVars :: Sender -> T.Text -> CustomCommand -> Effect CustomCommand
