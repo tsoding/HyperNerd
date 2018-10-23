@@ -86,7 +86,7 @@ builtinCommands =
                                                       regexArgsCommand "([a-zA-Z0-9]+) ?(.*)" $
                                                       pairArgsCommand $
                                                       updateCustomCommand builtinCommands))
-               -- TODO: use help instead of !showcmd
+               -- TODO(#337): use help instead of !showcmd
                , ("showcmd", ("Show custom command definition", regexArgsCommand "([a-zA-Z0-9]+)" $
                                                                 firstArgCommand $
                                                                 showCustomCommand builtinCommands))
