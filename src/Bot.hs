@@ -73,8 +73,6 @@ builtinCommands =
                                                      firstArgCommand voteCommand))
                , ("uptime", ("Show stream uptime", voidCommand uptimeCommand))
                , ("rq", ("Get random quote from your log", randomLogRecordCommand))
-               , ("nope", ("Timeout yourself for 1 second", timeoutMessage 1))
-               , ("atme", ("At yourself", replyMessage . fmap (const "")))
                , ("addperiodic", ("Add periodic command", modCommand $
                                                           commandArgsCommand addPeriodicCommand))
                , ("delperiodic", ("Delete periodic command", modCommand removePeriodicCommand))
@@ -88,6 +86,14 @@ builtinCommands =
                                                       regexArgsCommand "([a-zA-Z0-9]+) ?(.*)" $
                                                       pairArgsCommand $
                                                       updateCustomCommand builtinCommands))
+               -- TODO(#337): use help instead of !showcmd
+               , ("showcmd", ("Show custom command definition", regexArgsCommand "([a-zA-Z0-9]+)" $
+                                                                firstArgCommand $
+                                                                showCustomCommand builtinCommands))
+               , ("timescmd", ("Show amount of times the custom commands was invoked",
+                               regexArgsCommand "([a-zA-Z0-9]+)" $
+                               firstArgCommand $
+                               timesCustomCommand builtinCommands))
                , ("song", ("Print currently playing song", voidCommand currentSongCommand))
                , ("addalias", ("Add command alias", modCommand $
                                                     regexArgsCommand "([a-zA-Z0-9]+) ([a-zA-Z0-9]+)" $
