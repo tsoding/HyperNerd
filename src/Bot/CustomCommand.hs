@@ -5,6 +5,7 @@ module Bot.CustomCommand ( addCustomCommand
                          , dispatchCustomCommand
                          , updateCustomCommand
                          , showCustomCommand
+                         , timesCustomCommand
                          ) where
 
 import           Bot.Replies
@@ -107,6 +108,24 @@ showCustomCommand builtinCommands Message { messageContent = name
     (Just _, Just _)    -> errorEff [qms|Custom command '{name}' collide with
                                          a built in command|]
     (Nothing, Nothing)  -> replyToSender sender [qms|Command '{name}' does not exist|]
+
+timesCustomCommand :: CommandTable a -> CommandHandler T.Text
+timesCustomCommand builtinCommands Message { messageSender = sender
+                                           , messageContent = name
+                                           } = do
+  customCommand <- runMaybeT $ customCommandByName name
+  let builtinCommand = M.lookup name builtinCommands
+
+  case (customCommand, builtinCommand) of
+    (Just cmd, Nothing) -> replyToSender sender [qms|Command '{name}' was invoked
+                                                     {customCommandTimes $ entityPayload cmd} times.|]
+    (Nothing, Just _)  -> replyToSender sender [qms|Command '{name}' is builtin and
+                                                    we don't track the frequency usage for builtin commands.
+                                                    See https://github.com/tsoding/HyperNerd/issues/334
+                                                    for more info.|]
+    (Just _, Just _)   -> errorEff [qms|Custom command '{name}' collide with
+                                        a built in command|]
+    (Nothing, Nothing) -> replyToSender sender [qms|Command '{name}' does not exist|]
 
 updateCustomCommand :: CommandTable a -> CommandHandler (T.Text, T.Text)
 updateCustomCommand builtinCommands Message { messageSender = sender
