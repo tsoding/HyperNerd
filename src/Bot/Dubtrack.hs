@@ -73,5 +73,5 @@ currentSongCommand Message { messageSender = sender } = do
     Left message -> errorEff $ T.pack message
     Right dubtrackResponse ->
         maybe (replyToSender sender "Nothing is playing right now")
-              (\song -> replyToSender sender [qms|"{songName song}: {songLink song}"|])
+              (\song -> replyToSender sender [qms|❝{songName song}❞: {songLink song}|])
               (roomCurrentSong $ drData dubtrackResponse)
