@@ -10,7 +10,7 @@ import           Effect
 import           Events
 import           Reaction
 
--- TODO: CommandHandler can be easily replaced by MsgReaction only
+-- TODO(#341): CommandHandler can be easily replaced by MsgReaction only
 type CommandHandler a = Message a -> Effect ()
 type CommandTable = M.Map T.Text (T.Text, MsgReaction T.Text)
 
