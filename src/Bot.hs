@@ -39,7 +39,7 @@ type Bot = Event -> Effect ()
 
 builtinCommands :: CommandTable
 builtinCommands =
-    M.fromList [ ("russify", ("Russify western spy text", Reaction russifyCommand))
+    M.fromList [ ("russify", ("Russify western spy text", russifyCommand))
                , ("addquote", ("Add quote to quote database",
                                Reaction $
                                senderAuthorizedCommand (\sender -> senderMod sender || senderSubscriber sender)

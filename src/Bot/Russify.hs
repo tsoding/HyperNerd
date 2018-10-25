@@ -10,12 +10,11 @@ import qualified Data.Map.Lazy as M
 import           Data.Maybe
 import qualified Data.Text as T
 import           Data.Text.Encoding
-import           Effect
 import           Events
+import           Reaction
 
-russifyCommand :: Message T.Text -> Effect ()
-russifyCommand message =
-    replyMessage (russify <$> message)
+russifyCommand :: Reaction (Message T.Text)
+russifyCommand = Reaction $ (replyMessage . fmap russify)
 
 mazarusha :: M.Map T.Text T.Text
 mazarusha =
