@@ -97,7 +97,6 @@ executable HyperNerd
                      , bytestring
                      , clock
                      , containers
-                     , contravariant
                      , exceptions
                      , file-embed
                      , free
@@ -142,7 +141,6 @@ test-suite HyperNerdTest
                      , base
                      , bytestring
                      , containers
-                     , contravariant
                      , exceptions
                      , file-embed
                      , free
