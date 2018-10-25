@@ -241,7 +241,8 @@ bot Join = do
 bot event@(Msg sender text) = do
   recordUserMsg sender text
   forbidden <- forbidLinksForPlebs event
-  unless forbidden $
+  unless forbidden $ do
+    runReaction voteMessage $ Message sender text
     mapM redirectAlias (textAsPipe text) >>= dispatchPipe . Message sender
 
 helpCommand :: CommandTable -> CommandHandler T.Text

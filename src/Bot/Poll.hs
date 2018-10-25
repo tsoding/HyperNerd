@@ -16,6 +16,7 @@ import           Effect
 import           Entity
 import           Events
 import           Property
+import           Reaction
 import           Text.InterpolatedString.QM
 
 data PollOption = PollOption { poPollId :: Int
@@ -95,14 +96,20 @@ pollCommand Message { messageSender = sender
                            {optionsList}|]
                   timeout (fromIntegral durationMs) $ announcePollResults pollId
 
+
+voteMessage :: Reaction (Message T.Text)
+voteMessage = Reaction $ \message@Message { messageContent = option } -> do
+                poll <- currentPoll
+                case poll of
+                  Just poll' -> registerPollVote $ fmap (const (poll', option)) message
+                  Nothing    -> return ()
+
 voteCommand :: CommandHandler T.Text
-voteCommand Message { messageSender = sender
-                    , messageContent = option
-                    } = do
+voteCommand message@Message { messageContent = option } = do
   poll <- currentPoll
   case poll of
-    Just poll' -> registerPollVote poll' sender option
-    Nothing    -> replyToSender sender "No polls are in place"
+    Just poll' -> registerPollVote $ fmap (const (poll', option))         message
+    Nothing    -> replyMessage     $ fmap (const "No polls are in place") message
 
 pollLifetime :: UTCTime -> Entity Poll -> Double
 pollLifetime currentTime pollEntity =
@@ -185,8 +192,10 @@ registerOptionVote option sender = do
                                        , voteOptionId = entityId option
                                        }
 
-registerPollVote :: Entity Poll -> Sender -> T.Text -> Effect ()
-registerPollVote poll sender optionName = do
+registerPollVote :: Message (Entity Poll, T.Text) -> Effect ()
+registerPollVote Message { messageSender = sender
+                         , messageContent = (poll, optionName)
+                         } = do
   options <- selectEntities "PollOption" $
              Filter (PropertyEquals "pollId" $
                      PropertyInt $
