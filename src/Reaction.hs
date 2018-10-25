@@ -16,3 +16,6 @@ cmapF f reaction = Reaction (runReaction reaction . fmap f)
 
 liftE :: (a -> Effect b) -> Reaction b -> Reaction a
 liftE f reaction = Reaction $ (f >=> runReaction reaction)
+
+ignore :: Reaction a
+ignore = Reaction (const $ return ())
