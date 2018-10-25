@@ -10,13 +10,13 @@ import           Effect
 import           Events
 
 type CommandHandler a = Message a -> Effect ()
-type CommandTable a = M.Map T.Text (T.Text, CommandHandler a)
+type CommandTable = M.Map T.Text (T.Text, CommandHandler T.Text)
 
 contramapCH :: (a -> b)
              -> CommandHandler b
              -> CommandHandler a
-contramapCH f commandHandler message =
-    commandHandler (f <$> message)
+contramapCH f commandHandler =
+    commandHandler . fmap f
 
 data Command a = Command { commandName :: T.Text
                          , commandArgs :: a

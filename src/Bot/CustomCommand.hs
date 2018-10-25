@@ -51,7 +51,7 @@ customCommandByName name =
       $ selectEntities "CustomCommand"
       $ Filter (PropertyEquals "name" $ PropertyText name) All
 
-addCustomCommand :: CommandTable a -> CommandHandler (T.Text, T.Text)
+addCustomCommand :: CommandTable -> CommandHandler (T.Text, T.Text)
 addCustomCommand builtinCommands Message { messageSender = sender
                                          , messageContent = (name, message)
                                          } = do
@@ -73,7 +73,7 @@ addCustomCommand builtinCommands Message { messageSender = sender
                                                              }
            replyToSender sender [qms|Added command '{name}'|]
 
-deleteCustomCommand :: CommandTable a -> CommandHandler T.Text
+deleteCustomCommand :: CommandTable -> CommandHandler T.Text
 deleteCustomCommand builtinCommands Message { messageSender = sender
                                             , messageContent = name
                                             } = do
@@ -93,7 +93,7 @@ deleteCustomCommand builtinCommands Message { messageSender = sender
                                         built in command|]
     (Nothing, Nothing) -> replyToSender sender [qms|Command '{name}' does not exist|]
 
-showCustomCommand :: CommandTable a -> CommandHandler T.Text
+showCustomCommand :: CommandTable -> CommandHandler T.Text
 showCustomCommand builtinCommands Message { messageContent = name
                                           , messageSender = sender
                                           } = do
@@ -109,7 +109,7 @@ showCustomCommand builtinCommands Message { messageContent = name
                                          a built in command|]
     (Nothing, Nothing)  -> replyToSender sender [qms|Command '{name}' does not exist|]
 
-timesCustomCommand :: CommandTable a -> CommandHandler T.Text
+timesCustomCommand :: CommandTable -> CommandHandler T.Text
 timesCustomCommand builtinCommands Message { messageSender = sender
                                            , messageContent = name
                                            } = do
@@ -127,7 +127,7 @@ timesCustomCommand builtinCommands Message { messageSender = sender
                                         a built in command|]
     (Nothing, Nothing) -> replyToSender sender [qms|Command '{name}' does not exist|]
 
-updateCustomCommand :: CommandTable a -> CommandHandler (T.Text, T.Text)
+updateCustomCommand :: CommandTable -> CommandHandler (T.Text, T.Text)
 updateCustomCommand builtinCommands Message { messageSender = sender
                                             , messageContent = (name, message)
                                             } = do
