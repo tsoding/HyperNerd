@@ -36,7 +36,7 @@ import           Text.Regex.TDFA.String
 
 type Bot = Event -> Effect ()
 
-builtinCommands :: CommandTable T.Text
+builtinCommands :: CommandTable
 builtinCommands =
     M.fromList [ ("russify", ("Russify western spy text", russifyCommand))
                , ("addquote", ("Add quote to quote database",
@@ -218,7 +218,7 @@ bot event@(Msg sender text) = do
   unless forbidden $
     mapM redirectAlias (textAsPipe text) >>= dispatchPipe . Message sender
 
-helpCommand :: CommandTable T.Text -> CommandHandler T.Text
+helpCommand :: CommandTable -> CommandHandler T.Text
 helpCommand commandTable message@Message { messageContent = "" } =
     replyMessage $
     fmap (const [qm|Available commands: {commandList}|]) message

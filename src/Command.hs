@@ -10,7 +10,7 @@ import           Effect
 import           Events
 
 type CommandHandler a = Message a -> Effect ()
-type CommandTable a = M.Map T.Text (T.Text, CommandHandler a)
+type CommandTable = M.Map T.Text (T.Text, CommandHandler T.Text)
 
 contramapCH :: (a -> b)
              -> CommandHandler b
