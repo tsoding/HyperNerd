@@ -5,12 +5,13 @@ module Bot.Variable ( expandVariables
                     , updateVariable
                     ) where
 
-import           Command
 import qualified Data.Map as M
 import qualified Data.Text as T
 import           Effect
 import           Entity
 import           Property
+import           Reaction
+import           Events
 
 data Variable = Variable { variableName :: T.Text
                          , variableValue :: T.Text
@@ -30,13 +31,13 @@ expandVariables :: T.Text -> Effect T.Text
 expandVariables = return
 
 -- TODO(#244): addVariable is not implemented
-addVariable :: CommandHandler T.Text
-addVariable _ = return ()
+addVariable :: Reaction (Message T.Text)
+addVariable = ignore
 
 -- TODO(#245): deleteVariable is not implemented
-deleteVariable :: CommandHandler T.Text
-deleteVariable _ = return ()
+deleteVariable :: Reaction (Message T.Text)
+deleteVariable = ignore
 
 -- TODO(#246): updateVariable is not implemented
-updateVariable :: CommandHandler (T.Text, T.Text)
-updateVariable _ = return ()
+updateVariable :: Reaction (Message (T.Text, T.Text))
+updateVariable = ignore

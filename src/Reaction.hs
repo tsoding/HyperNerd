@@ -1,19 +1,21 @@
 module Reaction where
 
-import Data.Functor.Contravariant
-import Data.Functor.Contravariant.Compose
 import Effect
 import Events
+import Control.Monad
 
 newtype Reaction a = Reaction { runReaction :: a -> Effect () }
 
-instance Contravariant Reaction where
-    contramap f reaction = Reaction $ runReaction reaction . f
+type MsgReaction a = Reaction (Message a)
 
-type MsgReaction a = ComposeCF Reaction Message a
+cmap :: (a -> b) -> Reaction b -> Reaction a
+cmap f reaction = Reaction (runReaction reaction . f)
 
-msgReaction :: (Message a -> Effect ()) -> MsgReaction a
-msgReaction = ComposeCF . Reaction
+cmapF :: Functor f => (a -> b) -> Reaction (f b) -> Reaction (f a)
+cmapF f reaction = Reaction (runReaction reaction . fmap f)
 
-runMsgReaction :: MsgReaction a -> Message a -> Effect ()
-runMsgReaction = runReaction . getComposeCF
+liftE :: (a -> Effect b) -> Reaction b -> Reaction a
+liftE f reaction = Reaction (f >=> runReaction reaction)
+
+ignore :: Reaction a
+ignore = Reaction (const $ return ())
