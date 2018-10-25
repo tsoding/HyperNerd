@@ -28,6 +28,7 @@ import qualified Data.Text as T
 import           Effect
 import           Entity
 import           Events
+import           Reaction
 import           Text.InterpolatedString.QM
 import           Text.Read
 import           Text.Regex.Base.RegexLike
@@ -38,25 +39,30 @@ type Bot = Event -> Effect ()
 
 builtinCommands :: CommandTable
 builtinCommands =
-    M.fromList [ ("russify", ("Russify western spy text", russifyCommand))
+    M.fromList [ ("russify", ("Russify western spy text", msgReaction russifyCommand))
                , ("addquote", ("Add quote to quote database",
+                               msgReaction $
                                senderAuthorizedCommand (\sender -> senderMod sender || senderSubscriber sender)
                                                        "Only subs and mods can add quotes, sorry."
                                                        addQuoteCommand))
                , ("delquote", ("Delete quote from quote database",
+                               msgReaction $
                                modCommand $
                                readCommand $
                                justCommand deleteQuoteCommand))
-               , ("quote", ("Get a quote from the quote database", readCommand quoteCommand))
-               , ("bttv", ("Show all available BTTV emotes", voidCommand bttvCommand))
-               , ("ffz", ("Show all available FFZ emotes", voidCommand ffzCommand))
-               , ("updateffz", ("Update FFZ cache", modCommand $
+               , ("quote", ("Get a quote from the quote database", msgReaction $ readCommand quoteCommand))
+               , ("bttv", ("Show all available BTTV emotes", msgReaction $ voidCommand bttvCommand))
+               , ("ffz", ("Show all available FFZ emotes", msgReaction $ voidCommand ffzCommand))
+               , ("updateffz", ("Update FFZ cache", msgReaction $
+                                                    modCommand $
                                                     voidCommand updateFfzEmotesCommand))
-               , ("updatebttv", ("Update BTTV cache", modCommand $
+               , ("updatebttv", ("Update BTTV cache", msgReaction $
+                                                      modCommand $
                                                       voidCommand updateBttvEmotesCommand))
 
-               , ("help", ("Send help", helpCommand builtinCommands))
-               , ("poll", ("Starts a poll", modCommand $
+               , ("help", ("Send help", msgReaction $ helpCommand builtinCommands))
+               , ("poll", ("Starts a poll", msgReaction $
+                                            modCommand $
                                             regexArgsCommand "([0-9]+) (.*)" $
                                             pairArgsCommand $
                                             contramapCH (\(duration, options) ->
@@ -65,47 +71,59 @@ builtinCommands =
                                                              T.unpack duration) $
                                             justCommand pollCommand))
                , ("cancelpoll", ("Cancels the current poll",
+                                 msgReaction $
                                  modCommand $
                                  voidCommand cancelPollCommand))
-               , ("checkpoll", ("", modCommand $
+               , ("checkpoll", ("", msgReaction $
+                                    modCommand $
                                     voidCommand currentPollCommand))
-               , ("vote", ("Vote for a poll option", wordsCommand $
+               , ("vote", ("Vote for a poll option", msgReaction $
+                                                     wordsCommand $
                                                      firstArgCommand voteCommand))
-               , ("uptime", ("Show stream uptime", voidCommand uptimeCommand))
-               , ("rq", ("Get random quote from your log", randomLogRecordCommand))
-               , ("addperiodic", ("Add periodic command", modCommand $
+               , ("uptime", ("Show stream uptime", msgReaction $ voidCommand uptimeCommand))
+               , ("rq", ("Get random quote from your log", msgReaction $ randomLogRecordCommand))
+               , ("addperiodic", ("Add periodic command", msgReaction $
+                                                          modCommand $
                                                           commandArgsCommand addPeriodicCommand))
-               , ("delperiodic", ("Delete periodic command", modCommand removePeriodicCommand))
-               , ("addcmd", ("Add custom command", modCommand $
+               , ("delperiodic", ("Delete periodic command", msgReaction $ modCommand removePeriodicCommand))
+               , ("addcmd", ("Add custom command", msgReaction $
+                                                   modCommand $
                                                    regexArgsCommand "([a-zA-Z0-9]+) ?(.*)" $
                                                    pairArgsCommand $
                                                    addCustomCommand builtinCommands))
-               , ("delcmd", ("Delete custom command", modCommand $
+               , ("delcmd", ("Delete custom command", msgReaction $
+                                                      modCommand $
                                                       deleteCustomCommand builtinCommands))
-               , ("updcmd", ("Update custom command", modCommand $
+               , ("updcmd", ("Update custom command", msgReaction $
+                                                      modCommand $
                                                       regexArgsCommand "([a-zA-Z0-9]+) ?(.*)" $
                                                       pairArgsCommand $
                                                       updateCustomCommand builtinCommands))
                -- TODO(#337): use help instead of !showcmd
-               , ("showcmd", ("Show custom command definition", regexArgsCommand "([a-zA-Z0-9]+)" $
+               , ("showcmd", ("Show custom command definition", msgReaction $
+                                                                regexArgsCommand "([a-zA-Z0-9]+)" $
                                                                 firstArgCommand $
                                                                 showCustomCommand builtinCommands))
                , ("timescmd", ("Show amount of times the custom commands was invoked",
+                               msgReaction $
                                regexArgsCommand "([a-zA-Z0-9]+)" $
                                firstArgCommand $
                                timesCustomCommand builtinCommands))
-               , ("song", ("Print currently playing song", voidCommand currentSongCommand))
-               , ("addalias", ("Add command alias", modCommand $
+               , ("song", ("Print currently playing song", msgReaction $ voidCommand currentSongCommand))
+               , ("addalias", ("Add command alias", msgReaction $
+                                                    modCommand $
                                                     regexArgsCommand "([a-zA-Z0-9]+) ([a-zA-Z0-9]+)" $
                                                     pairArgsCommand addAliasCommand))
-               , ("delalias", ("Remove command alias", modCommand removeAliasCommand))
-               , ("addvar", ("Add variable", modCommand addVariable))
-               , ("updvar", ("Update variable", modCommand $
+               , ("delalias", ("Remove command alias", msgReaction $ modCommand removeAliasCommand))
+               , ("addvar", ("Add variable", msgReaction $ modCommand addVariable))
+               , ("updvar", ("Update variable", msgReaction $
+                                                modCommand $
                                                 regexArgsCommand "([a-zA-Z0-9]+) ?(.*)" $
                                                 pairArgsCommand updateVariable))
-               , ("delvar", ("Delete variable", modCommand deleteVariable))
+               , ("delvar", ("Delete variable", msgReaction $ modCommand deleteVariable))
                , ("nuke", ([qms|Looks at N previous messages and bans all of
                                 the users whose messages match provided regex|],
+                           msgReaction $
                            modCommand $
                            regexArgsCommand "([0-9]+) (.*)" $
                            pairArgsCommand $ \Message { messageContent = (strN, regexStr) } ->
@@ -123,15 +141,18 @@ builtinCommands =
                                                SortBy "timestamp" Desc All
                                       traverse_ (banUser . lrUser . entityPayload) $
                                         filter (isRight . execute regex . T.unpack . lrMsg . entityPayload) logs))
-               , ("cycle", ("Mock the message", replyMessage . fmap mockMessage))
-               , ("trust", ("Makes the user trusted", modCommand $
+               , ("cycle", ("Mock the message", msgReaction (replyMessage . fmap mockMessage)))
+               , ("trust", ("Makes the user trusted", msgReaction $
+                                                      modCommand $
                                                       regexArgsCommand "(.+)" $
                                                       firstArgCommand trustCommand))
-               , ("untrust", ("Untrusts the user", modCommand $
+               , ("untrust", ("Untrusts the user", msgReaction $
+                                                   modCommand $
                                                    regexArgsCommand "(.+)" $
                                                    firstArgCommand untrustCommand))
-               , ("amitrusted", ("Check if you are a trusted user", voidCommand amitrustedCommand))
-               , ("istrusted", ("Check if the user is trusted", regexArgsCommand "(.+)" $
+               , ("amitrusted", ("Check if you are a trusted user", msgReaction $ voidCommand amitrustedCommand))
+               , ("istrusted", ("Check if the user is trusted", msgReaction $
+                                                                regexArgsCommand "(.+)" $
                                                                 firstArgCommand istrustedCommand))
                ]
 
@@ -252,5 +273,5 @@ dispatchBuiltinCommand message@Message { messageContent =
                                                      }
                                        } =
     maybe (return ())
-          (\(_, f) -> f $ fmap (const args) message)
+          (\(_, f) -> runMsgReaction f $ fmap (const args) message)
           (M.lookup name builtinCommands)

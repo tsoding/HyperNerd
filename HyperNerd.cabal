@@ -81,6 +81,7 @@ executable HyperNerd
                      , Events
                      , IrcTransport
                      , Property
+                     , Reaction
                      , Sqlite.Compiler
                      , Sqlite.EntityPersistence
                      , Sqlite.Migration
@@ -96,6 +97,7 @@ executable HyperNerd
                      , bytestring
                      , clock
                      , containers
+                     , contravariant
                      , exceptions
                      , file-embed
                      , free
@@ -134,16 +136,18 @@ test-suite HyperNerdTest
   main-is:             Spec.hs
   hs-source-dirs:      src
                      , test
-  build-depends:       aeson
+  build-depends:       HUnit
+                     , aeson
                      , async
-                     , HUnit
                      , base
                      , bytestring
                      , containers
+                     , contravariant
                      , exceptions
                      , file-embed
                      , free
                      , http-conduit
+                     , qm-interpolated-string
                      , raw-strings-qq
                      , regex-tdfa
                      , safe
@@ -154,7 +158,6 @@ test-suite HyperNerdTest
                      , transformers
                      , unordered-containers
                      , uri-encode
-                     , qm-interpolated-string
 
   other-modules:       Bot.BttvFfz
                      , Bot.Links
@@ -166,6 +169,7 @@ test-suite HyperNerdTest
                      , Entity
                      , Events
                      , Property
+                     , Reaction
                      , Sqlite.EntityPersistence
                      , Sqlite.EntityPersistenceSpec
                      , Sqlite.Migration
