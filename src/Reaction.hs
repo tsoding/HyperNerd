@@ -15,7 +15,7 @@ cmapF :: Functor f => (a -> b) -> Reaction (f b) -> Reaction (f a)
 cmapF f reaction = Reaction (runReaction reaction . fmap f)
 
 liftE :: (a -> Effect b) -> Reaction b -> Reaction a
-liftE f reaction = Reaction $ (f >=> runReaction reaction)
+liftE f reaction = Reaction (f >=> runReaction reaction)
 
 ignore :: Reaction a
 ignore = Reaction (const $ return ())

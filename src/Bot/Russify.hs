@@ -14,7 +14,7 @@ import           Events
 import           Reaction
 
 russifyCommand :: Reaction (Message T.Text)
-russifyCommand = Reaction $ (replyMessage . fmap russify)
+russifyCommand = Reaction (replyMessage . fmap russify)
 
 mazarusha :: M.Map T.Text T.Text
 mazarusha =
