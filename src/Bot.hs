@@ -143,7 +143,7 @@ mockMessage =
                                    else Data.Char.toLower) True
 
 readCommand :: Read a => CommandHandler (Maybe a) -> CommandHandler T.Text
-readCommand commandHandler = commandHandler . fmap (readMaybe . T.unpack)
+readCommand = contramapCH (readMaybe . T.unpack)
 
 justCommand :: CommandHandler a -> CommandHandler (Maybe a)
 justCommand commandHandler message@Message { messageContent = Just arg } =
@@ -164,7 +164,7 @@ voidCommand commandHandler =
     commandHandler . void
 
 wordsCommand :: CommandHandler [T.Text] -> CommandHandler T.Text
-wordsCommand commandHandler = commandHandler . fmap T.words
+wordsCommand = contramapCH T.words
 
 firstArgCommand :: CommandHandler a -> CommandHandler [a]
 firstArgCommand _ message@Message { messageContent = [] } =
