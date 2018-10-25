@@ -115,12 +115,17 @@ builtinCommands =
                                                     regexArgsCommand "([a-zA-Z0-9]+) ([a-zA-Z0-9]+)" $
                                                     pairArgsCommand addAliasCommand))
                , ("delalias", ("Remove command alias", Reaction $ modCommand removeAliasCommand))
-               , ("addvar", ("Add variable", Reaction $ modCommand addVariable))
+               , ("addvar", ("Add variable", Reaction $
+                                             modCommand $
+                                             runReaction addVariable))
                , ("updvar", ("Update variable", Reaction $
                                                 modCommand $
                                                 regexArgsCommand "([a-zA-Z0-9]+) ?(.*)" $
-                                                pairArgsCommand updateVariable))
-               , ("delvar", ("Delete variable", Reaction $ modCommand deleteVariable))
+                                                pairArgsCommand $
+                                                runReaction updateVariable))
+               , ("delvar", ("Delete variable", Reaction $
+                                                modCommand $
+                                                runReaction deleteVariable))
                , ("nuke", ([qms|Looks at N previous messages and bans all of
                                 the users whose messages match provided regex|],
                            Reaction $
