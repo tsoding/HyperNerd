@@ -81,7 +81,7 @@ builtinCommands =
                                                      wordsCommand $
                                                      firstArgCommand voteCommand))
                , ("uptime", ("Show stream uptime", msgReaction $ voidCommand uptimeCommand))
-               , ("rq", ("Get random quote from your log", msgReaction $ randomLogRecordCommand))
+               , ("rq", ("Get random quote from your log", msgReaction randomLogRecordCommand))
                , ("addperiodic", ("Add periodic command", msgReaction $
                                                           modCommand $
                                                           commandArgsCommand addPeriodicCommand))
