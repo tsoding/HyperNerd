@@ -13,6 +13,7 @@ import           Entity
 import           Events
 import           Property
 import           Text.InterpolatedString.QM
+import           Reaction
 import           HyperNerd.Functor
 
 data Quote = Quote { quoteContent :: T.Text
@@ -38,17 +39,15 @@ deleteQuoteCommand Message { messageSender = sender
   deleteEntityById "quote" quoteId
   replyToSender sender "Quote has been deleted"
 
-addQuoteCommand :: CommandHandler T.Text
-addQuoteCommand Message { messageSender = sender
-                        , messageContent = content
-                        } = do
-  timestamp <- now
-  entity <- createEntity "quote" Quote { quoteContent = content
-                                       , quoteQuoter = senderName sender
-                                       , quoteTimestamp = timestamp
-                                       }
-  replyToSender sender [qms|Added the quote under the
-                            number {entityId entity}|]
+addQuoteCommand :: Reaction (Message T.Text)
+addQuoteCommand =
+  cmapF Quote $
+  cmap (reflect (senderName . messageSender)) $
+  liftKM (<$> now) $
+  liftKM (createEntity "quote") $
+  cmapF (\entity -> [qms|Added the quote under the
+                         number {entityId entity}|]) $
+  liftK replyMessage ignore
 
 quoteCommand :: CommandHandler (Maybe Int)
 quoteCommand Message { messageSender = sender

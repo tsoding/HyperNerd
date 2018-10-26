@@ -42,10 +42,9 @@ builtinCommands :: CommandTable
 builtinCommands =
     M.fromList [ ("russify", ("Russify western spy text", russifyCommand))
                , ("addquote", ("Add quote to quote database",
-                               Reaction $
-                               senderAuthorizedCommand (\sender -> senderMod sender || senderSubscriber sender)
-                                                       "Only subs and mods can add quotes, sorry."
-                                                       addQuoteCommand))
+                               authorizeSender (\sender -> senderMod sender || senderSubscriber sender) $
+                               replyOnNothing "Only subs and mods can add quotes, sorry."
+                               addQuoteCommand))
                , ("delquote", ("Delete quote from quote database",
                                Reaction $
                                modCommand $

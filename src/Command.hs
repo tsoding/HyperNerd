@@ -12,7 +12,7 @@ import           Reaction
 
 -- TODO(#341): CommandHandler can be easily replaced by MsgReaction only
 type CommandHandler a = Message a -> Effect ()
-type CommandTable = M.Map T.Text (T.Text, MsgReaction T.Text)
+type CommandTable = M.Map T.Text (T.Text, ReactionM T.Text)
 
 contramapCH :: (a -> b)
              -> CommandHandler b
