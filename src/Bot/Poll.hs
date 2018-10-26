@@ -12,14 +12,14 @@ import qualified Data.Map as M
 import           Data.Maybe
 import qualified Data.Text as T
 import           Data.Time
+import           Data.Tuple
 import           Effect
 import           Entity
 import           Events
+import           HyperNerd.Functor
 import           Property
 import           Reaction
 import           Text.InterpolatedString.QM
-import           Data.Tuple
-import           HyperNerd.Functor
 
 data PollOption = PollOption { poPollId :: Int
                              , poName :: T.Text
@@ -101,15 +101,15 @@ pollCommand Message { messageSender = sender
 
 voteMessage :: Reaction (Message T.Text)
 voteMessage =
-    liftK (return . fmap . outerProduct' (,)) $
-    liftK ($ currentPoll) $
+    cmap (outerProduct' (,)) $
+    liftK (<$> currentPoll) $
     ignoreNothing $
     Reaction registerPollVote
 
 voteCommand :: Reaction (Message T.Text)
 voteCommand =
-    liftK (return . fmap . outerProduct (,)) $
-    liftK ($ currentPoll) $
+    cmap (outerProduct (,)) $
+    liftK (<$> currentPoll) $
     replyOnNothing "No polls are in place" $
     cmapF swap $
     Reaction registerPollVote
