@@ -27,7 +27,7 @@ ignoreNothing :: Reaction a -> Reaction (Maybe a)
 ignoreNothing = Reaction . maybe (return ()) . runReaction
 
 outerProduct :: (Functor f, Functor g) => (a -> b -> c) -> f a -> g b -> f (g c)
-outerProduct f fa gb = (<$> gb) <$> f <$> fa
+outerProduct f fa gb = (<$> gb) . f <$> fa
 
 outerProduct' :: (Functor f, Functor g) => (a -> b -> c) -> g b -> f a -> f (g c)
-outerProduct' f = flip $ outerProduct f
+outerProduct' = flip . outerProduct
