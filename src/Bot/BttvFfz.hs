@@ -23,6 +23,7 @@ import           Events
 import           Network.HTTP.Simple
 import qualified Network.URI.Encode as URI
 import           Property
+import           Reaction
 import           Safe
 import           Text.Printf
 
@@ -66,14 +67,6 @@ instance FromJSON FfzRes where
              >>= (.: "emoticons")
     parseJSON invalid = typeMismatch "FfzRes" invalid
 
-selectEntitiesCH :: IsEntity a => T.Text
-                 -> Selector
-                 -> CommandHandler [Entity a]
-                 -> CommandHandler ()
-selectEntitiesCH name selector commandHandler message = do
-  entities <- selectEntities name selector
-  commandHandler $ fmap (const entities) message
-
 urlAsRequest :: CommandHandler (Either SomeException Request)
              -> CommandHandler String
 urlAsRequest next = next . fmap parseRequest
@@ -112,21 +105,21 @@ replaceAllEntitiesCH name Message { messageContent = entities } = do
   void $ deleteEntities name All
   traverse_ (createEntity name) entities
 
-ffzCommand :: CommandHandler ()
+ffzCommand :: Reaction (Message ())
 ffzCommand =
-    selectEntitiesCH "FfzEmote" All $
-    contramapCH (T.concat .
-                 intersperse " " .
-                 map (ffzName . entityPayload))
-    replyMessage
+    liftEM (selectEntities "FfzEmote" All) $
+    cmapF  (T.concat .
+            intersperse " " .
+            map (ffzName . entityPayload)) $
+    Reaction replyMessage
 
-bttvCommand :: CommandHandler ()
+bttvCommand :: Reaction (Message ())
 bttvCommand =
-    selectEntitiesCH "BttvEmote" All $
-    contramapCH (T.concat .
-                 intersperse " " .
-                 map (bttvName . entityPayload))
-    replyMessage
+    liftEM (selectEntities "BttvEmote" All) $
+    cmapF  (T.concat .
+            intersperse " " .
+            map (bttvName . entityPayload)) $
+    Reaction replyMessage
 
 updateFfzEmotesCommand :: CommandHandler ()
 updateFfzEmotesCommand =

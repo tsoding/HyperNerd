@@ -85,6 +85,7 @@ executable HyperNerd
                      , Sqlite.Compiler
                      , Sqlite.EntityPersistence
                      , Sqlite.Migration
+                     , HyperNerd.Functor
   
   -- LANGUAGE extensions used by modules in this package.
   other-extensions:    OverloadedStrings

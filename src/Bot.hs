@@ -42,18 +42,18 @@ builtinCommands :: CommandTable
 builtinCommands =
     M.fromList [ ("russify", ("Russify western spy text", russifyCommand))
                , ("addquote", ("Add quote to quote database",
-                               Reaction $
-                               senderAuthorizedCommand (\sender -> senderMod sender || senderSubscriber sender)
-                                                       "Only subs and mods can add quotes, sorry."
-                                                       addQuoteCommand))
+                               authorizeSender (\sender -> senderMod sender || senderSubscriber sender) $
+                               replyOnNothing "Only subs and mods can add quotes, sorry."
+                               addQuoteCommand))
                , ("delquote", ("Delete quote from quote database",
-                               Reaction $
-                               modCommand $
-                               readCommand $
-                               justCommand deleteQuoteCommand))
+                               authorizeSender senderAuthority $
+                               replyOnNothing "Only for mods" $
+                               cmapF (readMaybe . T.unpack) $
+                               replyOnNothing "Expected integer as an argument"
+                               deleteQuoteCommand))
                , ("quote", ("Get a quote from the quote database", Reaction $ readCommand quoteCommand))
-               , ("bttv", ("Show all available BTTV emotes", Reaction $ voidCommand bttvCommand))
-               , ("ffz", ("Show all available FFZ emotes", Reaction $ voidCommand ffzCommand))
+               , ("bttv", ("Show all available BTTV emotes", cmap void bttvCommand))
+               , ("ffz", ("Show all available FFZ emotes", cmap void ffzCommand))
                , ("updateffz", ("Update FFZ cache", Reaction $
                                                     modCommand $
                                                     voidCommand updateFfzEmotesCommand))
