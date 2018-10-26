@@ -104,14 +104,15 @@ voteMessage =
     liftK (return . fmap . outerProduct' (,)) $
     liftK ($ currentPoll) $
     ignoreNothing $
-    liftK registerPollVote ignore
+    Reaction registerPollVote
 
 voteCommand :: Reaction (Message T.Text)
 voteCommand =
     liftK (return . fmap . outerProduct (,)) $
     liftK ($ currentPoll) $
     replyOnNothing "No polls are in place" $
-    liftK (registerPollVote . fmap swap) ignore
+    cmapF swap $
+    Reaction registerPollVote
 
 pollLifetime :: UTCTime -> Entity Poll -> Double
 pollLifetime currentTime =

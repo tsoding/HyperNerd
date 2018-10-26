@@ -36,8 +36,8 @@ deleteQuoteCommand :: Reaction (Message Int)
 deleteQuoteCommand =
   liftKM (deleteEntityById "quote") $
   cmapF  (const "Quote has been deleted") $
-  liftK  replyMessage
-  ignore
+  Reaction replyMessage
+
 
 addQuoteCommand :: Reaction (Message T.Text)
 addQuoteCommand =
@@ -47,8 +47,7 @@ addQuoteCommand =
   liftKM (createEntity "quote") $
   cmapF  (\entity -> [qms|Added the quote under the
                           number {entityId entity}|]) $
-  liftK  replyMessage
-  ignore
+  Reaction replyMessage
 
 quoteCommand :: CommandHandler (Maybe Int)
 quoteCommand Message { messageSender = sender
