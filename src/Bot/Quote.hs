@@ -13,6 +13,7 @@ import           Entity
 import           Events
 import           Property
 import           Text.InterpolatedString.QM
+import           HyperNerd.Functor
 
 data Quote = Quote { quoteContent :: T.Text
                    , quoteQuoter :: T.Text

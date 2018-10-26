@@ -19,6 +19,7 @@ import           Property
 import           Reaction
 import           Text.InterpolatedString.QM
 import           Data.Tuple
+import           HyperNerd.Functor
 
 data PollOption = PollOption { poPollId :: Int
                              , poName :: T.Text
