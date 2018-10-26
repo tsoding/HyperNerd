@@ -7,4 +7,4 @@ outerProduct' :: (Functor f, Functor g) => (a -> b -> c) -> g b -> f a -> f (g c
 outerProduct' = flip . outerProduct
 
 reflect :: Functor f => (f (a -> b) -> a) -> f (a -> b) -> f b
-reflect r f = ($ (r f)) <$> f
+reflect r f = ($ r f) <$> f
