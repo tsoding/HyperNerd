@@ -79,7 +79,8 @@ builtinCommands =
                                     voidCommand currentPollCommand))
                , ("vote", ("Vote for a poll option", Reaction $
                                                      wordsCommand $
-                                                     firstArgCommand voteCommand))
+                                                     firstArgCommand $
+                                                     runReaction voteCommand))
                , ("uptime", ("Show stream uptime", Reaction $ voidCommand uptimeCommand))
                , ("rq", ("Get random quote from your log", Reaction randomLogRecordCommand))
                , ("addperiodic", ("Add periodic command", Reaction $
