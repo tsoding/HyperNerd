@@ -46,10 +46,11 @@ builtinCommands =
                                replyOnNothing "Only subs and mods can add quotes, sorry."
                                addQuoteCommand))
                , ("delquote", ("Delete quote from quote database",
-                               Reaction $
-                               modCommand $
-                               readCommand $
-                               justCommand deleteQuoteCommand))
+                               authorizeSender senderAuthority $
+                               replyOnNothing "Only for mods" $
+                               cmapF (readMaybe . T.unpack) $
+                               replyOnNothing "Expected integer as an argument"
+                               deleteQuoteCommand))
                , ("quote", ("Get a quote from the quote database", Reaction $ readCommand quoteCommand))
                , ("bttv", ("Show all available BTTV emotes", Reaction $ voidCommand bttvCommand))
                , ("ffz", ("Show all available FFZ emotes", Reaction $ voidCommand ffzCommand))
