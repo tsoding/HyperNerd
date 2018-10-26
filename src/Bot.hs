@@ -34,6 +34,7 @@ import           Text.Read
 import           Text.Regex.Base.RegexLike
 import           Text.Regex.TDFA (defaultCompOpt, defaultExecOpt)
 import           Text.Regex.TDFA.String
+import           Safe
 
 type Bot = Event -> Effect ()
 
@@ -77,9 +78,9 @@ builtinCommands =
                , ("checkpoll", ("", Reaction $
                                     modCommand $
                                     voidCommand currentPollCommand))
-               , ("vote", ("Vote for a poll option", Reaction $
-                                                     wordsCommand $
-                                                     firstArgCommand voteCommand))
+               , ("vote", ("Vote for a poll option", cmapF T.words $
+                                                     cmapF headMay $
+                                                     silenceOnNothing voteCommand))
                , ("uptime", ("Show stream uptime", Reaction $ voidCommand uptimeCommand))
                , ("rq", ("Get random quote from your log", Reaction randomLogRecordCommand))
                , ("addperiodic", ("Add periodic command", Reaction $
@@ -115,9 +116,8 @@ builtinCommands =
                                                     regexArgsCommand "([a-zA-Z0-9]+) ([a-zA-Z0-9]+)" $
                                                     pairArgsCommand addAliasCommand))
                , ("delalias", ("Remove command alias", Reaction $ modCommand removeAliasCommand))
-               , ("addvar", ("Add variable", Reaction $
-                                             modCommand $
-                                             runReaction addVariable))
+               , ("addvar", ("Add variable", authorizeSender senderAuthority $
+                                             replyOnNothing "Only for mods" addVariable))
                , ("updvar", ("Update variable", Reaction $
                                                 modCommand $
                                                 regexArgsCommand "([a-zA-Z0-9]+) ?(.*)" $
@@ -189,9 +189,6 @@ voidCommand :: CommandHandler () -> CommandHandler a
 voidCommand commandHandler =
     commandHandler . void
 
-wordsCommand :: CommandHandler [T.Text] -> CommandHandler T.Text
-wordsCommand = contramapCH T.words
-
 firstArgCommand :: CommandHandler a -> CommandHandler [a]
 firstArgCommand _ message@Message { messageContent = [] } =
     replyMessage $ fmap (const "Not enough arguments") message
@@ -209,6 +206,11 @@ senderAuthorizedCommand predicate unauthorizedResponse commandHandler message =
     if predicate $ messageSender message
     then commandHandler message
     else replyMessage (const unauthorizedResponse <$> message)
+
+authorizeSender :: (Sender -> Bool) -> Reaction (Message (Maybe a)) -> Reaction (Message a)
+authorizeSender p = cmap (\msg -> if p $ messageSender msg
+                                  then Just <$> msg
+                                  else const Nothing <$> msg)
 
 pairArgsCommand :: CommandHandler (a, a) -> CommandHandler [a]
 pairArgsCommand commandHandler message@Message { messageContent = [x, y] } =

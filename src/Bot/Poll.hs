@@ -18,6 +18,7 @@ import           Events
 import           Property
 import           Reaction
 import           Text.InterpolatedString.QM
+import           Data.Tuple
 
 data PollOption = PollOption { poPollId :: Int
                              , poName :: T.Text
@@ -98,25 +99,25 @@ pollCommand Message { messageSender = sender
 
 
 voteMessage :: Reaction (Message T.Text)
-voteMessage = Reaction $ \message@Message { messageContent = option } -> do
-                poll <- currentPoll
-                case poll of
-                  Just poll' -> registerPollVote $ fmap (const (poll', option)) message
-                  Nothing    -> return ()
+voteMessage =
+    liftK (return . fmap . outerProduct' (,)) $
+    liftK ($ currentPoll) $
+    ignoreNothing $
+    liftK registerPollVote ignore
 
-voteCommand :: CommandHandler T.Text
-voteCommand message@Message { messageContent = option } = do
-  poll <- currentPoll
-  case poll of
-    Just poll' -> registerPollVote $ fmap (const (poll', option))         message
-    Nothing    -> replyMessage     $ fmap (const "No polls are in place") message
+voteCommand :: Reaction (Message T.Text)
+voteCommand =
+    liftK (return . fmap . outerProduct (,)) $
+    liftK ($ currentPoll) $
+    replyOnNothing "No polls are in place" $
+    liftK (registerPollVote . fmap swap) ignore
 
 pollLifetime :: UTCTime -> Entity Poll -> Double
-pollLifetime currentTime pollEntity =
-    realToFrac $
-    diffUTCTime currentTime $
-    pollStartedAt $
-    entityPayload pollEntity
+pollLifetime currentTime =
+    realToFrac .
+    diffUTCTime currentTime .
+    pollStartedAt .
+    entityPayload
 
 isPollAlive :: UTCTime -> Entity Poll -> Bool
 isPollAlive currentTime pollEntity =
