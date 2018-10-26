@@ -116,9 +116,8 @@ builtinCommands =
                                                     regexArgsCommand "([a-zA-Z0-9]+) ([a-zA-Z0-9]+)" $
                                                     pairArgsCommand addAliasCommand))
                , ("delalias", ("Remove command alias", Reaction $ modCommand removeAliasCommand))
-               , ("addvar", ("Add variable", Reaction $
-                                             modCommand $
-                                             runReaction addVariable))
+               , ("addvar", ("Add variable", authorizeSender senderAuthority $
+                                             replyOnNothing "Only for mods" addVariable))
                , ("updvar", ("Update variable", Reaction $
                                                 modCommand $
                                                 regexArgsCommand "([a-zA-Z0-9]+) ?(.*)" $
@@ -207,6 +206,11 @@ senderAuthorizedCommand predicate unauthorizedResponse commandHandler message =
     if predicate $ messageSender message
     then commandHandler message
     else replyMessage (const unauthorizedResponse <$> message)
+
+authorizeSender :: (Sender -> Bool) -> Reaction (Message (Maybe a)) -> Reaction (Message a)
+authorizeSender p = cmap (\msg -> if p $ messageSender msg
+                                  then Just <$> msg
+                                  else const Nothing <$> msg)
 
 pairArgsCommand :: CommandHandler (a, a) -> CommandHandler [a]
 pairArgsCommand commandHandler message@Message { messageContent = [x, y] } =
