@@ -43,3 +43,10 @@ replyOnNothing reply reaction =
                                        fmap (const x) message
                              Nothing -> replyMessage $
                                         fmap (const reply) message
+
+silenceOnNothing :: Reaction (Message a) -> Reaction (Message (Maybe a))
+silenceOnNothing reaction =
+    Reaction $ \message -> case messageContent message of
+                             Just x -> runReaction reaction $
+                                       fmap (const x) message
+                             Nothing -> return ()

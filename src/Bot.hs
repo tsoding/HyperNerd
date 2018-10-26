@@ -34,6 +34,7 @@ import           Text.Read
 import           Text.Regex.Base.RegexLike
 import           Text.Regex.TDFA (defaultCompOpt, defaultExecOpt)
 import           Text.Regex.TDFA.String
+import           Safe
 
 type Bot = Event -> Effect ()
 
@@ -77,10 +78,9 @@ builtinCommands =
                , ("checkpoll", ("", Reaction $
                                     modCommand $
                                     voidCommand currentPollCommand))
-               , ("vote", ("Vote for a poll option", Reaction $
-                                                     wordsCommand $
-                                                     firstArgCommand $
-                                                     runReaction voteCommand))
+               , ("vote", ("Vote for a poll option", cmapF T.words $
+                                                     cmapF headMay $
+                                                     silenceOnNothing voteCommand))
                , ("uptime", ("Show stream uptime", Reaction $ voidCommand uptimeCommand))
                , ("rq", ("Get random quote from your log", Reaction randomLogRecordCommand))
                , ("addperiodic", ("Add periodic command", Reaction $
@@ -189,9 +189,6 @@ commandArgsCommand commandHandler message@Message { messageContent = text } =
 voidCommand :: CommandHandler () -> CommandHandler a
 voidCommand commandHandler =
     commandHandler . void
-
-wordsCommand :: CommandHandler [T.Text] -> CommandHandler T.Text
-wordsCommand = contramapCH T.words
 
 firstArgCommand :: CommandHandler a -> CommandHandler [a]
 firstArgCommand _ message@Message { messageContent = [] } =
