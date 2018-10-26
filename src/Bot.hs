@@ -52,8 +52,8 @@ builtinCommands =
                                replyOnNothing "Expected integer as an argument"
                                deleteQuoteCommand))
                , ("quote", ("Get a quote from the quote database", Reaction $ readCommand quoteCommand))
-               , ("bttv", ("Show all available BTTV emotes", Reaction $ voidCommand bttvCommand))
-               , ("ffz", ("Show all available FFZ emotes", Reaction $ voidCommand ffzCommand))
+               , ("bttv", ("Show all available BTTV emotes", cmap void bttvCommand))
+               , ("ffz", ("Show all available FFZ emotes", cmap void ffzCommand))
                , ("updateffz", ("Update FFZ cache", Reaction $
                                                     modCommand $
                                                     voidCommand updateFfzEmotesCommand))

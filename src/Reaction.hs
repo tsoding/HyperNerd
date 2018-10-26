@@ -23,6 +23,9 @@ liftKM f reaction = Reaction $ \msg -> fmap (\x -> const x <$> msg) (f $ message
 liftE :: Effect a -> Reaction a -> Reaction b
 liftE = liftK . const
 
+liftEM :: Effect a -> ReactionM a -> ReactionM b
+liftEM = liftKM . const
+
 ignore :: Reaction a
 ignore = Reaction (const $ return ())
 
