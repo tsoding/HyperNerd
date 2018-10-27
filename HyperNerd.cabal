@@ -160,6 +160,7 @@ test-suite HyperNerdTest
 
   other-modules:       Bot.BttvFfz
                      , Bot.Links
+                     , Bot.Poll
                      , Bot.Replies
                      , BotSpec.LinksSpec
                      , Command
@@ -167,6 +168,7 @@ test-suite HyperNerdTest
                      , Effect
                      , Entity
                      , Events
+                     , HyperNerd.Functor
                      , Property
                      , Reaction
                      , Sqlite.EntityPersistence

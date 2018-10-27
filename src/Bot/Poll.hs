@@ -92,20 +92,13 @@ cancelPollCommand Message {messageSender = sender} = do
       say [qms|TwitchVotes The current poll has been cancelled!|]
     Nothing -> replyToSender sender "No polls are in place"
 
-defaulPollDurationMillis :: Int
-defaulPollDurationMillis = 10000
-
 -- TODO(#294): poll duration doesn't have upper/lower limit
 pollCommand :: CommandHandler (Int, [T.Text])
 pollCommand Message { messageSender = sender
                     , messageContent = (durationSecs, options)
                     } = do
   poll <- currentPoll
-  let orderedDurationMillis = durationSecs * 1000
-  let durationMs =
-        if orderedDurationMillis < defaulPollDurationMillis
-          then defaulPollDurationMillis
-          else orderedDurationMillis
+  let durationMs = durationSecs * 1000
   case poll of
     Just _ ->
       replyToSender sender "Cannot create a poll while another poll is in place"
@@ -163,18 +156,27 @@ currentPoll = do
   fmap (listToMaybe . filter (isPollAlive currentTime)) $
     selectEntities "Poll" $ Take 1 $ SortBy "startedAt" Desc All
 
+defaulPollDurationMillis :: Int
+defaulPollDurationMillis = 10000
+
+makePoll :: Sender -> Int -> UTCTime -> Poll
+makePoll sender duration startedAt =
+  Poll
+    { pollAuthor = senderName sender
+    , pollStartedAt = startedAt
+    , pollDuration = effectiveDuration
+    , pollCancelled = False
+    }
+  where
+    effectiveDuration =
+      if duration < defaulPollDurationMillis
+        then defaulPollDurationMillis
+        else duration
+
 startPoll :: Sender -> [T.Text] -> Int -> Effect Int
 startPoll sender options duration = do
   startedAt <- now
-  poll <-
-    createEntity
-      "Poll"
-      Poll
-        { pollAuthor = senderName sender
-        , pollStartedAt = startedAt
-        , pollDuration = duration
-        , pollCancelled = False
-        }
+  poll <- createEntity "Poll" (makePoll sender duration startedAt)
   let pollId = entityId poll
   for_ options $ \name ->
     createEntity "PollOption" PollOption {poName = name, poPollId = pollId}
