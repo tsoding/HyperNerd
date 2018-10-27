@@ -2,7 +2,7 @@
 
 module CommandSpec where
 
-import Bot.Poll (Poll(..), defaulPollDurationMillis, makePoll)
+import Bot.Poll (defaulPollDurationMillis, makePoll, pollDuration)
 import Command
 import Data.Text (pack)
 import Data.Time (fromGregorian)

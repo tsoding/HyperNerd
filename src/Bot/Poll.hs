@@ -1,7 +1,22 @@
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE QuasiQuotes #-}
 
-module Bot.Poll where
+module Bot.Poll
+  ( defaulPollDurationMillis
+  , startPoll
+  , announcePollResults
+  , registerOptionVote
+  , announceRunningPoll
+  , registerPollVote
+  , voteMessage
+  , pollCommand
+  , voteCommand
+  , cancelPollCommand
+  , currentPollCommand
+  , makePoll
+  , Poll()
+  , pollDuration
+  ) where
 
 import Bot.Replies
 import Command
