@@ -101,7 +101,7 @@ jsonHttpRequest =
     silenceOnLeft .
     liftKM httpRequest .
     cmapF  (eitherDecode . getResponseBody) .
-    -- TODO: we probably don't wanna silence JSON parsing errors
+    -- TODO(#349): we probably don't wanna silence JSON parsing errors
     silenceOnLeft
 
 updateFfzEmotesCommand :: Reaction (Message ())
