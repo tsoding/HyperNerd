@@ -54,12 +54,12 @@ builtinCommands =
                , ("quote", ("Get a quote from the quote database", Reaction $ readCommand quoteCommand))
                , ("bttv", ("Show all available BTTV emotes", cmap void bttvCommand))
                , ("ffz", ("Show all available FFZ emotes", cmap void ffzCommand))
-               , ("updateffz", ("Update FFZ cache", Reaction $
-                                                    modCommand $
-                                                    voidCommand updateFfzEmotesCommand))
-               , ("updatebttv", ("Update BTTV cache", Reaction $
-                                                      modCommand $
-                                                      voidCommand updateBttvEmotesCommand))
+               , ("updateffz", ("Update FFZ cache", authorizeSender senderAuthority $
+                                                    replyOnNothing "Only for mods" $
+                                                    cmap void updateFfzEmotesCommand))
+               , ("updatebttv", ("Update BTTV cache", authorizeSender senderAuthority $
+                                                      replyOnNothing "Only for mods" $
+                                                      cmap void updateBttvEmotesCommand))
 
                , ("help", ("Send help", Reaction $ helpCommand builtinCommands))
                , ("poll", ("Starts a poll", Reaction $
