@@ -50,3 +50,10 @@ silenceOnNothing reaction =
                              Just x -> runReaction reaction $
                                        fmap (const x) message
                              Nothing -> return ()
+
+silenceOnLeft :: Reaction (Message b) -> Reaction (Message (Either a b))
+silenceOnLeft reaction =
+    Reaction $ \message -> case messageContent message of
+                             Left _ -> return ()
+                             Right x -> runReaction reaction $
+                                        fmap (const x) message

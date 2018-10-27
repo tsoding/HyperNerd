@@ -8,12 +8,9 @@ module Bot.BttvFfz ( ffzCommand
                    ) where
 
 import           Bot.Replies
-import           Command
-import           Control.Exception
 import           Control.Monad
 import           Data.Aeson
 import           Data.Aeson.Types
-import           Data.Foldable
 import           Data.List
 import qualified Data.Map as M
 import qualified Data.Text as T
@@ -67,43 +64,20 @@ instance FromJSON FfzRes where
              >>= (.: "emoticons")
     parseJSON invalid = typeMismatch "FfzRes" invalid
 
-urlAsRequest :: CommandHandler (Either SomeException Request)
-             -> CommandHandler String
-urlAsRequest next = next . fmap parseRequest
-
-jsonHttpRequest :: FromJSON a => CommandHandler (Either String a)
-                -> CommandHandler Request
-jsonHttpRequest next message@Message { messageContent = request } = do
-  response <- eitherDecode . getResponseBody <$> httpRequest request
-  next $ fmap (const response) message
-
-dropEither :: Show e => CommandHandler a
-           -> CommandHandler (Either e a)
-dropEither _ Message { messageContent = Left e } =
-    errorEff $ T.pack $ show e
-dropEither next message@Message { messageContent = Right a } =
-    next $ fmap (const a) message
-
-ffzUrlString :: CommandHandler String
-             -> CommandHandler ()
-ffzUrlString next message@Message { messageSender = sender } =
-    next $ fmap (const url) message
+ffzUrl :: Message a -> Message String
+ffzUrl message@Message { messageSender = sender } =
+    fmap (const url) message
     where url = maybe "tsoding"
                       (printf "https://api.frankerfacez.com/v1/room/%s" . URI.encode)
                       (tailMay $ T.unpack $ senderChannel sender)
 
-bttvUrlString :: CommandHandler String
-              -> CommandHandler ()
-bttvUrlString next message@Message { messageSender = sender } =
-    next $ fmap (const url) message
+bttvUrl :: Message a -> Message String
+bttvUrl message@Message { messageSender = sender } =
+    fmap (const url) message
     where url = maybe "tsoding"
                       (printf "https://api.betterttv.net/2/channels/%s" . URI.encode)
                       (tailMay $ T.unpack $ senderChannel sender)
 
-replaceAllEntitiesCH :: IsEntity a => T.Text -> CommandHandler [a]
-replaceAllEntitiesCH name Message { messageContent = entities } = do
-  void $ deleteEntities name All
-  traverse_ (createEntity name) entities
 
 ffzCommand :: Reaction (Message ())
 ffzCommand =
@@ -121,18 +95,37 @@ bttvCommand =
             map (bttvName . entityPayload)) $
     Reaction replyMessage
 
-updateFfzEmotesCommand :: CommandHandler ()
-updateFfzEmotesCommand =
-    ffzUrlString    $
-    urlAsRequest    $ dropEither $
-    jsonHttpRequest $ dropEither $
-    contramapCH ffzResEmotes     $
-    replaceAllEntitiesCH "FfzEmote"
+jsonHttpRequest :: FromJSON a => Reaction (Message a) -> Reaction (Message String)
+jsonHttpRequest =
+    cmapF  parseRequest .
+    silenceOnLeft .
+    liftKM httpRequest .
+    cmapF  (eitherDecode . getResponseBody) .
+    -- TODO: we probably don't wanna silence JSON parsing errors
+    silenceOnLeft
 
-updateBttvEmotesCommand :: CommandHandler ()
+updateFfzEmotesCommand :: Reaction (Message ())
+updateFfzEmotesCommand =
+    cmap ffzUrl $
+    jsonHttpRequest $
+    cmapF ffzResEmotes $
+    liftKM (\emotes -> do
+              void $ deleteEntities "FfzEmote" All
+              traverse (createEntity "FfzEmote") emotes) $
+    cmapF (T.concat .
+           intersperse " " .
+           map (ffzName . entityPayload)) $
+    Reaction replyMessage
+
+updateBttvEmotesCommand :: Reaction (Message ())
 updateBttvEmotesCommand =
-    bttvUrlString   $
-    urlAsRequest    $ dropEither $
-    jsonHttpRequest $ dropEither $
-    contramapCH bttvResEmotes    $
-    replaceAllEntitiesCH "BttvEmote"
+    cmap bttvUrl $
+    jsonHttpRequest $
+    cmapF bttvResEmotes $
+    liftKM (\emotes -> do
+              void $ deleteEntities "BttvEmote" All
+              traverse (createEntity "BttvEmote") emotes) $
+    cmapF (T.concat .
+            intersperse " " .
+            map (bttvName . entityPayload)) $
+    Reaction replyMessage
