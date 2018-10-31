@@ -1,11 +1,12 @@
 {-# LANGUAGE QuasiQuotes #-}
+
 module Bot.Replies where
 
 import qualified Data.Text as T
-import           Effect
-import           Events
-import           Text.InterpolatedString.QM
-import           Reaction
+import Effect
+import Events
+import Reaction
+import Text.InterpolatedString.QM
 
 replyToUser :: T.Text -> T.Text -> Effect ()
 replyToUser user text = say [qms|@{user} {text}|]
@@ -14,9 +15,8 @@ replyToSender :: Sender -> T.Text -> Effect ()
 replyToSender sender = replyToUser (senderName sender)
 
 replyMessage :: Message T.Text -> Effect ()
-replyMessage Message { messageSender = sender
-                     , messageContent = text
-                     } = replyToSender sender text
+replyMessage Message {messageSender = sender, messageContent = text} =
+  replyToSender sender text
 
 banUser :: T.Text -> Effect ()
 banUser user = say [qms|/ban {user}|]
@@ -38,22 +38,21 @@ whisperToSender = whisperToUser . senderName
 
 replyOnNothing :: T.Text -> Reaction (Message a) -> Reaction (Message (Maybe a))
 replyOnNothing reply reaction =
-    Reaction $ \message -> case messageContent message of
-                             Just x -> runReaction reaction $
-                                       fmap (const x) message
-                             Nothing -> replyMessage $
-                                        fmap (const reply) message
+  Reaction $ \message ->
+    case messageContent message of
+      Just x -> runReaction reaction $ fmap (const x) message
+      Nothing -> replyMessage $ fmap (const reply) message
 
 silenceOnNothing :: Reaction (Message a) -> Reaction (Message (Maybe a))
 silenceOnNothing reaction =
-    Reaction $ \message -> case messageContent message of
-                             Just x -> runReaction reaction $
-                                       fmap (const x) message
-                             Nothing -> return ()
+  Reaction $ \message ->
+    case messageContent message of
+      Just x -> runReaction reaction $ fmap (const x) message
+      Nothing -> return ()
 
 silenceOnLeft :: Reaction (Message b) -> Reaction (Message (Either a b))
 silenceOnLeft reaction =
-    Reaction $ \message -> case messageContent message of
-                             Left _ -> return ()
-                             Right x -> runReaction reaction $
-                                        fmap (const x) message
+  Reaction $ \message ->
+    case messageContent message of
+      Left _ -> return ()
+      Right x -> runReaction reaction $ fmap (const x) message
