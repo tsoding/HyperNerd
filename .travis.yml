@@ -44,3 +44,4 @@ script:
 # Build the package, its tests, and its docs and run the tests
 - stack --docker --no-terminal test --haddock --no-haddock-deps
 - curl -sL https://raw.github.com/ndmitchell/hlint/master/misc/travis.sh | sh -s .
+- find -type f -name '*.hs' -exec stack exec hindent -- --validate {} \;
