@@ -102,7 +102,6 @@ executable HyperNerd
                      , file-embed
                      , free
                      , hlint
-                     , hindent
                      , hookup
                      , http-conduit
                      , ini

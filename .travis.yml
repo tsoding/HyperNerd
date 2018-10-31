@@ -39,6 +39,7 @@ install:
 # Build dependencies
 - stack docker pull
 - stack --docker --no-terminal --install-ghc test --only-dependencies
+- stack --docker --no-terminal install hindent
 
 script:
 # Build the package, its tests, and its docs and run the tests
