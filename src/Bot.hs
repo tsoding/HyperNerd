@@ -64,7 +64,7 @@ builtinCommands =
           replyOnNothing "Expected integer as an argument" deleteQuoteCommand))
     , ( "quote"
       , ( "Get a quote from the quote database"
-        , Reaction $ readCommand quoteCommand))
+        , cmapR (readMaybe . T.unpack) $ quoteCommand))
     , ("bttv", ("Show all available BTTV emotes", cmapR (const ()) bttvCommand))
     , ("ffz", ("Show all available FFZ emotes", cmapR (const ()) ffzCommand))
     , ( "updateffz"
@@ -206,9 +206,6 @@ mockMessage =
          then Data.Char.toUpper
          else Data.Char.toLower)
     True
-
-readCommand :: Read a => CommandHandler (Maybe a) -> CommandHandler T.Text
-readCommand = contramapCH (readMaybe . T.unpack)
 
 justCommand :: CommandHandler a -> CommandHandler (Maybe a)
 justCommand commandHandler message@Message {messageContent = Just arg} =

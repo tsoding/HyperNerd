@@ -1,10 +1,13 @@
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE QuasiQuotes #-}
 
-module Bot.Quote where
+module Bot.Quote
+  ( deleteQuoteCommand
+  , addQuoteCommand
+  , quoteCommand
+  ) where
 
 import Bot.Replies
-import Command
 import qualified Data.Map as M
 import Data.Maybe
 import qualified Data.Text as T
@@ -52,17 +55,23 @@ addQuoteCommand =
             number {entityId entity}|]) $
   Reaction replyMessage
 
-quoteCommand :: CommandHandler (Maybe Int)
-quoteCommand Message {messageSender = sender, messageContent = Nothing} =
-  fmap listToMaybe (selectEntities "quote" (Take 1 $ Shuffle All)) >>=
-  quoteFoundReply sender
-quoteCommand Message {messageSender = sender, messageContent = Just quoteId} = do
-  quote <- getEntityById "quote" quoteId
-  quoteFoundReply sender quote
+replyRandomQuote :: Reaction Message ()
+replyRandomQuote =
+  liftR (const $ selectEntities "quote" $ Take 1 $ Shuffle All) $
+  cmapR listToMaybe $ quoteFoundReply
 
-quoteFoundReply :: Sender -> Maybe (Entity Quote) -> Effect ()
-quoteFoundReply sender Nothing = replyToSender sender "Couldn't find any quotes"
-quoteFoundReply sender (Just Entity { entityId = quoteId
-                                    , entityPayload = Quote {quoteContent = content}
-                                    }) =
-  replyToSender sender [qms|{content} {quoteId}|]
+replyRequestedQuote :: Reaction Message Int
+replyRequestedQuote = liftR (getEntityById "quote") $ quoteFoundReply
+
+quoteCommand :: Reaction Message (Maybe Int)
+quoteCommand = maybeReaction replyRandomQuote replyRequestedQuote
+
+quoteAsReplyMessage :: Entity Quote -> T.Text
+quoteAsReplyMessage entity =
+  [qms|{quoteContent $ entityPayload entity}
+       {entityId entity}|]
+
+quoteFoundReply :: Reaction Message (Maybe (Entity Quote))
+quoteFoundReply =
+  replyOnNothing "Couldn't find any quotes" $
+  cmapR quoteAsReplyMessage $ Reaction replyMessage
