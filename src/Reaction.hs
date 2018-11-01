@@ -20,9 +20,6 @@ liftK f reaction =
     x <- f (extract w)
     runReaction reaction $ fmap (const x) w
 
-liftE :: Comonad w => Effect a -> Reaction w a -> Reaction w b
-liftE = liftK . const
-
 ignore :: Comonad w => Reaction w a
 ignore = Reaction (const $ return ())
 

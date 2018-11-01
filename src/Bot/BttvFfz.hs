@@ -89,13 +89,13 @@ bttvUrl message@Message {messageSender = sender} = fmap (const url) message
 
 ffzCommand :: Reaction Message ()
 ffzCommand =
-  liftE (selectEntities "FfzEmote" All) $
+  liftK (const $ selectEntities "FfzEmote" All) $
   cmap (T.concat . intersperse " " . map (ffzName . entityPayload)) $
   Reaction replyMessage
 
 bttvCommand :: Reaction Message ()
 bttvCommand =
-  liftE (selectEntities "BttvEmote" All) $
+  liftK (const $ selectEntities "BttvEmote" All) $
   cmap (T.concat . intersperse " " . map (bttvName . entityPayload)) $
   Reaction replyMessage
 
