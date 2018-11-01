@@ -87,48 +87,47 @@ bttvUrl message@Message {messageSender = sender} = fmap (const url) message
         (printf "https://api.betterttv.net/2/channels/%s" . URI.encode)
         (tailMay $ T.unpack $ senderChannel sender)
 
-ffzCommand :: Reaction (Message ())
+ffzCommand :: Reaction Message ()
 ffzCommand =
-  liftEM (selectEntities "FfzEmote" All) $
-  cmapF (T.concat . intersperse " " . map (ffzName . entityPayload)) $
+  liftK (const $ selectEntities "FfzEmote" All) $
+  cmap (T.concat . intersperse " " . map (ffzName . entityPayload)) $
   Reaction replyMessage
 
-bttvCommand :: Reaction (Message ())
+bttvCommand :: Reaction Message ()
 bttvCommand =
-  liftEM (selectEntities "BttvEmote" All) $
-  cmapF (T.concat . intersperse " " . map (bttvName . entityPayload)) $
+  liftK (const $ selectEntities "BttvEmote" All) $
+  cmap (T.concat . intersperse " " . map (bttvName . entityPayload)) $
   Reaction replyMessage
 
-jsonHttpRequest ::
-     FromJSON a => Reaction (Message a) -> Reaction (Message String)
+jsonHttpRequest :: FromJSON a => Reaction Message a -> Reaction Message String
 jsonHttpRequest =
-  cmapF parseRequest .
-  silenceOnLeft .
-  liftKM httpRequest .
-  cmapF (eitherDecode . getResponseBody) .
-    -- TODO(#349): we probably don't wanna silence JSON parsing errors
-  silenceOnLeft
+  cmap parseRequest .
+  ignoreLeft .
+  liftK httpRequest .
+  cmap (eitherDecode . getResponseBody) .
+  -- TODO(#349): we probably don't wanna silence JSON parsing errors
+  ignoreLeft
 
-updateFfzEmotesCommand :: Reaction (Message ())
+updateFfzEmotesCommand :: Reaction Message ()
 updateFfzEmotesCommand =
-  cmap ffzUrl $
+  cmapF ffzUrl $
   jsonHttpRequest $
-  cmapF ffzResEmotes $
-  liftKM
+  cmap ffzResEmotes $
+  liftK
     (\emotes -> do
        void $ deleteEntities "FfzEmote" All
        traverse (createEntity "FfzEmote") emotes) $
-  cmapF (T.concat . intersperse " " . map (ffzName . entityPayload)) $
+  cmap (T.concat . intersperse " " . map (ffzName . entityPayload)) $
   Reaction replyMessage
 
-updateBttvEmotesCommand :: Reaction (Message ())
+updateBttvEmotesCommand :: Reaction Message ()
 updateBttvEmotesCommand =
-  cmap bttvUrl $
+  cmapF bttvUrl $
   jsonHttpRequest $
-  cmapF bttvResEmotes $
-  liftKM
+  cmap bttvResEmotes $
+  liftK
     (\emotes -> do
        void $ deleteEntities "BttvEmote" All
        traverse (createEntity "BttvEmote") emotes) $
-  cmapF (T.concat . intersperse " " . map (bttvName . entityPayload)) $
+  cmap (T.concat . intersperse " " . map (bttvName . entityPayload)) $
   Reaction replyMessage

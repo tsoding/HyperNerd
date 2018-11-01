@@ -119,6 +119,7 @@ executable HyperNerd
                      , transformers
                      , unordered-containers
                      , uri-encode
+                     , comonad
   
   -- Directories containing source files.
   hs-source-dirs:      src
@@ -157,6 +158,7 @@ test-suite HyperNerdTest
                      , transformers
                      , unordered-containers
                      , uri-encode
+                     , comonad
 
   other-modules:       Bot.BttvFfz
                      , Bot.Links
