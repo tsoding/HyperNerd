@@ -14,6 +14,7 @@ import Bot.Alias
 import Bot.BttvFfz
 import Bot.CustomCommand
 import Bot.Dubtrack
+import Bot.Help
 import Bot.Links
 import Bot.Log
 import Bot.Periodic
@@ -29,7 +30,6 @@ import Data.Array
 import Data.Char
 import Data.Either
 import Data.Foldable
-import Data.List
 import qualified Data.Map as M
 import qualified Data.Text as T
 import Effect
@@ -60,24 +60,24 @@ builtinCommands =
       , ( "Delete quote from quote database"
         , authorizeSender senderAuthority $
           replyOnNothing "Only for mods" $
-          cmap (readMaybe . T.unpack) $
+          cmapR (readMaybe . T.unpack) $
           replyOnNothing "Expected integer as an argument" deleteQuoteCommand))
     , ( "quote"
       , ( "Get a quote from the quote database"
-        , Reaction $ readCommand quoteCommand))
-    , ("bttv", ("Show all available BTTV emotes", cmap (const ()) bttvCommand))
-    , ("ffz", ("Show all available FFZ emotes", cmap (const ()) ffzCommand))
+        , cmapR (readMaybe . T.unpack) quoteCommand))
+    , ("bttv", ("Show all available BTTV emotes", cmapR (const ()) bttvCommand))
+    , ("ffz", ("Show all available FFZ emotes", cmapR (const ()) ffzCommand))
     , ( "updateffz"
       , ( "Update FFZ cache"
         , authorizeSender senderAuthority $
           replyOnNothing "Only for mods" $
-          cmap (const ()) updateFfzEmotesCommand))
+          cmapR (const ()) updateFfzEmotesCommand))
     , ( "updatebttv"
       , ( "Update BTTV cache"
         , authorizeSender senderAuthority $
           replyOnNothing "Only for mods" $
-          cmap (const ()) updateBttvEmotesCommand))
-    , ("help", ("Send help", Reaction $ helpCommand builtinCommands))
+          cmapR (const ()) updateBttvEmotesCommand))
+    , ("help", ("Send help", helpCommand builtinCommands))
     , ( "poll"
       , ( "Starts a poll"
         , Reaction $
@@ -95,7 +95,7 @@ builtinCommands =
       , ("", Reaction $ modCommand $ voidCommand currentPollCommand))
     , ( "vote"
       , ( "Vote for a poll option"
-        , cmap T.words $ cmap headMay $ ignoreNothing voteCommand))
+        , cmapR T.words $ cmapR headMay $ ignoreNothing voteCommand))
     , ("uptime", ("Show stream uptime", Reaction $ voidCommand uptimeCommand))
     , ( "rq"
       , ("Get random quote from your log", Reaction randomLogRecordCommand))
@@ -207,9 +207,6 @@ mockMessage =
          else Data.Char.toLower)
     True
 
-readCommand :: Read a => CommandHandler (Maybe a) -> CommandHandler T.Text
-readCommand = contramapCH (readMaybe . T.unpack)
-
 justCommand :: CommandHandler a -> CommandHandler (Maybe a)
 justCommand commandHandler message@Message {messageContent = Just arg} =
   commandHandler $ fmap (const arg) message
@@ -248,7 +245,7 @@ senderAuthorizedCommand predicate unauthorizedResponse commandHandler message =
 authorizeSender ::
      (Sender -> Bool) -> Reaction Message (Maybe a) -> Reaction Message a
 authorizeSender p =
-  cmapF
+  transR
     (\msg ->
        if p $ messageSender msg
          then Just <$> msg
@@ -295,21 +292,6 @@ bot event@(Msg sender text) = do
   unless forbidden $ do
     runReaction voteMessage $ Message sender text
     mapM redirectAlias (textAsPipe text) >>= dispatchPipe . Message sender
-
-helpCommand :: CommandTable -> CommandHandler T.Text
-helpCommand commandTable message@Message {messageContent = ""} =
-  replyMessage $ fmap (const [qm|Available commands: {commandList}|]) message
-  where
-    commandList =
-      T.concat $
-      intersperse (T.pack ", ") $
-      map (\x -> T.concat [T.pack "!", x]) $ M.keys commandTable
-helpCommand commandTable Message { messageSender = sender
-                                 , messageContent = command
-                                 } =
-  replyToSender sender $
-  maybe "Cannot find such command FeelsBadMan" fst $
-  M.lookup command commandTable
 
 dispatchPipe :: Message [Command T.Text] -> Effect ()
 dispatchPipe message@Message {messageContent = [command]} =

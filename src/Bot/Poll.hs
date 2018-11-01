@@ -29,7 +29,7 @@ data Poll = Poll
   { pollAuthor :: T.Text
   , pollStartedAt :: UTCTime
   , pollDuration :: Int
-                 -- TODO(#299): Entity doesn't support boolean types
+  -- TODO(#299): Entity doesn't support boolean types
   , pollCancelled :: Bool
   }
 
@@ -104,25 +104,25 @@ pollCommand Message { messageSender = sender
     Nothing -> do
       pollId <- startPoll sender options durationMs
       let optionsList = T.concat $ intersperse " , " options
-                  -- TODO(#296): duration of poll is not human-readable in poll start announcement
+      -- TODO(#296): duration of poll is not human-readable in poll start announcement
       say
         [qms|TwitchVotes The poll has been started. You have {durationSecs} seconds.
-                           Use !vote command to vote for one of the options:
-                           {optionsList}|]
+             Use !vote command to vote for one of the options:
+             {optionsList}|]
       timeout (fromIntegral durationMs) $ announcePollResults pollId
 
 voteMessage :: Reaction Message T.Text
 voteMessage =
-  cmap (,) $
-  liftK (<$> currentPoll) $
-  cmap (\(option, poll) -> fmap ((,) option) poll) $
+  cmapR (,) $
+  liftR (<$> currentPoll) $
+  cmapR (\(option, poll) -> fmap ((,) option) poll) $
   ignoreNothing $ Reaction registerPollVote
 
 voteCommand :: Reaction Message T.Text
 voteCommand =
-  cmap (,) $
-  liftK (<$> currentPoll) $
-  cmap (\(option, poll) -> fmap ((,) option) poll) $
+  cmapR (,) $
+  liftR (<$> currentPoll) $
+  cmapR (\(option, poll) -> fmap ((,) option) poll) $
   replyOnNothing "No polls are in place" $ Reaction registerPollVote
 
 pollLifetime :: UTCTime -> Entity Poll -> Double
@@ -146,8 +146,8 @@ currentPollCommand Message {messageSender = sender} = do
       replyToSender
         sender
         [qms|id: {entityId poll'},
-                                            {pollLifetime currentTime poll'}
-                                            secs ago|]
+             {pollLifetime currentTime poll'}
+             secs ago|]
     Nothing -> replyToSender sender "No polls are in place"
 
 currentPoll :: Effect (Maybe (Entity Poll))
@@ -209,7 +209,7 @@ registerOptionVote option sender = do
   if any ((== senderName sender) . voteUser . entityPayload) existingVotes
     then logMsg
            [qms|[WARNING] User {senderName sender} already
-                   voted for {poName $ entityPayload option}|]
+                voted for {poName $ entityPayload option}|]
     else void $
          createEntity
            "Vote"
@@ -227,7 +227,7 @@ registerPollVote Message { messageSender = sender
     Nothing ->
       logMsg
         [qms|[WARNING] {senderName sender} voted for
-                           unexisting option {optionName}|]
+             unexisting option {optionName}|]
 
 announceRunningPoll :: Effect ()
 announceRunningPoll = do
@@ -242,5 +242,5 @@ announceRunningPoll = do
             intersperse " , " $ map (poName . entityPayload) pollOptions
       say
         [qms|TwitchVotes The poll is still going. Use !vote command to vote for
-                                   one of the options: {optionsList}|]
+             one of the options: {optionsList}|]
     Nothing -> return ()

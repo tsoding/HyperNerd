@@ -89,45 +89,45 @@ bttvUrl message@Message {messageSender = sender} = fmap (const url) message
 
 ffzCommand :: Reaction Message ()
 ffzCommand =
-  liftK (const $ selectEntities "FfzEmote" All) $
-  cmap (T.concat . intersperse " " . map (ffzName . entityPayload)) $
+  liftR (const $ selectEntities "FfzEmote" All) $
+  cmapR (T.concat . intersperse " " . map (ffzName . entityPayload)) $
   Reaction replyMessage
 
 bttvCommand :: Reaction Message ()
 bttvCommand =
-  liftK (const $ selectEntities "BttvEmote" All) $
-  cmap (T.concat . intersperse " " . map (bttvName . entityPayload)) $
+  liftR (const $ selectEntities "BttvEmote" All) $
+  cmapR (T.concat . intersperse " " . map (bttvName . entityPayload)) $
   Reaction replyMessage
 
 jsonHttpRequest :: FromJSON a => Reaction Message a -> Reaction Message String
 jsonHttpRequest =
-  cmap parseRequest .
+  cmapR parseRequest .
   ignoreLeft .
-  liftK httpRequest .
-  cmap (eitherDecode . getResponseBody) .
+  liftR httpRequest .
+  cmapR (eitherDecode . getResponseBody) .
   -- TODO(#349): we probably don't wanna silence JSON parsing errors
   ignoreLeft
 
 updateFfzEmotesCommand :: Reaction Message ()
 updateFfzEmotesCommand =
-  cmapF ffzUrl $
+  transR ffzUrl $
   jsonHttpRequest $
-  cmap ffzResEmotes $
-  liftK
+  cmapR ffzResEmotes $
+  liftR
     (\emotes -> do
        void $ deleteEntities "FfzEmote" All
        traverse (createEntity "FfzEmote") emotes) $
-  cmap (T.concat . intersperse " " . map (ffzName . entityPayload)) $
+  cmapR (T.concat . intersperse " " . map (ffzName . entityPayload)) $
   Reaction replyMessage
 
 updateBttvEmotesCommand :: Reaction Message ()
 updateBttvEmotesCommand =
-  cmapF bttvUrl $
+  transR bttvUrl $
   jsonHttpRequest $
-  cmap bttvResEmotes $
-  liftK
+  cmapR bttvResEmotes $
+  liftR
     (\emotes -> do
        void $ deleteEntities "BttvEmote" All
        traverse (createEntity "BttvEmote") emotes) $
-  cmap (T.concat . intersperse " " . map (bttvName . entityPayload)) $
+  cmapR (T.concat . intersperse " " . map (bttvName . entityPayload)) $
   Reaction replyMessage

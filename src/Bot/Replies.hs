@@ -38,4 +38,4 @@ whisperToSender = whisperToUser . senderName
 
 replyOnNothing :: T.Text -> Reaction Message a -> Reaction Message (Maybe a)
 replyOnNothing reply =
-  maybeReaction $ cmap (const reply) $ Reaction replyMessage
+  maybeReaction $ cmapR (const reply) $ Reaction replyMessage
