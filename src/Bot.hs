@@ -23,13 +23,13 @@ import Bot.Replies
 import Bot.Russify
 import Bot.Twitch
 import Bot.Variable
+import Bot.Help
 import Command
 import Control.Monad
 import Data.Array
 import Data.Char
 import Data.Either
 import Data.Foldable
-import Data.List
 import qualified Data.Map as M
 import qualified Data.Text as T
 import Effect
@@ -77,7 +77,7 @@ builtinCommands =
         , authorizeSender senderAuthority $
           replyOnNothing "Only for mods" $
           cmapR (const ()) updateBttvEmotesCommand))
-    , ("help", ("Send help", Reaction $ helpCommand builtinCommands))
+    , ("help", ("Send help", helpCommand builtinCommands))
     , ( "poll"
       , ( "Starts a poll"
         , Reaction $
@@ -292,21 +292,6 @@ bot event@(Msg sender text) = do
   unless forbidden $ do
     runReaction voteMessage $ Message sender text
     mapM redirectAlias (textAsPipe text) >>= dispatchPipe . Message sender
-
-helpCommand :: CommandTable -> CommandHandler T.Text
-helpCommand commandTable message@Message {messageContent = ""} =
-  replyMessage $ fmap (const [qm|Available commands: {commandList}|]) message
-  where
-    commandList =
-      T.concat $
-      intersperse (T.pack ", ") $
-      map (\x -> T.concat [T.pack "!", x]) $ M.keys commandTable
-helpCommand commandTable Message { messageSender = sender
-                                 , messageContent = command
-                                 } =
-  replyToSender sender $
-  maybe "Cannot find such command FeelsBadMan" fst $
-  M.lookup command commandTable
 
 dispatchPipe :: Message [Command T.Text] -> Effect ()
 dispatchPipe message@Message {messageContent = [command]} =
