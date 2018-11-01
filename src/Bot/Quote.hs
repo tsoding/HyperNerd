@@ -35,21 +35,21 @@ instance IsEntity Quote where
     extractProperty "quoter" properties <*>
     extractProperty "timestamp" properties
 
-deleteQuoteCommand :: Reaction (Message Int)
+deleteQuoteCommand :: Reaction Message Int
 deleteQuoteCommand =
-  liftKM (deleteEntityById "quote") $
-  cmapF (const "Quote has been deleted") $ Reaction replyMessage
+  liftK (deleteEntityById "quote") $
+  cmap (const "Quote has been deleted") $ Reaction replyMessage
 
-addQuoteCommand :: Reaction (Message T.Text)
+addQuoteCommand :: Reaction Message T.Text
 addQuoteCommand =
-  cmapF Quote $
-  cmap (reflect (senderName . messageSender)) $
-  liftKM (<$> now) $
-  liftKM (createEntity "quote") $
-  cmapF
+  cmap Quote $
+  cmapF (reflect (senderName . messageSender)) $
+  liftK (<$> now) $
+  liftK (createEntity "quote") $
+  cmap
     (\entity ->
        [qms|Added the quote under the
-                          number {entityId entity}|]) $
+            number {entityId entity}|]) $
   Reaction replyMessage
 
 quoteCommand :: CommandHandler (Maybe Int)

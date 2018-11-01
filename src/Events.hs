@@ -2,6 +2,7 @@
 
 module Events where
 
+import Control.Comonad
 import qualified Data.Text as T
 
 data Sender = Sender
@@ -24,3 +25,7 @@ data Message a = Message
   { messageSender :: Sender
   , messageContent :: a
   } deriving (Functor)
+
+instance Comonad Message where
+  extract = messageContent
+  duplicate m = const m <$> m

@@ -119,6 +119,7 @@ executable HyperNerd
                      , transformers
                      , unordered-containers
                      , uri-encode
+                     , comonad
   
   -- Directories containing source files.
   hs-source-dirs:      src

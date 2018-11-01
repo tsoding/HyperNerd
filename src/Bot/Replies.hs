@@ -36,23 +36,6 @@ whisperToUser user message = say [qms|/w {user} {message}|]
 whisperToSender :: Sender -> T.Text -> Effect ()
 whisperToSender = whisperToUser . senderName
 
-replyOnNothing :: T.Text -> Reaction (Message a) -> Reaction (Message (Maybe a))
-replyOnNothing reply reaction =
-  Reaction $ \message ->
-    case messageContent message of
-      Just x -> runReaction reaction $ fmap (const x) message
-      Nothing -> replyMessage $ fmap (const reply) message
-
-silenceOnNothing :: Reaction (Message a) -> Reaction (Message (Maybe a))
-silenceOnNothing reaction =
-  Reaction $ \message ->
-    case messageContent message of
-      Just x -> runReaction reaction $ fmap (const x) message
-      Nothing -> return ()
-
-silenceOnLeft :: Reaction (Message b) -> Reaction (Message (Either a b))
-silenceOnLeft reaction =
-  Reaction $ \message ->
-    case messageContent message of
-      Left _ -> return ()
-      Right x -> runReaction reaction $ fmap (const x) message
+replyOnNothing :: T.Text -> Reaction Message a -> Reaction Message (Maybe a)
+replyOnNothing reply =
+  maybeReaction $ cmap (const reply) $ Reaction replyMessage

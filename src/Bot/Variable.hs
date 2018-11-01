@@ -35,13 +35,13 @@ expandVariables :: T.Text -> Effect T.Text
 expandVariables = return
 
 -- TODO(#244): addVariable is not implemented
-addVariable :: Reaction (Message T.Text)
+addVariable :: Reaction Message T.Text
 addVariable = ignore
 
 -- TODO(#245): deleteVariable is not implemented
-deleteVariable :: Reaction (Message T.Text)
+deleteVariable :: Reaction Message T.Text
 deleteVariable = ignore
 
 -- TODO(#246): updateVariable is not implemented
-updateVariable :: Reaction (Message (T.Text, T.Text))
+updateVariable :: Reaction Message (T.Text, T.Text)
 updateVariable = ignore

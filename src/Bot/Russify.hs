@@ -16,8 +16,8 @@ import Data.Text.Encoding
 import Events
 import Reaction
 
-russifyCommand :: Reaction (Message T.Text)
-russifyCommand = Reaction (replyMessage . fmap russify)
+russifyCommand :: Reaction Message T.Text
+russifyCommand = cmap russify $ Reaction replyMessage
 
 mazarusha :: M.Map T.Text T.Text
 mazarusha =

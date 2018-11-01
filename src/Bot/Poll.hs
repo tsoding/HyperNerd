@@ -13,11 +13,9 @@ import qualified Data.Map as M
 import Data.Maybe
 import qualified Data.Text as T
 import Data.Time
-import Data.Tuple
 import Effect
 import Entity
 import Events
-import HyperNerd.Functor
 import Property
 import Reaction
 import Text.InterpolatedString.QM
@@ -113,17 +111,19 @@ pollCommand Message { messageSender = sender
                            {optionsList}|]
       timeout (fromIntegral durationMs) $ announcePollResults pollId
 
-voteMessage :: Reaction (Message T.Text)
+voteMessage :: Reaction Message T.Text
 voteMessage =
-  cmap (outerProduct' (,)) $
-  liftK (<$> currentPoll) $ ignoreNothing $ Reaction registerPollVote
-
-voteCommand :: Reaction (Message T.Text)
-voteCommand =
-  cmap (outerProduct (,)) $
+  cmap (,) $
   liftK (<$> currentPoll) $
-  replyOnNothing "No polls are in place" $
-  cmapF swap $ Reaction registerPollVote
+  cmap (\(option, poll) -> fmap ((,) option) poll) $
+  ignoreNothing $ Reaction registerPollVote
+
+voteCommand :: Reaction Message T.Text
+voteCommand =
+  cmap (,) $
+  liftK (<$> currentPoll) $
+  cmap (\(option, poll) -> fmap ((,) option) poll) $
+  replyOnNothing "No polls are in place" $ Reaction registerPollVote
 
 pollLifetime :: UTCTime -> Entity Poll -> Double
 pollLifetime currentTime =
@@ -215,9 +215,9 @@ registerOptionVote option sender = do
            "Vote"
            Vote {voteUser = senderName sender, voteOptionId = entityId option}
 
-registerPollVote :: Message (Entity Poll, T.Text) -> Effect ()
+registerPollVote :: Message (T.Text, Entity Poll) -> Effect ()
 registerPollVote Message { messageSender = sender
-                         , messageContent = (poll, optionName)
+                         , messageContent = (optionName, poll)
                          } = do
   options <-
     selectEntities "PollOption" $
