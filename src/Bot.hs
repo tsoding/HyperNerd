@@ -14,6 +14,7 @@ import Bot.Alias
 import Bot.BttvFfz
 import Bot.CustomCommand
 import Bot.Dubtrack
+import Bot.Help
 import Bot.Links
 import Bot.Log
 import Bot.Periodic
@@ -23,7 +24,6 @@ import Bot.Replies
 import Bot.Russify
 import Bot.Twitch
 import Bot.Variable
-import Bot.Help
 import Command
 import Control.Monad
 import Data.Array

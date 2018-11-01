@@ -51,7 +51,7 @@ ignoreLeft = eitherReaction ignore
 
 ifR :: Comonad w => (a -> Bool) -> Reaction w a -> Reaction w a -> Reaction w a
 ifR predicate thenReaction elseReaction =
-    Reaction $ \x ->
-        if predicate $ extract x
-        then runReaction thenReaction x
-        else runReaction elseReaction x
+  Reaction $ \x ->
+    if predicate $ extract x
+      then runReaction thenReaction x
+      else runReaction elseReaction x

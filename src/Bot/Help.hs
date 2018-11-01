@@ -1,17 +1,18 @@
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE QuasiQuotes #-}
+
 module Bot.Help
   ( helpCommand
   ) where
 
-import Text.InterpolatedString.QM
-import Command
-import Reaction
-import Events
-import qualified Data.Text as T
-import qualified Data.Map as M
 import Bot.Replies
+import Command
 import Data.List
+import qualified Data.Map as M
+import qualified Data.Text as T
+import Events
+import Reaction
+import Text.InterpolatedString.QM
 
 helpCommand :: CommandTable -> Reaction Message T.Text
 helpCommand commandTable =
