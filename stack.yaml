@@ -65,3 +65,12 @@ extra-package-dbs: []
 #
 # Allow a newer minor version of GHC than the snapshot specifies
 # compiler-check: newer-minor
+
+extra-include-dirs:
+- /usr/local/opt/openssl/include
+extra-lib-dirs:
+- /usr/local/opt/openssl/lib
+
+flags: 
+  HsOpenSSL: 
+    macports-openssl : true

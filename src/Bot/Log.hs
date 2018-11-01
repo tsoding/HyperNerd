@@ -42,6 +42,23 @@ recordUserMsg sender msg =
                                                        }
        return ()
 
+intToNormalDiffTime :: Int -> NominalDiffTime
+intToNormalDiffTime = fromInteger . toInteger
+
+assertIsNegative :: Int -> String -> Int
+assertIsNegative n msg
+  | n < 0 = n
+  | otherwise = error $ show n ++ " " ++ msg
+  
+getLogs :: Int -> Effect [LogRecord]
+getLogs offsetMillis = do
+  currentTime <- now
+  let diff = intToNormalDiffTime (assertIsNegative offsetMillis "offset should be negative" `div` 1000)
+  let startDate = addUTCTime diff currentTime 
+  allLogs <- selectEntities "LogRecord" $ SortBy "timstamp" Desc All
+  let result = filter (\l -> lrTimestamp l > startDate) $ map entityPayload allLogs
+  return result
+  
 randomLogRecordCommand :: CommandHandler T.Text
 randomLogRecordCommand Message { messageSender = sender
                                , messageContent = rawName
