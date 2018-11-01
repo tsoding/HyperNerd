@@ -22,7 +22,7 @@ helpCommand commandTable =
 
 replyHelpForCommand :: CommandTable -> Reaction Message T.Text
 replyHelpForCommand commandTable =
-  cmapR (flip M.lookup commandTable) $
+  cmapR (`M.lookup` commandTable) $
   replyOnNothing "Cannot find such command FeelsBadMan" $
   cmapR fst $ Reaction replyMessage
 

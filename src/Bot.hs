@@ -64,7 +64,7 @@ builtinCommands =
           replyOnNothing "Expected integer as an argument" deleteQuoteCommand))
     , ( "quote"
       , ( "Get a quote from the quote database"
-        , cmapR (readMaybe . T.unpack) $ quoteCommand))
+        , cmapR (readMaybe . T.unpack) quoteCommand))
     , ("bttv", ("Show all available BTTV emotes", cmapR (const ()) bttvCommand))
     , ("ffz", ("Show all available FFZ emotes", cmapR (const ()) ffzCommand))
     , ( "updateffz"

@@ -58,10 +58,10 @@ addQuoteCommand =
 replyRandomQuote :: Reaction Message ()
 replyRandomQuote =
   liftR (const $ selectEntities "quote" $ Take 1 $ Shuffle All) $
-  cmapR listToMaybe $ quoteFoundReply
+  cmapR listToMaybe quoteFoundReply
 
 replyRequestedQuote :: Reaction Message Int
-replyRequestedQuote = liftR (getEntityById "quote") $ quoteFoundReply
+replyRequestedQuote = liftR (getEntityById "quote") quoteFoundReply
 
 quoteCommand :: Reaction Message (Maybe Int)
 quoteCommand = maybeReaction replyRandomQuote replyRequestedQuote
