@@ -8,14 +8,18 @@ newtype Reaction w a = Reaction
   { runReaction :: w a -> Effect ()
   }
 
-cmapF :: Functor w => (w a -> w b) -> Reaction w b -> Reaction w a
-cmapF f reaction = Reaction $ runReaction reaction . f
+transR ::
+     (Functor f1, Functor f2)
+  => (f1 a -> f2 b)
+  -> Reaction f2 b
+  -> Reaction f1 a
+transR f reaction = Reaction $ runReaction reaction . f
 
-cmap :: Functor w => (a -> b) -> Reaction w b -> Reaction w a
-cmap f reaction = Reaction $ \w -> runReaction reaction $ fmap f w
+cmapR :: Functor w => (a -> b) -> Reaction w b -> Reaction w a
+cmapR f reaction = Reaction $ \w -> runReaction reaction $ fmap f w
 
-liftK :: Comonad w => (a -> Effect b) -> Reaction w b -> Reaction w a
-liftK f reaction =
+liftR :: Comonad w => (a -> Effect b) -> Reaction w b -> Reaction w a
+liftR f reaction =
   Reaction $ \w -> do
     x <- f (extract w)
     runReaction reaction $ fmap (const x) w

@@ -113,16 +113,16 @@ pollCommand Message { messageSender = sender
 
 voteMessage :: Reaction Message T.Text
 voteMessage =
-  cmap (,) $
-  liftK (<$> currentPoll) $
-  cmap (\(option, poll) -> fmap ((,) option) poll) $
+  cmapR (,) $
+  liftR (<$> currentPoll) $
+  cmapR (\(option, poll) -> fmap ((,) option) poll) $
   ignoreNothing $ Reaction registerPollVote
 
 voteCommand :: Reaction Message T.Text
 voteCommand =
-  cmap (,) $
-  liftK (<$> currentPoll) $
-  cmap (\(option, poll) -> fmap ((,) option) poll) $
+  cmapR (,) $
+  liftR (<$> currentPoll) $
+  cmapR (\(option, poll) -> fmap ((,) option) poll) $
   replyOnNothing "No polls are in place" $ Reaction registerPollVote
 
 pollLifetime :: UTCTime -> Entity Poll -> Double

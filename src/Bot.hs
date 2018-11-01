@@ -60,23 +60,23 @@ builtinCommands =
       , ( "Delete quote from quote database"
         , authorizeSender senderAuthority $
           replyOnNothing "Only for mods" $
-          cmap (readMaybe . T.unpack) $
+          cmapR (readMaybe . T.unpack) $
           replyOnNothing "Expected integer as an argument" deleteQuoteCommand))
     , ( "quote"
       , ( "Get a quote from the quote database"
         , Reaction $ readCommand quoteCommand))
-    , ("bttv", ("Show all available BTTV emotes", cmap (const ()) bttvCommand))
-    , ("ffz", ("Show all available FFZ emotes", cmap (const ()) ffzCommand))
+    , ("bttv", ("Show all available BTTV emotes", cmapR (const ()) bttvCommand))
+    , ("ffz", ("Show all available FFZ emotes", cmapR (const ()) ffzCommand))
     , ( "updateffz"
       , ( "Update FFZ cache"
         , authorizeSender senderAuthority $
           replyOnNothing "Only for mods" $
-          cmap (const ()) updateFfzEmotesCommand))
+          cmapR (const ()) updateFfzEmotesCommand))
     , ( "updatebttv"
       , ( "Update BTTV cache"
         , authorizeSender senderAuthority $
           replyOnNothing "Only for mods" $
-          cmap (const ()) updateBttvEmotesCommand))
+          cmapR (const ()) updateBttvEmotesCommand))
     , ("help", ("Send help", Reaction $ helpCommand builtinCommands))
     , ( "poll"
       , ( "Starts a poll"
@@ -95,7 +95,7 @@ builtinCommands =
       , ("", Reaction $ modCommand $ voidCommand currentPollCommand))
     , ( "vote"
       , ( "Vote for a poll option"
-        , cmap T.words $ cmap headMay $ ignoreNothing voteCommand))
+        , cmapR T.words $ cmapR headMay $ ignoreNothing voteCommand))
     , ("uptime", ("Show stream uptime", Reaction $ voidCommand uptimeCommand))
     , ( "rq"
       , ("Get random quote from your log", Reaction randomLogRecordCommand))
@@ -248,7 +248,7 @@ senderAuthorizedCommand predicate unauthorizedResponse commandHandler message =
 authorizeSender ::
      (Sender -> Bool) -> Reaction Message (Maybe a) -> Reaction Message a
 authorizeSender p =
-  cmapF
+  transR
     (\msg ->
        if p $ messageSender msg
          then Just <$> msg

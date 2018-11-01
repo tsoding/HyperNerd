@@ -37,16 +37,16 @@ instance IsEntity Quote where
 
 deleteQuoteCommand :: Reaction Message Int
 deleteQuoteCommand =
-  liftK (deleteEntityById "quote") $
-  cmap (const "Quote has been deleted") $ Reaction replyMessage
+  liftR (deleteEntityById "quote") $
+  cmapR (const "Quote has been deleted") $ Reaction replyMessage
 
 addQuoteCommand :: Reaction Message T.Text
 addQuoteCommand =
-  cmap Quote $
-  cmapF (reflect (senderName . messageSender)) $
-  liftK (<$> now) $
-  liftK (createEntity "quote") $
-  cmap
+  cmapR Quote $
+  transR (reflect (senderName . messageSender)) $
+  liftR (<$> now) $
+  liftR (createEntity "quote") $
+  cmapR
     (\entity ->
        [qms|Added the quote under the
             number {entityId entity}|]) $
