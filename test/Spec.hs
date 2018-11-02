@@ -16,7 +16,7 @@ main = do
       , CS.commandWithGermanUmlauts
       , CS.commandWithRussians
                                           -- TODO(#225): CS.textAsPipeSpec is failing
-                                          -- , CS.textAsPipeSpec      
+                                          -- , CS.textAsPipeSpec
       , CS.textAsPipeSingleCommandSpec
       , SEPS.createEntityAndGetItById
       , SEPS.createSeveralEntityTypes
