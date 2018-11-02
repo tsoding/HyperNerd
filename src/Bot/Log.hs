@@ -12,6 +12,7 @@ import           Effect
 import           Entity
 import           Events
 import           Property
+import           Numeric.Natural
 
 data LogRecord = LogRecord { lrUser :: T.Text
                            , lrChannel :: T.Text
@@ -24,13 +25,18 @@ instance IsEntity LogRecord where
         M.fromList [ ("user", PropertyText $ lrUser lr)
                    , ("channel", PropertyText $ lrChannel lr)
                    , ("msg", PropertyText $ lrMsg lr)
-                   , ("timestamp", PropertyUTCTime $ lrTimestamp lr)
+                   , (timestampPV, PropertyUTCTime $ lrTimestamp lr)
                    ]
     fromProperties properties =
         LogRecord <$> extractProperty "user" properties
                   <*> extractProperty "channel" properties
                   <*> extractProperty "msg" properties
-                  <*> extractProperty "timestamp" properties
+                  <*> extractProperty timestampPV properties
+
+timestampPV :: T.Text
+timestampPV = "timestamp"
+
+type Seconds = Natural
 
 recordUserMsg :: Sender -> T.Text -> Effect ()
 recordUserMsg sender msg =
@@ -42,22 +48,17 @@ recordUserMsg sender msg =
                                                        }
        return ()
 
-intToNormalDiffTime :: Int -> NominalDiffTime
-intToNormalDiffTime = fromInteger . toInteger
-
-assertIsNegative :: Int -> String -> Int
-assertIsNegative n msg
-  | n < 0 = n
-  | otherwise = error $ show n ++ " " ++ msg
-  
-getLogs :: Int -> Effect [LogRecord]
-getLogs offsetMillis = do
+getRecentLogs :: Seconds -> Effect [LogRecord]
+getRecentLogs offset = do
   currentTime <- now
-  let diff = intToNormalDiffTime (assertIsNegative offsetMillis "offset should be negative" `div` 1000)
-  let startDate = addUTCTime diff currentTime 
-  allLogs <- selectEntities "LogRecord" $ SortBy "timstamp" Desc All
+  let diff = intToNominalDiffTime $ -1 * offset
+  let startDate = addUTCTime diff currentTime
+  -- TODO there should be comparing selector when implemented
+  allLogs <- selectEntities "LogRecord" $ SortBy timestampPV Desc All
   let result = filter (\l -> lrTimestamp l > startDate) $ map entityPayload allLogs
   return result
+  where
+    intToNominalDiffTime = fromInteger . toInteger
   
 randomLogRecordCommand :: CommandHandler T.Text
 randomLogRecordCommand Message { messageSender = sender

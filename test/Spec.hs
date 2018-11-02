@@ -3,6 +3,7 @@ module Main where
 import qualified BotSpec.LinksSpec as BLS
 import qualified CommandSpec as CS
 import qualified Sqlite.EntityPersistenceSpec as SEPS
+import qualified Bot.PollTest as PT
 import           System.Exit
 import           Test.HUnit
 
@@ -20,6 +21,9 @@ main = do results <- runTestTT $ TestList [ BLS.textContainsLinkSpec
                                           , SEPS.getRandomEntityIdWithPropertyEquals
                                           , SEPS.nextEntityId
                                           , SEPS.selectEntitiesWithPropertyEquals
+                                          , PT.testShowRanks
+                                          , PT.testRank
+                                          , PT.testRankWithEmptyList
                                           ]
           if errors results + failures results == 0
           then exitSuccess
