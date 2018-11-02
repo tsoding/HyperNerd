@@ -166,6 +166,7 @@ test-suite HyperNerdTest
                      , Bot.Replies
                      , BotSpec.LinksSpec
                      , Bot.Log
+                     , Bot.LogSpec
                      , Bot.Poll
                      , Bot.PollTest
                      , Command
