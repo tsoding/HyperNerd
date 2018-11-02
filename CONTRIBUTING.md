@@ -21,9 +21,12 @@
   - If 300 changes is not enough,
     - make as many changes as you can according to the PR size limitation,
     - make sure that the code is compilable and the application is usable,
-    - create TODOs right in the code for the unfinished work,
+    - create TODOs right in the code for the unfinished work (format your TODOs according to the [Snitch TODO format][snitch-todo-format]),
     - submit PR with the unfinished work and TODOs,
-    - TODOs will be converted to separate issues
+    - after the merge TODOs will be converted to separate issues by the Project Leader ([@rexim] as of now),
 - If you fix a bug, please don't forget to create a Unit Test that fails without your fix.
 - Neglected PRs older than two weeks are gonna be automatically closed.
 - Don't get discouraged if your PR was not merged. The Rules and CI are designed to keep the quality of the code high so you don't have to worry about it yourself. Keep experimenting, keep improving.
+
+[@rexim]: https://github.com/rexim
+[snitch-todo-format]: https://github.com/tsoding/snitch#unreported-todo
