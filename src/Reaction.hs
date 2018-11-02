@@ -1,33 +1,57 @@
 module Reaction where
 
+import Control.Comonad
+import Data.Functor
 import Effect
-import Events
-import Control.Monad
 
-newtype Reaction a = Reaction { runReaction :: a -> Effect () }
+newtype Reaction w a = Reaction
+  { runReaction :: w a -> Effect ()
+  }
 
-type ReactionM a = Reaction (Message a)
+transR ::
+     (Functor f1, Functor f2)
+  => (f1 a -> f2 b)
+  -> Reaction f2 b
+  -> Reaction f1 a
+transR f reaction = Reaction $ runReaction reaction . f
 
-cmap :: (a -> b) -> Reaction b -> Reaction a
-cmap f reaction = Reaction (runReaction reaction . f)
+cmapR :: Functor w => (a -> b) -> Reaction w b -> Reaction w a
+cmapR f reaction = Reaction $ \w -> runReaction reaction $ fmap f w
 
-cmapF :: Functor f => (a -> b) -> Reaction (f b) -> Reaction (f a)
-cmapF f reaction = Reaction (runReaction reaction . fmap f)
+liftR :: Comonad w => (a -> Effect b) -> Reaction w b -> Reaction w a
+liftR f reaction =
+  Reaction $ \w -> do
+    x <- f (extract w)
+    runReaction reaction $ fmap (const x) w
 
-liftK :: (a -> Effect b) -> Reaction b -> Reaction a
-liftK f reaction = Reaction (f >=> runReaction reaction)
-
-liftKM :: (a -> Effect b) -> ReactionM b -> ReactionM a
-liftKM f reaction = Reaction $ \msg -> fmap (\x -> const x <$> msg) (f $ messageContent msg) >>= runReaction reaction
-
-liftE :: Effect a -> Reaction a -> Reaction b
-liftE = liftK . const
-
-liftEM :: Effect a -> ReactionM a -> ReactionM b
-liftEM = liftKM . const
-
-ignore :: Reaction a
+ignore :: Comonad w => Reaction w a
 ignore = Reaction (const $ return ())
 
-ignoreNothing :: Reaction a -> Reaction (Maybe a)
-ignoreNothing = Reaction . maybe (return ()) . runReaction
+ignoreNothing :: Comonad w => Reaction w a -> Reaction w (Maybe a)
+ignoreNothing = maybeReaction ignore
+
+maybeReaction ::
+     Comonad w => Reaction w () -> Reaction w a -> Reaction w (Maybe a)
+maybeReaction nothingReaction justReaction =
+  Reaction $ \x ->
+    case extract x of
+      Just x' -> runReaction justReaction $ fmap (const x') x
+      Nothing -> runReaction nothingReaction $ void x
+
+eitherReaction ::
+     Comonad w => Reaction w a -> Reaction w b -> Reaction w (Either a b)
+eitherReaction leftReaction rightReaction =
+  Reaction $ \x ->
+    case extract x of
+      Left a -> runReaction leftReaction $ fmap (const a) x
+      Right b -> runReaction rightReaction $ fmap (const b) x
+
+ignoreLeft :: Comonad w => Reaction w b -> Reaction w (Either a b)
+ignoreLeft = eitherReaction ignore
+
+ifR :: Comonad w => (a -> Bool) -> Reaction w a -> Reaction w a -> Reaction w a
+ifR predicate thenReaction elseReaction =
+  Reaction $ \x ->
+    if predicate $ extract x
+      then runReaction thenReaction x
+      else runReaction elseReaction x

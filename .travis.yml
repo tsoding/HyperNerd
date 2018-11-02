@@ -39,8 +39,11 @@ install:
 # Build dependencies
 - stack docker pull
 - stack --docker --no-terminal --install-ghc test --only-dependencies
+- stack --docker --no-terminal install hindent
 
 script:
 # Build the package, its tests, and its docs and run the tests
 - stack --docker --no-terminal test --haddock --no-haddock-deps
 - curl -sL https://raw.github.com/ndmitchell/hlint/master/misc/travis.sh | sh -s .
+- find ./src/ -type f -name '*.hs' -print | xargs -Ixx stack --docker --no-terminal exec -- hindent --validate xx
+- find ./test/ -type f -name '*.hs' -print | xargs -Ixx stack --docker --no-terminal exec -- hindent --validate xx

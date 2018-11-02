@@ -1,71 +1,77 @@
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE QuasiQuotes #-}
-module Bot.Quote where
 
-import           Bot.Replies
-import           Command
+module Bot.Quote
+  ( deleteQuoteCommand
+  , addQuoteCommand
+  , quoteCommand
+  ) where
+
+import Bot.Replies
 import qualified Data.Map as M
-import           Data.Maybe
+import Data.Maybe
 import qualified Data.Text as T
-import           Data.Time
-import           Effect
-import           Entity
-import           Events
-import           Property
-import           Text.InterpolatedString.QM
-import           Reaction
-import           HyperNerd.Functor
+import Data.Time
+import Effect
+import Entity
+import Events
+import HyperNerd.Functor
+import Property
+import Reaction
+import Text.InterpolatedString.QM
 
-data Quote = Quote { quoteContent :: T.Text
-                   , quoteQuoter :: T.Text
-                   , quoteTimestamp :: UTCTime
-                   }
+data Quote = Quote
+  { quoteContent :: T.Text
+  , quoteQuoter :: T.Text
+  , quoteTimestamp :: UTCTime
+  }
 
 instance IsEntity Quote where
-    toProperties quote =
-        M.fromList [ ("content", PropertyText $ quoteContent quote)
-                   , ("quoter", PropertyText $ quoteQuoter quote)
-                   , ("timestamp", PropertyUTCTime $ quoteTimestamp quote)
-                   ]
-    fromProperties properties =
-        Quote <$> extractProperty "content" properties
-              <*> extractProperty "quoter" properties
-              <*> extractProperty "timestamp" properties
+  toProperties quote =
+    M.fromList
+      [ ("content", PropertyText $ quoteContent quote)
+      , ("quoter", PropertyText $ quoteQuoter quote)
+      , ("timestamp", PropertyUTCTime $ quoteTimestamp quote)
+      ]
+  fromProperties properties =
+    Quote <$> extractProperty "content" properties <*>
+    extractProperty "quoter" properties <*>
+    extractProperty "timestamp" properties
 
-deleteQuoteCommand :: Reaction (Message Int)
+deleteQuoteCommand :: Reaction Message Int
 deleteQuoteCommand =
-  liftKM (deleteEntityById "quote") $
-  cmapF  (const "Quote has been deleted") $
-  Reaction replyMessage
+  liftR (deleteEntityById "quote") $
+  cmapR (const "Quote has been deleted") $ Reaction replyMessage
 
-
-addQuoteCommand :: Reaction (Message T.Text)
+addQuoteCommand :: Reaction Message T.Text
 addQuoteCommand =
-  cmapF  Quote $
-  cmap   (reflect (senderName . messageSender)) $
-  liftKM (<$> now) $
-  liftKM (createEntity "quote") $
-  cmapF  (\entity -> [qms|Added the quote under the
-                          number {entityId entity}|]) $
+  cmapR Quote $
+  transR (reflect (senderName . messageSender)) $
+  liftR (<$> now) $
+  liftR (createEntity "quote") $
+  cmapR
+    (\entity ->
+       [qms|Added the quote under the
+            number {entityId entity}|]) $
   Reaction replyMessage
 
-quoteCommand :: CommandHandler (Maybe Int)
-quoteCommand Message { messageSender = sender
-                     , messageContent = Nothing
-                     } =
-    fmap listToMaybe (selectEntities "quote" (Take 1 $ Shuffle All))
-      >>= quoteFoundReply sender
-quoteCommand Message { messageSender = sender
-                     , messageContent = Just quoteId
-                     } = do
-  quote <- getEntityById "quote" quoteId
-  quoteFoundReply sender quote
+replyRandomQuote :: Reaction Message ()
+replyRandomQuote =
+  liftR (const $ selectEntities "quote" $ Take 1 $ Shuffle All) $
+  cmapR listToMaybe quoteFoundReply
 
-quoteFoundReply :: Sender -> Maybe (Entity Quote) -> Effect ()
-quoteFoundReply sender Nothing =
-    replyToSender sender "Couldn't find any quotes"
-quoteFoundReply sender (Just Entity { entityId = quoteId
-                                    , entityPayload =
-                                        Quote { quoteContent = content }
-                                    }) =
-    replyToSender sender [qms|{content} {quoteId}|]
+replyRequestedQuote :: Reaction Message Int
+replyRequestedQuote = liftR (getEntityById "quote") quoteFoundReply
+
+quoteCommand :: Reaction Message (Maybe Int)
+quoteCommand = maybeReaction replyRandomQuote replyRequestedQuote
+
+quoteAsReplyMessage :: Entity Quote -> T.Text
+quoteAsReplyMessage entity =
+  [qms|{quoteContent $ entityPayload entity}
+       {entityId entity}|]
+
+quoteFoundReply :: Reaction Message (Maybe (Entity Quote))
+quoteFoundReply =
+  replyOnNothing "Couldn't find any quotes" $
+  cmapR quoteAsReplyMessage $ Reaction replyMessage
