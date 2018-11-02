@@ -58,7 +58,7 @@ recordUserMsg sender msg = do
 getRecentLogs :: Seconds -> Effect [LogRecord]
 getRecentLogs offset = do
   currentTime <- now
-  let diff = intToNominalDiffTime $ -1 * offset
+  let diff = secondsAsBackwardsDiff offset
   let startDate = addUTCTime diff currentTime
   -- TODO: use "PropertyGreater" when it's ready
   -- limiting fetched logs by 100 untill then
@@ -66,8 +66,9 @@ getRecentLogs offset = do
   let result =
         filter (\l -> lrTimestamp l > startDate) $ map entityPayload allLogs
   return result
-  where
-    intToNominalDiffTime = fromInteger . toInteger
+
+secondsAsBackwardsDiff :: Seconds -> NominalDiffTime
+secondsAsBackwardsDiff = negate . fromInteger . toInteger
 
 randomLogRecordCommand :: CommandHandler T.Text
 randomLogRecordCommand Message { messageSender = sender

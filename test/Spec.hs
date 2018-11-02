@@ -1,5 +1,6 @@
 module Main where
 
+import qualified Bot.LogSpec as LS
 import qualified Bot.PollTest as PT
 import qualified BotSpec.LinksSpec as BLS
 import qualified CommandSpec as CS
@@ -28,6 +29,7 @@ main = do
       , PT.testShowRanks
       , PT.testRank
       , PT.testRankWithEmptyList
+      , LS.testSecondsAsBackwardsDiff
       ]
   if errors results + failures results == 0
     then exitSuccess
