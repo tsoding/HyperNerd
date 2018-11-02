@@ -91,7 +91,7 @@ cancelPollCommand Message {messageSender = sender} = do
       say [qms|TwitchVotes The current poll has been cancelled!|]
     Nothing -> replyToSender sender "No polls are in place"
 
--- TODO maybe use this in announcePollResults too?
+-- TODO: maybe use rank in announcePollResults too?
 rank :: (Ord a) => [a] -> [(Int, a)]
 rank =
   map (\l -> (length l, safeHead l)) .

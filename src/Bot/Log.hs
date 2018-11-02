@@ -60,8 +60,8 @@ getRecentLogs offset = do
   currentTime <- now
   let diff = intToNominalDiffTime $ -1 * offset
   let startDate = addUTCTime diff currentTime
-  -- TODO there should be comparing selector when implemented
-  allLogs <- selectEntities "LogRecord" $ SortBy timestampPV Desc All
+  -- TODO: use "PropertyGreater" when it's ready, take only 100 for now
+  allLogs <- selectEntities "LogRecord" $ Take 100 $ SortBy timestampPV Desc All
   let result =
         filter (\l -> lrTimestamp l > startDate) $ map entityPayload allLogs
   return result
