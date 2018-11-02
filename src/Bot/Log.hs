@@ -12,8 +12,8 @@ import Data.Time
 import Effect
 import Entity
 import Events
-import Property
 import Numeric.Natural
+import Property
 
 data LogRecord = LogRecord
   { lrUser :: T.Text
@@ -62,11 +62,12 @@ getRecentLogs offset = do
   let startDate = addUTCTime diff currentTime
   -- TODO there should be comparing selector when implemented
   allLogs <- selectEntities "LogRecord" $ SortBy timestampPV Desc All
-  let result = filter (\l -> lrTimestamp l > startDate) $ map entityPayload allLogs
+  let result =
+        filter (\l -> lrTimestamp l > startDate) $ map entityPayload allLogs
   return result
   where
     intToNominalDiffTime = fromInteger . toInteger
-  
+
 randomLogRecordCommand :: CommandHandler T.Text
 randomLogRecordCommand Message { messageSender = sender
                                , messageContent = rawName
