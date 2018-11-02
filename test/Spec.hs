@@ -1,9 +1,9 @@
 module Main where
 
+import qualified Bot.PollTest as PT
 import qualified BotSpec.LinksSpec as BLS
 import qualified CommandSpec as CS
 import qualified Sqlite.EntityPersistenceSpec as SEPS
-import qualified Bot.PollTest as PT
 import System.Exit
 import Test.HUnit
 
@@ -15,8 +15,8 @@ main = do
       [ BLS.textContainsLinkSpec
       , CS.commandWithGermanUmlauts
       , CS.commandWithRussians
-                                          -- TODO(#225): CS.textAsPipeSpec is failing
-                                          -- , CS.textAsPipeSpec
+      -- TODO(#225): CS.textAsPipeSpec is failing
+      -- , CS.textAsPipeSpec
       , CS.textAsPipeSingleCommandSpec
       , SEPS.createEntityAndGetItById
       , SEPS.createSeveralEntityTypes
