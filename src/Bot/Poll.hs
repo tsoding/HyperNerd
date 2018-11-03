@@ -127,8 +127,8 @@ pollCommand Message { messageSender = sender
                              {optionsList}|]
           timeout (fromIntegral durationMs) $ announcePollResults pollId
         else do
-          -- TODO(#361): Polls with negative durations are not stored in the database
           let offset = fromInteger $ toInteger $ negate durationSecs
+          -- TODO(#361): Polls with negative durations are not stored in the database
           instantlyReportResults offset options
 
 instantlyReportResults :: Seconds -> [T.Text] -> Effect ()
