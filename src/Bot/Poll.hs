@@ -100,7 +100,7 @@ rank =
     safeHead (x:_) = x
     safeHead _ = error "Empty list"
 
--- TODO: showRanks should format results exactly like announcePollResults to make Twitch emotes visible
+-- TODO(#360): showRanks should format results exactly like announcePollResults to make Twitch emotes visible
 showRanks :: (Show a) => [(Int, a)] -> String
 showRanks = intercalate ", " . map (\(i, v) -> show v ++ ": " ++ show i)
 
