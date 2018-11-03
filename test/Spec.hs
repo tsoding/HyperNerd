@@ -1,5 +1,7 @@
 module Main where
 
+import qualified Bot.LogSpec as LS
+import qualified Bot.PollTest as PT
 import qualified BotSpec.LinksSpec as BLS
 import qualified CommandSpec as CS
 import qualified Sqlite.EntityPersistenceSpec as SEPS
@@ -14,8 +16,8 @@ main = do
       [ BLS.textContainsLinkSpec
       , CS.commandWithGermanUmlauts
       , CS.commandWithRussians
-                                          -- TODO(#225): CS.textAsPipeSpec is failing
-                                          -- , CS.textAsPipeSpec
+      -- TODO(#225): CS.textAsPipeSpec is failing
+      -- , CS.textAsPipeSpec
       , CS.textAsPipeSingleCommandSpec
       , SEPS.createEntityAndGetItById
       , SEPS.createSeveralEntityTypes
@@ -24,6 +26,10 @@ main = do
       , SEPS.getRandomEntityIdWithPropertyEquals
       , SEPS.nextEntityId
       , SEPS.selectEntitiesWithPropertyEquals
+      , PT.testShowRanks
+      , PT.testRank
+      , PT.testRankWithEmptyList
+      , LS.testSecondsAsBackwardsDiff
       ]
   if errors results + failures results == 0
     then exitSuccess

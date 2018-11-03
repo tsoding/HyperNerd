@@ -165,11 +165,16 @@ test-suite HyperNerdTest
                      , Bot.Links
                      , Bot.Replies
                      , BotSpec.LinksSpec
+                     , Bot.Log
+                     , Bot.LogSpec
+                     , Bot.Poll
+                     , Bot.PollTest
                      , Command
                      , CommandSpec
                      , Effect
                      , Entity
                      , Events
+                     , HyperNerd.Functor
                      , Property
                      , Reaction
                      , Sqlite.EntityPersistence

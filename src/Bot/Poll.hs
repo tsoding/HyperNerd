@@ -3,6 +3,7 @@
 
 module Bot.Poll where
 
+import Bot.Log (LogRecord(..), Seconds, getRecentLogs)
 import Bot.Replies
 import Command
 import Control.Monad
@@ -90,6 +91,18 @@ cancelPollCommand Message {messageSender = sender} = do
       say [qms|TwitchVotes The current poll has been cancelled!|]
     Nothing -> replyToSender sender "No polls are in place"
 
+-- TODO: consider using rank function in implementation of announcePollResults
+rank :: (Ord a) => [a] -> [(Int, a)]
+rank =
+  map (\l -> (length l, safeHead l)) .
+  sortBy (flip compare `on` length) . group . sort
+  where
+    safeHead (x:_) = x
+    safeHead _ = error "Empty list"
+
+showRanks :: (Show a) => [(Int, a)] -> String
+showRanks = intercalate ", " . map (\(i, v) -> show v ++ ": " ++ show i)
+
 -- TODO(#294): poll duration doesn't have upper/lower limit
 pollCommand :: CommandHandler (Int, [T.Text])
 pollCommand Message { messageSender = sender
@@ -101,15 +114,31 @@ pollCommand Message { messageSender = sender
     Just _ ->
       replyToSender sender "Cannot create a poll while another poll is in place"
     -- TODO(#295): passing duration of different units is not type safe
-    Nothing -> do
-      pollId <- startPoll sender options durationMs
-      let optionsList = T.concat $ intersperse " , " options
-      -- TODO(#296): duration of poll is not human-readable in poll start announcement
-      say
-        [qms|TwitchVotes The poll has been started. You have {durationSecs} seconds.
-             Use !vote command to vote for one of the options:
-             {optionsList}|]
-      timeout (fromIntegral durationMs) $ announcePollResults pollId
+    Nothing ->
+      if durationSecs >= 0
+        then do
+          pollId <- startPoll sender options durationMs
+          let optionsList = T.concat $ intersperse " , " options
+                    -- TODO(#296): duration of poll is not human-readable in poll start announcement
+          say
+            [qms|TwitchVotes The poll has been started. You have {durationSecs} seconds.
+                             Use !vote command to vote for one of the options:
+                             {optionsList}|]
+          timeout (fromIntegral durationMs) $ announcePollResults pollId
+        else do
+          let offset = fromInteger $ toInteger $ negate durationSecs
+          instantlyReportResults offset options
+
+instantlyReportResults :: Seconds -> [T.Text] -> Effect ()
+instantlyReportResults durationSecs options = do
+  logs <- getRecentLogs durationSecs
+  unless (null logs) $ do
+    let votes = filter (`elem` options) $ map lrMsg logs
+    case votes of
+      [] -> say [qms|No votes yet.|]
+      _ -> do
+        let ranks = rank votes
+        say [qms|Poll results: {showRanks ranks}|]
 
 voteMessage :: Reaction Message T.Text
 voteMessage =

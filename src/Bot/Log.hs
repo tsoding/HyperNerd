@@ -12,6 +12,7 @@ import Data.Time
 import Effect
 import Entity
 import Events
+import Numeric.Natural
 import Property
 
 data LogRecord = LogRecord
@@ -21,19 +22,24 @@ data LogRecord = LogRecord
   , lrTimestamp :: UTCTime
   }
 
+timestampPV :: T.Text
+timestampPV = "timestamp"
+
+type Seconds = Natural
+
 instance IsEntity LogRecord where
   toProperties lr =
     M.fromList
       [ ("user", PropertyText $ lrUser lr)
       , ("channel", PropertyText $ lrChannel lr)
       , ("msg", PropertyText $ lrMsg lr)
-      , ("timestamp", PropertyUTCTime $ lrTimestamp lr)
+      , (timestampPV, PropertyUTCTime $ lrTimestamp lr)
       ]
   fromProperties properties =
     LogRecord <$> extractProperty "user" properties <*>
     extractProperty "channel" properties <*>
     extractProperty "msg" properties <*>
-    extractProperty "timestamp" properties
+    extractProperty timestampPV properties
 
 recordUserMsg :: Sender -> T.Text -> Effect ()
 recordUserMsg sender msg = do
@@ -48,6 +54,21 @@ recordUserMsg sender msg = do
         , lrTimestamp = timestamp
         }
   return ()
+
+getRecentLogs :: Seconds -> Effect [LogRecord]
+getRecentLogs offset = do
+  currentTime <- now
+  let diff = secondsAsBackwardsDiff offset
+  let startDate = addUTCTime diff currentTime
+  -- TODO: use "PropertyGreater" when it's ready
+  -- limiting fetched logs by 100 untill then
+  allLogs <- selectEntities "LogRecord" $ Take 100 $ SortBy timestampPV Desc All
+  let result =
+        filter (\l -> lrTimestamp l > startDate) $ map entityPayload allLogs
+  return result
+
+secondsAsBackwardsDiff :: Seconds -> NominalDiffTime
+secondsAsBackwardsDiff = negate . fromInteger . toInteger
 
 randomLogRecordCommand :: CommandHandler T.Text
 randomLogRecordCommand Message { messageSender = sender
