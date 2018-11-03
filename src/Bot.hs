@@ -82,7 +82,7 @@ builtinCommands =
       , ( "Starts a poll"
         , Reaction $
           modCommand $
-          -- TODO: !poll command does not parse negative numbers
+          -- TODO(#362): !poll command does not parse negative numbers
           regexArgsCommand "([0-9]+) (.*)" $
           pairArgsCommand $
           contramapCH
