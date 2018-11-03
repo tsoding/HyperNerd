@@ -100,6 +100,7 @@ rank =
     safeHead (x:_) = x
     safeHead _ = error "Empty list"
 
+-- TODO: showRanks should format results exactly like announcePollResults to make Twitch emotes visible
 showRanks :: (Show a) => [(Int, a)] -> String
 showRanks = intercalate ", " . map (\(i, v) -> show v ++ ": " ++ show i)
 
@@ -119,13 +120,14 @@ pollCommand Message { messageSender = sender
         then do
           pollId <- startPoll sender options durationMs
           let optionsList = T.concat $ intersperse " , " options
-                    -- TODO(#296): duration of poll is not human-readable in poll start announcement
+          -- TODO(#296): duration of poll is not human-readable in poll start announcement
           say
             [qms|TwitchVotes The poll has been started. You have {durationSecs} seconds.
                              Use !vote command to vote for one of the options:
                              {optionsList}|]
           timeout (fromIntegral durationMs) $ announcePollResults pollId
         else do
+          -- TODO: Polls with negative durations are not stored in the database
           let offset = fromInteger $ toInteger $ negate durationSecs
           instantlyReportResults offset options
 
@@ -214,7 +216,7 @@ announcePollResults pollId = do
          Filter
            (PropertyEquals "optionId" $
             PropertyInt $
-                                    -- TODO(#282): how to get rid of type hint in announcePollResults?
+            -- TODO(#282): how to get rid of type hint in announcePollResults?
             entityId option)
            All :: Effect [Entity Vote])
       options
