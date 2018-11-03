@@ -60,7 +60,7 @@ getRecentLogs offset = do
   currentTime <- now
   let diff = secondsAsBackwardsDiff offset
   let startDate = addUTCTime diff currentTime
-  -- TODO: use "PropertyGreater" when it's ready
+  -- TODO(#358): use "PropertyGreater" when it's ready
   -- limiting fetched logs by 100 untill then
   allLogs <- selectEntities "LogRecord" $ Take 100 $ SortBy timestampPV Desc All
   let result =
