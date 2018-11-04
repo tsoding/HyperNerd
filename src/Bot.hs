@@ -189,8 +189,7 @@ builtinCommands =
         , Reaction $
           modCommand $ regexArgsCommand "(.+)" $ firstArgCommand untrustCommand))
     , ( "amitrusted"
-      , ( "Check if you are a trusted user"
-        , Reaction $ voidCommand amitrustedCommand))
+      , ("Check if you are a trusted user", cmapR (const ()) amitrustedCommand))
     , ( "istrusted"
       , ( "Check if the user is trusted"
         , Reaction $ regexArgsCommand "(.+)" $ firstArgCommand istrustedCommand))

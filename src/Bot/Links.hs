@@ -24,6 +24,8 @@ import Property
 import Text.InterpolatedString.QM
 import Text.Regex.TDFA (defaultCompOpt, defaultExecOpt)
 import Text.Regex.TDFA.String
+import Reaction
+import HyperNerd.Functor
 
 -- TODO(#264): trusted users system doesn't handle name changes
 newtype TrustedUser = TrustedUser
@@ -99,12 +101,12 @@ untrustCommand Message {messageSender = sender, messageContent = inputUser} = do
     Nothing ->
       replyToSender sender [qm|{user} was not trusted in the first place|]
 
-amitrustedCommand :: CommandHandler ()
-amitrustedCommand Message {messageSender = sender} = do
-  trustedUser <- findTrustedUser $ senderName sender
-  case trustedUser of
-    Just _ -> replyToSender sender "Yes Pog"
-    Nothing -> replyToSender sender "No PepeHands"
+amitrustedCommand :: Reaction Message ()
+amitrustedCommand =
+  cmapR (const $ id) $
+  transR (reflect (senderName . messageSender)) $
+  liftR findTrustedUser $
+  cmapR (maybe "No PepeHands" (const "Yes pog")) $ Reaction replyMessage
 
 istrustedCommand :: CommandHandler T.Text
 istrustedCommand Message {messageSender = sender, messageContent = inputUser} = do
