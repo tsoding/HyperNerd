@@ -26,6 +26,7 @@ import Text.Regex.TDFA (defaultCompOpt, defaultExecOpt)
 import Text.Regex.TDFA.String
 import Reaction
 import HyperNerd.Functor
+import HyperNerd.Comonad
 
 -- TODO(#264): trusted users system doesn't handle name changes
 newtype TrustedUser = TrustedUser
@@ -103,15 +104,14 @@ untrustCommand Message {messageSender = sender, messageContent = inputUser} = do
 
 amitrustedCommand :: Reaction Message ()
 amitrustedCommand =
-  cmapR (const $ id) $
-  transR (reflect (senderName . messageSender)) $
-  liftR findTrustedUser $
-  cmapR (maybe "No PepeHands" (const "Yes pog")) $ Reaction replyMessage
+  cmapR (const id) $
+  transR (reflect (senderName . messageSender)) istrustedCommand
 
-istrustedCommand :: CommandHandler T.Text
-istrustedCommand Message {messageSender = sender, messageContent = inputUser} = do
-  let user = T.toLower inputUser
-  trustedUser <- findTrustedUser user
-  case trustedUser of
-    Just _ -> replyToSender sender [qm|{user} is trusted Pog|]
-    Nothing -> replyToSender sender [qm|{user} is not trusted PepeHands|]
+istrustedCommand :: Reaction Message T.Text
+istrustedCommand =
+  cmapR T.toLower $
+  cmapR (join (,)) $
+  transR ComposeCC $
+  liftR findTrustedUser $
+  cmapR (maybe " is trusted Pog" (const " is not trusted PepeHands")) $
+  transR getComposeCC $ cmapR (uncurry T.append) $ Reaction replyMessage
