@@ -25,6 +25,7 @@ import Bot.Russify
 import Bot.Twitch
 import Bot.Variable
 import Command
+import Control.Comonad
 import Control.Monad
 import Data.Array
 import Data.Char
@@ -42,7 +43,6 @@ import Text.Read
 import qualified Text.Regex.Base.RegexLike as Regex
 import Text.Regex.TDFA (defaultCompOpt, defaultExecOpt)
 import Text.Regex.TDFA.String
-import Control.Comonad
 
 type Bot = Event -> Effect ()
 
