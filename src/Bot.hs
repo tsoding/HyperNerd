@@ -179,8 +179,7 @@ builtinCommands =
                   filter
                     (isRight . execute regex . T.unpack . lrMsg . entityPayload)
                     logs))
-    , ( "cycle"
-      , ("Mock the message", Reaction (replyMessage . fmap mockMessage)))
+    , ("cycle", ("Mock the message", cmapR mockMessage $ Reaction replyMessage))
     , ( "trust"
       , ( "Makes the user trusted"
         , Reaction $
