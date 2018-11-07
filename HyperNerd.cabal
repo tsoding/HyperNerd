@@ -87,6 +87,7 @@ executable HyperNerd
                      , Sqlite.EntityPersistence
                      , Sqlite.Migration
                      , HyperNerd.Functor
+                     , HyperNerd.Comonad
   
   -- LANGUAGE extensions used by modules in this package.
   other-extensions:    OverloadedStrings
@@ -175,6 +176,7 @@ test-suite HyperNerdTest
                      , Entity
                      , Events
                      , HyperNerd.Functor
+                     , HyperNerd.Comonad
                      , Property
                      , Reaction
                      , Sqlite.EntityPersistence

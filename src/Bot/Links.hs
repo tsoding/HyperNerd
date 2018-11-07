@@ -20,7 +20,10 @@ import qualified Data.Text as T
 import Effect
 import Entity
 import Events
+import HyperNerd.Comonad
+import HyperNerd.Functor
 import Property
+import Reaction
 import Text.InterpolatedString.QM
 import Text.Regex.TDFA (defaultCompOpt, defaultExecOpt)
 import Text.Regex.TDFA.String
@@ -65,13 +68,13 @@ forbidLinksForPlebs (Msg sender text)
           whisperToSender
             sender
             [qms|You have been timed out because
-                                        I thought you sent a link. Only
-                                        trusted users are allowed
-                                        to send links. Sometimes I get
-                                        things wrong. In that case feel
-                                        free to file an issue at
-                                        https://github.com/tsoding/HyperNerd/issues .
-                                        Ask Tsoding to make you a trusted user.|]
+                 I thought you sent a link. Only
+                 trusted users are allowed
+                 to send links. Sometimes I get
+                 things wrong. In that case feel
+                 free to file an issue at
+                 https://github.com/tsoding/HyperNerd/issues .
+                 Ask Tsoding to make you a trusted user.|]
           replyToSender sender "check your whispers."
           return True
       _ -> return False
@@ -99,17 +102,18 @@ untrustCommand Message {messageSender = sender, messageContent = inputUser} = do
     Nothing ->
       replyToSender sender [qm|{user} was not trusted in the first place|]
 
-amitrustedCommand :: CommandHandler ()
-amitrustedCommand Message {messageSender = sender} = do
-  trustedUser <- findTrustedUser $ senderName sender
-  case trustedUser of
-    Just _ -> replyToSender sender "Yes Pog"
-    Nothing -> replyToSender sender "No PepeHands"
+amitrustedCommand :: Reaction Message ()
+amitrustedCommand =
+  cmapR (const id) $
+  transR (reflect (senderName . messageSender)) $
+  liftR findTrustedUser $
+  cmapR (maybe "no PepeHands" (const "yes Pog")) $ Reaction replyMessage
 
-istrustedCommand :: CommandHandler T.Text
-istrustedCommand Message {messageSender = sender, messageContent = inputUser} = do
-  let user = T.toLower inputUser
-  trustedUser <- findTrustedUser user
-  case trustedUser of
-    Just _ -> replyToSender sender [qm|{user} is trusted Pog|]
-    Nothing -> replyToSender sender [qm|{user} is not trusted PepeHands|]
+istrustedCommand :: Reaction Message T.Text
+istrustedCommand =
+  cmapR T.toLower $
+  cmapR (join (,)) $
+  transR ComposeCC $
+  liftR findTrustedUser $
+  cmapR (maybe " is not trusted PepeHands" (const " is trusted Pog")) $
+  transR getComposeCC $ cmapR (uncurry T.append) $ Reaction replyMessage

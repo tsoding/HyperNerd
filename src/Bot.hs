@@ -25,6 +25,7 @@ import Bot.Russify
 import Bot.Twitch
 import Bot.Variable
 import Command
+import Control.Comonad
 import Control.Monad
 import Data.Array
 import Data.Char
@@ -39,7 +40,7 @@ import Reaction
 import Safe
 import Text.InterpolatedString.QM
 import Text.Read
-import Text.Regex.Base.RegexLike
+import qualified Text.Regex.Base.RegexLike as Regex
 import Text.Regex.TDFA (defaultCompOpt, defaultExecOpt)
 import Text.Regex.TDFA.String
 
@@ -179,8 +180,7 @@ builtinCommands =
                   filter
                     (isRight . execute regex . T.unpack . lrMsg . entityPayload)
                     logs))
-    , ( "cycle"
-      , ("Mock the message", Reaction (replyMessage . fmap mockMessage)))
+    , ("cycle", ("Mock the message", cmapR mockMessage $ Reaction replyMessage))
     , ( "trust"
       , ( "Makes the user trusted"
         , Reaction $
@@ -190,11 +190,12 @@ builtinCommands =
         , Reaction $
           modCommand $ regexArgsCommand "(.+)" $ firstArgCommand untrustCommand))
     , ( "amitrusted"
-      , ( "Check if you are a trusted user"
-        , Reaction $ voidCommand amitrustedCommand))
+      , ("Check if you are a trusted user", cmapR (const ()) amitrustedCommand))
     , ( "istrusted"
       , ( "Check if the user is trusted"
-        , Reaction $ regexArgsCommand "(.+)" $ firstArgCommand istrustedCommand))
+        , regexArgs "(.+)" $
+          replyLeft $
+          cmapR headMay $ replyOnNothing "Not enough arguments" istrustedCommand))
     ]
 
 mockMessage :: T.Text -> T.Text
@@ -263,6 +264,26 @@ pairArgsCommand _ message@Message {messageContent = args} =
                      but got {length args}|])
     message
 
+regexParseArgs :: T.Text -> T.Text -> Either String [T.Text]
+regexParseArgs regexString textArgs = do
+  let stringArgs = T.unpack textArgs
+  regex <- compile defaultCompOpt defaultExecOpt $ T.unpack regexString
+  result <- execute regex stringArgs
+  case result of
+    Just matches ->
+      case map (T.pack . flip Regex.extract stringArgs) $ elems matches of
+        _:finalArgs -> Right finalArgs
+        [] -> Left "Not enough arguments"
+    Nothing -> Left [qms|Command doesn't match '{regexString}' regex|]
+
+regexArgs ::
+     Comonad w
+  => T.Text
+  -> Reaction w (Either String [T.Text])
+  -> Reaction w T.Text
+regexArgs regexString reaction =
+  Reaction $ runReaction reaction . fmap (regexParseArgs regexString)
+
 regexArgsCommand :: String -> CommandHandler [T.Text] -> CommandHandler T.Text
 regexArgsCommand regexString commandHandler Message { messageSender = sender
                                                     , messageContent = args
@@ -270,14 +291,14 @@ regexArgsCommand regexString commandHandler Message { messageSender = sender
   either
     (replyToSender sender . T.pack)
     (commandHandler . Message sender)
-    regexArgs
+    parsedArgs
   where
-    regexArgs = do
+    parsedArgs = do
       regex <- compile defaultCompOpt defaultExecOpt regexString
       result <- execute regex stringArgs
       case result of
         Just matches ->
-          case map (T.pack . flip extract stringArgs) $ elems matches of
+          case map (T.pack . flip Regex.extract stringArgs) $ elems matches of
             _:finalArgs -> Right finalArgs
             [] -> Left "Not enough arguments"
         Nothing -> Left [qms|Command doesn't match '{regexString}' regex|]
