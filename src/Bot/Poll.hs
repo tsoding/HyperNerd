@@ -204,8 +204,9 @@ startPoll sender options duration = do
     createEntity "PollOption" PollOption {poName = name, poPollId = pollId}
   return pollId
 
-announcePollResults :: Int -> Effect ()
-announcePollResults pollId = do
+getOptionsAndVotesByPollId ::
+     Int -> Effect ([Entity PollOption], [[Entity Vote]])
+getOptionsAndVotesByPollId pollId = do
   options <-
     selectEntities "PollOption" $
     Filter (PropertyEquals "pollId" $ PropertyInt pollId) All
@@ -220,6 +221,11 @@ announcePollResults pollId = do
             entityId option)
            All :: Effect [Entity Vote])
       options
+  return (options, votes)
+
+announcePollResults :: Int -> Effect ()
+announcePollResults pollId = do
+  (options, votes) <- getOptionsAndVotesByPollId pollId
   let results =
         T.concat $
         intersperse ", " $
@@ -274,4 +280,23 @@ announceRunningPoll = do
       say
         [qms|TwitchVotes The poll is still going. Use !vote command to vote for
              one of the options: {optionsList}|]
+    Nothing -> return ()
+
+unvoteCommand :: Effect ()
+unvoteCommand = do
+  poll <- currentPoll
+  case poll of
+    Just pollEntity -> do
+      let pollId = entityId pollEntity
+      (_, votes) <- getOptionsAndVotesByPollId pollId
+      let votes' = join votes
+      let maybeVote =
+            find (\v -> (voteUser $ entityPayload v) == T.pack "fake") votes'
+      case maybeVote of
+        Just vote -> do
+          let voteId = entityId vote
+          deleteEntityById "Vote" voteId
+          return ()
+        Nothing -> return ()
+      return ()
     Nothing -> return ()
