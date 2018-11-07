@@ -105,7 +105,9 @@ untrustCommand Message {messageSender = sender, messageContent = inputUser} = do
 amitrustedCommand :: Reaction Message ()
 amitrustedCommand =
   cmapR (const id) $
-  transR (reflect (senderName . messageSender)) istrustedCommand
+  transR (reflect (senderName . messageSender)) $
+  liftR findTrustedUser $
+  cmapR (maybe "no PepeHands" (const "yes Pog")) $ Reaction replyMessage
 
 istrustedCommand :: Reaction Message T.Text
 istrustedCommand =
@@ -113,5 +115,5 @@ istrustedCommand =
   cmapR (join (,)) $
   transR ComposeCC $
   liftR findTrustedUser $
-  cmapR (maybe " is trusted Pog" (const " is not trusted PepeHands")) $
+  cmapR (maybe " is not trusted PepeHands" (const " is trusted Pog")) $
   transR getComposeCC $ cmapR (uncurry T.append) $ Reaction replyMessage
