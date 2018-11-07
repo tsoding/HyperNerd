@@ -70,6 +70,9 @@ getRecentLogs offset = do
 secondsAsBackwardsDiff :: Seconds -> NominalDiffTime
 secondsAsBackwardsDiff = negate . fromInteger . toInteger
 
+intToSeconds :: Int -> Seconds
+intToSeconds = fromInteger . toInteger . abs
+
 randomLogRecordCommand :: CommandHandler T.Text
 randomLogRecordCommand Message { messageSender = sender
                                , messageContent = rawName

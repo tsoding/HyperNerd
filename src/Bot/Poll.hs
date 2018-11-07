@@ -3,7 +3,7 @@
 
 module Bot.Poll where
 
-import Bot.Log (LogRecord(..), Seconds, getRecentLogs)
+import Bot.Log (LogRecord(..), Seconds, getRecentLogs, intToSeconds)
 import Bot.Replies
 import Command
 import Control.Monad
@@ -127,7 +127,7 @@ pollCommand Message { messageSender = sender
                              {optionsList}|]
           timeout (fromIntegral durationMs) $ announcePollResults pollId
         else do
-          let offset = fromInteger $ toInteger $ negate durationSecs
+          let offset = intToSeconds durationSecs
           -- TODO(#361): Polls with negative durations are not stored in the database
           instantlyReportResults offset options
 
