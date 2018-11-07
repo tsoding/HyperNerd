@@ -39,6 +39,9 @@ data Vote = Vote
   , voteOptionId :: Int
   }
 
+voteTypeName :: T.Text
+voteTypeName = "Vote"
+
 intAsBool :: Int -> Bool
 intAsBool 0 = False
 intAsBool _ = True
@@ -213,7 +216,7 @@ getOptionsAndVotesByPollId pollId = do
   votes <-
     mapM
       (\option ->
-         selectEntities "Vote" $
+         selectEntities voteTypeName $
          Filter
            (PropertyEquals "optionId" $
             PropertyInt $
@@ -282,21 +285,22 @@ announceRunningPoll = do
              one of the options: {optionsList}|]
     Nothing -> return ()
 
-unvoteCommand :: Effect ()
-unvoteCommand = do
-  poll <- currentPoll
-  case poll of
+unvoteCommand :: CommandHandler ()
+unvoteCommand Message {messageSender = sender} = do
+  maybePoll <- currentPoll
+  case maybePoll of
     Just pollEntity -> do
       let pollId = entityId pollEntity
-      (_, votes) <- getOptionsAndVotesByPollId pollId
-      let votes' = join votes
-      let maybeVote =
-            find (\v -> (voteUser $ entityPayload v) == T.pack "fake") votes'
+      votes <- getVotesByPollId pollId
+      let name = senderName sender
+      let maybeVote = findVoteByUserName name votes
       case maybeVote of
         Just vote -> do
           let voteId = entityId vote
-          deleteEntityById "Vote" voteId
-          return ()
+          deleteVoteById voteId
         Nothing -> return ()
-      return ()
     Nothing -> return ()
+  where
+    deleteVoteById = deleteEntityById voteTypeName
+    getVotesByPollId pollId = join . snd <$> getOptionsAndVotesByPollId pollId
+    findVoteByUserName name = find (\v -> voteUser (entityPayload v) == name)
