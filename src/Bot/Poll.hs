@@ -299,7 +299,7 @@ unvoteCommand Message {messageSender = sender} = do
           let voteId = entityId vote
           deleteVoteById voteId
         Nothing -> return ()
-    Nothing -> say "No polls are in place"
+    Nothing -> replyToSender sender "No polls are in place"
   where
     deleteVoteById = deleteEntityById voteTypeName
     getVotesByPollId pollId = join . snd <$> getOptionsAndVotesByPollId pollId
