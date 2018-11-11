@@ -39,6 +39,9 @@ data Vote = Vote
   , voteOptionId :: Int
   }
 
+voteTypeName :: T.Text
+voteTypeName = "Vote"
+
 intAsBool :: Int -> Bool
 intAsBool 0 = False
 intAsBool _ = True
@@ -204,15 +207,16 @@ startPoll sender options duration = do
     createEntity "PollOption" PollOption {poName = name, poPollId = pollId}
   return pollId
 
-announcePollResults :: Int -> Effect ()
-announcePollResults pollId = do
+getOptionsAndVotesByPollId ::
+     Int -> Effect ([Entity PollOption], [[Entity Vote]])
+getOptionsAndVotesByPollId pollId = do
   options <-
     selectEntities "PollOption" $
     Filter (PropertyEquals "pollId" $ PropertyInt pollId) All
   votes <-
     mapM
       (\option ->
-         selectEntities "Vote" $
+         selectEntities voteTypeName $
          Filter
            (PropertyEquals "optionId" $
             PropertyInt $
@@ -220,6 +224,11 @@ announcePollResults pollId = do
             entityId option)
            All :: Effect [Entity Vote])
       options
+  return (options, votes)
+
+announcePollResults :: Int -> Effect ()
+announcePollResults pollId = do
+  (options, votes) <- getOptionsAndVotesByPollId pollId
   let results =
         T.concat $
         intersperse ", " $
@@ -275,3 +284,23 @@ announceRunningPoll = do
         [qms|TwitchVotes The poll is still going. Use !vote command to vote for
              one of the options: {optionsList}|]
     Nothing -> return ()
+
+unvoteCommand :: CommandHandler ()
+unvoteCommand Message {messageSender = sender} = do
+  maybePoll <- currentPoll
+  case maybePoll of
+    Just pollEntity -> do
+      let pollId = entityId pollEntity
+      votes <- getVotesByPollId pollId
+      let name = senderName sender
+      let maybeVote = findVoteByUserName name votes
+      case maybeVote of
+        Just vote -> do
+          let voteId = entityId vote
+          deleteVoteById voteId
+        Nothing -> return ()
+    Nothing -> replyToSender sender "No polls are in place"
+  where
+    deleteVoteById = deleteEntityById voteTypeName
+    getVotesByPollId pollId = join . snd <$> getOptionsAndVotesByPollId pollId
+    findVoteByUserName name = find (\v -> voteUser (entityPayload v) == name)
