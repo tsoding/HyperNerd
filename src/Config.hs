@@ -10,6 +10,7 @@ data Config = Config
   , configPass :: T.Text
   , configChannel :: T.Text
   , configClientId :: T.Text
+  , configOwner :: T.Text
   } deriving (Show)
 
 configFromFile :: FilePath -> IO Config
@@ -19,4 +20,5 @@ configFromFile filePath = do
     Config <$> (ini >>= lookupValue "User" "nick") <*>
     (ini >>= lookupValue "User" "password") <*>
     (T.cons '#' <$> (ini >>= lookupValue "User" "channel")) <*>
-    (ini >>= lookupValue "User" "clientId")
+    (ini >>= lookupValue "User" "clientId") <*>
+    (ini >>= lookupValue "User" "owner")

@@ -28,6 +28,7 @@ god =
     , senderSubscriber = True
     , senderMod = True
     , senderBroadcaster = True
+    , senderOwner = True
     }
 
 newtype PeriodicCommand = PeriodicCommand

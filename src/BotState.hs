@@ -125,11 +125,13 @@ handleIrcMessage b msg botState = do
       b $
       Msg
         Sender
-          { senderName = idText $ userNick userInfo
+          { senderName = name
           , senderChannel = idText target
           , senderSubscriber = any (T.isPrefixOf "subscriber") badges
           , senderMod = any (T.isPrefixOf "moderator") badges
           , senderBroadcaster = any (T.isPrefixOf "broadcaster") badges
+          , senderOwner = name == configOwner (bsConfig botState)
           }
         msgText
+      where name = idText $ userNick userInfo
     _ -> return botState
