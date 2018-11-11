@@ -11,10 +11,12 @@ data Sender = Sender
   , senderSubscriber :: Bool
   , senderMod :: Bool
   , senderBroadcaster :: Bool
+  , senderOwner :: Bool
   }
 
 senderAuthority :: Sender -> Bool
-senderAuthority sender = senderMod sender || senderBroadcaster sender
+senderAuthority sender =
+  senderMod sender || senderBroadcaster sender || senderOwner sender
 
 data Event
   = Join
