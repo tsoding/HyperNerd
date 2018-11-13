@@ -4,6 +4,7 @@
 module Bot.Twitch where
 
 import Bot.Replies
+import Control.Comonad
 import Data.Aeson
 import Data.Aeson.Types
 import Data.Maybe
@@ -13,12 +14,13 @@ import Effect
 import Events
 import Network.HTTP.Simple
 import qualified Network.URI.Encode as URI
+import Reaction
 import Text.InterpolatedString.QM
 import Text.Printf
-import Reaction
-import Control.Comonad
 
-newtype TwitchResponse a = TwitchResponse { trData :: [a] }
+newtype TwitchResponse a = TwitchResponse
+  { trData :: [a]
+  }
 
 instance FromJSON a => FromJSON (TwitchResponse a) where
   parseJSON (Object obj) = TwitchResponse <$> obj .: "data"
@@ -76,11 +78,10 @@ streamUptime twitchStream = do
 
 uptimeCommand :: Reaction Message ()
 uptimeCommand =
-    transR duplicate $
-    cmapR channelOfMessage $
-    liftR twitchStreamByLogin $
-    replyOnNothing "Not even streaming LUL" $
-    liftR streamUptime $
-    cmapR humanReadableDiffTime $
-    cmapR (T.append "Streaming for ") $
-    Reaction replyMessage
+  transR duplicate $
+  cmapR channelOfMessage $
+  liftR twitchStreamByLogin $
+  replyOnNothing "Not even streaming LUL" $
+  liftR streamUptime $
+  cmapR humanReadableDiffTime $
+  cmapR (T.append "Streaming for ") $ Reaction replyMessage
