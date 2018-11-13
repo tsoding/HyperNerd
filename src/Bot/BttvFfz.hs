@@ -72,12 +72,14 @@ instance FromJSON FfzRes where
 ffzUrl :: Message a -> Message String
 ffzUrl message = fmap (const url) message
   where
-    url = [qms|https://api.frankerfacez.com/v1/room/{URI.encode $ T.unpack $ channelOfMessage message}|]
+    url = [qms|https://api.frankerfacez.com/v1/room/{encodedChannel}|]
+    encodedChannel = URI.encode $ T.unpack $ channelOfMessage message
 
 bttvUrl :: Message a -> Message String
 bttvUrl message = fmap (const url) message
   where
-    url = [qms|https://api.betterttv.net/2/channels/{URI.encode $ T.unpack $ channelOfMessage message}|]
+    url = [qms|https://api.betterttv.net/2/channels/{encodedChannel}|]
+    encodedChannel = URI.encode $ T.unpack $ channelOfMessage message
 
 ffzCommand :: Reaction Message ()
 ffzCommand =

@@ -4,7 +4,6 @@
 module Bot.Twitch where
 
 import Bot.Replies
-import Command
 import Data.Aeson
 import Data.Aeson.Types
 import Data.Maybe
@@ -14,9 +13,10 @@ import Effect
 import Events
 import Network.HTTP.Simple
 import qualified Network.URI.Encode as URI
-import Safe
 import Text.InterpolatedString.QM
 import Text.Printf
+import Reaction
+import Control.Comonad
 
 newtype TwitchResponse a = TwitchResponse { trData :: [a] }
 
@@ -68,17 +68,19 @@ humanReadableDiffTime t =
     secondsInHour = 60 * secondsInMinute
     secondsInMinute = 60
 
-uptimeCommand :: CommandHandler ()
-uptimeCommand Message {messageSender = sender} = do
-  let channel =
-        T.pack $ fromMaybe "tsoding" $ tailMay $ T.unpack $ senderChannel sender
-  response <- twitchStreamByLogin channel
-  maybe
-    (replyToSender sender "Not even streaming LUL")
-    (\twitchStream -> do
-       currentTime <- now
-       let streamStartTime = tsStartedAt twitchStream
-       let humanReadableDiff =
-             humanReadableDiffTime $ diffUTCTime currentTime streamStartTime
-       replyToSender sender [qms|Streaming for {humanReadableDiff}|])
-    response
+streamUptime :: TwitchStream -> Effect NominalDiffTime
+streamUptime twitchStream = do
+  currentTime <- now
+  let streamStartTime = tsStartedAt twitchStream
+  return $ diffUTCTime currentTime streamStartTime
+
+uptimeCommand :: Reaction Message ()
+uptimeCommand =
+    transR duplicate $
+    cmapR channelOfMessage $
+    liftR twitchStreamByLogin $
+    replyOnNothing "Not even streaming LUL" $
+    liftR streamUptime $
+    cmapR humanReadableDiffTime $
+    cmapR (T.append "Streaming for ") $
+    Reaction replyMessage
