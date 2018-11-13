@@ -18,19 +18,21 @@ import Safe
 import Text.InterpolatedString.QM
 import Text.Printf
 
+newtype TwitchResponse a = TwitchResponse { trData :: [a] }
+
+instance FromJSON a => FromJSON (TwitchResponse a) where
+  parseJSON (Object obj) = TwitchResponse <$> obj .: "data"
+  parseJSON invalid = typeMismatch "TwitchResponse" invalid
+
 data TwitchStream = TwitchStream
   { tsStartedAt :: UTCTime
   , tsTitle :: T.Text
   }
 
-twitchStreamsParser :: Object -> Parser [TwitchStream]
-twitchStreamsParser obj =
-  obj .: "data" >>=
-  mapM
-    (\s -> do
-       title <- s .: "title"
-       startedAt <- s .: "started_at"
-       return TwitchStream {tsStartedAt = startedAt, tsTitle = title})
+instance FromJSON TwitchStream where
+  parseJSON (Object obj) =
+    TwitchStream <$> obj .: "title" <*> obj .: "started_at"
+  parseJSON invalid = typeMismatch "TwitchStream" invalid
 
 twitchStreamByLogin :: T.Text -> Effect (Maybe TwitchStream)
 twitchStreamByLogin login = do
@@ -39,11 +41,10 @@ twitchStreamByLogin login = do
     printf "https://api.twitch.tv/helix/streams?user_login=%s" $
     URI.encode $ T.unpack login
   response <- twitchApiRequest request
-  let payload = eitherDecode $ getResponseBody response
   either
     (errorEff . T.pack)
-    (return . listToMaybe)
-    (payload >>= parseEither twitchStreamsParser)
+    (return . listToMaybe . trData)
+    (eitherDecode $ getResponseBody response)
 
 humanReadableDiffTime :: NominalDiffTime -> T.Text
 humanReadableDiffTime t =
