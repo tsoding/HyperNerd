@@ -1,6 +1,7 @@
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE UnicodeSyntax #-}
 {-# LANGUAGE FlexibleInstances #-}
+{-# LANGUAGE QuasiQuotes #-}
 
 module Bot.BttvFfz
   ( ffzCommand
@@ -23,8 +24,7 @@ import Network.HTTP.Simple
 import qualified Network.URI.Encode as URI
 import Property
 import Reaction
-import Safe
-import Text.Printf
+import Text.InterpolatedString.QM
 
 newtype FfzEmote = FfzEmote
   { ffzName :: T.Text
@@ -70,22 +70,14 @@ instance FromJSON FfzRes where
   parseJSON invalid = typeMismatch "FfzRes" invalid
 
 ffzUrl :: Message a -> Message String
-ffzUrl message@Message {messageSender = sender} = fmap (const url) message
+ffzUrl message = fmap (const url) message
   where
-    url =
-      maybe
-        "tsoding"
-        (printf "https://api.frankerfacez.com/v1/room/%s" . URI.encode)
-        (tailMay $ T.unpack $ senderChannel sender)
+    url = [qms|https://api.frankerfacez.com/v1/room/{URI.encode $ T.unpack $ channelOfMessage message}|]
 
 bttvUrl :: Message a -> Message String
-bttvUrl message@Message {messageSender = sender} = fmap (const url) message
+bttvUrl message = fmap (const url) message
   where
-    url =
-      maybe
-        "tsoding"
-        (printf "https://api.betterttv.net/2/channels/%s" . URI.encode)
-        (tailMay $ T.unpack $ senderChannel sender)
+    url = [qms|https://api.betterttv.net/2/channels/{URI.encode $ T.unpack $ channelOfMessage message}|]
 
 ffzCommand :: Reaction Message ()
 ffzCommand =

@@ -4,6 +4,8 @@ module Events where
 
 import Control.Comonad
 import qualified Data.Text as T
+import Safe
+import Data.Maybe
 
 data Sender = Sender
   { senderName :: T.Text
@@ -31,3 +33,7 @@ data Message a = Message
 instance Comonad Message where
   extract = messageContent
   duplicate m = const m <$> m
+
+channelOfMessage :: Message a -> T.Text
+channelOfMessage Message { messageSender = sender } =
+  T.pack $ fromMaybe "tsoding" $ tailMay $ T.unpack $ senderChannel sender
