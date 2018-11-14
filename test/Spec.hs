@@ -5,6 +5,7 @@ import qualified Bot.PollTest as PT
 import qualified BotSpec.LinksSpec as BLS
 import qualified CommandSpec as CS
 import qualified Sqlite.EntityPersistenceSpec as SEPS
+import qualified BotSpec.TwitchSpec as TS
 import System.Exit
 import Test.HUnit
 
@@ -30,6 +31,7 @@ main = do
       , PT.testRank
       , PT.testRankWithEmptyList
       , LS.testSecondsAsBackwardsDiff
+      , TS.twitchResponseFromJsonSpec
       ]
   if errors results + failures results == 0
     then exitSuccess

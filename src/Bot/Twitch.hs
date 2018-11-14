@@ -20,7 +20,7 @@ import Text.Printf
 
 newtype TwitchResponse a = TwitchResponse
   { trData :: [a]
-  }
+  } deriving (Eq, Show)
 
 instance FromJSON a => FromJSON (TwitchResponse a) where
   parseJSON (Object obj) = TwitchResponse <$> obj .: "data"
@@ -29,11 +29,11 @@ instance FromJSON a => FromJSON (TwitchResponse a) where
 data TwitchStream = TwitchStream
   { tsStartedAt :: UTCTime
   , tsTitle :: T.Text
-  }
+  } deriving (Eq, Show)
 
 instance FromJSON TwitchStream where
   parseJSON (Object obj) =
-    TwitchStream <$> obj .: "title" <*> obj .: "started_at"
+    TwitchStream <$> obj .: "started_at" <*> obj .: "title"
   parseJSON invalid = typeMismatch "TwitchStream" invalid
 
 twitchStreamByLogin :: T.Text -> Effect (Maybe TwitchStream)

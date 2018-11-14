@@ -182,5 +182,7 @@ test-suite HyperNerdTest
                      , Sqlite.EntityPersistence
                      , Sqlite.EntityPersistenceSpec
                      , Sqlite.Migration
+                     , BotSpec.TwitchSpec
+                     , Bot.Twitch
 
   default-language:    Haskell2010
