@@ -3,6 +3,7 @@ module Main where
 import qualified Bot.LogSpec as LS
 import qualified Bot.PollTest as PT
 import qualified BotSpec.LinksSpec as BLS
+import qualified BotSpec.TwitchSpec as TS
 import qualified CommandSpec as CS
 import qualified Sqlite.EntityPersistenceSpec as SEPS
 import System.Exit
@@ -30,6 +31,7 @@ main = do
       , PT.testRank
       , PT.testRankWithEmptyList
       , LS.testSecondsAsBackwardsDiff
+      , TS.twitchResponseFromJsonSpec
       ]
   if errors results + failures results == 0
     then exitSuccess
