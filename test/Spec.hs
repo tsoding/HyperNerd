@@ -3,9 +3,9 @@ module Main where
 import qualified Bot.LogSpec as LS
 import qualified Bot.PollTest as PT
 import qualified BotSpec.LinksSpec as BLS
+import qualified BotSpec.TwitchSpec as TS
 import qualified CommandSpec as CS
 import qualified Sqlite.EntityPersistenceSpec as SEPS
-import qualified BotSpec.TwitchSpec as TS
 import System.Exit
 import Test.HUnit
 

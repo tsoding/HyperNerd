@@ -3,11 +3,11 @@
 
 module BotSpec.TwitchSpec where
 
+import Bot.Twitch
+import Data.Aeson
+import Data.Time
 import Test.HUnit
 import Text.InterpolatedString.QM
-import Data.Aeson
-import Bot.Twitch
-import Data.Time
 
 twitchResponseFromJsonSpec :: Test
 twitchResponseFromJsonSpec =
