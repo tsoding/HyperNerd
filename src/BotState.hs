@@ -11,6 +11,7 @@ module BotState
 import Bot
 import Config
 import Control.Concurrent.STM
+import Control.Exception
 import Control.Monad.Free
 import Data.Foldable
 import Data.Function
@@ -29,10 +30,9 @@ import Irc.UserInfo (userNick)
 import IrcTransport
 import Network.HTTP.Simple
 import qualified Sqlite.EntityPersistence as SEP
-import Text.Printf
-import Text.InterpolatedString.QM
-import Control.Exception
 import System.IO
+import Text.InterpolatedString.QM
+import Text.Printf
 
 data BotState = BotState
   { bsConfig :: Config
@@ -80,11 +80,15 @@ applyEffect botState (Free (UpdateEntities name selector properties s)) = do
   n <- SEP.updateEntities (bsSqliteConn botState) name selector properties
   applyEffect botState (s n)
 applyEffect botState (Free (HttpRequest request s)) = do
-  response <- catch (Just <$> httpLBS request)
-                    (\e -> do
-                       hPutStr stderr [qms|[ERROR] HTTP request failed:
+  response <-
+    catch
+      (Just <$> httpLBS request)
+      (\e -> do
+         hPutStr
+           stderr
+           [qms|[ERROR] HTTP request failed:
                                            {e :: HttpException}|]
-                       return Nothing)
+         return Nothing)
   case response of
     Just response' -> applyEffect botState (s response')
     Nothing -> return botState
