@@ -199,7 +199,7 @@ builtinCommands =
           replyLeft $
           cmapR headMay $ replyOnNothing "Not enough arguments" istrustedCommand))
     , ( "wiggle"
-      , ( "Wiggle the tenticle"
+      , ( "Wiggle the tenticle (integration with https://github.com/tsoding/wiggle)"
         , Reaction $ \_ -> do
             request <- parseRequest "http://localhost:8081/wiggle"
             void $ httpRequest request))
