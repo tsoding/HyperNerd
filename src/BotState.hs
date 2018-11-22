@@ -1,4 +1,5 @@
 {-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE QuasiQuotes #-}
 
 module BotState
   ( joinChannel
@@ -10,6 +11,7 @@ module BotState
 import Bot
 import Config
 import Control.Concurrent.STM
+import Control.Exception
 import Control.Monad.Free
 import Data.Foldable
 import Data.Function
@@ -28,6 +30,8 @@ import Irc.UserInfo (userNick)
 import IrcTransport
 import Network.HTTP.Simple
 import qualified Sqlite.EntityPersistence as SEP
+import System.IO
+import Text.InterpolatedString.QM
 import Text.Printf
 
 data BotState = BotState
@@ -76,8 +80,18 @@ applyEffect botState (Free (UpdateEntities name selector properties s)) = do
   n <- SEP.updateEntities (bsSqliteConn botState) name selector properties
   applyEffect botState (s n)
 applyEffect botState (Free (HttpRequest request s)) = do
-  response <- httpLBS request
-  applyEffect botState (s response)
+  response <-
+    catch
+      (Just <$> httpLBS request)
+      (\e -> do
+         hPutStr
+           stderr
+           [qms|[ERROR] HTTP request failed:
+                                           {e :: HttpException}|]
+         return Nothing)
+  case response of
+    Just response' -> applyEffect botState (s response')
+    Nothing -> return botState
 applyEffect botState (Free (TwitchApiRequest request s)) = do
   let clientId = fromString $ T.unpack $ configClientId $ bsConfig botState
   response <- httpLBS (addRequestHeader "Client-ID" clientId request)

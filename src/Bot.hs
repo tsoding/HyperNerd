@@ -36,6 +36,7 @@ import qualified Data.Text as T
 import Effect
 import Entity
 import Events
+import Network.HTTP.Simple
 import Reaction
 import Safe
 import Text.InterpolatedString.QM
@@ -172,7 +173,7 @@ builtinCommands =
               Left msg ->
                 logMsg
                   [qms|[WARNING] Could not parse
-                                                               arguments: {msg}|]
+                       arguments: {msg}|]
               Right (n, regex) -> do
                 logs <-
                   selectEntities "LogRecord" $
@@ -197,6 +198,11 @@ builtinCommands =
         , regexArgs "(.+)" $
           replyLeft $
           cmapR headMay $ replyOnNothing "Not enough arguments" istrustedCommand))
+    , ( "wiggle"
+      , ( "Wiggle the tenticle (integration with https://github.com/tsoding/wiggle)"
+        , Reaction $ \_ -> do
+            request <- parseRequest "http://localhost:8081/wiggle"
+            void $ httpRequest request))
     ]
 
 mockMessage :: T.Text -> T.Text
