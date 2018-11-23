@@ -31,12 +31,14 @@ import Data.Array
 import Data.Char
 import Data.Either
 import Data.Foldable
+import Data.Functor.Identity
 import qualified Data.Map as M
 import qualified Data.Text as T
 import Effect
 import Entity
 import Events
 import Network.HTTP.Simple
+import qualified Network.URI.Encode as URI
 import Reaction
 import Safe
 import Text.InterpolatedString.QM
@@ -200,8 +202,10 @@ builtinCommands =
           cmapR headMay $ replyOnNothing "Not enough arguments" istrustedCommand))
     , ( "wiggle"
       , ( "Wiggle the tenticle (integration with https://github.com/tsoding/wiggle)"
-        , Reaction $ \_ -> do
-            request <- parseRequest "http://localhost:8081/wiggle"
+        , transR (Identity . messageSender) $
+          cmapR (URI.encode . T.unpack . senderName) $
+          Reaction $ \(Identity name) -> do
+            request <- parseRequest [qms|http://localhost:8081/wiggle/{name}|]
             void $ httpRequest request))
     ]
 
