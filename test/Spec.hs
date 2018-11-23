@@ -20,6 +20,7 @@ main = do
       -- TODO(#225): CS.textAsPipeSpec is failing
       -- , CS.textAsPipeSpec
       , CS.textAsPipeSingleCommandSpec
+      , CS.wiggleSpec
       , SEPS.createEntityAndGetItById
       , SEPS.createSeveralEntityTypes
       , SEPS.deleteEntitiesWithPropertyEquals

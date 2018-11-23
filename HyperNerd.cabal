@@ -106,6 +106,7 @@ executable HyperNerd
                      , hlint
                      , hookup
                      , http-conduit
+                     , http-types
                      , ini
                      , irc-core
                      , network
@@ -141,6 +142,7 @@ test-suite HyperNerdTest
                      , test
   build-depends:       HUnit
                      , aeson
+                     , array
                      , async
                      , base
                      , bytestring
@@ -149,8 +151,10 @@ test-suite HyperNerdTest
                      , file-embed
                      , free
                      , http-conduit
+                     , http-types
                      , qm-interpolated-string
                      , raw-strings-qq
+                     , regex-base
                      , regex-tdfa
                      , safe
                      , sqlite-simple
@@ -162,14 +166,23 @@ test-suite HyperNerdTest
                      , uri-encode
                      , comonad
 
-  other-modules:       Bot.BttvFfz
+  other-modules:       Bot
+                     , Bot.Alias
+                     , Bot.BttvFfz
+                     , Bot.CustomCommand
+                     , Bot.Dubtrack
+                     , Bot.Help
                      , Bot.Links
+                     , Bot.Periodic
+                     , Bot.Quote
                      , Bot.Replies
+                     , Bot.Russify
                      , BotSpec.LinksSpec
                      , Bot.Log
                      , Bot.LogSpec
                      , Bot.Poll
                      , Bot.PollTest
+                     , Bot.Variable
                      , Command
                      , CommandSpec
                      , Effect

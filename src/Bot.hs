@@ -8,6 +8,7 @@ module Bot
   , Event(..)
   , Sender(..)
   , TwitchStream(..)
+  , wiggle
   ) where
 
 import Bot.Alias
@@ -38,6 +39,7 @@ import Effect
 import Entity
 import Events
 import Network.HTTP.Simple
+import Network.HTTP.Types.Status
 import qualified Network.URI.Encode as URI
 import Reaction
 import Safe
@@ -203,11 +205,19 @@ builtinCommands =
     , ( "wiggle"
       , ( "Wiggle the tenticle (integration with https://github.com/tsoding/wiggle)"
         , transR (Identity . messageSender) $
-          cmapR (URI.encode . T.unpack . senderName) $
-          Reaction $ \(Identity name) -> do
-            request <- parseRequest [qms|http://localhost:8081/wiggle/{name}|]
-            void $ httpRequest request))
+          cmapR (URI.encode . T.unpack . senderName) wiggle))
     ]
+
+wiggle :: Reaction Identity String
+wiggle = Reaction $ \(Identity name) -> wiggle' name True
+  where
+    defaultTimeoutMillis = 10000
+    wiggle' name isRetry = do
+      request <- parseRequest [qms|http://localhost:8081/wiggle/{name}|]
+      response <- httpRequest request
+      let status = statusCode $ getResponseStatus response
+      when (status /= 200) $
+        when isRetry $ timeout defaultTimeoutMillis $ wiggle' name False
 
 mockMessage :: T.Text -> T.Text
 mockMessage =
