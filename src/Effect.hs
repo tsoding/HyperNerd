@@ -145,7 +145,7 @@ httpRequest request = liftF $ HttpRequest request id
 twitchApiRequest :: Request -> Effect (Response B8.ByteString)
 twitchApiRequest request = liftF $ TwitchApiRequest request id
 
--- TODO: timeout should accept 'MilliSeconds' type instead of plaint Integer
+-- TODO: timeout should accept 'MilliSeconds' type instead of plain Integer
 timeout :: Integer -> Effect () -> Effect ()
 timeout t e = liftF $ Timeout t e ()
 
