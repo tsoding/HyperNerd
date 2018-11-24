@@ -58,6 +58,7 @@ wiggleSpec =
     runEffectIO _ (Pure a) = return a
     runEffectIO counter (Free (HttpRequest _ f)) = do
       modifyIORef' counter (+ 1)
+      -- TODO: how can we get rid of a real http call in Unit Tests?
       request <- parseRequest "https://httpstat.us/404"
       response <- httpLBS request
       let result = f response

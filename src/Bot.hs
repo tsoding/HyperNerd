@@ -208,8 +208,8 @@ builtinCommands =
           cmapR (URI.encode . T.unpack . senderName) wiggle))
     ]
 
-wiggle :: Reaction Identity String
-wiggle = Reaction $ \(Identity name) -> wiggle' name True
+wiggle :: Comonad w => Reaction w String
+wiggle = Reaction $ \wa -> wiggle' (extract wa) True
   where
     defaultTimeoutMillis = 10000
     wiggle' name isRetry = do
