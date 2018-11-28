@@ -216,6 +216,7 @@ wiggle = Reaction $ \(Identity name) -> wiggle' name True
       request <- parseRequest [qms|http://localhost:8081/wiggle/{name}|]
       response <- httpRequest request
       let status = getResponseStatus response
+      -- TODO: handle error on request when free monad will provide such ability
       when (status /= ok200) $
         when isRetry $ timeout defaultTimeoutMillis $ wiggle' name False
 
