@@ -102,19 +102,16 @@ applyEffect (botState, Free (Listen effect s)) = do
   (botState', sayLog) <- listenEffectIO applyEffect (botState, effect)
   return (botState', s sayLog)
 
-runEffectIO :: ((a, Effect ()) -> IO (a, Effect ()))
-            -> (a, Effect ())
-            -> IO a
+runEffectIO :: ((a, Effect ()) -> IO (a, Effect ())) -> (a, Effect ()) -> IO a
 runEffectIO _ (x, Pure _) = return x
 runEffectIO f effect = f effect >>= runEffectIO f
 
-listenEffectIO :: ((a, Effect ()) -> IO (a, Effect ()))
-               -> (a, Effect ())
-               -> IO (a, [T.Text])
+listenEffectIO ::
+     ((a, Effect ()) -> IO (a, Effect ())) -> (a, Effect ()) -> IO (a, [T.Text])
 listenEffectIO _ (x, Pure _) = return (x, [])
 listenEffectIO f (x, Free (Say text s)) = do
   (x', sayLog) <- f (x, s) >>= listenEffectIO f
-  return (x', text:sayLog)
+  return (x', text : sayLog)
 listenEffectIO f effect = f effect >>= listenEffectIO f
 
 runEffectTransIO :: BotState -> Effect () -> IO BotState
@@ -127,8 +124,7 @@ joinChannel b botState = runEffectTransIO botState $ b Join
 
 advanceTimeouts :: Integer -> BotState -> IO BotState
 advanceTimeouts dt botState =
-  foldlM runEffectTransIO (botState {bsTimeouts = unripe}) $
-  map snd ripe
+  foldlM runEffectTransIO (botState {bsTimeouts = unripe}) $ map snd ripe
   where
     (ripe, unripe) =
       span ((<= 0) . fst) $
