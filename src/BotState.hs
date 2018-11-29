@@ -42,44 +42,44 @@ data BotState = BotState
   , bsOutcoming :: OutcomingQueue
   }
 
-applyEffect :: BotState -> Effect () -> IO BotState
-applyEffect botState (Pure _) = return botState
-applyEffect botState (Free (Say text s)) = do
+applyEffect :: (BotState, Effect ()) -> IO (BotState, Effect ())
+applyEffect self@(_, (Pure _)) = return self
+applyEffect (botState, (Free (Say text s))) = do
   atomically $
     writeTQueue (bsOutcoming botState) $
     ircPrivmsg (configChannel $ bsConfig botState) text
-  applyEffect botState s
-applyEffect botState (Free (LogMsg msg s)) = do
+  return (botState, s)
+applyEffect (botState, (Free (LogMsg msg s))) = do
   putStrLn $ T.unpack msg
-  applyEffect botState s
-applyEffect botState (Free (Now s)) = do
+  return (botState, s)
+applyEffect (botState, (Free (Now s))) = do
   timestamp <- getCurrentTime
-  applyEffect botState (s timestamp)
-applyEffect botState (Free (ErrorEff msg)) = do
+  return (botState, (s timestamp))
+applyEffect (botState, (Free (ErrorEff msg))) = do
   putStrLn $ printf "[ERROR] %s" msg
-  return botState
-applyEffect botState (Free (CreateEntity name properties s)) = do
+  return (botState, Pure ())
+applyEffect (botState, (Free (CreateEntity name properties s))) = do
   entityId <- SEP.createEntity (bsSqliteConn botState) name properties
-  applyEffect botState (s entityId)
-applyEffect botState (Free (GetEntityById name entityId s)) = do
+  return (botState, (s entityId))
+applyEffect (botState, (Free (GetEntityById name entityId s))) = do
   entity <- SEP.getEntityById (bsSqliteConn botState) name entityId
-  applyEffect botState (s entity)
-applyEffect botState (Free (DeleteEntityById name entityId s)) = do
+  return (botState, (s entity))
+applyEffect (botState, (Free (DeleteEntityById name entityId s))) = do
   SEP.deleteEntityById (bsSqliteConn botState) name entityId
-  applyEffect botState s
-applyEffect botState (Free (UpdateEntityById entity s)) = do
+  return (botState, s)
+applyEffect (botState, (Free (UpdateEntityById entity s))) = do
   entity' <- SEP.updateEntityById (bsSqliteConn botState) entity
-  applyEffect botState (s entity')
-applyEffect botState (Free (SelectEntities name selector s)) = do
+  return (botState, (s entity'))
+applyEffect (botState, (Free (SelectEntities name selector s))) = do
   entities <- SEP.selectEntities (bsSqliteConn botState) name selector
-  applyEffect botState (s entities)
-applyEffect botState (Free (DeleteEntities name selector s)) = do
+  return (botState, (s entities))
+applyEffect (botState, (Free (DeleteEntities name selector s))) = do
   n <- SEP.deleteEntities (bsSqliteConn botState) name selector
-  applyEffect botState (s n)
-applyEffect botState (Free (UpdateEntities name selector properties s)) = do
+  return (botState, (s n))
+applyEffect (botState, (Free (UpdateEntities name selector properties s))) = do
   n <- SEP.updateEntities (bsSqliteConn botState) name selector properties
-  applyEffect botState (s n)
-applyEffect botState (Free (HttpRequest request s)) = do
+  return (botState, (s n))
+applyEffect (botState, (Free (HttpRequest request s))) = do
   response <-
     catch
       (Just <$> httpLBS request)
@@ -90,20 +90,27 @@ applyEffect botState (Free (HttpRequest request s)) = do
                 {e :: HttpException}|]
          return Nothing)
   case response of
-    Just response' -> applyEffect botState (s response')
-    Nothing -> return botState
-applyEffect botState (Free (TwitchApiRequest request s)) = do
+    Just response' -> return (botState, (s response'))
+    Nothing -> return (botState, Pure ())
+applyEffect (botState, (Free (TwitchApiRequest request s))) = do
   let clientId = fromString $ T.unpack $ configClientId $ bsConfig botState
   response <- httpLBS (addRequestHeader "Client-ID" clientId request)
-  applyEffect botState (s response)
-applyEffect botState (Free (Timeout ms e s)) =
-  applyEffect (botState {bsTimeouts = (ms, e) : bsTimeouts botState}) s
+  return (botState, (s response))
+applyEffect (botState, (Free (Timeout ms e s))) =
+  return ((botState {bsTimeouts = (ms, e) : bsTimeouts botState}), s)
 -- TODO(#224): RedirectSay effect is not interpreted
-applyEffect botState (Free (Listen _ s)) = applyEffect botState (s [])
+applyEffect (botState, (Free (Listen _ s))) = return (botState, (s []))
+
+runEffectIO :: ((a, Effect ()) -> IO (a, Effect ()))
+            -> (a, Effect ())
+            -> IO a
+runEffectIO _ (x, Pure _) = return x
+runEffectIO f effect = f effect >>= runEffectIO f
 
 applyEffectInTransaction :: BotState -> Effect () -> IO BotState
-applyEffectInTransaction botState =
-  SQLite.withTransaction (bsSqliteConn botState) . applyEffect botState
+applyEffectInTransaction botState effect =
+  SQLite.withTransaction (bsSqliteConn botState) $
+  runEffectIO applyEffect (botState, effect)
 
 joinChannel :: Bot -> BotState -> IO BotState
 joinChannel b botState = applyEffectInTransaction botState $ b Join
