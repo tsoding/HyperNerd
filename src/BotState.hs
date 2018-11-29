@@ -107,17 +107,17 @@ runEffectIO :: ((a, Effect ()) -> IO (a, Effect ()))
 runEffectIO _ (x, Pure _) = return x
 runEffectIO f effect = f effect >>= runEffectIO f
 
-applyEffectInTransaction :: BotState -> Effect () -> IO BotState
-applyEffectInTransaction botState effect =
+runEffectTransIO :: BotState -> Effect () -> IO BotState
+runEffectTransIO botState effect =
   SQLite.withTransaction (bsSqliteConn botState) $
   runEffectIO applyEffect (botState, effect)
 
 joinChannel :: Bot -> BotState -> IO BotState
-joinChannel b botState = applyEffectInTransaction botState $ b Join
+joinChannel b botState = runEffectTransIO botState $ b Join
 
 advanceTimeouts :: Integer -> BotState -> IO BotState
 advanceTimeouts dt botState =
-  foldlM applyEffectInTransaction (botState {bsTimeouts = unripe}) $
+  foldlM runEffectTransIO (botState {bsTimeouts = unripe}) $
   map snd ripe
   where
     (ripe, unripe) =
@@ -142,7 +142,7 @@ handleIrcMessage b msg botState = do
       atomically $ writeTQueue (bsOutcoming botState) (ircPong xs)
       return botState
     (Privmsg userInfo target msgText) ->
-      applyEffectInTransaction botState $
+      runEffectTransIO botState $
       b $
       Msg
         Sender
