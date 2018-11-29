@@ -99,7 +99,7 @@ applyEffect botState (Free (TwitchApiRequest request s)) = do
 applyEffect botState (Free (Timeout ms e s)) =
   applyEffect (botState {bsTimeouts = (ms, e) : bsTimeouts botState}) s
 -- TODO(#224): RedirectSay effect is not interpreted
-applyEffect botState (Free (RedirectSay _ s)) = applyEffect botState (s [])
+applyEffect botState (Free (Listen _ s)) = applyEffect botState (s [])
 
 applyEffectInTransaction :: BotState -> Effect () -> IO BotState
 applyEffectInTransaction botState =
