@@ -43,43 +43,43 @@ data BotState = BotState
   }
 
 applyEffect :: (BotState, Effect ()) -> IO (BotState, Effect ())
-applyEffect self@(_, (Pure _)) = return self
-applyEffect (botState, (Free (Say text s))) = do
+applyEffect self@(_, Pure _) = return self
+applyEffect (botState, Free (Say text s)) = do
   atomically $
     writeTQueue (bsOutcoming botState) $
     ircPrivmsg (configChannel $ bsConfig botState) text
   return (botState, s)
-applyEffect (botState, (Free (LogMsg msg s))) = do
+applyEffect (botState, Free (LogMsg msg s)) = do
   putStrLn $ T.unpack msg
   return (botState, s)
-applyEffect (botState, (Free (Now s))) = do
+applyEffect (botState, Free (Now s)) = do
   timestamp <- getCurrentTime
-  return (botState, (s timestamp))
-applyEffect (botState, (Free (ErrorEff msg))) = do
+  return (botState, s timestamp)
+applyEffect (botState, Free (ErrorEff msg)) = do
   putStrLn $ printf "[ERROR] %s" msg
   return (botState, Pure ())
-applyEffect (botState, (Free (CreateEntity name properties s))) = do
+applyEffect (botState, Free (CreateEntity name properties s)) = do
   entityId <- SEP.createEntity (bsSqliteConn botState) name properties
-  return (botState, (s entityId))
-applyEffect (botState, (Free (GetEntityById name entityId s))) = do
+  return (botState, s entityId)
+applyEffect (botState, Free (GetEntityById name entityId s)) = do
   entity <- SEP.getEntityById (bsSqliteConn botState) name entityId
-  return (botState, (s entity))
-applyEffect (botState, (Free (DeleteEntityById name entityId s))) = do
+  return (botState, s entity)
+applyEffect (botState, Free (DeleteEntityById name entityId s)) = do
   SEP.deleteEntityById (bsSqliteConn botState) name entityId
   return (botState, s)
-applyEffect (botState, (Free (UpdateEntityById entity s))) = do
+applyEffect (botState, Free (UpdateEntityById entity s)) = do
   entity' <- SEP.updateEntityById (bsSqliteConn botState) entity
-  return (botState, (s entity'))
-applyEffect (botState, (Free (SelectEntities name selector s))) = do
+  return (botState, s entity')
+applyEffect (botState, Free (SelectEntities name selector s)) = do
   entities <- SEP.selectEntities (bsSqliteConn botState) name selector
-  return (botState, (s entities))
-applyEffect (botState, (Free (DeleteEntities name selector s))) = do
+  return (botState, s entities)
+applyEffect (botState, Free (DeleteEntities name selector s)) = do
   n <- SEP.deleteEntities (bsSqliteConn botState) name selector
-  return (botState, (s n))
-applyEffect (botState, (Free (UpdateEntities name selector properties s))) = do
+  return (botState, s n)
+applyEffect (botState, Free (UpdateEntities name selector properties s)) = do
   n <- SEP.updateEntities (bsSqliteConn botState) name selector properties
-  return (botState, (s n))
-applyEffect (botState, (Free (HttpRequest request s))) = do
+  return (botState, s n)
+applyEffect (botState, Free (HttpRequest request s)) = do
   response <-
     catch
       (Just <$> httpLBS request)
@@ -90,17 +90,17 @@ applyEffect (botState, (Free (HttpRequest request s))) = do
                 {e :: HttpException}|]
          return Nothing)
   case response of
-    Just response' -> return (botState, (s response'))
+    Just response' -> return (botState, s response')
     Nothing -> return (botState, Pure ())
-applyEffect (botState, (Free (TwitchApiRequest request s))) = do
+applyEffect (botState, Free (TwitchApiRequest request s)) = do
   let clientId = fromString $ T.unpack $ configClientId $ bsConfig botState
   response <- httpLBS (addRequestHeader "Client-ID" clientId request)
-  return (botState, (s response))
-applyEffect (botState, (Free (Timeout ms e s))) =
+  return (botState, s response)
+applyEffect (botState, Free (Timeout ms e s)) =
   return ((botState {bsTimeouts = (ms, e) : bsTimeouts botState}), s)
-applyEffect (botState, (Free (Listen effect s))) = do
+applyEffect (botState, Free (Listen effect s)) = do
   (botState', sayLog) <- listenEffectIO applyEffect (botState, effect)
-  return (botState', (s sayLog))
+  return (botState', s sayLog)
 
 runEffectIO :: ((a, Effect ()) -> IO (a, Effect ()))
             -> (a, Effect ())
