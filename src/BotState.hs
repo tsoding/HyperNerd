@@ -98,14 +98,24 @@ applyEffect (botState, (Free (TwitchApiRequest request s))) = do
   return (botState, (s response))
 applyEffect (botState, (Free (Timeout ms e s))) =
   return ((botState {bsTimeouts = (ms, e) : bsTimeouts botState}), s)
--- TODO(#224): RedirectSay effect is not interpreted
-applyEffect (botState, (Free (Listen _ s))) = return (botState, (s []))
+applyEffect (botState, (Free (Listen effect s))) = do
+  (botState', sayLog) <- listenEffectIO applyEffect (botState, effect)
+  return (botState', (s sayLog))
 
 runEffectIO :: ((a, Effect ()) -> IO (a, Effect ()))
             -> (a, Effect ())
             -> IO a
 runEffectIO _ (x, Pure _) = return x
 runEffectIO f effect = f effect >>= runEffectIO f
+
+listenEffectIO :: ((a, Effect ()) -> IO (a, Effect ()))
+               -> (a, Effect ())
+               -> IO (a, [T.Text])
+listenEffectIO _ (x, Pure _) = return (x, [])
+listenEffectIO f (x, Free (Say text s)) = do
+  (x', sayLog) <- f (x, s) >>= listenEffectIO f
+  return (x', text:sayLog)
+listenEffectIO f effect = f effect >>= listenEffectIO f
 
 runEffectTransIO :: BotState -> Effect () -> IO BotState
 runEffectTransIO botState effect =
