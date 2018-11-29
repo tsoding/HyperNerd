@@ -22,7 +22,7 @@ module Effect
   , timeout
   , errorEff
   , twitchApiRequest
-  , redirectSay
+  , listen
   , periodicEffect
   ) where
 
@@ -92,8 +92,8 @@ data EffectF s
   | Timeout Integer
             (Effect ())
             s
-  | RedirectSay (Effect ())
-                ([T.Text] -> s)
+  | Listen (Effect ())
+           ([T.Text] -> s)
   deriving (Functor)
 
 type Effect = Free EffectF
@@ -151,8 +151,8 @@ timeout t e = liftF $ Timeout t e ()
 errorEff :: T.Text -> Effect a
 errorEff t = liftF $ ErrorEff t
 
-redirectSay :: Effect () -> Effect [T.Text]
-redirectSay effect = liftF $ RedirectSay effect id
+listen :: Effect () -> Effect [T.Text]
+listen effect = liftF $ Listen effect id
 
 periodicEffect :: Integer -> Effect () -> Effect ()
 periodicEffect period effect = do
