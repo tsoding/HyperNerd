@@ -87,7 +87,7 @@ applyEffect botState (Free (HttpRequest request s)) = do
          hPutStr
            stderr
            [qms|[ERROR] HTTP request failed:
-                                           {e :: HttpException}|]
+                {e :: HttpException}|]
          return Nothing)
   case response of
     Just response' -> applyEffect botState (s response')
