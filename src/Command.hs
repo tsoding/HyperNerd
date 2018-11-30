@@ -1,5 +1,6 @@
 {-# LANGUAGE ViewPatterns #-}
 {-# LANGUAGE TypeSynonymInstances #-}
+{-# LANGUAGE OverloadedStrings #-}
 
 module Command where
 
@@ -37,4 +38,5 @@ textAsCommand (T.uncons -> Just ('!', restText)) =
 textAsCommand _ = Nothing
 
 textAsPipe :: T.Text -> [Command T.Text]
-textAsPipe t = maybeToList $ textAsCommand t
+textAsPipe =
+  fromMaybe [] . sequence . map (textAsCommand . T.strip) . T.splitOn "|"
