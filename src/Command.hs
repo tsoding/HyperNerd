@@ -1,6 +1,7 @@
 {-# LANGUAGE ViewPatterns #-}
 {-# LANGUAGE TypeSynonymInstances #-}
 {-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE DeriveFunctor #-}
 
 module Command where
 
@@ -23,7 +24,7 @@ contramapCH f commandHandler = commandHandler . fmap f
 data Command a = Command
   { commandName :: T.Text
   , commandArgs :: a
-  } deriving (Eq, Show)
+  } deriving (Eq, Show, Functor)
 
 renameCommand :: Command a -> T.Text -> Command a
 renameCommand command name = command {commandName = name}
