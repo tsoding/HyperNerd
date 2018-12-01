@@ -31,6 +31,7 @@ import Data.Array
 import Data.Char
 import Data.Either
 import Data.Foldable
+import Data.Functor.Compose
 import Data.Functor.Identity
 import qualified Data.Map as M
 import qualified Data.Text as T
@@ -326,11 +327,18 @@ bot event@(Msg sender text) = do
     runReaction voteMessage $ Message sender text
     mapM redirectAlias (textAsPipe text) >>= dispatchPipe . Message sender
 
--- TODO(#223): dispatchPipe doesn't support several commands
+dispatchRedirect :: Effect () -> Message (Command T.Text) -> Effect ()
+dispatchRedirect effect cmd = do
+  effectOutput <- T.concat <$> listen effect
+  dispatchCommand $ getCompose ((`T.append` effectOutput) <$> Compose cmd)
+
 dispatchPipe :: Message [Command T.Text] -> Effect ()
-dispatchPipe message@Message {messageContent = command:_} =
-  dispatchCommand $ fmap (const command) message
-dispatchPipe _ = return ()
+dispatchPipe message@Message {messageContent = cmds}
+  | length cmds <= 5 =
+    foldl dispatchRedirect (return ()) $ map (\x -> fmap (const x) message) cmds
+  | otherwise =
+    replyMessage $
+    fmap (const "The length of the pipe is limited to 5 commands") message
 
 dispatchCommand :: Message (Command T.Text) -> Effect ()
 dispatchCommand message = do
