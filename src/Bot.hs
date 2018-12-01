@@ -328,7 +328,7 @@ bot event@(Msg sender text) = do
 
 -- TODO(#223): dispatchPipe doesn't support several commands
 dispatchPipe :: Message [Command T.Text] -> Effect ()
-dispatchPipe message@Message {messageContent = command:_ } =
+dispatchPipe message@Message {messageContent = command:_} =
   dispatchCommand $ fmap (const command) message
 dispatchPipe _ = return ()
 

@@ -38,5 +38,4 @@ textAsCommand (T.uncons -> Just ('!', restText)) =
 textAsCommand _ = Nothing
 
 textAsPipe :: T.Text -> [Command T.Text]
-textAsPipe =
-  fromMaybe [] . mapM (textAsCommand . T.strip) . T.splitOn "|"
+textAsPipe = fromMaybe [] . mapM (textAsCommand . T.strip) . T.splitOn "|"
