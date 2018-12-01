@@ -326,11 +326,10 @@ bot event@(Msg sender text) = do
     runReaction voteMessage $ Message sender text
     mapM redirectAlias (textAsPipe text) >>= dispatchPipe . Message sender
 
-dispatchPipe :: Message [Command T.Text] -> Effect ()
-dispatchPipe message@Message {messageContent = [command]} =
-  dispatchCommand $ fmap (const command) message
-dispatchPipe Message {messageContent = []} = return ()
 -- TODO(#223): dispatchPipe doesn't support several commands
+dispatchPipe :: Message [Command T.Text] -> Effect ()
+dispatchPipe message@Message {messageContent = command:_} =
+  dispatchCommand $ fmap (const command) message
 dispatchPipe _ = return ()
 
 dispatchCommand :: Message (Command T.Text) -> Effect ()
