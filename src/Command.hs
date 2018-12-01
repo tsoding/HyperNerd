@@ -39,4 +39,4 @@ textAsCommand _ = Nothing
 
 textAsPipe :: T.Text -> [Command T.Text]
 textAsPipe =
-  fromMaybe [] . sequence . map (textAsCommand . T.strip) . T.splitOn "|"
+  fromMaybe [] . mapM (textAsCommand . T.strip) . T.splitOn "|"
