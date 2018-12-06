@@ -1,6 +1,7 @@
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE TupleSections #-}
 {-# LANGUAGE QuasiQuotes #-}
+{-# LANGUAGE TypeApplications #-}
 
 module Bot
   ( Bot
@@ -47,6 +48,7 @@ import Text.Read
 import qualified Text.Regex.Base.RegexLike as Regex
 import Text.Regex.TDFA (defaultCompOpt, defaultExecOpt)
 import Text.Regex.TDFA.String
+import Data.List
 
 type Bot = Event -> Effect ()
 
@@ -208,6 +210,13 @@ builtinCommands =
           Reaction $ \(Identity name) -> do
             request <- parseRequest [qms|http://localhost:8081/wiggle/{name}|]
             void $ httpRequest request))
+    , ( "count"
+      , ( "Count numbers from 1 to n"
+        , authorizeSender senderAuthority $
+          replyOnNothing "Only for mods" $
+          cmapR (readMaybe . T.unpack) $
+          replyOnNothing "Expected number" $
+          Reaction $ \w -> mapM_ (say . T.pack . show @Int) [1 .. min 20 $ extract w]))
     ]
 
 mockMessage :: T.Text -> T.Text
