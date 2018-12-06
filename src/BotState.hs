@@ -110,7 +110,7 @@ listenEffectIO ::
      ((a, Effect ()) -> IO (a, Effect ())) -> (a, Effect ()) -> IO (a, [T.Text])
 listenEffectIO _ (x, Pure _) = return (x, [])
 listenEffectIO f (x, Free (Say text s)) = do
-  (x', sayLog) <- f (x, s) >>= listenEffectIO f
+  (x', sayLog) <- listenEffectIO f (x, s)
   return (x', text : sayLog)
 listenEffectIO f effect = f effect >>= listenEffectIO f
 
