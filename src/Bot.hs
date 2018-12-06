@@ -273,7 +273,7 @@ pairArgsCommand _ message@Message {messageContent = args} =
   fmap
     (const
        [qms|Expected two arguments
-                     but got {length args}|])
+            but got {length args}|])
     message
 
 regexParseArgs :: T.Text -> T.Text -> Either String [T.Text]
