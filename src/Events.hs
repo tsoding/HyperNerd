@@ -32,7 +32,7 @@ data Message a = Message
 
 instance Comonad Message where
   extract = messageContent
-  duplicate m = const m <$> m
+  duplicate m = m <$ m
 
 channelOfMessage :: Message a -> T.Text
 channelOfMessage Message {messageSender = sender} =

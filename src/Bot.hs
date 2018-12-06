@@ -264,7 +264,7 @@ senderAuthorizedCommand ::
 senderAuthorizedCommand predicate unauthorizedResponse commandHandler message =
   if predicate $ messageSender message
     then commandHandler message
-    else replyMessage (const unauthorizedResponse <$> message)
+    else replyMessage (unauthorizedResponse <$ message)
 
 authorizeSender ::
      (Sender -> Bool) -> Reaction Message (Maybe a) -> Reaction Message a
@@ -273,7 +273,7 @@ authorizeSender p =
     (\msg ->
        if p $ messageSender msg
          then Just <$> msg
-         else const Nothing <$> msg)
+         else Nothing <$ msg)
 
 pairArgsCommand :: CommandHandler (a, a) -> CommandHandler [a]
 pairArgsCommand commandHandler message@Message {messageContent = [x, y]} =
