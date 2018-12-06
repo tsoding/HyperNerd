@@ -34,6 +34,7 @@ import Data.Either
 import Data.Foldable
 import Data.Functor.Compose
 import Data.Functor.Identity
+import Data.List
 import qualified Data.Map as M
 import qualified Data.Text as T
 import Effect
@@ -48,7 +49,6 @@ import Text.Read
 import qualified Text.Regex.Base.RegexLike as Regex
 import Text.Regex.TDFA (defaultCompOpt, defaultExecOpt)
 import Text.Regex.TDFA.String
-import Data.List
 
 type Bot = Event -> Effect ()
 
@@ -216,7 +216,8 @@ builtinCommands =
           replyOnNothing "Only for mods" $
           cmapR (readMaybe . T.unpack) $
           replyOnNothing "Expected number" $
-          Reaction $ \w -> mapM_ (say . T.pack . show @Int) [1 .. min 20 $ extract w]))
+          Reaction $ \w ->
+            mapM_ (say . T.pack . show @Int) [1 .. min 20 $ extract w]))
     ]
 
 mockMessage :: T.Text -> T.Text
