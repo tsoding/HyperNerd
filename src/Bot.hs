@@ -329,8 +329,9 @@ bot event@(Msg sender text) = do
 
 dispatchRedirect :: Effect () -> Message (Command T.Text) -> Effect ()
 dispatchRedirect effect cmd = do
-  effectOutput <- T.concat <$> listen effect
-  dispatchCommand $ getCompose ((`T.append` effectOutput) <$> Compose cmd)
+  effectOutput <- T.concat . intersperse " " <$> listen effect
+  dispatchCommand $
+    getCompose ((\x -> T.concat [x, " ", effectOutput]) <$> Compose cmd)
 
 dispatchPipe :: Message [Command T.Text] -> Effect ()
 dispatchPipe message@Message {messageContent = cmds}
