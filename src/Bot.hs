@@ -220,7 +220,10 @@ builtinCommands =
             mapM_ (say . T.pack . show @Int) [1 .. min 20 $ extract w]))
     , ( "wme"
       , ( "Whisper yourself something"
-        , Reaction $ \msg -> whisperToSender (messageSender msg) [qms|You asked me to whisper you this: "{messageContent msg}"|]))
+        , Reaction $ \msg ->
+            whisperToSender
+              (messageSender msg)
+              [qms|You asked me to whisper you this: "{messageContent msg}"|]))
     ]
 
 mockMessage :: T.Text -> T.Text
