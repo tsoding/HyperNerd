@@ -1,6 +1,7 @@
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE TupleSections #-}
 {-# LANGUAGE QuasiQuotes #-}
+{-# LANGUAGE TypeApplications #-}
 
 module Bot
   ( Bot
@@ -32,7 +33,9 @@ import Data.Array
 import Data.Char
 import Data.Either
 import Data.Foldable
+import Data.Functor.Compose
 import Data.Functor.Identity
+import Data.List
 import qualified Data.Map as M
 import qualified Data.Text as T
 import Effect
@@ -206,6 +209,20 @@ builtinCommands =
       , ( "Wiggle the tenticle (integration with https://github.com/tsoding/wiggle)"
         , transR (Identity . messageSender) $
           cmapR (URI.encode . T.unpack . senderName) wiggle))
+    , ( "count"
+      , ( "Count numbers from 1 to n"
+        , authorizeSender senderAuthority $
+          replyOnNothing "Only for mods" $
+          cmapR (readMaybe . T.unpack) $
+          replyOnNothing "Expected number" $
+          Reaction $ \w ->
+            mapM_ (say . T.pack . show @Int) [1 .. min 20 $ extract w]))
+    , ( "wme"
+      , ( "Whisper yourself something"
+        , Reaction $ \msg ->
+            whisperToSender
+              (messageSender msg)
+              [qms|You asked me to whisper you this: "{messageContent msg}"|]))
     ]
 
 wiggle :: Comonad w => Reaction w String
@@ -264,7 +281,7 @@ senderAuthorizedCommand ::
 senderAuthorizedCommand predicate unauthorizedResponse commandHandler message =
   if predicate $ messageSender message
     then commandHandler message
-    else replyMessage (const unauthorizedResponse <$> message)
+    else replyMessage (unauthorizedResponse <$ message)
 
 authorizeSender ::
      (Sender -> Bool) -> Reaction Message (Maybe a) -> Reaction Message a
@@ -273,7 +290,7 @@ authorizeSender p =
     (\msg ->
        if p $ messageSender msg
          then Just <$> msg
-         else const Nothing <$> msg)
+         else Nothing <$ msg)
 
 pairArgsCommand :: CommandHandler (a, a) -> CommandHandler [a]
 pairArgsCommand commandHandler message@Message {messageContent = [x, y]} =
@@ -283,7 +300,7 @@ pairArgsCommand _ message@Message {messageContent = args} =
   fmap
     (const
        [qms|Expected two arguments
-                     but got {length args}|])
+            but got {length args}|])
     message
 
 regexParseArgs :: T.Text -> T.Text -> Either String [T.Text]
@@ -337,12 +354,19 @@ bot event@(Msg sender text) = do
     runReaction voteMessage $ Message sender text
     mapM redirectAlias (textAsPipe text) >>= dispatchPipe . Message sender
 
+dispatchRedirect :: Effect () -> Message (Command T.Text) -> Effect ()
+dispatchRedirect effect cmd = do
+  effectOutput <- T.concat . intersperse " " <$> listen effect
+  dispatchCommand $
+    getCompose ((\x -> T.concat [x, " ", effectOutput]) <$> Compose cmd)
+
 dispatchPipe :: Message [Command T.Text] -> Effect ()
-dispatchPipe message@Message {messageContent = [command]} =
-  dispatchCommand $ fmap (const command) message
-dispatchPipe Message {messageContent = []} = return ()
--- TODO(#223): dispatchPipe doesn't support several commands
-dispatchPipe _ = return ()
+dispatchPipe message@Message {messageContent = cmds}
+  | length cmds <= 5 =
+    foldl dispatchRedirect (return ()) $ map (\x -> fmap (const x) message) cmds
+  | otherwise =
+    replyMessage $
+    fmap (const "The length of the pipe is limited to 5 commands") message
 
 dispatchCommand :: Message (Command T.Text) -> Effect ()
 dispatchCommand message = do

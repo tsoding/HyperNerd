@@ -17,8 +17,7 @@ main = do
       [ BLS.textContainsLinkSpec
       , CS.commandWithGermanUmlauts
       , CS.commandWithRussians
-      -- TODO(#225): CS.textAsPipeSpec is failing
-      -- , CS.textAsPipeSpec
+      , CS.textAsPipeSpec
       , CS.textAsPipeSingleCommandSpec
       , CS.wiggleSpec
       , SEPS.createEntityAndGetItById
