@@ -35,8 +35,12 @@ newtype TrustedUser = TrustedUser
 
 instance IsEntity TrustedUser where
   toProperties trustedUser =
-    M.fromList [("user", PropertyText $ trustedUserName trustedUser)]
-  fromProperties properties = TrustedUser <$> extractProperty "user" properties
+    M.fromList
+      [ ( "user"
+        , PropertyText $ T.strip $ T.toLower $ trustedUserName trustedUser)
+      ]
+  fromProperties properties =
+    TrustedUser . T.strip . T.toLower <$> extractProperty "user" properties
 
 findTrustedUser :: T.Text -> Effect (Maybe (Entity TrustedUser))
 findTrustedUser name =
@@ -83,7 +87,7 @@ forbidLinksForPlebs _ = return False
 
 trustCommand :: CommandHandler T.Text
 trustCommand Message {messageSender = sender, messageContent = inputUser} = do
-  let user = T.toLower inputUser
+  let user = T.strip $ T.toLower inputUser
   trustedUser <- findTrustedUser user
   case trustedUser of
     Just _ -> replyToSender sender [qm|{user} is already trusted|]
@@ -93,7 +97,7 @@ trustCommand Message {messageSender = sender, messageContent = inputUser} = do
 
 untrustCommand :: CommandHandler T.Text
 untrustCommand Message {messageSender = sender, messageContent = inputUser} = do
-  let user = T.toLower inputUser
+  let user = T.strip $ T.toLower inputUser
   trustedUser <- findTrustedUser user
   case trustedUser of
     Just trustedUser' -> do
@@ -111,7 +115,7 @@ amitrustedCommand =
 
 istrustedCommand :: Reaction Message T.Text
 istrustedCommand =
-  cmapR T.toLower $
+  cmapR (T.strip . T.toLower) $
   cmapR (join (,)) $
   transR ComposeCC $
   liftR findTrustedUser $
