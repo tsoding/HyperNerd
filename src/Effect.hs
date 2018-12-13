@@ -161,11 +161,7 @@ periodicEffect period effect = do
   timeout period $ periodicEffect period effect
 
 escapeMessage :: T.Text -> T.Text
-escapeMessage text =
-  case T.uncons text of
-    Just ('/', rest) -> rest
-    Just ('.', rest) -> rest
-    _ -> text
+escapeMessage = T.dropWhile (`elem` ['/', '.'])
 
 escapeSay :: Effect () -> Effect ()
 escapeSay effect = listen effect >>= mapM_ (say . escapeMessage)
