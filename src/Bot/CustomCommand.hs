@@ -25,12 +25,14 @@ import Entity
 import Events
 import Property
 import Text.InterpolatedString.QM
+import Data.Bool (intAsBool, boolAsInt)
 
 data CustomCommand = CustomCommand
   { customCommandName :: T.Text
   , customCommandMessage :: T.Text
   , customCommandTimes :: Int
   , customCommandLastUsed :: UTCTime
+  , customCommandEscape :: Bool
   }
 
 instance IsEntity CustomCommand where
@@ -40,12 +42,14 @@ instance IsEntity CustomCommand where
       , ("message", PropertyText $ customCommandMessage customCommand)
       , ("times", PropertyInt $ customCommandTimes customCommand)
       , ("lastUsed", PropertyUTCTime $ customCommandLastUsed customCommand)
+      , ("escape", PropertyInt $ boolAsInt $ customCommandEscape customCommand)
       ]
   fromProperties properties =
     CustomCommand <$> extractProperty "name" properties <*>
     extractProperty "message" properties <*>
     pure (fromMaybe 0 $ extractProperty "times" properties) <*>
-    pure (fromMaybe dayZero $ extractProperty "lastUsed" properties)
+    pure (fromMaybe dayZero $ extractProperty "lastUsed" properties) <*>
+    pure (maybe True intAsBool $ extractProperty "escape" properties)
     where
       dayZero = UTCTime (ModifiedJulianDay 0) 0
 
@@ -86,6 +90,7 @@ addCustomCommand builtinCommands Message { messageSender = sender
             , customCommandMessage = message
             , customCommandTimes = 0
             , customCommandLastUsed = UTCTime (ModifiedJulianDay 0) 0
+            , customCommandEscape = True
             }
       replyToSender sender [qms|Added command '{name}'|]
 
