@@ -88,6 +88,7 @@ executable HyperNerd
                      , Sqlite.Migration
                      , HyperNerd.Functor
                      , HyperNerd.Comonad
+                     , Data.Bool
   
   -- LANGUAGE extensions used by modules in this package.
   other-extensions:    OverloadedStrings
@@ -184,5 +185,6 @@ test-suite HyperNerdTest
                      , Sqlite.Migration
                      , BotSpec.TwitchSpec
                      , Bot.Twitch
+                     , Data.Bool
 
   default-language:    Haskell2010

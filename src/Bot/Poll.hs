@@ -20,6 +20,7 @@ import Events
 import Property
 import Reaction
 import Text.InterpolatedString.QM
+import Data.Bool (intAsBool, boolAsInt)
 
 data PollOption = PollOption
   { poPollId :: Int
@@ -41,14 +42,6 @@ data Vote = Vote
 
 voteTypeName :: T.Text
 voteTypeName = "Vote"
-
-intAsBool :: Int -> Bool
-intAsBool 0 = False
-intAsBool _ = True
-
-boolAsInt :: Bool -> Int
-boolAsInt True = 1
-boolAsInt False = 0
 
 instance IsEntity Poll where
   toProperties poll =
