@@ -240,7 +240,7 @@ executeCustomCommand customCommand =
     then escapeSay commandEffect
     else commandEffect
   where
-    commandEffect = escapeSay $ say $ customCommandMessage customCommand
+    commandEffect = say $ customCommandMessage customCommand
 
 {-# ANN dispatchCustomCommand ("HLint: ignore Use fmap" :: String)
         #-}
