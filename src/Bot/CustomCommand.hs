@@ -25,7 +25,7 @@ import Entity
 import Events
 import Property
 import Text.InterpolatedString.QM
-import Data.Bool (intAsBool, boolAsInt)
+import Data.Bool (boolAsInt, intAsBool)
 
 data CustomCommand = CustomCommand
   { customCommandName :: T.Text
@@ -234,6 +234,14 @@ customCommandCooldown cooldownTimeout customCommand = do
       lift $ logMsg [qms|Command '{name}' has not cooled down yet|]
       MaybeT $ return Nothing
 
+executeCustomCommand :: CustomCommand -> Effect ()
+executeCustomCommand customCommand =
+  if customCommandEscape customCommand
+    then escapeSay commandEffect
+    else commandEffect
+  where
+    commandEffect = escapeSay $ say $ customCommandMessage customCommand
+
 {-# ANN dispatchCustomCommand ("HLint: ignore Use fmap" :: String)
         #-}
 
@@ -253,4 +261,4 @@ dispatchCustomCommand Message { messageContent = Command { commandName = cmd
        MaybeT . updateEntityById >>=
        return . entityPayload >>=
        lift . expandCustomCommandVars sender args)
-  maybe (return ()) (escapeSay . say . customCommandMessage) customCommand
+  maybe (return ()) executeCustomCommand customCommand
