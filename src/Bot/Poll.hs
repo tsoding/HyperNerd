@@ -7,6 +7,7 @@ import Bot.Log (LogRecord(..), Seconds, getRecentLogs)
 import Bot.Replies
 import Command
 import Control.Monad
+import Data.Bool (boolAsInt, intAsBool)
 import Data.Foldable
 import Data.Function
 import Data.List
@@ -20,7 +21,6 @@ import Events
 import Property
 import Reaction
 import Text.InterpolatedString.QM
-import Data.Bool (intAsBool, boolAsInt)
 
 data PollOption = PollOption
   { poPollId :: Int

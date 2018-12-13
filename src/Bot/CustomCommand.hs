@@ -17,6 +17,7 @@ import Command
 import Control.Monad
 import Control.Monad.Trans.Class
 import Control.Monad.Trans.Maybe
+import Data.Bool (boolAsInt, intAsBool)
 import qualified Data.Map as M
 import Data.Maybe
 import qualified Data.Text as T
@@ -25,9 +26,8 @@ import Effect
 import Entity
 import Events
 import Property
-import Text.InterpolatedString.QM
-import Data.Bool (boolAsInt, intAsBool)
 import Reaction
+import Text.InterpolatedString.QM
 
 data CustomCommand = CustomCommand
   { customCommandName :: T.Text
@@ -267,8 +267,7 @@ dispatchCustomCommand Message { messageContent = Command { commandName = cmd
 
 toggleEscape :: CustomCommand -> CustomCommand
 toggleEscape customCommand =
-  customCommand
-    {customCommandEscape = not $ customCommandEscape customCommand}
+  customCommand {customCommandEscape = not $ customCommandEscape customCommand}
 
 toggleEscapeCustomCommand :: Reaction Message T.Text
 toggleEscapeCustomCommand =
