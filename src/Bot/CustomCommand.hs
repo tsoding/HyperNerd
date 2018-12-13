@@ -248,4 +248,4 @@ dispatchCustomCommand Message { messageContent = Command { commandName = cmd
        MaybeT . updateEntityById >>=
        return . entityPayload >>=
        lift . expandCustomCommandVars sender args)
-  maybe (return ()) (say . customCommandMessage) customCommand
+  maybe (return ()) (escapeSay . say . customCommandMessage) customCommand
