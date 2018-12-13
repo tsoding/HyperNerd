@@ -131,7 +131,7 @@ builtinCommands =
     , ( "escapecmd"
       , ( "Toggle escape mode for the custom command"
         , authorizeSender senderAuthority $
-          replyOnNothing "Only for mods" $
+          replyOnNothing "Only for mods"
           toggleEscapeCustomCommand))
                -- TODO(#337): use help instead of !showcmd
     , ( "showcmd"
