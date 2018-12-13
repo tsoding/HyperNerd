@@ -8,6 +8,7 @@ module Bot.CustomCommand
   , updateCustomCommand
   , showCustomCommand
   , timesCustomCommand
+  , toggleEscapeCustomCommand
   ) where
 
 import Bot.Replies
@@ -26,6 +27,7 @@ import Events
 import Property
 import Text.InterpolatedString.QM
 import Data.Bool (boolAsInt, intAsBool)
+import Reaction
 
 data CustomCommand = CustomCommand
   { customCommandName :: T.Text
@@ -262,3 +264,17 @@ dispatchCustomCommand Message { messageContent = Command { commandName = cmd
        return . entityPayload >>=
        lift . expandCustomCommandVars sender args)
   maybe (return ()) executeCustomCommand customCommand
+
+toggleEscape :: CustomCommand -> CustomCommand
+toggleEscape customCommand =
+  customCommand
+    {customCommandEscape = not $ customCommandEscape customCommand}
+
+toggleEscapeCustomCommand :: Reaction Message T.Text
+toggleEscapeCustomCommand =
+  cmapR T.strip $
+  liftR (runMaybeT . customCommandByName) $
+  replyOnNothing "Could not find such command" $
+  Reaction $ \Message {messageContent = customCommand, messageSender = sender} -> do
+    void $ updateEntityById (toggleEscape <$> customCommand)
+    replyToSender sender "Toggled the escape"
