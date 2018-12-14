@@ -225,6 +225,9 @@ builtinCommands =
             whisperToSender
               (messageSender msg)
               [qms|You asked me to whisper you this: "{messageContent msg}"|]))
+    , ( "vanish"
+      , ( "Timeout yourself for one second"
+        , Reaction $ timeoutMessage 1))
     ]
 
 mockMessage :: T.Text -> T.Text
