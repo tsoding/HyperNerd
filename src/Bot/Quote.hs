@@ -74,4 +74,4 @@ quoteAsReplyMessage entity =
 quoteFoundReply :: Reaction Message (Maybe (Entity Quote))
 quoteFoundReply =
   replyOnNothing "Couldn't find any quotes" $
-  cmapR quoteAsReplyMessage $ cmapR twitchCmdEscape $ liftR say ignore
+  cmapR quoteAsReplyMessage $ liftR say ignore

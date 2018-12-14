@@ -189,7 +189,7 @@ builtinCommands =
                     logs))
     , ( "cycle"
       , ( "Mock the message"
-        , cmapR mockMessage $ cmapR twitchCmdEscape $ liftR say ignore))
+        , cmapR mockMessage $ liftR say ignore))
     , ( "trust"
       , ( "Makes the user trusted"
         , Reaction $
