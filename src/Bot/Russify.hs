@@ -13,11 +13,12 @@ import qualified Data.Map.Lazy as M
 import Data.Maybe
 import qualified Data.Text as T
 import Data.Text.Encoding
+import Effect
 import Events
 import Reaction
 
 russifyCommand :: Reaction Message T.Text
-russifyCommand = cmapR russify $ Reaction replyMessage
+russifyCommand = cmapR russify $ cmapR twitchCmdEscape $ liftR say ignore
 
 mazarusha :: M.Map T.Text T.Text
 mazarusha =

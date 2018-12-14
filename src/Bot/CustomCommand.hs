@@ -193,7 +193,7 @@ expandCustomCommandVars sender args customCommand = do
   let times = customCommandTimes customCommand
   let vars =
         [ ("%times", [qms|{times}|])
-        , ("%1", args)
+        , ("%1", twitchCmdEscape args)
         , ("%year", [qms|{year}|])
         , ("%month", [qms|{month}|])
         , ("%day", [qms|{day}|])
