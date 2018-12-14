@@ -34,7 +34,6 @@ import Data.Either
 import Data.Foldable
 import Data.Functor.Compose
 import Data.Functor.Identity
-import Data.List
 import qualified Data.Map as M
 import qualified Data.Text as T
 import Effect
@@ -187,9 +186,7 @@ builtinCommands =
                   filter
                     (isRight . execute regex . T.unpack . lrMsg . entityPayload)
                     logs))
-    , ( "cycle"
-      , ( "Mock the message"
-        , cmapR mockMessage $ cmapR twitchCmdEscape $ liftR say ignore))
+    , ("cycle", ("Mock the message", cmapR mockMessage $ liftR say ignore))
     , ( "trust"
       , ( "Makes the user trusted"
         , Reaction $
@@ -226,6 +223,8 @@ builtinCommands =
             whisperToSender
               (messageSender msg)
               [qms|You asked me to whisper you this: "{messageContent msg}"|]))
+    , ( "vanish"
+      , ("Timeout yourself for one second", Reaction $ timeoutMessage 1))
     ]
 
 mockMessage :: T.Text -> T.Text
@@ -347,9 +346,9 @@ bot event@(Msg sender text) = do
 
 dispatchRedirect :: Effect () -> Message (Command T.Text) -> Effect ()
 dispatchRedirect effect cmd = do
-  effectOutput <- T.concat . intersperse " " <$> listen effect
+  effectOutput <- T.concat . concatMap (\x -> [" ", x]) <$> listen effect
   dispatchCommand $
-    getCompose ((\x -> T.concat [x, " ", effectOutput]) <$> Compose cmd)
+    getCompose ((\x -> T.concat [x, effectOutput]) <$> Compose cmd)
 
 dispatchPipe :: Message [Command T.Text] -> Effect ()
 dispatchPipe message@Message {messageContent = cmds}

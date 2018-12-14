@@ -42,12 +42,15 @@ data BotState = BotState
   , bsOutcoming :: OutcomingQueue
   }
 
+twitchCmdEscape :: T.Text -> T.Text
+twitchCmdEscape = T.dropWhile (`elem` ['/', '.']) . T.strip
+
 applyEffect :: (BotState, Effect ()) -> IO (BotState, Effect ())
 applyEffect self@(_, Pure _) = return self
 applyEffect (botState, Free (Say text s)) = do
   atomically $
     writeTQueue (bsOutcoming botState) $
-    ircPrivmsg (configChannel $ bsConfig botState) text
+    ircPrivmsg (configChannel $ bsConfig botState) $ twitchCmdEscape text
   return (botState, s)
 applyEffect (botState, Free (LogMsg msg s)) = do
   putStrLn $ T.unpack msg
@@ -101,6 +104,13 @@ applyEffect (botState, Free (Timeout ms e s)) =
 applyEffect (botState, Free (Listen effect s)) = do
   (botState', sayLog) <- listenEffectIO applyEffect (botState, effect)
   return (botState', s sayLog)
+applyEffect (botState, Free (TwitchCommand name args s)) = do
+  atomically $
+    writeTQueue (bsOutcoming botState) $
+    ircPrivmsg
+      (configChannel $ bsConfig botState)
+      [qms|/{name} {T.concat $ intersperse " " args}|]
+  return (botState, s)
 
 runEffectIO :: ((a, Effect ()) -> IO (a, Effect ())) -> (a, Effect ()) -> IO a
 runEffectIO _ (x, Pure _) = return x

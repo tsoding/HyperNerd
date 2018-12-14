@@ -24,6 +24,7 @@ module Effect
   , twitchApiRequest
   , listen
   , periodicEffect
+  , twitchCommand
   ) where
 
 import Control.Monad.Catch
@@ -94,6 +95,9 @@ data EffectF s
             s
   | Listen (Effect ())
            ([T.Text] -> s)
+  | TwitchCommand T.Text
+                  [T.Text]
+                  s
   deriving (Functor)
 
 type Effect = Free EffectF
@@ -158,3 +162,6 @@ periodicEffect :: Integer -> Effect () -> Effect ()
 periodicEffect period effect = do
   effect
   timeout period $ periodicEffect period effect
+
+twitchCommand :: T.Text -> [T.Text] -> Effect ()
+twitchCommand name args = liftF $ TwitchCommand name args ()

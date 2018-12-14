@@ -5,7 +5,6 @@ module Bot.Russify
   ( russifyCommand
   ) where
 
-import Bot.Replies
 import Data.Aeson
 import qualified Data.ByteString.Lazy.Char8 as B
 import Data.FileEmbed
@@ -18,7 +17,7 @@ import Events
 import Reaction
 
 russifyCommand :: Reaction Message T.Text
-russifyCommand = cmapR russify $ cmapR twitchCmdEscape $ liftR say ignore
+russifyCommand = cmapR russify $ liftR say ignore
 
 mazarusha :: M.Map T.Text T.Text
 mazarusha =
