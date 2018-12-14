@@ -186,9 +186,7 @@ builtinCommands =
                   filter
                     (isRight . execute regex . T.unpack . lrMsg . entityPayload)
                     logs))
-    , ( "cycle"
-      , ( "Mock the message"
-        , cmapR mockMessage $ liftR say ignore))
+    , ("cycle", ("Mock the message", cmapR mockMessage $ liftR say ignore))
     , ( "trust"
       , ( "Makes the user trusted"
         , Reaction $
@@ -226,8 +224,7 @@ builtinCommands =
               (messageSender msg)
               [qms|You asked me to whisper you this: "{messageContent msg}"|]))
     , ( "vanish"
-      , ( "Timeout yourself for one second"
-        , Reaction $ timeoutMessage 1))
+      , ("Timeout yourself for one second", Reaction $ timeoutMessage 1))
     ]
 
 mockMessage :: T.Text -> T.Text

@@ -95,7 +95,9 @@ data EffectF s
             s
   | Listen (Effect ())
            ([T.Text] -> s)
-  | TwitchCommand T.Text [T.Text] s
+  | TwitchCommand T.Text
+                  [T.Text]
+                  s
   deriving (Functor)
 
 type Effect = Free EffectF
