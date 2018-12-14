@@ -15,9 +15,10 @@ import qualified Data.Text as T
 import Data.Text.Encoding
 import Events
 import Reaction
+import Effect
 
 russifyCommand :: Reaction Message T.Text
-russifyCommand = cmapR russify $ Reaction replyMessage
+russifyCommand = cmapR russify $ cmapR twitchCmdEscape $ liftR say ignore
 
 mazarusha :: M.Map T.Text T.Text
 mazarusha =

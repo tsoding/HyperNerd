@@ -42,3 +42,6 @@ replyOnNothing reply =
 
 replyLeft :: Reaction Message a -> Reaction Message (Either String a)
 replyLeft = eitherReaction $ cmapR T.pack $ Reaction replyMessage
+
+twitchCmdEscape :: T.Text -> T.Text
+twitchCmdEscape = T.dropWhile (`elem` ['/', '.']) . T.strip
