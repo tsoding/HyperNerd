@@ -187,7 +187,7 @@ builtinCommands =
                   filter
                     (isRight . execute regex . T.unpack . lrMsg . entityPayload)
                     logs))
-    , ("cycle", ("Mock the message", cmapR mockMessage $ Reaction replyMessage))
+    , ("cycle", ("Mock the message", cmapR mockMessage $ cmapR twitchCmdEscape $ liftR say ignore))
     , ( "trust"
       , ( "Makes the user trusted"
         , Reaction $
