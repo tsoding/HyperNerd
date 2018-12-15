@@ -3,6 +3,8 @@
 
 module Bot.Log where
 
+import Control.Comonad
+import Data.Foldable
 import qualified Data.Map as M
 import Data.Maybe
 import qualified Data.Text as T
@@ -14,8 +16,6 @@ import Numeric.Natural
 import Property
 import Reaction
 import Text.InterpolatedString.QM
-import Control.Comonad
-import Data.Foldable
 
 data LogRecord = LogRecord
   { lrUser :: T.Text

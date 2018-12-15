@@ -105,8 +105,7 @@ builtinCommands =
         , cmapR T.words $ cmapR headMay $ ignoreNothing voteCommand))
     , ("unvote", ("Cancel vote", Reaction $ voidCommand unvoteCommand))
     , ("uptime", ("Show stream uptime", cmapR (const ()) uptimeCommand))
-    , ( "rq"
-      , ("Get random quote from your log", randomLogRecordCommand))
+    , ("rq", ("Get random quote from your log", randomLogRecordCommand))
     , ( "addperiodic"
       , ( "Add periodic command"
         , Reaction $ modCommand $ commandArgsCommand addPeriodicCommand))
