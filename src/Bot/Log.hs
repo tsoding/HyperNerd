@@ -1,10 +1,8 @@
 {-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE QuasiQuotes #-}
 
 module Bot.Log where
 
-import Bot.Replies
-import Command
-import Control.Monad
 import qualified Data.Map as M
 import Data.Maybe
 import qualified Data.Text as T
@@ -14,6 +12,10 @@ import Entity
 import Events
 import Numeric.Natural
 import Property
+import Reaction
+import Text.InterpolatedString.QM
+import Control.Comonad
+import Data.Foldable
 
 data LogRecord = LogRecord
   { lrUser :: T.Text
@@ -21,6 +23,9 @@ data LogRecord = LogRecord
   , lrMsg :: T.Text
   , lrTimestamp :: UTCTime
   }
+
+lrAsMsg :: LogRecord -> T.Text
+lrAsMsg lr = [qms|<{lrUser lr}> {lrMsg lr}|]
 
 timestampPV :: T.Text
 timestampPV = "timestamp"
@@ -40,6 +45,10 @@ instance IsEntity LogRecord where
     extractProperty "channel" properties <*>
     extractProperty "msg" properties <*>
     extractProperty timestampPV properties
+
+randomUserQuoteSelector :: T.Text -> Selector
+randomUserQuoteSelector user =
+  Take 1 $ Shuffle $ Filter (PropertyEquals "user" $ PropertyText user) All
 
 recordUserMsg :: Sender -> T.Text -> Effect ()
 recordUserMsg sender msg = do
@@ -70,21 +79,16 @@ getRecentLogs offset = do
 secondsAsBackwardsDiff :: Seconds -> NominalDiffTime
 secondsAsBackwardsDiff = negate . fromInteger . toInteger
 
-randomLogRecordCommand :: CommandHandler T.Text
-randomLogRecordCommand Message { messageSender = sender
-                               , messageContent = rawName
-                               } = do
-  let name = T.toLower $ T.strip rawName
-  user <-
-    if T.null name
-      then return $ senderName sender
-      else return name
-  entity <-
-    listToMaybe <$>
-    selectEntities
-      "LogRecord"
-      (Take 1 $ Shuffle $ Filter (PropertyEquals "user" $ PropertyText user) All)
-  maybe
-    (return ())
-    (fromEntityProperties >=> replyToUser user . lrMsg . entityPayload)
-    entity
+randomLogRecordCommand :: Reaction Message T.Text
+randomLogRecordCommand =
+  cmapR (T.toLower . T.strip) $
+  transR duplicate $
+  cmapR extractUser $
+  liftR (selectEntities "LogRecord" . randomUserQuoteSelector) $
+  cmapR listToMaybe $
+  ignoreNothing $ cmapR (lrAsMsg . entityPayload) $ liftR say ignore
+  where
+    extractUser :: Message T.Text -> T.Text
+    extractUser msg =
+      fromMaybe (senderName $ messageSender msg) $
+      find (not . T.null) $ Just $ messageContent msg

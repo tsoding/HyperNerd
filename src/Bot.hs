@@ -106,7 +106,7 @@ builtinCommands =
     , ("unvote", ("Cancel vote", Reaction $ voidCommand unvoteCommand))
     , ("uptime", ("Show stream uptime", cmapR (const ()) uptimeCommand))
     , ( "rq"
-      , ("Get random quote from your log", Reaction randomLogRecordCommand))
+      , ("Get random quote from your log", randomLogRecordCommand))
     , ( "addperiodic"
       , ( "Add periodic command"
         , Reaction $ modCommand $ commandArgsCommand addPeriodicCommand))
