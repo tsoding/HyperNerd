@@ -64,19 +64,13 @@ addCustomCommand builtinCommands Message { messageSender = sender
   let builtinCommand = M.lookup name builtinCommands
   case (customCommand, builtinCommand) of
     (Just _, Nothing) ->
-      replyToSender
-        sender
-        [qms|Command '{name}' already
-                                                   exists|]
+      replyToSender sender [qms|Command '{name}' already exists|]
     (Nothing, Just _) ->
       replyToSender
         sender
-        [qms|There is already a builtin
-                                                   command with name '{name}'|]
+        [qms|There is already a builtin command with name '{name}'|]
     (Just _, Just _) ->
-      errorEff
-        [qms|Custom command '{name}' collide with
-                                       a built in command|]
+      errorEff [qms|Custom command '{name}' collide with a built in command|]
     (Nothing, Nothing) -> do
       void $
         createEntity
@@ -104,12 +98,11 @@ deleteCustomCommand builtinCommands Message { messageSender = sender
     (Nothing, Just _) ->
       replyToSender
         sender
-        [qms|Command '{name}' is builtin
-                                                    and can't be removed like that|]
+        [qms|Command '{name}' is builtin and can't be removed like that|]
     (Just _, Just _) ->
       errorEff
-        [qms|Custom command '{name}' collide with a
-                                        built in command|]
+        [qms|Custom command '{name}'
+             collide with a built in command|]
     (Nothing, Nothing) ->
       replyToSender sender [qms|Command '{name}' does not exist|]
 
@@ -124,16 +117,16 @@ showCustomCommand builtinCommands Message { messageContent = name
       replyToSender
         sender
         [qms|Command '{name}' defined as
-                                                     '{customCommandMessage $ entityPayload cmd}'|]
+             '{customCommandMessage $ entityPayload cmd}'|]
     (Nothing, Just _) ->
       replyToSender
         sender
         [qms|Command '{name}' is builtin. Look into the code
-                                                     for the definition: https://github.com/tsoding/HyperNerd|]
+             for the definition: https://github.com/tsoding/HyperNerd|]
     (Just _, Just _) ->
       errorEff
         [qms|Custom command '{name}' collide with
-                                         a built in command|]
+             a built in command|]
     (Nothing, Nothing) ->
       replyToSender sender [qms|Command '{name}' does not exist|]
 
@@ -148,18 +141,18 @@ timesCustomCommand builtinCommands Message { messageSender = sender
       replyToSender
         sender
         [qms|Command '{name}' was invoked
-                                                     {customCommandTimes $ entityPayload cmd} times.|]
+             {customCommandTimes $ entityPayload cmd} times.|]
     (Nothing, Just _) ->
       replyToSender
         sender
         [qms|Command '{name}' is builtin and
-                                                    we don't track the frequency usage for builtin commands.
-                                                    See https://github.com/tsoding/HyperNerd/issues/334
-                                                    for more info.|]
+             we don't track the frequency usage for builtin commands.
+             See https://github.com/tsoding/HyperNerd/issues/334
+             for more info.|]
     (Just _, Just _) ->
       errorEff
         [qms|Custom command '{name}' collide with
-                                        a built in command|]
+             a built in command|]
     (Nothing, Nothing) ->
       replyToSender sender [qms|Command '{name}' does not exist|]
 
@@ -177,11 +170,11 @@ updateCustomCommand builtinCommands Message { messageSender = sender
       replyToSender
         sender
         [qms|Command '{name}' is builtin and
-                                                    can't be updated like that|]
+             can't be updated like that|]
     (Just _, Just _) ->
       errorEff
         [qms|Custom command '{name}' collide with
-                                        a built in command|]
+             a built in command|]
     (Nothing, Nothing) ->
       replyToSender sender [qms|Command '{name}' does not exist|]
 

@@ -70,17 +70,12 @@ addPeriodicCommand Message { messageSender = sender
                            } = do
   maybePc <- getPeriodicCommandByName name
   case maybePc of
-    Just _ ->
-      replyToSender
-        sender
-        [qms|'{name}' is aleady
-                                        called periodically|]
+    Just _ -> replyToSender sender [qms|'{name}' is aleady called periodically|]
     Nothing -> do
       void $ createEntity "PeriodicCommand" $ PeriodicCommand command
       replyToSender
         sender
-        [qms|'{name}' has been scheduled
-                                                 to call periodically|]
+        [qms|'{name}' has been scheduled to call periodically|]
 
 removePeriodicCommand :: CommandHandler T.Text
 removePeriodicCommand Message {messageSender = sender, messageContent = name} = do
@@ -92,7 +87,4 @@ removePeriodicCommand Message {messageSender = sender, messageContent = name} = 
         Filter (PropertyEquals "name" $ PropertyText name) All
       replyToSender sender [qms|'{name}' has been unscheduled|]
     Nothing ->
-      replyToSender
-        sender
-        [qms|'{name}' was not scheduled to
-                                         begin with|]
+      replyToSender sender [qms|'{name}' was not scheduled to begin with|]
