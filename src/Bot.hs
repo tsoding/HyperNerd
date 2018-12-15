@@ -162,7 +162,7 @@ builtinCommands =
       , ("Delete variable", Reaction $ modCommand $ runReaction deleteVariable))
     , ( "nuke"
       , ( [qms|Looks at N previous messages and bans all of
-                                the users whose messages match provided regex|]
+               the users whose messages match provided regex|]
         , Reaction $
           modCommand $
           regexArgsCommand "([0-9]+) (.*)" $
@@ -174,9 +174,7 @@ builtinCommands =
                   compile defaultCompOpt defaultExecOpt $ T.unpack regexStr
             case liftM2 (,) parsedN compiledRegex of
               Left msg ->
-                logMsg
-                  [qms|[WARNING] Could not parse
-                       arguments: {msg}|]
+                logMsg [qms|[WARNING] Could not parse arguments: {msg}|]
               Right (n, regex) -> do
                 logs <-
                   selectEntities "LogRecord" $

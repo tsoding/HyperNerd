@@ -49,10 +49,7 @@ addQuoteCommand =
   transR (reflect (senderName . messageSender)) $
   liftR (<$> now) $
   liftR (createEntity "quote") $
-  cmapR
-    (\entity ->
-       [qms|Added the quote under the
-            number {entityId entity}|]) $
+  cmapR (\entity -> [qms|Added the quote under the number {entityId entity}|]) $
   Reaction replyMessage
 
 replyRandomQuote :: Reaction Message ()
@@ -68,8 +65,7 @@ quoteCommand = maybeReaction replyRandomQuote replyRequestedQuote
 
 quoteAsReplyMessage :: Entity Quote -> T.Text
 quoteAsReplyMessage entity =
-  [qms|{quoteContent $ entityPayload entity}
-       {entityId entity}|]
+  [qms|{quoteContent $ entityPayload entity} {entityId entity}|]
 
 quoteFoundReply :: Reaction Message (Maybe (Entity Quote))
 quoteFoundReply =

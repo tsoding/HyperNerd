@@ -126,8 +126,8 @@ pollCommand Message { messageSender = sender
           -- TODO(#296): duration of poll is not human-readable in poll start announcement
           say
             [qms|TwitchVotes The poll has been started. You have {durationSecs} seconds.
-                             Use !vote command to vote for one of the options:
-                             {optionsList}|]
+                 Use !vote command to vote for one of the options:
+                 {optionsList}|]
           timeout (fromIntegral durationMs) $ announcePollResults pollId
         else do
           let offset = fromInteger $ toInteger $ negate durationSecs
