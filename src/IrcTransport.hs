@@ -71,12 +71,10 @@ sendLoop outcoming ircConn = do
   sendMsg ircConn outMsg
   sendLoop outcoming ircConn
 
-ircTransportEntry :: IncomingQueue -> OutcomingQueue -> FilePath -> IO ()
-ircTransportEntry incoming outcoming configFilePath = do
-  conf <- configFromFile configFilePath
-  withConnection twitchConnectionParams $ \ircConn
-           -- TODO(#17): check unsuccessful authorization
-   -> do
+-- TODO(#17): check unsuccessful authorization
+ircTransportEntry :: IncomingQueue -> OutcomingQueue -> Config -> IO ()
+ircTransportEntry incoming outcoming conf = do
+  withConnection twitchConnectionParams $ \ircConn -> do
     authorize conf ircConn
     withAsync (sendLoop outcoming ircConn) $ \sender ->
       withAsync (receiveLoop incoming ircConn) $ \receive -> do
