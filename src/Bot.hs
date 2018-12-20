@@ -84,6 +84,7 @@ builtinCommands =
           replyOnNothing "Only for mods" $
           cmapR (const ()) updateBttvEmotesCommand))
     , ("help", ("Send help", helpCommand builtinCommands))
+    -- TODO: !poll command doesn't support multi-word options
     , ( "poll"
       , ( "Starts a poll"
         , Reaction $

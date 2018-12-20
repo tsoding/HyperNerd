@@ -20,6 +20,8 @@ import Events
 import Property
 import Reaction
 import Text.InterpolatedString.QM
+import Text.Read
+import Safe
 
 data PollOption = PollOption
   { poPollId :: Int
@@ -122,17 +124,18 @@ pollCommand Message { messageSender = sender
       if durationSecs >= 0
         then do
           pollId <- startPoll sender options durationMs
-          let optionsList = T.concat $ intersperse " , " options
           -- TODO(#296): duration of poll is not human-readable in poll start announcement
           say
-            [qms|TwitchVotes The poll has been started. You have {durationSecs} seconds.
-                 Use !vote command to vote for one of the options:
-                 {optionsList}|]
+            [qms|TwitchVotes The poll has been started.
+                 You have {durationSecs} seconds:|]
+          traverse_ (\(i, op) -> say [qms|[{i}] {op}|]) $
+            zip [0 :: Int ..] options
           timeout (fromIntegral durationMs) $ announcePollResults pollId
         else do
           let offset = fromInteger $ toInteger $ negate durationSecs
           -- TODO(#361): Polls with negative durations are not stored in the database
           instantlyReportResults offset options
+
 
 instantlyReportResults :: Seconds -> [T.Text] -> Effect ()
 instantlyReportResults durationSecs options = do
@@ -146,7 +149,8 @@ instantlyReportResults durationSecs options = do
         say [qms|Poll results: {showRanks ranks}|]
 
 voteMessage :: Reaction Message T.Text
-voteMessage = Reaction registerPollVote
+voteMessage =
+  cmapR (readMaybe . T.unpack) $ ignoreNothing $ Reaction registerPollVote
 
 pollLifetime :: UTCTime -> Entity Poll -> Double
 pollLifetime currentTime =
@@ -215,6 +219,7 @@ getOptionsAndVotesByPollId pollId = do
       options
   return (options, votes)
 
+-- TODO: announcePollResults doesn't announces the results the same way pollCommand announces options
 announcePollResults :: Int -> Effect ()
 announcePollResults pollId = do
   (options, votes) <- getOptionsAndVotesByPollId pollId
@@ -244,22 +249,25 @@ registerOptionVote option sender = do
            "Vote"
            Vote {voteUser = senderName sender, voteOptionId = entityId option}
 
-registerPollVote :: Message T.Text -> Effect ()
-registerPollVote Message {messageSender = sender, messageContent = optionName} = do
+registerPollVote :: Message Int -> Effect ()
+registerPollVote Message {messageSender = sender, messageContent = optionNumber} = do
   poll' <- currentPoll
   case poll' of
     Just poll -> do
       options <-
-        selectEntities "PollOption" $
-        Filter (PropertyEquals "pollId" $ PropertyInt $ entityId poll) All
-      case find ((== optionName) . poName . entityPayload) options of
+        sortBy (compare `on` entityId) <$>
+        selectEntities
+          "PollOption"
+          (Filter (PropertyEquals "pollId" $ PropertyInt $ entityId poll) All)
+      case options `atMay` optionNumber of
         Just option -> registerOptionVote option sender
         Nothing ->
           logMsg
             [qms|[WARNING] {senderName sender} voted for
-                 unexisting option {optionName}|]
+                 unexisting option {optionNumber}|]
     Nothing -> return ()
 
+-- TODO: announceRunningPoll doesn't announces the results the same way pollCommand announces options
 announceRunningPoll :: Effect ()
 announceRunningPoll = do
   poll <- currentPoll
