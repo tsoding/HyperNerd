@@ -28,7 +28,7 @@ logicEntry botState = do
   currCPUTime <- getTime Monotonic
   joinChannel bot botState >>= eventLoop bot currCPUTime
 
--- TODO: supervisor is vulnerable to errors that happen at the start of the action
+-- TODO(#399): supervisor is vulnerable to errors that happen at the start of the action
 supavisah :: Show a => IO a -> IO ()
 supavisah x =
     void $ forkFinally x $ \reason -> do
