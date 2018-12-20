@@ -19,9 +19,9 @@ import Entity
 import Events
 import Property
 import Reaction
+import Safe
 import Text.InterpolatedString.QM
 import Text.Read
-import Safe
 
 data PollOption = PollOption
   { poPollId :: Int
@@ -135,7 +135,6 @@ pollCommand Message { messageSender = sender
           let offset = fromInteger $ toInteger $ negate durationSecs
           -- TODO(#361): Polls with negative durations are not stored in the database
           instantlyReportResults offset options
-
 
 instantlyReportResults :: Seconds -> [T.Text] -> Effect ()
 instantlyReportResults durationSecs options = do
