@@ -31,9 +31,10 @@ logicEntry botState = do
 -- TODO(#399): supervisor is vulnerable to errors that happen at the start of the action
 supavisah :: Show a => IO a -> IO ()
 supavisah x =
-    void $ forkFinally x $ \reason -> do
-        putStrLn [qms|Thread died because of {reason}. Restarting...|]
-        supavisah x
+  void $
+  forkFinally x $ \reason -> do
+    putStrLn [qms|Thread died because of {reason}. Restarting...|]
+    supavisah x
 
 mainWithArgs :: [String] -> IO ()
 mainWithArgs [configPath, databasePath] =
