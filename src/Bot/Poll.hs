@@ -266,7 +266,7 @@ registerPollVote Message {messageSender = sender, messageContent = optionNumber}
                  unexisting option {optionNumber}|]
     Nothing -> return ()
 
--- TODO: announceRunningPoll doesn't announces the results the same way pollCommand announces options
+-- TODO(#403): announceRunningPoll doesn't announces the results the same way pollCommand announces options
 announceRunningPoll :: Effect ()
 announceRunningPoll = do
   poll <- currentPoll
