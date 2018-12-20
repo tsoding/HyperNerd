@@ -1,4 +1,5 @@
 {-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE QuasiQuotes #-}
 
 module Main where
 
@@ -10,6 +11,7 @@ import Control.Monad
 import IrcTransport
 import System.Clock
 import System.Environment
+import Text.InterpolatedString.QM
 
 eventLoop :: Bot -> TimeSpec -> BotState -> IO ()
 eventLoop b prevCPUTime botState = do
@@ -26,16 +28,21 @@ logicEntry botState = do
   currCPUTime <- getTime Monotonic
   joinChannel bot botState >>= eventLoop bot currCPUTime
 
+-- TODO: supervisor is vulnerable to errors that happen at the start of the action
+supavisah :: Show a => IO a -> IO ()
+supavisah x =
+    void $ forkFinally x $ \reason -> do
+        putStrLn [qms|Thread died because of {reason}. Restarting...|]
+        supavisah x
+
 mainWithArgs :: [String] -> IO ()
 mainWithArgs [configPath, databasePath] =
   withBotState configPath databasePath $ \botState -> do
-    void $
-      forkIO $
-      ircTransportEntry
-        (bsIncoming botState)
-        (bsOutcoming botState)
-        (bsConfig botState)
-    logicEntry botState
+    supavisah $ logicEntry botState
+    ircTransportEntry
+      (bsIncoming botState)
+      (bsOutcoming botState)
+      (bsConfig botState)
 mainWithArgs _ = error "./HyperNerd <config-file> <database-file>"
 
 main :: IO ()
