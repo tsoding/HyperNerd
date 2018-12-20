@@ -19,7 +19,9 @@ import Entity
 import Events
 import Property
 import Reaction
+import Safe
 import Text.InterpolatedString.QM
+import Text.Read
 
 data PollOption = PollOption
   { poPollId :: Int
@@ -122,12 +124,12 @@ pollCommand Message { messageSender = sender
       if durationSecs >= 0
         then do
           pollId <- startPoll sender options durationMs
-          let optionsList = T.concat $ intersperse " , " options
           -- TODO(#296): duration of poll is not human-readable in poll start announcement
           say
-            [qms|TwitchVotes The poll has been started. You have {durationSecs} seconds.
-                 Use !vote command to vote for one of the options:
-                 {optionsList}|]
+            [qms|TwitchVotes The poll has been started.
+                 You have {durationSecs} seconds:|]
+          traverse_ (\(i, op) -> say [qms|[{i}] {op}|]) $
+            zip [0 :: Int ..] options
           timeout (fromIntegral durationMs) $ announcePollResults pollId
         else do
           let offset = fromInteger $ toInteger $ negate durationSecs
@@ -147,17 +149,7 @@ instantlyReportResults durationSecs options = do
 
 voteMessage :: Reaction Message T.Text
 voteMessage =
-  cmapR (,) $
-  liftR (<$> currentPoll) $
-  cmapR (\(option, poll) -> fmap ((,) option) poll) $
-  ignoreNothing $ Reaction registerPollVote
-
-voteCommand :: Reaction Message T.Text
-voteCommand =
-  cmapR (,) $
-  liftR (<$> currentPoll) $
-  cmapR (\(option, poll) -> fmap ((,) option) poll) $
-  replyOnNothing "No polls are in place" $ Reaction registerPollVote
+  cmapR (readMaybe . T.unpack) $ ignoreNothing $ Reaction registerPollVote
 
 pollLifetime :: UTCTime -> Entity Poll -> Double
 pollLifetime currentTime =
@@ -226,6 +218,7 @@ getOptionsAndVotesByPollId pollId = do
       options
   return (options, votes)
 
+-- TODO(#402): announcePollResults doesn't announces the results the same way pollCommand announces options
 announcePollResults :: Int -> Effect ()
 announcePollResults pollId = do
   (options, votes) <- getOptionsAndVotesByPollId pollId
@@ -255,20 +248,25 @@ registerOptionVote option sender = do
            "Vote"
            Vote {voteUser = senderName sender, voteOptionId = entityId option}
 
-registerPollVote :: Message (T.Text, Entity Poll) -> Effect ()
-registerPollVote Message { messageSender = sender
-                         , messageContent = (optionName, poll)
-                         } = do
-  options <-
-    selectEntities "PollOption" $
-    Filter (PropertyEquals "pollId" $ PropertyInt $ entityId poll) All
-  case find ((== optionName) . poName . entityPayload) options of
-    Just option -> registerOptionVote option sender
-    Nothing ->
-      logMsg
-        [qms|[WARNING] {senderName sender} voted for
-             unexisting option {optionName}|]
+registerPollVote :: Message Int -> Effect ()
+registerPollVote Message {messageSender = sender, messageContent = optionNumber} = do
+  poll' <- currentPoll
+  case poll' of
+    Just poll -> do
+      options <-
+        sortBy (compare `on` entityId) <$>
+        selectEntities
+          "PollOption"
+          (Filter (PropertyEquals "pollId" $ PropertyInt $ entityId poll) All)
+      case options `atMay` optionNumber of
+        Just option -> registerOptionVote option sender
+        Nothing ->
+          logMsg
+            [qms|[WARNING] {senderName sender} voted for
+                 unexisting option {optionNumber}|]
+    Nothing -> return ()
 
+-- TODO(#403): announceRunningPoll doesn't announces the results the same way pollCommand announces options
 announceRunningPoll :: Effect ()
 announceRunningPoll = do
   poll <- currentPoll
@@ -284,23 +282,3 @@ announceRunningPoll = do
         [qms|TwitchVotes The poll is still going. Use !vote command to vote for
              one of the options: {optionsList}|]
     Nothing -> return ()
-
-unvoteCommand :: CommandHandler ()
-unvoteCommand Message {messageSender = sender} = do
-  maybePoll <- currentPoll
-  case maybePoll of
-    Just pollEntity -> do
-      let pollId = entityId pollEntity
-      votes <- getVotesByPollId pollId
-      let name = senderName sender
-      let maybeVote = findVoteByUserName name votes
-      case maybeVote of
-        Just vote -> do
-          let voteId = entityId vote
-          deleteVoteById voteId
-        Nothing -> return ()
-    Nothing -> replyToSender sender "No polls are in place"
-  where
-    deleteVoteById = deleteEntityById voteTypeName
-    getVotesByPollId pollId = join . snd <$> getOptionsAndVotesByPollId pollId
-    findVoteByUserName name = find (\v -> voteUser (entityPayload v) == name)

@@ -84,6 +84,7 @@ builtinCommands =
           replyOnNothing "Only for mods" $
           cmapR (const ()) updateBttvEmotesCommand))
     , ("help", ("Send help", helpCommand builtinCommands))
+    -- TODO(#401): !poll command doesn't support multi-word options
     , ( "poll"
       , ( "Starts a poll"
         , Reaction $
@@ -100,10 +101,6 @@ builtinCommands =
         , Reaction $ modCommand $ voidCommand cancelPollCommand))
     , ( "checkpoll"
       , ("", Reaction $ modCommand $ voidCommand currentPollCommand))
-    , ( "vote"
-      , ( "Vote for a poll option"
-        , cmapR T.words $ cmapR headMay $ ignoreNothing voteCommand))
-    , ("unvote", ("Cancel vote", Reaction $ voidCommand unvoteCommand))
     , ("uptime", ("Show stream uptime", cmapR (const ()) uptimeCommand))
     , ("rq", ("Get random quote from your log", randomLogRecordCommand))
     , ( "addperiodic"
