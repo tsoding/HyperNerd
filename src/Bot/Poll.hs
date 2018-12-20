@@ -218,7 +218,7 @@ getOptionsAndVotesByPollId pollId = do
       options
   return (options, votes)
 
--- TODO: announcePollResults doesn't announces the results the same way pollCommand announces options
+-- TODO(#402): announcePollResults doesn't announces the results the same way pollCommand announces options
 announcePollResults :: Int -> Effect ()
 announcePollResults pollId = do
   (options, votes) <- getOptionsAndVotesByPollId pollId
