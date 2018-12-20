@@ -5,6 +5,9 @@ module BotState
   ( joinChannel
   , advanceTimeouts
   , handleIrcMessage
+  , withBotState
+  , withBotState'
+  , newBotState
   , BotState(..)
   ) where
 
@@ -41,6 +44,30 @@ data BotState = BotState
   , bsIncoming :: IncomingQueue
   , bsOutcoming :: OutcomingQueue
   }
+
+newBotState :: Config -> SQLite.Connection -> IO BotState
+newBotState conf sqliteConn = do
+  incoming <- atomically newTQueue
+  outcoming <- atomically newTQueue
+  return
+    BotState
+      { bsConfig = conf
+      , bsSqliteConn = sqliteConn
+      , bsTimeouts = []
+      , bsIncoming = incoming
+      , bsOutcoming = outcoming
+      }
+
+withBotState' :: Config -> FilePath -> (BotState -> IO ()) -> IO ()
+withBotState' conf databasePath block =
+  SQLite.withConnection databasePath $ \sqliteConn -> do
+    SEP.prepareSchema sqliteConn
+    newBotState conf sqliteConn >>= block
+
+withBotState :: FilePath -> FilePath -> (BotState -> IO ()) -> IO ()
+withBotState configPath databasePath block = do
+  conf <- configFromFile configPath
+  withBotState' conf databasePath block
 
 twitchCmdEscape :: T.Text -> T.Text
 twitchCmdEscape = T.dropWhile (`elem` ['/', '.']) . T.strip
