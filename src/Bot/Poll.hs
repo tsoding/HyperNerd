@@ -146,11 +146,7 @@ instantlyReportResults durationSecs options = do
         say [qms|Poll results: {showRanks ranks}|]
 
 voteMessage :: Reaction Message T.Text
-voteMessage =
-  cmapR (,) $
-  liftR (<$> currentPoll) $
-  cmapR (\(option, poll) -> fmap ((,) option) poll) $
-  ignoreNothing $ Reaction registerPollVote
+voteMessage = Reaction registerPollVote
 
 pollLifetime :: UTCTime -> Entity Poll -> Double
 pollLifetime currentTime =
@@ -248,19 +244,21 @@ registerOptionVote option sender = do
            "Vote"
            Vote {voteUser = senderName sender, voteOptionId = entityId option}
 
-registerPollVote :: Message (T.Text, Entity Poll) -> Effect ()
-registerPollVote Message { messageSender = sender
-                         , messageContent = (optionName, poll)
-                         } = do
-  options <-
-    selectEntities "PollOption" $
-    Filter (PropertyEquals "pollId" $ PropertyInt $ entityId poll) All
-  case find ((== optionName) . poName . entityPayload) options of
-    Just option -> registerOptionVote option sender
-    Nothing ->
-      logMsg
-        [qms|[WARNING] {senderName sender} voted for
-             unexisting option {optionName}|]
+registerPollVote :: Message T.Text -> Effect ()
+registerPollVote Message {messageSender = sender, messageContent = optionName} = do
+  poll' <- currentPoll
+  case poll' of
+    Just poll -> do
+      options <-
+        selectEntities "PollOption" $
+        Filter (PropertyEquals "pollId" $ PropertyInt $ entityId poll) All
+      case find ((== optionName) . poName . entityPayload) options of
+        Just option -> registerOptionVote option sender
+        Nothing ->
+          logMsg
+            [qms|[WARNING] {senderName sender} voted for
+                 unexisting option {optionName}|]
+    Nothing -> return ()
 
 announceRunningPoll :: Effect ()
 announceRunningPoll = do
