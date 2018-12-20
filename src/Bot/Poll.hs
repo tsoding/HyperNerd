@@ -152,13 +152,6 @@ voteMessage =
   cmapR (\(option, poll) -> fmap ((,) option) poll) $
   ignoreNothing $ Reaction registerPollVote
 
-voteCommand :: Reaction Message T.Text
-voteCommand =
-  cmapR (,) $
-  liftR (<$> currentPoll) $
-  cmapR (\(option, poll) -> fmap ((,) option) poll) $
-  replyOnNothing "No polls are in place" $ Reaction registerPollVote
-
 pollLifetime :: UTCTime -> Entity Poll -> Double
 pollLifetime currentTime =
   realToFrac . diffUTCTime currentTime . pollStartedAt . entityPayload
@@ -284,23 +277,3 @@ announceRunningPoll = do
         [qms|TwitchVotes The poll is still going. Use !vote command to vote for
              one of the options: {optionsList}|]
     Nothing -> return ()
-
-unvoteCommand :: CommandHandler ()
-unvoteCommand Message {messageSender = sender} = do
-  maybePoll <- currentPoll
-  case maybePoll of
-    Just pollEntity -> do
-      let pollId = entityId pollEntity
-      votes <- getVotesByPollId pollId
-      let name = senderName sender
-      let maybeVote = findVoteByUserName name votes
-      case maybeVote of
-        Just vote -> do
-          let voteId = entityId vote
-          deleteVoteById voteId
-        Nothing -> return ()
-    Nothing -> replyToSender sender "No polls are in place"
-  where
-    deleteVoteById = deleteEntityById voteTypeName
-    getVotesByPollId pollId = join . snd <$> getOptionsAndVotesByPollId pollId
-    findVoteByUserName name = find (\v -> voteUser (entityPayload v) == name)
