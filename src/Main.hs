@@ -27,7 +27,7 @@ logicEntry botState = do
   joinChannel bot botState >>= eventLoop bot currCPUTime
 
 mainWithArgs :: [String] -> IO ()
-mainWithArgs [configPath, databasePath] = do
+mainWithArgs [configPath, databasePath] =
   withBotState configPath databasePath $ \botState -> do
     void $
       forkIO $

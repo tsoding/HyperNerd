@@ -59,7 +59,7 @@ newBotState conf sqliteConn = do
       }
 
 withBotState' :: Config -> FilePath -> (BotState -> IO ()) -> IO ()
-withBotState' conf databasePath block = do
+withBotState' conf databasePath block =
   SQLite.withConnection databasePath $ \sqliteConn -> do
     SEP.prepareSchema sqliteConn
     newBotState conf sqliteConn >>= block
