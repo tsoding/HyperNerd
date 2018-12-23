@@ -218,20 +218,17 @@ getOptionsAndVotesByPollId pollId = do
       options
   return (options, votes)
 
--- TODO(#402): announcePollResults doesn't announces the results the same way pollCommand announces options
 announcePollResults :: Int -> Effect ()
 announcePollResults pollId = do
   (options, votes) <- getOptionsAndVotesByPollId pollId
-  let results =
-        T.concat $
-        intersperse ", " $
-        map
-          (\(option, count) ->
-             [qms|{poName $ entityPayload $ option} : {count}|]) $
-        sortBy (flip compare `on` snd) $ zip options $ map length votes
   poll <- getEntityById "Poll" pollId
-  unless (maybe True (pollCancelled . entityPayload) poll) $
-    say [qms|TwitchVotes Poll has finished. The results are: {results}|]
+  unless (maybe True (pollCancelled . entityPayload) poll) $ do
+    say [qms|TwitchVotes Poll has finished:|]
+    traverse_
+      (\(i, (option, count)) ->
+         say [qms|[{i}] {poName $ entityPayload $ option} : {count}|]) $
+      zip [0 :: Int ..] $
+      sortBy (flip compare `on` snd) $ zip options $ map length votes
 
 registerOptionVote :: Entity PollOption -> Sender -> Effect ()
 registerOptionVote option sender = do
