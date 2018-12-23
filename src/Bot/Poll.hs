@@ -266,7 +266,6 @@ registerPollVote Message {messageSender = sender, messageContent = optionNumber}
                  unexisting option {optionNumber}|]
     Nothing -> return ()
 
--- TODO(#403): announceRunningPoll doesn't announces the results the same way pollCommand announces options
 announceRunningPoll :: Effect ()
 announceRunningPoll = do
   poll <- currentPoll
@@ -275,10 +274,7 @@ announceRunningPoll = do
       pollOptions <-
         selectEntities "PollOption" $
         Filter (PropertyEquals "pollId" $ PropertyInt $ entityId pollEntity) All
-      let optionsList =
-            T.concat $
-            intersperse " , " $ map (poName . entityPayload) pollOptions
-      say
-        [qms|TwitchVotes The poll is still going. Use !vote command to vote for
-             one of the options: {optionsList}|]
+      say "TwitchVotes The poll is still going"
+      traverse_ (\(i, op) -> say [qms|[{i}] {op}|]) $
+        zip [0 :: Int ..] $ map (poName . entityPayload) pollOptions
     Nothing -> return ()
