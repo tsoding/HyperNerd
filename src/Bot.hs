@@ -48,6 +48,7 @@ import Text.Read
 import qualified Text.Regex.Base.RegexLike as Regex
 import Text.Regex.TDFA (defaultCompOpt, defaultExecOpt)
 import Text.Regex.TDFA.String
+import Bot.Banwords
 
 type Bot = Event -> Effect ()
 
@@ -326,15 +327,6 @@ regexArgsCommand regexString commandHandler Message { messageSender = sender
             [] -> Left "Not enough arguments"
         Nothing -> Left [qms|Command doesn't match '{regexString}' regex|]
     stringArgs = T.unpack args
-
-forbidBanwords :: Message T.Text -> Effect Bool
-forbidBanwords Message {messageContent = text, messageSender = sender} =
-  if "theart3Screw" `T.isInfixOf` text
-    then do
-      timeoutSender 600 sender
-      replyToSender sender "Screwing request accepted Jebaited"
-      return True
-    else return False
 
 bot :: Bot
 bot Join = do
