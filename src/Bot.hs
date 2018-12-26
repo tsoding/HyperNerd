@@ -327,14 +327,24 @@ regexArgsCommand regexString commandHandler Message { messageSender = sender
         Nothing -> Left [qms|Command doesn't match '{regexString}' regex|]
     stringArgs = T.unpack args
 
+forbidBanwords :: Message T.Text -> Effect Bool
+forbidBanwords Message {messageContent = text, messageSender = sender} =
+  if "theart3Screw" `T.isInfixOf` text
+    then do
+      timeoutSender 600 sender
+      replyToSender sender "Screwing request accepted Jebaited"
+      return True
+    else return False
+
 bot :: Bot
 bot Join = do
   startPeriodicCommands dispatchCommand
   periodicEffect (60 * 1000) announceRunningPoll
 bot event@(Msg sender text) = do
   recordUserMsg sender text
-  forbidden <- forbidLinksForPlebs event
-  unless forbidden $ do
+  linkForbidden <- forbidLinksForPlebs event
+  banwordsForbidden <- forbidBanwords $ Message sender text
+  unless (linkForbidden || banwordsForbidden) $ do
     runReaction voteMessage $ Message sender text
     mapM redirectAlias (textAsPipe text) >>= dispatchPipe . Message sender
 
