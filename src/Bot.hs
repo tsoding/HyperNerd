@@ -12,6 +12,7 @@ module Bot
   ) where
 
 import Bot.Alias
+import Bot.Banwords
 import Bot.BttvFfz
 import Bot.CustomCommand
 import Bot.Dubtrack
@@ -326,15 +327,6 @@ regexArgsCommand regexString commandHandler Message { messageSender = sender
             [] -> Left "Not enough arguments"
         Nothing -> Left [qms|Command doesn't match '{regexString}' regex|]
     stringArgs = T.unpack args
-
-forbidBanwords :: Message T.Text -> Effect Bool
-forbidBanwords Message {messageContent = text, messageSender = sender} =
-  if "theart3Screw" `T.isInfixOf` text
-    then do
-      timeoutSender 600 sender
-      replyToSender sender "Screwing request accepted Jebaited"
-      return True
-    else return False
 
 bot :: Bot
 bot Join = do
