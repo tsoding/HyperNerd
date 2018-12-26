@@ -1,9 +1,11 @@
+{-# LANGUAGE OverloadedStrings #-}
+
 module Bot.Banwords where
 
-import Events
+import Bot.Replies
 import qualified Data.Text as T
 import Effect
-import Bot.Replies
+import Events
 
 forbidBanwords :: Message T.Text -> Effect Bool
 forbidBanwords Message {messageContent = text, messageSender = sender} =
