@@ -200,8 +200,7 @@ handleIrcMessage b msg botState = do
         msgText
       where name = idText $ userNick userInfo
             displayName =
-              fromMaybe name $
-              fmap valueOfTag $
+              maybe name valueOfTag $
               find (\(TagEntry ident _) -> ident == "display-name") $
               _msgTags msg
     _ -> return botState
