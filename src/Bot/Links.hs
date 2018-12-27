@@ -48,6 +48,15 @@ findTrustedUser name =
   selectEntities "TrustedUser" $
   Filter (PropertyEquals "user" $ PropertyText name) All
 
+autoTrustSender :: Sender -> Effect (Maybe (Entity TrustedUser))
+autoTrustSender sender = do
+  trustedUser <- findTrustedUser $ senderName sender
+  case trustedUser of
+    Nothing
+      | senderSubscriber sender || senderAuthority sender ->
+        fmap Just $ createEntity "TrustedUser" $ TrustedUser $ senderName sender
+    trustedUser' -> return trustedUser'
+
 textContainsLink :: T.Text -> Bool
 textContainsLink t =
   isRight $ do
@@ -64,7 +73,7 @@ textContainsLink t =
 forbidLinksForPlebs :: Event -> Effect Bool
 forbidLinksForPlebs (Msg sender text)
   | textContainsLink text = do
-    trustedUser <- findTrustedUser $ senderName sender
+    trustedUser <- autoTrustSender sender
     case trustedUser of
       Nothing
         | not (senderSubscriber sender) && not (senderAuthority sender) -> do
@@ -109,8 +118,8 @@ untrustCommand Message {messageSender = sender, messageContent = inputUser} = do
 amitrustedCommand :: Reaction Message ()
 amitrustedCommand =
   cmapR (const id) $
-  transR (reflect (senderName . messageSender)) $
-  liftR findTrustedUser $
+  transR (reflect messageSender) $
+  liftR autoTrustSender $
   cmapR (maybe "no PepeHands" (const "yes Pog")) $ Reaction replyMessage
 
 istrustedCommand :: Reaction Message T.Text
