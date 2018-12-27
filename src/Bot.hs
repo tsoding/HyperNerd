@@ -200,9 +200,10 @@ builtinCommands =
     , ( "wiggle"
       , ( "Wiggle the tenticle (integration with https://github.com/tsoding/wiggle)"
         , transR (Identity . messageSender) $
-          cmapR (URI.encode . T.unpack . senderName) $
+          cmapR (URI.encode . T.unpack . senderDisplayName) $
           Reaction $ \(Identity name) -> do
-            request <- parseRequest [qms|http://localhost:8081/wiggle/{name}|]
+            request <-
+              parseRequest [qms|http://localhost:8081/wiggle/{URI.encode name}|]
             void $ httpRequest request))
     , ( "count"
       , ( "Count numbers from 1 to n"

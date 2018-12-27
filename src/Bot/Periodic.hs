@@ -24,6 +24,7 @@ god :: Sender
 god =
   Sender
     { senderName = "god"
+    , senderDisplayName = "God"
     , senderChannel = "dimension10"
     , senderSubscriber = True
     , senderMod = True
