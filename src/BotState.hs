@@ -190,6 +190,7 @@ handleIrcMessage b msg botState = do
       Msg
         Sender
           { senderName = name
+          , senderDisplayName = displayName
           , senderChannel = idText target
           , senderSubscriber = any (T.isPrefixOf "subscriber") badges
           , senderMod = any (T.isPrefixOf "moderator") badges
@@ -198,4 +199,9 @@ handleIrcMessage b msg botState = do
           }
         msgText
       where name = idText $ userNick userInfo
+            displayName =
+              fromMaybe name $
+              fmap valueOfTag $
+              find (\(TagEntry ident _) -> ident == "display-name") $
+              _msgTags msg
     _ -> return botState

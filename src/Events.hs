@@ -9,6 +9,7 @@ import Safe
 
 data Sender = Sender
   { senderName :: T.Text
+  , senderDisplayName :: T.Text
   , senderChannel :: T.Text
   , senderSubscriber :: Bool
   , senderMod :: Bool
