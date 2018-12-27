@@ -12,7 +12,9 @@ module Bot.Links
 
 import Bot.Replies
 import Command
+import Control.Applicative
 import Control.Monad
+import Control.Monad.Trans.Maybe
 import Data.Either
 import qualified Data.Map as M
 import Data.Maybe
@@ -42,11 +44,22 @@ instance IsEntity TrustedUser where
   fromProperties properties =
     TrustedUser . T.strip . T.toLower <$> extractProperty "user" properties
 
-findTrustedUser :: T.Text -> Effect (Maybe (Entity TrustedUser))
+findTrustedUser :: T.Text -> MaybeT Effect (Entity TrustedUser)
 findTrustedUser name =
+  MaybeT $
   fmap listToMaybe $
   selectEntities "TrustedUser" $
   Filter (PropertyEquals "user" $ PropertyText name) All
+
+findTrustedSender :: Sender -> MaybeT Effect (Entity TrustedUser)
+findTrustedSender = findTrustedUser . senderName
+
+autoTrustSender :: Sender -> MaybeT Effect (Entity TrustedUser)
+autoTrustSender sender
+  | senderSubscriber sender || senderAuthority sender =
+    MaybeT $
+    fmap Just $ createEntity "TrustedUser" $ TrustedUser $ senderName sender
+  | otherwise = MaybeT $ return Nothing
 
 textContainsLink :: T.Text -> Bool
 textContainsLink t =
@@ -64,7 +77,8 @@ textContainsLink t =
 forbidLinksForPlebs :: Event -> Effect Bool
 forbidLinksForPlebs (Msg sender text)
   | textContainsLink text = do
-    trustedUser <- findTrustedUser $ senderName sender
+    trustedUser <-
+      runMaybeT (findTrustedSender sender <|> autoTrustSender sender)
     case trustedUser of
       Nothing
         | not (senderSubscriber sender) && not (senderAuthority sender) -> do
@@ -88,7 +102,7 @@ forbidLinksForPlebs _ = return False
 trustCommand :: CommandHandler T.Text
 trustCommand Message {messageSender = sender, messageContent = inputUser} = do
   let user = T.strip $ T.toLower inputUser
-  trustedUser <- findTrustedUser user
+  trustedUser <- runMaybeT $ findTrustedUser user
   case trustedUser of
     Just _ -> replyToSender sender [qm|{user} is already trusted|]
     Nothing -> do
@@ -98,7 +112,7 @@ trustCommand Message {messageSender = sender, messageContent = inputUser} = do
 untrustCommand :: CommandHandler T.Text
 untrustCommand Message {messageSender = sender, messageContent = inputUser} = do
   let user = T.strip $ T.toLower inputUser
-  trustedUser <- findTrustedUser user
+  trustedUser <- runMaybeT $ findTrustedUser user
   case trustedUser of
     Just trustedUser' -> do
       deleteEntityById "TrustedUser" $ entityId trustedUser'
@@ -109,8 +123,9 @@ untrustCommand Message {messageSender = sender, messageContent = inputUser} = do
 amitrustedCommand :: Reaction Message ()
 amitrustedCommand =
   cmapR (const id) $
-  transR (reflect (senderName . messageSender)) $
-  liftR findTrustedUser $
+  transR (reflect messageSender) $
+  liftR
+    (\sender -> runMaybeT (findTrustedSender sender <|> autoTrustSender sender)) $
   cmapR (maybe "no PepeHands" (const "yes Pog")) $ Reaction replyMessage
 
 istrustedCommand :: Reaction Message T.Text
@@ -118,6 +133,6 @@ istrustedCommand =
   cmapR (T.strip . T.toLower) $
   cmapR (join (,)) $
   transR ComposeCC $
-  liftR findTrustedUser $
+  liftR (runMaybeT . findTrustedUser) $
   cmapR (maybe " is not trusted PepeHands" (const " is trusted Pog")) $
   transR getComposeCC $ cmapR (uncurry T.append) $ Reaction replyMessage
