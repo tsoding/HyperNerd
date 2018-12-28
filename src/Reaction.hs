@@ -8,6 +8,15 @@ newtype Reaction w a = Reaction
   { runReaction :: w a -> Effect ()
   }
 
+instance Semigroup (Reaction w a) where
+  r1 <> r2 =
+    Reaction $ \w -> do
+      runReaction r1 w
+      runReaction r2 w
+
+instance Monoid (Reaction w a) where
+  mempty = ignore
+
 transR ::
      (Functor f1, Functor f2)
   => (f1 a -> f2 b)
@@ -24,7 +33,7 @@ liftR f reaction =
     x <- f (extract w)
     runReaction reaction $ fmap (const x) w
 
-ignore :: Comonad w => Reaction w a
+ignore :: Reaction w a
 ignore = Reaction (const $ return ())
 
 ignoreNothing :: Comonad w => Reaction w a -> Reaction w (Maybe a)
