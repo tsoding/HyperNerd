@@ -227,9 +227,8 @@ announcePollResults pollId = do
   unless (maybe True (pollCancelled . entityPayload) poll) $ do
     say [qms|TwitchVotes Poll has finished:|]
     traverse_
-      (\(i, (option, count)) ->
-         say [qms|[{i}] {poName $ entityPayload $ option} : {count}|]) $
-      zip [0 :: Int ..] $
+      (\(option, count) ->
+         say [qms|{poName $ entityPayload $ option} : {count}|]) $
       sortBy (flip compare `on` snd) $ zip options $ map length votes
 
 registerOptionVote :: Entity PollOption -> Sender -> Effect ()
