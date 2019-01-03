@@ -343,8 +343,9 @@ bot event@(Msg sender text) = do
   banwordsForbidden <- forbidBanwords $ Message sender text
   unless (linkForbidden || banwordsForbidden) $ do
     runReaction voteMessage $ Message sender text
-    mapM redirectAlias (textAsPipe text) >>= dispatchPipe . Message sender
-    runReaction mention $ Message sender text
+    case textAsPipe text of
+      [] -> runReaction mention $ Message sender text
+      pipe -> mapM redirectAlias pipe >>= dispatchPipe . Message sender
 
 dispatchRedirect :: Effect () -> Message (Command T.Text) -> Effect ()
 dispatchRedirect effect cmd = do
