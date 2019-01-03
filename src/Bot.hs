@@ -352,7 +352,7 @@ dispatchRedirect effect cmd = do
   dispatchCommand $
     getCompose ((\x -> T.concat [x, effectOutput]) <$> Compose cmd)
 
--- TODO: there is not cooldown for pipes
+-- TODO(#414): there is not cooldown for pipes
 dispatchPipe :: Message [Command T.Text] -> Effect ()
 dispatchPipe message@Message {messageContent = cmds}
   | length cmds <= cmdsLimit =
