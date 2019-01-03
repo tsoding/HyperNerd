@@ -359,8 +359,11 @@ dispatchPipe message@Message {messageContent = cmds}
     foldl dispatchRedirect (return ()) $ map (\x -> fmap (const x) message) cmds
   | otherwise =
     replyMessage $
-    fmap (const [qms|The length of the pipe is limited to {cmdsLimit} commands|]) message
-    where cmdsLimit = 10
+    fmap
+      (const [qms|The length of the pipe is limited to {cmdsLimit} commands|])
+      message
+  where
+    cmdsLimit = 10
 
 dispatchCommand :: Message (Command T.Text) -> Effect ()
 dispatchCommand message = do

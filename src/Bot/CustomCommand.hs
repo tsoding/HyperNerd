@@ -213,8 +213,7 @@ dispatchCustomCommand Message { messageContent = Command { commandName = cmd
                               } = do
   customCommand <-
     runMaybeT
-      (customCommandByName cmd >>=
-       return . fmap bumpCustomCommandTimes >>=
+      (customCommandByName cmd >>= return . fmap bumpCustomCommandTimes >>=
        MaybeT . updateEntityById >>=
        return . entityPayload >>=
        lift . expandCustomCommandVars sender args)
