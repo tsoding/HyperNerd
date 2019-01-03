@@ -82,9 +82,7 @@ secondsAsBackwardsDiff = negate . fromInteger . toInteger
 
 randomLogRecordOfSender :: Reaction Message a
 randomLogRecordOfSender =
-  transR duplicate $
-  cmapR (senderName . messageSender) $
-  liftR (selectEntities "LogRecord" . randomUserQuoteSelector) $
+  liftR (const $ selectEntities "LogRecord" $ Take 1 $ Shuffle All) $
   cmapR listToMaybe $
   ignoreNothing $
   cmapR (lrMsg . entityPayload) $
