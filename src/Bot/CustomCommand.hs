@@ -30,7 +30,6 @@ data CustomCommand = CustomCommand
   { customCommandName :: T.Text
   , customCommandMessage :: T.Text
   , customCommandTimes :: Int
-  , customCommandLastUsed :: UTCTime
   }
 
 instance IsEntity CustomCommand where
@@ -39,15 +38,11 @@ instance IsEntity CustomCommand where
       [ ("name", PropertyText $ customCommandName customCommand)
       , ("message", PropertyText $ customCommandMessage customCommand)
       , ("times", PropertyInt $ customCommandTimes customCommand)
-      , ("lastUsed", PropertyUTCTime $ customCommandLastUsed customCommand)
       ]
   fromProperties properties =
     CustomCommand <$> extractProperty "name" properties <*>
     extractProperty "message" properties <*>
-    pure (fromMaybe 0 $ extractProperty "times" properties) <*>
-    pure (fromMaybe dayZero $ extractProperty "lastUsed" properties)
-    where
-      dayZero = UTCTime (ModifiedJulianDay 0) 0
+    pure (fromMaybe 0 $ extractProperty "times" properties)
 
 customCommandByName :: T.Text -> MaybeT Effect (Entity CustomCommand)
 customCommandByName name =
@@ -79,7 +74,6 @@ addCustomCommand builtinCommands Message { messageSender = sender
             { customCommandName = name
             , customCommandMessage = message
             , customCommandTimes = 0
-            , customCommandLastUsed = UTCTime (ModifiedJulianDay 0) 0
             }
       replyToSender sender [qms|Added command '{name}'|]
 
@@ -205,23 +199,6 @@ replaceCustomCommandMessage :: T.Text -> CustomCommand -> CustomCommand
 replaceCustomCommandMessage message customCommand =
   customCommand {customCommandMessage = message}
 
-customCommandCooldown ::
-     Double -> Entity CustomCommand -> MaybeT Effect (Entity CustomCommand)
-customCommandCooldown cooldownTimeout customCommand = do
-  currentTime <- lift now
-  let diffTime =
-        diffUTCTime currentTime $
-        customCommandLastUsed $ entityPayload customCommand
-  if realToFrac diffTime > cooldownTimeout
-    then MaybeT $
-         return $
-         Just $
-         fmap (\cmd -> cmd {customCommandLastUsed = currentTime}) customCommand
-    else do
-      let name = customCommandName $ entityPayload customCommand
-      lift $ logMsg [qms|Command '{name}' has not cooled down yet|]
-      MaybeT $ return Nothing
-
 {-# ANN dispatchCustomCommand ("HLint: ignore Use fmap" :: String)
         #-}
 
@@ -236,7 +213,7 @@ dispatchCustomCommand Message { messageContent = Command { commandName = cmd
                               } = do
   customCommand <-
     runMaybeT
-      (customCommandByName cmd >>= customCommandCooldown 2.0 >>=
+      (customCommandByName cmd >>=
        return . fmap bumpCustomCommandTimes >>=
        MaybeT . updateEntityById >>=
        return . entityPayload >>=
