@@ -330,8 +330,7 @@ regexArgsCommand regexString commandHandler Message { messageSender = sender
     stringArgs = T.unpack args
 
 mention :: Reaction Message T.Text
-mention =
-  cmapR T.toUpper $ ifR (T.isInfixOf "MRBOTKA") randomLogRecordOfSender ignore
+mention = cmapR T.toUpper $ ifR (T.isInfixOf "MRBOTKA") randomLogRecord ignore
 
 bot :: Bot
 bot Join = do

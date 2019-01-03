@@ -80,8 +80,8 @@ getRecentLogs offset = do
 secondsAsBackwardsDiff :: Seconds -> NominalDiffTime
 secondsAsBackwardsDiff = negate . fromInteger . toInteger
 
-randomLogRecordOfSender :: Reaction Message a
-randomLogRecordOfSender =
+randomLogRecord :: Reaction Message a
+randomLogRecord =
   liftR (const $ selectEntities "LogRecord" $ Take 1 $ Shuffle All) $
   cmapR listToMaybe $
   ignoreNothing $ cmapR (lrMsg . entityPayload) $ Reaction replyMessage
