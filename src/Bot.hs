@@ -355,11 +355,12 @@ dispatchRedirect effect cmd = do
 -- TODO: there is not cooldown for pipes
 dispatchPipe :: Message [Command T.Text] -> Effect ()
 dispatchPipe message@Message {messageContent = cmds}
-  | length cmds <= 10 =
+  | length cmds <= cmdsLimit =
     foldl dispatchRedirect (return ()) $ map (\x -> fmap (const x) message) cmds
   | otherwise =
     replyMessage $
-    fmap (const "The length of the pipe is limited to 5 commands") message
+    fmap (const [qms|The length of the pipe is limited to {cmdsLimit} commands|]) message
+    where cmdsLimit = 10
 
 dispatchCommand :: Message (Command T.Text) -> Effect ()
 dispatchCommand message = do
