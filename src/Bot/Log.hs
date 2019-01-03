@@ -16,6 +16,7 @@ import Numeric.Natural
 import Property
 import Reaction
 import Text.InterpolatedString.QM
+import Bot.Replies
 
 data LogRecord = LogRecord
   { lrUser :: T.Text
@@ -78,6 +79,16 @@ getRecentLogs offset = do
 
 secondsAsBackwardsDiff :: Seconds -> NominalDiffTime
 secondsAsBackwardsDiff = negate . fromInteger . toInteger
+
+randomLogRecordOfSender :: Reaction Message a
+randomLogRecordOfSender =
+  transR duplicate $
+  cmapR (senderName . messageSender) $
+  liftR (selectEntities "LogRecord" . randomUserQuoteSelector) $
+  cmapR listToMaybe $
+  ignoreNothing $
+  cmapR (lrMsg . entityPayload) $
+  Reaction replyMessage
 
 randomLogRecordCommand :: Reaction Message T.Text
 randomLogRecordCommand =
