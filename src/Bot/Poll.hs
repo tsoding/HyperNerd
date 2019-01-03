@@ -149,6 +149,8 @@ instantlyReportResults durationSecs options = do
 
 voteMessage :: Reaction Message T.Text
 voteMessage =
+  cmapR (listToMaybe . T.words) $
+  ignoreNothing $
   cmapR (readMaybe . T.unpack) $ ignoreNothing $ Reaction registerPollVote
 
 pollLifetime :: UTCTime -> Entity Poll -> Double
