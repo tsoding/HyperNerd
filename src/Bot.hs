@@ -329,6 +329,9 @@ regexArgsCommand regexString commandHandler Message { messageSender = sender
         Nothing -> Left [qms|Command doesn't match '{regexString}' regex|]
     stringArgs = T.unpack args
 
+mention :: Reaction Message T.Text
+mention = cmapR T.toUpper $ ifR (T.isInfixOf "MRBOTKA") randomLogRecord ignore
+
 bot :: Bot
 bot Join = do
   startPeriodicCommands dispatchCommand
@@ -339,7 +342,9 @@ bot event@(Msg sender text) = do
   banwordsForbidden <- forbidBanwords $ Message sender text
   unless (linkForbidden || banwordsForbidden) $ do
     runReaction voteMessage $ Message sender text
-    mapM redirectAlias (textAsPipe text) >>= dispatchPipe . Message sender
+    case textAsPipe text of
+      [] -> runReaction mention $ Message sender text
+      pipe -> mapM redirectAlias pipe >>= dispatchPipe . Message sender
 
 dispatchRedirect :: Effect () -> Message (Command T.Text) -> Effect ()
 dispatchRedirect effect cmd = do

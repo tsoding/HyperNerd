@@ -3,6 +3,7 @@
 
 module Bot.Log where
 
+import Bot.Replies
 import Control.Comonad
 import Data.Foldable
 import qualified Data.Map as M
@@ -78,6 +79,12 @@ getRecentLogs offset = do
 
 secondsAsBackwardsDiff :: Seconds -> NominalDiffTime
 secondsAsBackwardsDiff = negate . fromInteger . toInteger
+
+randomLogRecord :: Reaction Message a
+randomLogRecord =
+  liftR (const $ selectEntities "LogRecord" $ Take 1 $ Shuffle All) $
+  cmapR listToMaybe $
+  ignoreNothing $ cmapR (lrMsg . entityPayload) $ Reaction replyMessage
 
 randomLogRecordCommand :: Reaction Message T.Text
 randomLogRecordCommand =
