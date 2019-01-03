@@ -3,6 +3,7 @@
 
 module Bot.Log where
 
+import Bot.Replies
 import Control.Comonad
 import Data.Foldable
 import qualified Data.Map as M
@@ -16,7 +17,6 @@ import Numeric.Natural
 import Property
 import Reaction
 import Text.InterpolatedString.QM
-import Bot.Replies
 
 data LogRecord = LogRecord
   { lrUser :: T.Text
@@ -84,9 +84,7 @@ randomLogRecordOfSender :: Reaction Message a
 randomLogRecordOfSender =
   liftR (const $ selectEntities "LogRecord" $ Take 1 $ Shuffle All) $
   cmapR listToMaybe $
-  ignoreNothing $
-  cmapR (lrMsg . entityPayload) $
-  Reaction replyMessage
+  ignoreNothing $ cmapR (lrMsg . entityPayload) $ Reaction replyMessage
 
 randomLogRecordCommand :: Reaction Message T.Text
 randomLogRecordCommand =
