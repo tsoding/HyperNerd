@@ -7,6 +7,7 @@ import qualified Data.Text as T
 import qualified Data.Text.IO as TIO
 import System.Random
 import Data.List
+import Safe
 
 data Event
   = Begin
@@ -19,7 +20,7 @@ newtype Markov = Markov
   } deriving (Show, Read)
 
 emptyMarkov :: Markov
-emptyMarkov = Markov $ M.empty
+emptyMarkov = Markov M.empty
 
 combineMarkov :: Markov -> Markov -> Markov
 combineMarkov m1 m2 =
@@ -38,7 +39,7 @@ singleton :: (Event, Event) -> Markov
 singleton (e1, e2) = Markov $ M.fromList [(e1, M.fromList [(e2, 1)])]
 
 text2Markov :: T.Text -> Markov
-text2Markov text = foldMap singleton $ zip events $ tail events
+text2Markov text = maybe mempty (foldMap singleton . zip events) (tailMay events)
     where events = sentence $ map Word $ T.words text
 
 log2Markov :: [T.Text] -> Markov
