@@ -2,12 +2,12 @@
 
 module Markov where
 
+import Data.List
 import qualified Data.Map as M
 import qualified Data.Text as T
 import qualified Data.Text.IO as TIO
-import System.Random
-import Data.List
 import Safe
+import System.Random
 
 data Event
   = Begin
@@ -39,8 +39,10 @@ singleton :: (Event, Event) -> Markov
 singleton (e1, e2) = Markov $ M.fromList [(e1, M.fromList [(e2, 1)])]
 
 text2Markov :: T.Text -> Markov
-text2Markov text = maybe mempty (foldMap singleton . zip events) (tailMay events)
-    where events = sentence $ map Word $ T.words text
+text2Markov text =
+  maybe mempty (foldMap singleton . zip events) (tailMay events)
+  where
+    events = sentence $ map Word $ T.words text
 
 log2Markov :: [T.Text] -> Markov
 log2Markov = foldMap text2Markov
@@ -57,9 +59,7 @@ nextEvent markov event =
       i <- randomRIO (0, n - 1)
       let a =
             dropWhile (\x -> snd x < i) $
-            zip (map fst statList) $
-            scanl (+) 0 $
-            map snd statList
+            zip (map fst statList) $ scanl (+) 0 $ map snd statList
       case a of
         [] -> return End
         (event', _):_ -> return event'
@@ -75,7 +75,7 @@ simulateFrom :: Event -> Markov -> IO [Event]
 simulateFrom End _ = return []
 simulateFrom event markov = do
   event' <- nextEvent markov event
-  (event':) <$> simulateFrom event' markov
+  (event' :) <$> simulateFrom event' markov
 
 simulate :: Markov -> IO [Event]
 simulate = simulateFrom Begin
