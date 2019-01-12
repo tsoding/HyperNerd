@@ -89,6 +89,7 @@ executable HyperNerd
                      , Sqlite.Migration
                      , HyperNerd.Functor
                      , HyperNerd.Comonad
+                     , Markov
   
   -- LANGUAGE extensions used by modules in this package.
   other-extensions:    OverloadedStrings
@@ -123,6 +124,7 @@ executable HyperNerd
                      , unordered-containers
                      , uri-encode
                      , comonad
+                     , random
   
   -- Directories containing source files.
   hs-source-dirs:      src
