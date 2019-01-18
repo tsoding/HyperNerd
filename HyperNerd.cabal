@@ -125,12 +125,36 @@ executable HyperNerd
                      , uri-encode
                      , comonad
                      , random
+                     , cassava
   
   -- Directories containing source files.
   hs-source-dirs:      src
   
   -- Base language which the package is written in.
   default-language:    Haskell2010
+
+executable Markov
+  ghc-options:         -threaded
+                       -Wall
+                       -Werror
+                       -fwarn-incomplete-patterns
+                       -fwarn-incomplete-uni-patterns
+
+  main-is:             MarkovMain.hs
+
+  other-modules:       Markov
+
+  build-depends:       base
+                     , containers
+                     , text
+                     , safe
+                     , random
+                     , cassava
+                     , bytestring
+
+  hs-source-dirs:      src
+
+  default-language: Haskell2010
 
 test-suite HyperNerdTest
   type:                exitcode-stdio-1.0
