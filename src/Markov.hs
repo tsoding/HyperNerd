@@ -68,7 +68,7 @@ text2Markov :: T.Text -> Markov
 text2Markov text =
   maybe mempty (foldMap singleton . zip events) (tailMay events)
   where
-    events = [Begin] ++ (map Word $ T.words text) ++ [End]
+    events = [Begin] ++ map Word (T.words text) ++ [End]
 
 log2Markov :: [T.Text] -> Markov
 log2Markov = foldMap text2Markov . filter (not . T.isPrefixOf "!")
