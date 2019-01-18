@@ -95,3 +95,4 @@ You can support my work via
 [tsoding]: https://www.twitch.tv/tsoding
 
 <!-- TODO: Markov feature is not documented -->
+<!-- TODO: Markov training is not automated -->
