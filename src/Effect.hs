@@ -25,6 +25,7 @@ module Effect
   , listen
   , periodicEffect
   , twitchCommand
+  , randomMarkov
   ) where
 
 import Control.Monad.Catch
@@ -98,6 +99,7 @@ data EffectF s
   | TwitchCommand T.Text
                   [T.Text]
                   s
+  | RandomMarkov (Maybe T.Text -> s)
   deriving (Functor)
 
 type Effect = Free EffectF
@@ -165,3 +167,6 @@ periodicEffect period effect = do
 
 twitchCommand :: T.Text -> [T.Text] -> Effect ()
 twitchCommand name args = liftF $ TwitchCommand name args ()
+
+randomMarkov :: Effect (Maybe T.Text)
+randomMarkov = liftF $ RandomMarkov id

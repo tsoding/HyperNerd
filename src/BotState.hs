@@ -36,6 +36,9 @@ import qualified Sqlite.EntityPersistence as SEP
 import System.IO
 import Text.InterpolatedString.QM
 import Text.Printf
+import Markov
+import Control.Monad.Trans.Maybe
+import Control.Monad.Trans.Class
 
 data BotState = BotState
   { bsConfig :: Config
@@ -43,10 +46,11 @@ data BotState = BotState
   , bsTimeouts :: [(Integer, Effect ())]
   , bsIncoming :: IncomingQueue
   , bsOutcoming :: OutcomingQueue
+  , bsMarkov :: Maybe Markov
   }
 
-newBotState :: Config -> SQLite.Connection -> IO BotState
-newBotState conf sqliteConn = do
+newBotState :: Maybe Markov -> Config -> SQLite.Connection -> IO BotState
+newBotState markov conf sqliteConn = do
   incoming <- atomically newTQueue
   outcoming <- atomically newTQueue
   return
@@ -56,18 +60,20 @@ newBotState conf sqliteConn = do
       , bsTimeouts = []
       , bsIncoming = incoming
       , bsOutcoming = outcoming
+      , bsMarkov = markov
       }
 
-withBotState' :: Config -> FilePath -> (BotState -> IO ()) -> IO ()
-withBotState' conf databasePath block =
+withBotState' :: Maybe Markov -> Config -> FilePath -> (BotState -> IO ()) -> IO ()
+withBotState' markov conf databasePath block =
   SQLite.withConnection databasePath $ \sqliteConn -> do
     SEP.prepareSchema sqliteConn
-    newBotState conf sqliteConn >>= block
+    newBotState markov conf sqliteConn >>= block
 
-withBotState :: FilePath -> FilePath -> (BotState -> IO ()) -> IO ()
-withBotState configPath databasePath block = do
+withBotState :: Maybe FilePath -> FilePath -> FilePath -> (BotState -> IO ()) -> IO ()
+withBotState markovPath configPath databasePath block = do
   conf <- configFromFile configPath
-  withBotState' conf databasePath block
+  markov <- runMaybeT (MaybeT (return markovPath) >>= lift . loadMarkov)
+  withBotState' markov conf databasePath block
 
 twitchCmdEscape :: T.Text -> T.Text
 twitchCmdEscape = T.dropWhile (`elem` ['/', '.']) . T.strip
@@ -138,6 +144,10 @@ applyEffect (botState, Free (TwitchCommand name args s)) = do
       (configChannel $ bsConfig botState)
       [qms|/{name} {T.concat $ intersperse " " args}|]
   return (botState, s)
+applyEffect (botState, Free (RandomMarkov s)) = do
+  let markov = MaybeT $ return $ bsMarkov botState
+  sentence <- runMaybeT (eventsAsText <$> (markov >>= lift . simulate))
+  return (botState, s sentence)
 
 runEffectIO :: ((a, Effect ()) -> IO (a, Effect ())) -> (a, Effect ()) -> IO a
 runEffectIO _ (x, Pure _) = return x

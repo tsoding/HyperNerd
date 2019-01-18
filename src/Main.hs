@@ -36,15 +36,20 @@ supavisah x =
     putStrLn [qms|Thread died because of {reason}. Restarting...|]
     supavisah x
 
-mainWithArgs :: [String] -> IO ()
-mainWithArgs [configPath, databasePath] =
-  withBotState configPath databasePath $ \botState -> do
+entry :: String -> String -> Maybe String -> IO ()
+entry configPath databasePath markovPath =
+  withBotState markovPath configPath databasePath $ \botState -> do
     supavisah $ logicEntry botState
     ircTransportEntry
       (bsIncoming botState)
       (bsOutcoming botState)
       (bsConfig botState)
-mainWithArgs _ = error "./HyperNerd <config-file> <database-file>"
+
+mainWithArgs :: [String] -> IO ()
+mainWithArgs [configPath, databasePath] = entry configPath databasePath Nothing
+mainWithArgs [configPath, databasePath, markovPath] =
+  entry configPath databasePath (Just markovPath)
+mainWithArgs _ = error "./HyperNerd <config-file> <database-file> [markov-file]"
 
 main :: IO ()
 main = getArgs >>= mainWithArgs
