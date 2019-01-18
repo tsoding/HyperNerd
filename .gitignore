@@ -91,3 +91,5 @@ cabal.project.local
 
 secret.ini
 *.db
+*.txt
+*.csv

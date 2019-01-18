@@ -329,9 +329,14 @@ regexArgsCommand regexString commandHandler Message { messageSender = sender
         Nothing -> Left [qms|Command doesn't match '{regexString}' regex|]
     stringArgs = T.unpack args
 
--- TODO(#422): `mention` Reaction does not respond with a Markov simulation result
 mention :: Reaction Message T.Text
-mention = cmapR T.toUpper $ ifR (T.isInfixOf "MRBOTKA") randomLogRecord ignore
+mention =
+  cmapR T.toUpper $
+  ifR
+    (T.isInfixOf "MRBOTKA")
+    (liftR (const randomMarkov) $
+     replyOnNothing "I have nothing to say to you" $ Reaction replyMessage)
+    ignore
 
 bot :: Bot
 bot Join = do
