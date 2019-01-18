@@ -94,5 +94,5 @@ You can support my work via
 [tsoder]: http://github.com/tsoding/tsoder
 [tsoding]: https://www.twitch.tv/tsoding
 
-<!-- TODO: Markov feature is not documented -->
+<!-- TODO(#426): Markov feature is not documented -->
 <!-- TODO: Markov training is not automated -->
