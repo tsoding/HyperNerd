@@ -5,14 +5,13 @@ module Markov where
 import qualified Data.ByteString as BS
 import qualified Data.ByteString.Lazy as BSL
 import Data.Csv
-import Data.List
+import Data.Foldable
 import qualified Data.Map as M
 import qualified Data.Text as T
-import qualified Data.Text.IO as TIO
 import Data.Text.Encoding
+import qualified Data.Text.IO as TIO
 import Safe
 import System.Random
-import Data.Foldable
 
 data Event
   = Begin
@@ -26,9 +25,9 @@ eventWordPrefix = "word|"
 instance FromField Event where
   parseField s
     | s == "begin" = pure Begin
-    | s == "end"   = pure End
+    | s == "end" = pure End
     | eventWordPrefix `BS.isPrefixOf` s =
-        pure $ Word $ decodeUtf8 $ BS.drop (BS.length eventWordPrefix) s
+      pure $ Word $ decodeUtf8 $ BS.drop (BS.length eventWordPrefix) s
     | otherwise = mempty
 
 instance ToField Event where
@@ -59,7 +58,8 @@ instance Monoid Markov where
   mempty = emptyMarkov
 
 record2Markov :: Event -> Event -> Int -> Markov
-record2Markov cause result occurance = Markov $ M.fromList [(cause, M.fromList [(result, occurance)])]
+record2Markov cause result occurance =
+  Markov $ M.fromList [(cause, M.fromList [(result, occurance)])]
 
 singleton :: (Event, Event) -> Markov
 singleton (e1, e2) = record2Markov e1 e2 1
@@ -85,8 +85,7 @@ nextEvent markov event =
       i <- randomRIO (0, n - 1)
       let a =
             dropWhile (\x -> snd x < i) $
-            zip (map fst statList) $
-            scanl (+) 0 $ map snd statList
+            zip (map fst statList) $ scanl (+) 0 $ map snd statList
       case a of
         [] -> return End
         (event', _):_ -> return event'
@@ -115,9 +114,9 @@ markov2Records markov = do
 
 saveMarkov :: FilePath -> Markov -> IO ()
 saveMarkov filePath markov =
-    BSL.writeFile filePath $ encode $ markov2Records markov
+  BSL.writeFile filePath $ encode $ markov2Records markov
 
 loadMarkov :: FilePath -> IO Markov
 loadMarkov filePath = do
-    input <- BSL.readFile filePath
-    either error (return . fold) $ decode NoHeader input
+  input <- BSL.readFile filePath
+  either error (return . fold) $ decode NoHeader input

@@ -16,6 +16,8 @@ import Config
 import Control.Concurrent.STM
 import Control.Exception
 import Control.Monad.Free
+import Control.Monad.Trans.Class
+import Control.Monad.Trans.Maybe
 import Data.Foldable
 import Data.Function
 import Data.List
@@ -31,14 +33,12 @@ import Irc.Message (IrcMsg(Ping, Privmsg), cookIrcMsg)
 import Irc.RawIrcMsg (RawIrcMsg(..), TagEntry(..))
 import Irc.UserInfo (userNick)
 import IrcTransport
+import Markov
 import Network.HTTP.Simple
 import qualified Sqlite.EntityPersistence as SEP
 import System.IO
 import Text.InterpolatedString.QM
 import Text.Printf
-import Markov
-import Control.Monad.Trans.Maybe
-import Control.Monad.Trans.Class
 
 data BotState = BotState
   { bsConfig :: Config
@@ -63,13 +63,15 @@ newBotState markov conf sqliteConn = do
       , bsMarkov = markov
       }
 
-withBotState' :: Maybe Markov -> Config -> FilePath -> (BotState -> IO ()) -> IO ()
+withBotState' ::
+     Maybe Markov -> Config -> FilePath -> (BotState -> IO ()) -> IO ()
 withBotState' markov conf databasePath block =
   SQLite.withConnection databasePath $ \sqliteConn -> do
     SEP.prepareSchema sqliteConn
     newBotState markov conf sqliteConn >>= block
 
-withBotState :: Maybe FilePath -> FilePath -> FilePath -> (BotState -> IO ()) -> IO ()
+withBotState ::
+     Maybe FilePath -> FilePath -> FilePath -> (BotState -> IO ()) -> IO ()
 withBotState markovPath configPath databasePath block = do
   conf <- configFromFile configPath
   markov <- runMaybeT (MaybeT (return markovPath) >>= lift . loadMarkov)

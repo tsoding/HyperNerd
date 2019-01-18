@@ -335,8 +335,7 @@ mention =
   ifR
     (T.isInfixOf "MRBOTKA")
     (liftR (const randomMarkov) $
-     replyOnNothing "I have nothing to say to you" $
-     Reaction replyMessage)
+     replyOnNothing "I have nothing to say to you" $ Reaction replyMessage)
     ignore
 
 bot :: Bot

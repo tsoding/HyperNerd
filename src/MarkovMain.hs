@@ -1,8 +1,8 @@
 module Main where
 
-import System.Environment
-import Markov
 import qualified Data.Text.IO as TIO
+import Markov
+import System.Environment
 
 mainWithArgs :: [String] -> IO ()
 mainWithArgs ("train":input:output:_) = do
