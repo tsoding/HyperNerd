@@ -4,14 +4,22 @@ import qualified Data.Text.IO as TIO
 import Markov
 import System.Environment
 
-mainWithArgs :: [String] -> IO ()
-mainWithArgs ("train":input:output:_) = do
+trainMain :: [String] -> IO ()
+trainMain (input:output:_) = do
   markov <- file2Markov input
   saveMarkov output markov
-mainWithArgs ("say":input:_) = do
+trainMain _ = error "Usage: ./Markov train <input.txt> <output.csv>"
+
+sayMain :: [String] -> IO ()
+sayMain (input:_) = do
   markov <- loadMarkov input
   sentence <- eventsAsText <$> simulate markov
   TIO.putStrLn sentence
+sayMain _ = error "Usage: ./Markov say <input.csv>"
+
+mainWithArgs :: [String] -> IO ()
+mainWithArgs ("train":args) = trainMain args
+mainWithArgs ("say":args) = sayMain args
 mainWithArgs _ = error "Usage: ./Markov <train|say>"
 
 main :: IO ()
