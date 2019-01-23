@@ -151,6 +151,8 @@ executable Markov
                      , random
                      , cassava
                      , bytestring
+                     , sqlite-simple
+                     , qm-interpolated-string
 
   hs-source-dirs:      src
 
