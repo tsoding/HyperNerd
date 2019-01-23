@@ -28,7 +28,7 @@ instance Monoid Log2Markov where
 --   4. Open the `databasePath` and fetch only the logs after the date
 --   5. Top up the `markov` with the fresh data
 trainMain :: [String] -> IO ()
-trainMain (databasePath:output:_) = do
+trainMain (databasePath:output:_) =
   SQLite.withConnection databasePath $ \sqliteConn -> do
     markov <-
       fold <$>
