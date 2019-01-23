@@ -21,6 +21,12 @@ instance Semigroup Log2Markov where
 instance Monoid Log2Markov where
     mempty = Log2Markov mempty
 
+-- TODO: Markov utility always build the model from scratch
+--   1. Check if `output` file exists
+--   2. Load the `output` file as Markov model `markov`
+--   3. Check the modification date of the `output` file
+--   4. Open the `databasePath` and fetch only the logs after the date
+--   5. Top up the `markov` with the fresh data
 trainMain :: [String] -> IO ()
 trainMain (databasePath:output:_) = do
   SQLite.withConnection databasePath $ \sqliteConn -> do
