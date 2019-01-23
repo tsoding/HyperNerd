@@ -2,24 +2,26 @@
 
 module Main where
 
+import Data.Foldable
 import qualified Data.Text.IO as TIO
-import Markov
-import System.Environment
 import qualified Database.SQLite.Simple as SQLite
 import Database.SQLite.Simple.FromRow
+import Markov
+import System.Environment
 import Text.InterpolatedString.QM
-import Data.Foldable
 
-newtype Log2Markov = Log2Markov { asMarkov :: Markov }
+newtype Log2Markov = Log2Markov
+  { asMarkov :: Markov
+  }
 
 instance FromRow Log2Markov where
-    fromRow = Log2Markov . text2Markov <$> field
+  fromRow = Log2Markov . text2Markov <$> field
 
 instance Semigroup Log2Markov where
-    m1 <> m2 = Log2Markov (asMarkov m1 <> asMarkov m2)
+  m1 <> m2 = Log2Markov (asMarkov m1 <> asMarkov m2)
 
 instance Monoid Log2Markov where
-    mempty = Log2Markov mempty
+  mempty = Log2Markov mempty
 
 -- TODO: Markov utility always build the model from scratch
 --   1. Check if `output` file exists
