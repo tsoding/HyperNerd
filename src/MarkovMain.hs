@@ -10,18 +10,18 @@ import Markov
 import System.Environment
 import Text.InterpolatedString.QM
 
-newtype Log2Markov = Log2Markov
+newtype Text2Markov = Text2Markov
   { asMarkov :: Markov
   }
 
-instance FromRow Log2Markov where
-  fromRow = Log2Markov . text2Markov <$> field
+instance FromRow Text2Markov where
+  fromRow = Text2Markov . text2Markov <$> field
 
-instance Semigroup Log2Markov where
-  m1 <> m2 = Log2Markov (asMarkov m1 <> asMarkov m2)
+instance Semigroup Text2Markov where
+  m1 <> m2 = Text2Markov (asMarkov m1 <> asMarkov m2)
 
-instance Monoid Log2Markov where
-  mempty = Log2Markov mempty
+instance Monoid Text2Markov where
+  mempty = Text2Markov mempty
 
 -- TODO(#430): Markov utility always build the model from scratch
 --   1. Check if `output` file exists
