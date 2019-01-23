@@ -1,14 +1,39 @@
+{-# LANGUAGE QuasiQuotes #-}
+
 module Main where
 
 import qualified Data.Text.IO as TIO
 import Markov
 import System.Environment
+import qualified Database.SQLite.Simple as SQLite
+import Database.SQLite.Simple.FromRow
+import Text.InterpolatedString.QM
+import Data.Foldable
+
+newtype Log2Markov = Log2Markov { asMarkov :: Markov }
+
+instance FromRow Log2Markov where
+    fromRow = Log2Markov . text2Markov <$> field
+
+instance Semigroup Log2Markov where
+    m1 <> m2 = Log2Markov (asMarkov m1 <> asMarkov m2)
+
+instance Monoid Log2Markov where
+    mempty = Log2Markov mempty
 
 trainMain :: [String] -> IO ()
-trainMain (input:output:_) = do
-  markov <- file2Markov input
-  saveMarkov output markov
-trainMain _ = error "Usage: ./Markov train <input.txt> <output.csv>"
+trainMain (databasePath:output:_) = do
+  SQLite.withConnection databasePath $ \sqliteConn -> do
+    markov <-
+      fold <$>
+      SQLite.query_
+        sqliteConn
+        [qms|select ep1.propertyText
+             from EntityProperty ep1
+             where ep1.entityName = 'LogRecord'
+               and ep1.propertyName = 'msg'|]
+    saveMarkov output $ asMarkov markov
+trainMain _ = error "Usage: ./Markov train <database.db> <output.csv>"
 
 sayMain :: [String] -> IO ()
 sayMain (input:_) = do
