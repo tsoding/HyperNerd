@@ -338,7 +338,7 @@ mention =
     ignore
 
 bot :: Bot
-bot Join = do
+bot Joined = do
   startPeriodicCommands dispatchCommand
   periodicEffect (60 * 1000) announceRunningPoll
 bot event@(Msg sender text) = do

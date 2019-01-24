@@ -170,7 +170,7 @@ runEffectTransIO botState effect =
   runEffectIO applyEffect (botState, effect)
 
 joinChannel :: Bot -> BotState -> IO BotState
-joinChannel b botState = runEffectTransIO botState $ b Join
+joinChannel b botState = runEffectTransIO botState $ b Joined
 
 advanceTimeouts :: Integer -> BotState -> IO BotState
 advanceTimeouts dt botState =

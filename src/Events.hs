@@ -22,7 +22,7 @@ senderAuthority sender =
   senderMod sender || senderBroadcaster sender || senderOwner sender
 
 data Event
-  = Join
+  = Joined
   | Msg Sender
         T.Text
 
