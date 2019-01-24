@@ -333,7 +333,7 @@ mention :: Reaction Message T.Text
 mention =
   cmapR T.toUpper $
   ifR
-    -- TODO: The Markov chain response trigger word is hardcoded
+    -- TODO(#432): The Markov chain response trigger word is hardcoded
     --   It should be the name of the bot assigned in the secret.ini file.
     (T.isInfixOf "MRBOTKA")
     (liftR (const randomMarkov) $
