@@ -6,9 +6,6 @@
 module Bot
   ( Bot
   , bot
-  , Event(..)
-  , Sender(..)
-  , TwitchStream(..)
   ) where
 
 import Bot.Alias

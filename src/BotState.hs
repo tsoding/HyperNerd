@@ -27,6 +27,7 @@ import qualified Data.Text as T
 import Data.Time
 import qualified Database.SQLite.Simple as SQLite
 import Effect
+import Events
 import Irc.Commands (ircPong, ircPrivmsg)
 import Irc.Identifier (idText)
 import Irc.Message (IrcMsg(Ping, Privmsg), cookIrcMsg)
