@@ -51,6 +51,30 @@ clientId = <client-id-token>
 | `channel`  | Channel that the bot will join on start up.                                                                  |
 | `clientId` | Client ID for Twitch API calls.                                                                              |
 
+## Markov Chain Responses
+
+To trigger a Markov chain response, just mention the bot in the chat.
+
+### Training the Markov Model
+
+The Markov model is a csv file that is generated from the logs in the
+bot's database file using the `Markov` CLI utility:
+
+```console
+$ cabal exec Markov database.db markov.csv
+```
+
+This command will produce the `markov.csv` file.
+
+### Using the Trained Markov Model with the Bot
+
+```console
+$ cabal exec HyperNerd secret.ini database.db markov.csv
+```
+
+The `markov.csv` file is not automatically updated. To update the file
+with the new logs you have to run the `Markov` CLI utility again.
+
 ## Command Aliases
 
 You can assign a command alias to any command:
