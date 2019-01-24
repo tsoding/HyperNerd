@@ -168,8 +168,8 @@ runEffectTransIO botState effect =
   SQLite.withTransaction (bsSqliteConn botState) $
   runEffectIO applyEffect (botState, effect)
 
-joinChannel :: Bot -> BotState -> IO BotState
-joinChannel b botState = runEffectTransIO botState $ b Joined
+joinChannel :: Bot -> BotState -> T.Text -> IO BotState
+joinChannel b botState = runEffectTransIO botState . b . Joined
 
 advanceTimeouts :: Integer -> BotState -> IO BotState
 advanceTimeouts dt botState =
@@ -215,5 +215,5 @@ handleIrcMessage b msg botState = do
               maybe name valueOfTag $
               find (\(TagEntry ident _) -> ident == "display-name") $
               _msgTags msg
-    Join {} -> joinChannel b botState
+    (Join userInfo _ _) -> joinChannel b botState $ idText $ userNick userInfo
     _ -> return botState

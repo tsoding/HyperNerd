@@ -10,6 +10,7 @@ module Bot
 
 import Bot.Alias
 import Bot.Banwords
+import Bot.BotUserInfo
 import Bot.BttvFfz
 import Bot.CustomCommand
 import Bot.Dubtrack
@@ -329,16 +330,21 @@ regexArgsCommand regexString commandHandler Message { messageSender = sender
 mention :: Reaction Message T.Text
 mention =
   cmapR T.toUpper $
+  liftR
+    (\msg ->
+       getCompose
+         ((, msg) . T.toUpper . buiNickname . entityPayload <$>
+          Compose botUserInfo)) $
+  ignoreNothing $
   ifR
-    -- TODO(#432): The Markov chain response trigger word is hardcoded
-    --   It should be the name of the bot assigned in the secret.ini file.
-    (T.isInfixOf "MRBOTKA")
+    (uncurry T.isInfixOf)
     (liftR (const randomMarkov) $
      replyOnNothing "I have nothing to say to you" $ Reaction replyMessage)
     ignore
 
 bot :: Bot
-bot Joined = do
+bot (Joined nickname) = do
+  updateBotUserInfo nickname
   startPeriodicCommands dispatchCommand
   periodicEffect (60 * 1000) announceRunningPoll
 bot event@(Msg sender text) = do

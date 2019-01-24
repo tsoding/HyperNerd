@@ -90,6 +90,7 @@ executable HyperNerd
                      , HyperNerd.Functor
                      , HyperNerd.Comonad
                      , Markov
+                     , Bot.BotUserInfo
   
   -- LANGUAGE extensions used by modules in this package.
   other-extensions:    OverloadedStrings

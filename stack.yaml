@@ -41,7 +41,7 @@ packages:
 # (e.g., acme-missiles-0.3)
 extra-deps:
 - hookup-0.2.2
-- irc-core-2.4.0
+- irc-core-2.5.0
 
 # Override default flag values for local packages and extra-deps
 
