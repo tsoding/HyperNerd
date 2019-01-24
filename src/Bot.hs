@@ -10,6 +10,7 @@ module Bot
 
 import Bot.Alias
 import Bot.Banwords
+import Bot.BotUserInfo
 import Bot.BttvFfz
 import Bot.CustomCommand
 import Bot.Dubtrack
@@ -46,7 +47,6 @@ import Text.Read
 import qualified Text.Regex.Base.RegexLike as Regex
 import Text.Regex.TDFA (defaultCompOpt, defaultExecOpt)
 import Text.Regex.TDFA.String
-import Bot.BotUserInfo
 
 type Bot = Event -> Effect ()
 

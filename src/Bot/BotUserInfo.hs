@@ -2,18 +2,20 @@
 
 module Bot.BotUserInfo where
 
-import qualified Data.Text as T
-import Entity
-import qualified Data.Map as M
-import Effect
-import Property
-import Data.Maybe
 import Data.Functor
+import qualified Data.Map as M
+import Data.Maybe
+import qualified Data.Text as T
+import Effect
+import Entity
+import Property
 
-newtype BotUserInfo = BotUserInfo { buiNickname :: T.Text }
+newtype BotUserInfo = BotUserInfo
+  { buiNickname :: T.Text
+  }
 
 renameBui :: T.Text -> BotUserInfo -> BotUserInfo
-renameBui nickname bui = bui { buiNickname = nickname }
+renameBui nickname bui = bui {buiNickname = nickname}
 
 instance IsEntity BotUserInfo where
   toProperties bui = M.fromList [("nickname", PropertyText $ buiNickname bui)]
