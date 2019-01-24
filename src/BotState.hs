@@ -215,5 +215,5 @@ handleIrcMessage b msg botState = do
               maybe name valueOfTag $
               find (\(TagEntry ident _) -> ident == "display-name") $
               _msgTags msg
-    (Join _ _ _) -> joinChannel b botState
+    Join {} -> joinChannel b botState
     _ -> return botState
