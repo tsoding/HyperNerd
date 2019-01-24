@@ -2,8 +2,7 @@
 {-# LANGUAGE QuasiQuotes #-}
 
 module BotState
-  ( joinChannel
-  , advanceTimeouts
+  ( advanceTimeouts
   , handleIrcMessage
   , withBotState
   , withBotState'
@@ -30,7 +29,7 @@ import Effect
 import Events
 import Irc.Commands (ircPong, ircPrivmsg)
 import Irc.Identifier (idText)
-import Irc.Message (IrcMsg(Ping, Privmsg), cookIrcMsg)
+import Irc.Message (IrcMsg(Ping, Privmsg, Join), cookIrcMsg)
 import Irc.RawIrcMsg (RawIrcMsg(..), TagEntry(..))
 import Irc.UserInfo (userNick)
 import IrcTransport
@@ -216,4 +215,5 @@ handleIrcMessage b msg botState = do
               maybe name valueOfTag $
               find (\(TagEntry ident _) -> ident == "display-name") $
               _msgTags msg
+    (Join _ _ _) -> joinChannel b botState
     _ -> return botState
