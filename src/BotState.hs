@@ -2,8 +2,7 @@
 {-# LANGUAGE QuasiQuotes #-}
 
 module BotState
-  ( joinChannel
-  , advanceTimeouts
+  ( advanceTimeouts
   , handleIrcMessage
   , withBotState
   , withBotState'
@@ -27,9 +26,10 @@ import qualified Data.Text as T
 import Data.Time
 import qualified Database.SQLite.Simple as SQLite
 import Effect
+import Events
 import Irc.Commands (ircPong, ircPrivmsg)
 import Irc.Identifier (idText)
-import Irc.Message (IrcMsg(Ping, Privmsg), cookIrcMsg)
+import Irc.Message (IrcMsg(Join, Ping, Privmsg), cookIrcMsg)
 import Irc.RawIrcMsg (RawIrcMsg(..), TagEntry(..))
 import Irc.UserInfo (userNick)
 import IrcTransport
@@ -169,7 +169,7 @@ runEffectTransIO botState effect =
   runEffectIO applyEffect (botState, effect)
 
 joinChannel :: Bot -> BotState -> IO BotState
-joinChannel b botState = runEffectTransIO botState $ b Join
+joinChannel b botState = runEffectTransIO botState $ b Joined
 
 advanceTimeouts :: Integer -> BotState -> IO BotState
 advanceTimeouts dt botState =
@@ -215,4 +215,5 @@ handleIrcMessage b msg botState = do
               maybe name valueOfTag $
               find (\(TagEntry ident _) -> ident == "display-name") $
               _msgTags msg
+    Join {} -> joinChannel b botState
     _ -> return botState
