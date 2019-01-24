@@ -28,4 +28,4 @@ updateBotUserInfo nickname = do
   bui <- botUserInfo
   case bui of
     Nothing -> void $ createEntity "BotUserInfo" $ BotUserInfo nickname
-    Just bui' -> void $ updateEntityById $ fmap (renameBui nickname) $ bui'
+    Just bui' -> void $ updateEntityById $ fmap (renameBui nickname) bui'

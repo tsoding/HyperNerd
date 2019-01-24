@@ -331,10 +331,10 @@ mention :: Reaction Message T.Text
 mention =
   cmapR T.toUpper $
   liftR
-    (\msg -> do
-       getCompose $
-         fmap ((\nick -> (nick, msg)) . T.toUpper . buiNickname . entityPayload) $
-         Compose botUserInfo) $
+    (\msg ->
+       getCompose
+         ((, msg) . T.toUpper . buiNickname . entityPayload <$>
+          Compose botUserInfo)) $
   ignoreNothing $
   ifR
     (uncurry T.isInfixOf)
