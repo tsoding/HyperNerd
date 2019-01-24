@@ -46,6 +46,7 @@ import Text.Read
 import qualified Text.Regex.Base.RegexLike as Regex
 import Text.Regex.TDFA (defaultCompOpt, defaultExecOpt)
 import Text.Regex.TDFA.String
+import Bot.BotUserInfo
 
 type Bot = Event -> Effect ()
 
@@ -329,16 +330,21 @@ regexArgsCommand regexString commandHandler Message { messageSender = sender
 mention :: Reaction Message T.Text
 mention =
   cmapR T.toUpper $
+  liftR
+    (\msg -> do
+       getCompose $
+         fmap ((\nick -> (nick, msg)) . T.toUpper . buiNickname . entityPayload) $
+         Compose botUserInfo) $
+  ignoreNothing $
   ifR
-    -- TODO(#432): The Markov chain response trigger word is hardcoded
-    --   It should be the name of the bot assigned in the secret.ini file.
-    (T.isInfixOf "MRBOTKA")
+    (uncurry T.isInfixOf)
     (liftR (const randomMarkov) $
      replyOnNothing "I have nothing to say to you" $ Reaction replyMessage)
     ignore
 
 bot :: Bot
-bot Joined = do
+bot (Joined nickname) = do
+  updateBotUserInfo nickname
   startPeriodicCommands dispatchCommand
   periodicEffect (60 * 1000) announceRunningPoll
 bot event@(Msg sender text) = do
