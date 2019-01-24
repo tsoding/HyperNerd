@@ -29,7 +29,7 @@ import Effect
 import Events
 import Irc.Commands (ircPong, ircPrivmsg)
 import Irc.Identifier (idText)
-import Irc.Message (IrcMsg(Ping, Privmsg, Join), cookIrcMsg)
+import Irc.Message (IrcMsg(Join, Ping, Privmsg), cookIrcMsg)
 import Irc.RawIrcMsg (RawIrcMsg(..), TagEntry(..))
 import Irc.UserInfo (userNick)
 import IrcTransport
