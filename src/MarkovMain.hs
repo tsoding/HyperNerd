@@ -33,7 +33,7 @@ trainMain (databasePath:output:_) =
 trainMain _ = error "Usage: ./Markov train <database:SqliteFile> <output:CsvFile>"
 
 sayMain :: [String] -> IO ()
-sayMain (input:strN:_) = do
+sayMain (input:strN:_) =
   case readMay strN of
     Just n -> do
       markov <- loadMarkov input
