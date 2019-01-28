@@ -12,11 +12,15 @@ import Safe
 import System.Environment
 import Text.InterpolatedString.QM
 
-asteriskCorrection :: [T.Text] -> [T.Text]
-asteriskCorrection = filter ((/= '*') . T.last)
+asteriskCorrectionFilter :: [T.Text] -> [T.Text]
+asteriskCorrectionFilter = filter ((/= '*') . T.last)
 
-mentions :: [T.Text] -> [T.Text]
-mentions = map (T.unwords . filter ((/= '@') . T.head) . T.words)
+mentionsFilter :: [T.Text] -> [T.Text]
+mentionsFilter =
+  filter (not . T.null) . map (T.unwords . filter ((/= '@') . T.head) . T.words)
+
+commandsFilter :: [T.Text] -> [T.Text]
+commandsFilter = filter ((/= '!') . T.head)
 
 -- TODO(#430): Markov utility always build the model from scratch
 --   1. Check if `output` file exists
@@ -29,7 +33,9 @@ trainMain (databasePath:output:_) =
   SQLite.withConnection databasePath $ \sqliteConn -> do
     markov <-
       fold .
-      map text2Markov . mentions . asteriskCorrection . map SQLite.fromOnly <$>
+      map text2Markov .
+      commandsFilter .
+      mentionsFilter . asteriskCorrectionFilter . map SQLite.fromOnly <$>
       SQLite.query_
         sqliteConn
         [qms|select ep1.propertyText
