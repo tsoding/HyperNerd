@@ -5,23 +5,12 @@ module Main where
 import Data.Foldable
 import qualified Data.Text.IO as TIO
 import qualified Database.SQLite.Simple as SQLite
-import Database.SQLite.Simple.FromRow
 import Markov
 import System.Environment
 import Text.InterpolatedString.QM
-
-newtype Text2Markov = Text2Markov
-  { asMarkov :: Markov
-  }
-
-instance FromRow Text2Markov where
-  fromRow = Text2Markov . text2Markov <$> field
-
-instance Semigroup Text2Markov where
-  m1 <> m2 = Text2Markov (asMarkov m1 <> asMarkov m2)
-
-instance Monoid Text2Markov where
-  mempty = Text2Markov mempty
+import Safe
+import Control.Monad
+import qualified Data.Text as T
 
 -- TODO(#430): Markov utility always build the model from scratch
 --   1. Check if `output` file exists
@@ -33,22 +22,28 @@ trainMain :: [String] -> IO ()
 trainMain (databasePath:output:_) =
   SQLite.withConnection databasePath $ \sqliteConn -> do
     markov <-
-      fold <$>
+      fold . map text2Markov . filter ((/= '*') . T.last) . map SQLite.fromOnly <$>
       SQLite.query_
         sqliteConn
         [qms|select ep1.propertyText
              from EntityProperty ep1
              where ep1.entityName = 'LogRecord'
                and ep1.propertyName = 'msg'|]
-    saveMarkov output $ asMarkov markov
-trainMain _ = error "Usage: ./Markov train <database.db> <output.csv>"
+    saveMarkov output markov
+trainMain _ = error "Usage: ./Markov train <database:SqliteFile> <output:CsvFile>"
 
 sayMain :: [String] -> IO ()
+sayMain (input:strN:_) = do
+  case readMay strN of
+    Just n -> do
+      markov <- loadMarkov input
+      replicateM_ n ((eventsAsText <$> simulate markov) >>= TIO.putStrLn)
+    Nothing -> error "n is not a number"
 sayMain (input:_) = do
   markov <- loadMarkov input
   sentence <- eventsAsText <$> simulate markov
   TIO.putStrLn sentence
-sayMain _ = error "Usage: ./Markov say <input.csv>"
+sayMain _ = error "Usage: ./Markov say <input:CsvFile> [n:Int]"
 
 mainWithArgs :: [String] -> IO ()
 mainWithArgs ("train":args) = trainMain args
