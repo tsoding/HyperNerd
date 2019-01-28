@@ -2,20 +2,20 @@
 
 module Markov where
 
+import Control.Monad
+import Control.Monad.Trans.Class
+import Control.Monad.Trans.Maybe
 import qualified Data.ByteString as BS
 import qualified Data.ByteString.Lazy as BSL
 import Data.Csv
 import Data.Foldable
 import qualified Data.Map as M
+import Data.Maybe
 import qualified Data.Text as T
 import Data.Text.Encoding
 import qualified Data.Text.IO as TIO
-import System.Random
-import Control.Monad
-import Data.Maybe
 import Safe
-import Control.Monad.Trans.Maybe
-import Control.Monad.Trans.Class
+import System.Random
 
 data Event
   = Begin
@@ -74,8 +74,7 @@ scan3 xs =
   maybeToList $ liftM3 zip3 (return xs) (tailMay xs) (tailMay xs >>= tailMay)
 
 text2Markov :: T.Text -> Markov
-text2Markov text =
-  foldMap singleton $ scan3 events
+text2Markov text = foldMap singleton $ scan3 events
   where
     events = [Begin] ++ map Word (T.words text) ++ [End]
 
