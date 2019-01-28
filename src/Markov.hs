@@ -14,6 +14,8 @@ import System.Random
 import Control.Monad
 import Data.Maybe
 import Safe
+import Control.Monad.Trans.Maybe
+import Control.Monad.Trans.Class
 
 data Event
   = Begin
@@ -110,18 +112,21 @@ simulateFrom markov (event1, event2) = do
   event3 <- nextEvent markov (event1, event2)
   (event1 :) <$> simulateFrom markov (event2, event3)
 
-randomElement :: [a] -> IO a
+randomElement :: [a] -> IO (Maybe a)
 randomElement xs = do
   let n = length xs
   i <- randomRIO (0, n - 1)
-  return (xs !! i)
+  return (xs `atMay` i)
 
-randomStartEvent :: Markov -> IO (Event, Event)
+randomStartEvent :: Markov -> IO (Maybe (Event, Event))
 randomStartEvent markov =
   randomElement $ filter ((==) Begin . fst) $ M.keys $ asMap markov
 
 simulate :: Markov -> IO [Event]
-simulate markov = randomStartEvent markov >>= simulateFrom markov
+simulate markov = do
+  result <-
+    runMaybeT (MaybeT (randomStartEvent markov) >>= lift . simulateFrom markov)
+  return $ join $ maybeToList result
 
 markov2Records :: Markov -> [(Event, Event, Event, Int)]
 markov2Records markov = do

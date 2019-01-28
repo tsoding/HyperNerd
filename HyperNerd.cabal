@@ -154,6 +154,7 @@ executable Markov
                      , bytestring
                      , sqlite-simple
                      , qm-interpolated-string
+                     , transformers
 
   hs-source-dirs:      src
 
