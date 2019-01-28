@@ -2,15 +2,15 @@
 
 module Main where
 
+import Control.Monad
 import Data.Foldable
+import qualified Data.Text as T
 import qualified Data.Text.IO as TIO
 import qualified Database.SQLite.Simple as SQLite
 import Markov
+import Safe
 import System.Environment
 import Text.InterpolatedString.QM
-import Safe
-import Control.Monad
-import qualified Data.Text as T
 
 -- TODO(#430): Markov utility always build the model from scratch
 --   1. Check if `output` file exists
@@ -30,7 +30,8 @@ trainMain (databasePath:output:_) =
              where ep1.entityName = 'LogRecord'
                and ep1.propertyName = 'msg'|]
     saveMarkov output markov
-trainMain _ = error "Usage: ./Markov train <database:SqliteFile> <output:CsvFile>"
+trainMain _ =
+  error "Usage: ./Markov train <database:SqliteFile> <output:CsvFile>"
 
 sayMain :: [String] -> IO ()
 sayMain (input:strN:_) =
