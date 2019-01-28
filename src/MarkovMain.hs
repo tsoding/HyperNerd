@@ -12,6 +12,12 @@ import Safe
 import System.Environment
 import Text.InterpolatedString.QM
 
+asteriskCorrection :: [T.Text] -> [T.Text]
+asteriskCorrection = filter ((/= '*') . T.last)
+
+mentions :: [T.Text] -> [T.Text]
+mentions = map (T.unwords . filter ((/= '@') . T.head) . T.words)
+
 -- TODO(#430): Markov utility always build the model from scratch
 --   1. Check if `output` file exists
 --   2. Load the `output` file as Markov model `markov`
@@ -22,7 +28,8 @@ trainMain :: [String] -> IO ()
 trainMain (databasePath:output:_) =
   SQLite.withConnection databasePath $ \sqliteConn -> do
     markov <-
-      fold . map text2Markov . filter ((/= '*') . T.last) . map SQLite.fromOnly <$>
+      fold .
+      map text2Markov . mentions . asteriskCorrection . map SQLite.fromOnly <$>
       SQLite.query_
         sqliteConn
         [qms|select ep1.propertyText
