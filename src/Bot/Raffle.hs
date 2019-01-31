@@ -1,20 +1,25 @@
 {-# LANGUAGE QuasiQuotes #-}
-module Bot.Raffle (raffleCommand, joinCommand) where
 
-import Reaction
-import Events
-import Data.Time
-import Entity
-import qualified Data.Map as M
-import Property
-import Effect
-import Text.InterpolatedString.QM
-import HyperNerd.Functor
+module Bot.Raffle
+  ( raffleCommand
+  , joinCommand
+  ) where
+
 import Bot.Replies
+import qualified Data.Map as M
+import Data.Time
+import Effect
+import Entity
+import Events
+import HyperNerd.Functor
+import Property
+import Reaction
+import Text.InterpolatedString.QM
 
-data Raffle = Raffle { raffleStartedAt :: UTCTime
-                     , raffleDuration :: Int
-                     }
+data Raffle = Raffle
+  { raffleStartedAt :: UTCTime
+  , raffleDuration :: Int
+  }
 
 instance IsEntity Raffle where
   toProperties raffle =
