@@ -39,7 +39,7 @@ currentRaffle = return Nothing
 startNewRaffle :: Int -> Effect (Maybe (Entity Raffle))
 startNewRaffle _ = return Nothing
 
--- TODO: joinUser is not implemented
+-- TODO(#444): joinUser is not implemented
 joinUser :: Entity Raffle -> Sender -> Effect ()
 joinUser _ _ = return ()
 
