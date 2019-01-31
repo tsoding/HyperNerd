@@ -35,7 +35,7 @@ instance IsEntity Raffle where
 currentRaffle :: Effect (Maybe (Entity Raffle))
 currentRaffle = return Nothing
 
--- TODO: startNewRaffle is not implemented
+-- TODO(#443): startNewRaffle is not implemented
 startNewRaffle :: Int -> Effect (Maybe (Entity Raffle))
 startNewRaffle _ = return Nothing
 
