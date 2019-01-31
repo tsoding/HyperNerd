@@ -31,7 +31,7 @@ instance IsEntity Raffle where
     Raffle <$> extractProperty "startedAt" properties <*>
     extractProperty "duration" properties
 
--- TODO: currentRaffle is not implemented
+-- TODO(#442): currentRaffle is not implemented
 currentRaffle :: Effect (Maybe (Entity Raffle))
 currentRaffle = return Nothing
 
