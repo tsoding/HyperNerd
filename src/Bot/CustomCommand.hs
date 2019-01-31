@@ -180,12 +180,12 @@ expandCustomCommandVars sender args customCommand = do
   let times = customCommandTimes customCommand
   let vars =
         [ ("%times", [qms|{times}|])
-        , ("%1", args)
         , ("%year", [qms|{year}|])
         , ("%month", [qms|{month}|])
         , ("%day", [qms|{day}|])
         , ("%date", [qms|{day}.{month}.{year}|])
         , ("%sender", [qms|{senderName sender}|])
+        , ("%1", args)
         ]
   expandedMessage <-
     expandVariables $ foldl (flip $ uncurry T.replace) message vars
