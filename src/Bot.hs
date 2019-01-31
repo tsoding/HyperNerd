@@ -83,9 +83,8 @@ builtinCommands =
           replyOnNothing "Only for mods" $
           cmapR (const ()) updateBttvEmotesCommand))
     , ("help", ("Send help", helpCommand builtinCommands))
-    -- TODO(#401): !poll command doesn't support multi-word options
     , ( "poll"
-      , ( "Starts a poll"
+      , ( "Starts a poll. !poll <duration:secs> option1; option2; ...; option3"
         , Reaction $
           modCommand $
           -- TODO(#362): !poll command does not parse negative numbers
@@ -93,7 +92,9 @@ builtinCommands =
           pairArgsCommand $
           contramapCH
             (\(duration, options) ->
-               fmap (, T.words options) $ readMaybe $ T.unpack duration) $
+               fmap
+                 (, filter (not . T.null) $ map T.strip $ T.splitOn ";" options) $
+               readMaybe $ T.unpack duration) $
           justCommand pollCommand))
     , ( "cancelpoll"
       , ( "Cancels the current poll"
