@@ -47,6 +47,7 @@ import Text.Read
 import qualified Text.Regex.Base.RegexLike as Regex
 import Text.Regex.TDFA (defaultCompOpt, defaultExecOpt)
 import Text.Regex.TDFA.String
+import Bot.Raffle
 
 type Bot = Event -> Effect ()
 
@@ -220,6 +221,11 @@ builtinCommands =
               [qms|You asked me to whisper you this: "{messageContent msg}"|]))
     , ( "vanish"
       , ("Timeout yourself for one second", Reaction $ timeoutMessage 1))
+    , ( "raffle"
+      , ("Start the raffle"
+        , authorizeSender senderAuthority $ replyOnNothing "Only for mods" $ cmapR (const 5) raffleCommand))
+    , ( "join"
+      , ("Join the raffle", joinCommand))
     ]
 
 mockMessage :: T.Text -> T.Text
