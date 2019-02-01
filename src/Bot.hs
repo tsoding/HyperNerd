@@ -20,6 +20,7 @@ import Bot.Log
 import Bot.Periodic
 import Bot.Poll
 import Bot.Quote
+import Bot.Raffle
 import Bot.Replies
 import Bot.Russify
 import Bot.Twitch
@@ -220,6 +221,11 @@ builtinCommands =
               [qms|You asked me to whisper you this: "{messageContent msg}"|]))
     , ( "vanish"
       , ("Timeout yourself for one second", Reaction $ timeoutMessage 1))
+    , ( "raffle"
+      , ( "Start the raffle"
+        , authorizeSender senderAuthority $
+          replyOnNothing "Only for mods" $ cmapR (const 5) raffleCommand))
+    , ("join", ("Join the raffle", joinCommand))
     ]
 
 mockMessage :: T.Text -> T.Text
