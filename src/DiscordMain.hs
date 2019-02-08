@@ -4,6 +4,5 @@ module Main where
 --   Should be implemented in src/DiscordMain.hs which is an entry
 --   point of Discord executable.
 -- TODO(#448): How can we integrate Discord Bot proof-of-concept with HyperNerd?
-
 main :: IO ()
 main = undefined
