@@ -1,23 +1,23 @@
 {-# LANGUAGE OverloadedStrings #-}
 
-module Config where
+module TwitchConfig where
 
 import Data.Ini
 import qualified Data.Text as T
 
-data Config = Config
-  { configNick :: T.Text
-  , configPass :: T.Text
-  , configChannel :: T.Text
-  , configClientId :: T.Text
-  , configOwner :: T.Text
+data TwitchConfig = TwitchConfig
+  { tcNick :: T.Text
+  , tcPass :: T.Text
+  , tcChannel :: T.Text
+  , tcClientId :: T.Text
+  , tcOwner :: T.Text
   } deriving (Show)
 
-configFromFile :: FilePath -> IO Config
-configFromFile filePath = do
+tcFromFile :: FilePath -> IO TwitchConfig
+tcFromFile filePath = do
   ini <- readIniFile filePath
   either (ioError . userError) return $
-    Config <$> (ini >>= lookupValue "User" "nick") <*>
+    TwitchConfig <$> (ini >>= lookupValue "User" "nick") <*>
     (ini >>= lookupValue "User" "password") <*>
     (T.cons '#' <$> (ini >>= lookupValue "User" "channel")) <*>
     (ini >>= lookupValue "User" "clientId") <*>

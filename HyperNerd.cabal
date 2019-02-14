@@ -77,7 +77,7 @@ executable HyperNerd
                      , Bot.Banwords
                      , BotState
                      , Command
-                     , Config
+                     , TwitchConfig
                      , Effect
                      , Entity
                      , Events

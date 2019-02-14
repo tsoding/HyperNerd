@@ -11,7 +11,7 @@ module BotState
   ) where
 
 import Bot
-import Config
+import TwitchConfig
 import Control.Concurrent.STM
 import Control.Exception
 import Control.Monad.Free
@@ -41,7 +41,7 @@ import Text.InterpolatedString.QM
 import Text.Printf
 
 data BotState = BotState
-  { bsConfig :: Config
+  { bsConfig :: TwitchConfig
   , bsSqliteConn :: SQLite.Connection
   , bsTimeouts :: [(Integer, Effect ())]
   , bsIncoming :: IncomingQueue
@@ -49,7 +49,7 @@ data BotState = BotState
   , bsMarkov :: Maybe Markov
   }
 
-newBotState :: Maybe Markov -> Config -> SQLite.Connection -> IO BotState
+newBotState :: Maybe Markov -> TwitchConfig -> SQLite.Connection -> IO BotState
 newBotState markov conf sqliteConn = do
   incoming <- atomically newTQueue
   outcoming <- atomically newTQueue
@@ -64,7 +64,7 @@ newBotState markov conf sqliteConn = do
       }
 
 withBotState' ::
-     Maybe Markov -> Config -> FilePath -> (BotState -> IO ()) -> IO ()
+     Maybe Markov -> TwitchConfig -> FilePath -> (BotState -> IO ()) -> IO ()
 withBotState' markov conf databasePath block =
   SQLite.withConnection databasePath $ \sqliteConn -> do
     SEP.prepareSchema sqliteConn
@@ -72,8 +72,8 @@ withBotState' markov conf databasePath block =
 
 withBotState ::
      Maybe FilePath -> FilePath -> FilePath -> (BotState -> IO ()) -> IO ()
-withBotState markovPath configPath databasePath block = do
-  conf <- configFromFile configPath
+withBotState markovPath tcPath databasePath block = do
+  conf <- tcFromFile tcPath
   markov <- runMaybeT (MaybeT (return markovPath) >>= lift . loadMarkov)
   withBotState' markov conf databasePath block
 
@@ -85,7 +85,7 @@ applyEffect self@(_, Pure _) = return self
 applyEffect (botState, Free (Say text s)) = do
   atomically $
     writeTQueue (bsOutcoming botState) $
-    ircPrivmsg (configChannel $ bsConfig botState) $ twitchCmdEscape text
+    ircPrivmsg (tcChannel $ bsConfig botState) $ twitchCmdEscape text
   return (botState, s)
 applyEffect (botState, Free (LogMsg msg s)) = do
   putStrLn $ T.unpack msg
@@ -131,7 +131,7 @@ applyEffect (botState, Free (HttpRequest request s)) = do
     Just response' -> return (botState, s response')
     Nothing -> return (botState, Pure ())
 applyEffect (botState, Free (TwitchApiRequest request s)) = do
-  let clientId = fromString $ T.unpack $ configClientId $ bsConfig botState
+  let clientId = fromString $ T.unpack $ tcClientId $ bsConfig botState
   response <- httpLBS (addRequestHeader "Client-ID" clientId request)
   return (botState, s response)
 applyEffect (botState, Free (Timeout ms e s)) =
@@ -143,7 +143,7 @@ applyEffect (botState, Free (TwitchCommand name args s)) = do
   atomically $
     writeTQueue (bsOutcoming botState) $
     ircPrivmsg
-      (configChannel $ bsConfig botState)
+      (tcChannel $ bsConfig botState)
       [qms|/{name} {T.concat $ intersperse " " args}|]
   return (botState, s)
 applyEffect (botState, Free (RandomMarkov s)) = do
@@ -207,7 +207,7 @@ handleIrcMessage b msg botState = do
           , senderSubscriber = any (T.isPrefixOf "subscriber") badges
           , senderMod = any (T.isPrefixOf "moderator") badges
           , senderBroadcaster = any (T.isPrefixOf "broadcaster") badges
-          , senderOwner = name == configOwner (bsConfig botState)
+          , senderOwner = name == tcOwner (bsConfig botState)
           }
         msgText
       where name = idText $ userNick userInfo
