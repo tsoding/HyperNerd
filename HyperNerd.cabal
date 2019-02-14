@@ -77,7 +77,6 @@ executable HyperNerd
                      , Bot.Banwords
                      , BotState
                      , Command
-                     , Config
                      , Effect
                      , Entity
                      , Events
@@ -92,6 +91,7 @@ executable HyperNerd
                      , Markov
                      , Bot.BotUserInfo
                      , Bot.Raffle
+                     , Config
 
   -- LANGUAGE extensions used by modules in this package.
   other-extensions:    OverloadedStrings
