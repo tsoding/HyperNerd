@@ -11,7 +11,7 @@ import Data.Maybe
 import qualified Data.Text as T
 import Data.Time
 import Effect
-import Events
+import Transport
 import Network.HTTP.Simple
 import qualified Network.URI.Encode as URI
 import Reaction

@@ -11,7 +11,7 @@ import qualified Data.Map as M
 import Data.Time
 import Effect
 import Entity
-import Events
+import Transport
 import HyperNerd.Functor
 import Property
 import Reaction

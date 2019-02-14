@@ -5,7 +5,7 @@ module Bot.Banwords where
 import Bot.Replies
 import qualified Data.Text as T
 import Effect
-import Events
+import Transport
 
 forbidBanwords :: Message T.Text -> Effect Bool
 forbidBanwords Message {messageContent = text, messageSender = sender} =

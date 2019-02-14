@@ -5,7 +5,7 @@ module Bot.Replies where
 
 import qualified Data.Text as T
 import Effect
-import Events
+import Transport
 import Reaction
 import Text.InterpolatedString.QM
 

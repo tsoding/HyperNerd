@@ -21,7 +21,7 @@ import Data.Maybe
 import qualified Data.Text as T
 import Effect
 import Entity
-import Events
+import Transport
 import HyperNerd.Comonad
 import HyperNerd.Functor
 import Property

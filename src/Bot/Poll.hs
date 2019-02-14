@@ -16,7 +16,7 @@ import qualified Data.Text as T
 import Data.Time
 import Effect
 import Entity
-import Events
+import Transport
 import Property
 import Reaction
 import Safe

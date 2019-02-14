@@ -12,7 +12,7 @@ import qualified Data.Text as T
 import Data.Time
 import Effect
 import Entity
-import Events
+import Transport
 import Numeric.Natural
 import Property
 import Reaction

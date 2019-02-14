@@ -1,10 +1,10 @@
 {-# LANGUAGE DeriveFunctor #-}
 
-module Events where
+module Transport where
 
 import Control.Comonad
-import Data.Maybe
 import qualified Data.Text as T
+import Data.Maybe
 import Safe
 
 data Sender = Sender

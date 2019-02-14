@@ -13,7 +13,7 @@ import Data.Maybe
 import qualified Data.Text as T
 import Data.Text.Encoding
 import Effect
-import Events
+import Transport
 import Reaction
 
 russifyCommand :: Reaction Message T.Text

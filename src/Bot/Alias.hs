@@ -15,7 +15,7 @@ import Data.Maybe
 import qualified Data.Text as T
 import Effect
 import Entity
-import Events
+import Transport
 import Property
 import Text.InterpolatedString.QM
 

@@ -14,7 +14,7 @@ import qualified Data.Text as T
 import Data.Time
 import Effect
 import Entity
-import Events
+import Transport
 import HyperNerd.Functor
 import Property
 import Reaction

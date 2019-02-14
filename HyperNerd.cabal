@@ -79,8 +79,8 @@ executable HyperNerd
                      , Command
                      , Effect
                      , Entity
-                     , Events
                      , Transport.Twitch
+                     , Transport
                      , Property
                      , Reaction
                      , Sqlite.Compiler
@@ -231,7 +231,6 @@ test-suite HyperNerdTest
                      , CommandSpec
                      , Effect
                      , Entity
-                     , Events
                      , HyperNerd.Functor
                      , HyperNerd.Comonad
                      , Property
@@ -241,5 +240,6 @@ test-suite HyperNerdTest
                      , Sqlite.Migration
                      , BotSpec.TwitchSpec
                      , Bot.Twitch
+                     , Transport
 
   default-language:    Haskell2010
