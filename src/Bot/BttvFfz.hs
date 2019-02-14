@@ -18,12 +18,12 @@ import qualified Data.Map as M
 import qualified Data.Text as T
 import Effect
 import Entity
-import Transport
 import Network.HTTP.Simple
 import qualified Network.URI.Encode as URI
 import Property
 import Reaction
 import Text.InterpolatedString.QM
+import Transport
 
 newtype FfzEmote = FfzEmote
   { ffzName :: T.Text

@@ -25,13 +25,13 @@ import qualified Data.Text as T
 import Data.Time
 import qualified Database.SQLite.Simple as SQLite
 import Effect
-import Transport
 import Markov
 import Network.HTTP.Simple
 import qualified Sqlite.EntityPersistence as SEP
 import System.IO
 import Text.InterpolatedString.QM
 import Text.Printf
+import Transport
 
 data BotState = BotState
   { bsConfig :: Config

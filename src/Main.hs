@@ -5,15 +5,15 @@ module Main where
 
 import Bot
 import BotState
+import Config
 import Control.Concurrent
 import Control.Concurrent.STM
 import Control.Monad
-import Transport.Twitch
-import Transport.Discord
 import System.Clock
 import System.Environment
 import Text.InterpolatedString.QM
-import Config
+import Transport.Discord
+import Transport.Twitch
 
 eventLoop :: Bot -> TimeSpec -> BotState -> IO ()
 eventLoop b prevCPUTime botState = do

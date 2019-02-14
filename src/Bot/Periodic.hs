@@ -15,9 +15,9 @@ import Data.Maybe
 import qualified Data.Text as T
 import Effect
 import Entity
-import Transport
 import Property
 import Text.InterpolatedString.QM
+import Transport
 
 -- TODO(#238): Periodic command sender should be the bot itself
 god :: Sender

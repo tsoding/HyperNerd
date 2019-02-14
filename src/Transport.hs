@@ -3,12 +3,13 @@
 module Transport where
 
 import Control.Comonad
-import qualified Data.Text as T
-import Data.Maybe
-import Safe
 import Control.Concurrent.STM
+import Data.Maybe
+import qualified Data.Text as T
+import Safe
 
 type IncomingQueue = TQueue InEvent
+
 type OutcomingQueue = TQueue OutEvent
 
 data Sender = Sender
@@ -30,7 +31,8 @@ data InEvent
   | InMsg Sender
           T.Text
 
-newtype OutEvent = OutMsg T.Text
+newtype OutEvent =
+  OutMsg T.Text
 
 data Message a = Message
   { messageSender :: Sender

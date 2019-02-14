@@ -6,20 +6,26 @@ module Transport.Twitch
 
 import Config
 import Control.Concurrent.Async
+import Control.Concurrent.STM
 import Control.Exception
 import Data.Foldable
+import qualified Data.Text as T
 import Data.Traversable
 import Hookup
 import Irc.Commands (ircCapReq, ircJoin, ircNick, ircPass, ircPong, ircPrivmsg)
-import Irc.RawIrcMsg (RawIrcMsg(..), TagEntry(..), asUtf8, parseRawIrcMsg, renderRawIrcMsg)
+import Irc.Message (IrcMsg(Join, Ping, Privmsg), cookIrcMsg)
+import Irc.RawIrcMsg
+  ( RawIrcMsg(..)
+  , TagEntry(..)
+  , asUtf8
+  , parseRawIrcMsg
+  , renderRawIrcMsg
+  )
 import Network.Socket (Family(..))
 import Transport
-import Control.Concurrent.STM
-import Irc.Message (IrcMsg(Join, Ping, Privmsg), cookIrcMsg)
-import qualified Data.Text as T
 
-import Irc.Identifier (idText)
 import Data.Maybe
+import Irc.Identifier (idText)
 import Irc.UserInfo (userNick)
 
 maxIrcMessage :: Int

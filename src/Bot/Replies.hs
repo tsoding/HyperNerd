@@ -5,9 +5,9 @@ module Bot.Replies where
 
 import qualified Data.Text as T
 import Effect
-import Transport
 import Reaction
 import Text.InterpolatedString.QM
+import Transport
 
 replyToUser :: T.Text -> T.Text -> Effect ()
 replyToUser user text = say [qms|@{user} {text}|]

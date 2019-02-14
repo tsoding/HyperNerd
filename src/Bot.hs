@@ -38,7 +38,6 @@ import qualified Data.Map as M
 import qualified Data.Text as T
 import Effect
 import Entity
-import Transport
 import Network.HTTP.Simple
 import qualified Network.URI.Encode as URI
 import Reaction
@@ -48,6 +47,7 @@ import Text.Read
 import qualified Text.Regex.Base.RegexLike as Regex
 import Text.Regex.TDFA (defaultCompOpt, defaultExecOpt)
 import Text.Regex.TDFA.String
+import Transport
 
 type Bot = InEvent -> Effect ()
 

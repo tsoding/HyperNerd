@@ -11,9 +11,9 @@ import qualified Data.Map as M
 import qualified Data.Text as T
 import Effect
 import Entity
-import Transport
 import Property
 import Reaction
+import Transport
 
 data Variable = Variable
   { variableName :: T.Text
