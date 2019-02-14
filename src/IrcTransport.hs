@@ -1,9 +1,10 @@
 {-# LANGUAGE OverloadedStrings #-}
 
-module IrcTransport ( ircTransportEntry
-                    , IncomingQueue
-                    , OutcomingQueue
-                    ) where
+module IrcTransport
+  ( ircTransportEntry
+  , IncomingQueue
+  , OutcomingQueue
+  ) where
 
 import Config
 import Control.Concurrent.Async
