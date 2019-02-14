@@ -143,9 +143,18 @@ executable Discord
                -fwarn-incomplete-uni-patterns
   main-is:     DiscordMain.hs
 
+  other-modules:   Markov
+
   build-depends:   base
                  , discord-haskell == 0.7.1
                  , text
+                 , transformers
+                 , bytestring
+                 , cassava
+                 , containers
+                 , safe
+                 , random
+
   hs-source-dirs:      src
 
   default-language: Haskell2010

@@ -1,6 +1,14 @@
 {-# LANGUAGE OverloadedStrings #-}
 
-module Markov where
+module Markov
+  ( Markov
+  , saveMarkov
+  , loadMarkov
+  , simulate
+  , eventsAsText
+  , text2Markov
+  , file2Markov
+  ) where
 
 import Control.Monad
 import Control.Monad.Trans.Class
