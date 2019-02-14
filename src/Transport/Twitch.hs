@@ -2,13 +2,10 @@
 
 module Transport.Twitch
   ( twitchTransportEntry
-  , IncomingQueue
-  , OutcomingQueue
   ) where
 
 import Config
 import Control.Concurrent.Async
-import Control.Concurrent.STM
 import Control.Exception
 import Data.Foldable
 import Data.Traversable
@@ -16,10 +13,8 @@ import Hookup
 import Irc.Commands (ircCapReq, ircJoin, ircNick, ircPass)
 import Irc.RawIrcMsg (RawIrcMsg, asUtf8, parseRawIrcMsg, renderRawIrcMsg)
 import Network.Socket (Family(..))
-
-type IncomingQueue = TQueue Irc.RawIrcMsg.RawIrcMsg
-
-type OutcomingQueue = TQueue Irc.RawIrcMsg.RawIrcMsg
+import Transport
+import Control.Concurrent.STM
 
 maxIrcMessage :: Int
 maxIrcMessage = 1000

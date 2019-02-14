@@ -6,6 +6,11 @@ import Control.Comonad
 import qualified Data.Text as T
 import Data.Maybe
 import Safe
+import Control.Concurrent.STM
+import Irc.RawIrcMsg (RawIrcMsg)
+
+type IncomingQueue = TQueue Irc.RawIrcMsg.RawIrcMsg
+type OutcomingQueue = TQueue Irc.RawIrcMsg.RawIrcMsg
 
 data Sender = Sender
   { senderName :: T.Text
