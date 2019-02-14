@@ -4,12 +4,12 @@ module Main where
 
 import Control.Exception (finally)
 import Control.Monad (when)
-import System.Environment
+import Data.Char (toLower)
 import qualified Data.Text as T
 import qualified Data.Text.IO as TIO
 import Discord
-import Data.Char (toLower)
 import Markov
+import System.Environment
 
 loopingPing :: (RestChan, Gateway, z) -> Markov -> IO ()
 loopingPing dis markov = do
@@ -36,8 +36,7 @@ mainWithArgs (authTokenFile:markovCsvFile:_) = do
   tok <- T.strip <$> TIO.readFile authTokenFile
   dis <- loginRestGateway (Auth tok)
   markov <- loadMarkov markovCsvFile
-  finally (loopingPing dis markov)
-          (stopDiscord dis)
+  finally (loopingPing dis markov) (stopDiscord dis)
 mainWithArgs _ = error "Usage: Discord <auth-token-file> <markov.csv>"
 
 -- TODO(#448): How can we integrate Discord Bot proof-of-concept with HyperNerd?
