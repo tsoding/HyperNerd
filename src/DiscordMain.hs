@@ -20,7 +20,7 @@ loopingPing dis markov = do
       when (isPing (messageText m) && not (fromBot m)) $ do
         markovText <- eventsAsText <$> simulate markov
         resp <- restCall dis (CreateMessage (messageChannel m) markovText)
-        putStrLn (show resp)
+        print resp
         putStrLn ""
       loopingPing dis markov
     _ -> loopingPing dis markov
