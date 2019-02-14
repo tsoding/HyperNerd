@@ -16,7 +16,7 @@ data TwitchParams = TwitchParams
   { tpNick :: T.Text
   , tpPass :: T.Text
   , tpChannel :: T.Text
-  , tpClientId :: T.Text
+  , tpTwitchClientId :: T.Text
   , tpOwner :: T.Text
   } deriving (Show)
 

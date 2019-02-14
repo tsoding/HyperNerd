@@ -127,7 +127,7 @@ applyEffect (botState, Free (HttpRequest request s)) = do
     Just response' -> return (botState, s response')
     Nothing -> return (botState, Pure ())
 applyEffect (botState, Free (TwitchApiRequest request s)) = do
-  let clientId = fromString $ T.unpack $ tpClientId $ bsConfig botState
+  let clientId = fromString $ T.unpack $ tpTwitchClientId $ bsConfig botState
   response <- httpLBS (addRequestHeader "Client-ID" clientId request)
   return (botState, s response)
 applyEffect (botState, Free (Timeout ms e s)) =
