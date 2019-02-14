@@ -54,7 +54,6 @@ owner = <your-name>
 password = 12345
 channel = Tsoding
 clientId = <client-id-token>
-database = twitch.db
 ```
 
 | name       | description                                                                                                  |

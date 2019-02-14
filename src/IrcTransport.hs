@@ -5,7 +5,7 @@ module IrcTransport ( ircTransportEntry
                     , OutcomingQueue
                     ) where
 
-import TwitchConfig
+import Config
 import Control.Concurrent.Async
 import Control.Concurrent.STM
 import Control.Exception
@@ -44,11 +44,11 @@ twitchConnectionParams =
 sendMsg :: Connection -> RawIrcMsg -> IO ()
 sendMsg conn msg = send conn (renderRawIrcMsg msg)
 
-authorize :: TwitchConfig -> Connection -> IO ()
+authorize :: TwitchParams -> Connection -> IO ()
 authorize conf conn = do
-  sendMsg conn (ircPass $ tcPass conf)
-  sendMsg conn (ircNick $ tcNick conf)
-  sendMsg conn (ircJoin (tcChannel conf) Nothing)
+  sendMsg conn (ircPass $ tpPass conf)
+  sendMsg conn (ircNick $ tpNick conf)
+  sendMsg conn (ircJoin (tpChannel conf) Nothing)
   sendMsg conn (ircCapReq ["twitch.tv/tags"])
 
 withConnection :: ConnectionParams -> (Connection -> IO a) -> IO a
@@ -75,7 +75,7 @@ sendLoop outcoming ircConn = do
   sendLoop outcoming ircConn
 
 -- TODO(#17): check unsuccessful authorization
-ircTransportEntry :: IncomingQueue -> OutcomingQueue -> TwitchConfig -> IO ()
+ircTransportEntry :: IncomingQueue -> OutcomingQueue -> TwitchParams -> IO ()
 ircTransportEntry incoming outcoming conf = do
   withConnection twitchConnectionParams $ \ircConn -> do
     authorize conf ircConn
