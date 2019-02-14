@@ -35,7 +35,7 @@ $ stack exec HyperNerd secret.ini database.db
 ### Example of a secret.ini file
 
 ```ini
-[User]
+[Twitch]
 nick = HyperNerd
 owner = <your-name>
 password = 12345
