@@ -3,7 +3,7 @@
 
 module BotState
   ( advanceTimeouts
-  , handleIrcMessage
+  , handleInEvent
   , withBotState
   , withBotState'
   , newBotState
@@ -20,18 +20,12 @@ import Control.Monad.Trans.Maybe
 import Data.Foldable
 import Data.Function
 import Data.List
-import Data.Maybe
 import Data.String
 import qualified Data.Text as T
 import Data.Time
 import qualified Database.SQLite.Simple as SQLite
 import Effect
 import Transport
-import Irc.Commands (ircPong, ircPrivmsg)
-import Irc.Identifier (idText)
-import Irc.Message (IrcMsg(Join, Ping, Privmsg), cookIrcMsg)
-import Irc.RawIrcMsg (RawIrcMsg(..), TagEntry(..))
-import Irc.UserInfo (userNick)
 import Markov
 import Network.HTTP.Simple
 import qualified Sqlite.EntityPersistence as SEP
@@ -87,8 +81,7 @@ applyEffect :: (BotState, Effect ()) -> IO (BotState, Effect ())
 applyEffect self@(_, Pure _) = return self
 applyEffect (botState, Free (Say text s)) = do
   atomically $
-    writeTQueue (bsOutcoming botState) $
-    ircPrivmsg (tpChannel $ bsConfig botState) $ twitchCmdEscape text
+    writeTQueue (bsOutcoming botState) $ OutMsg $ twitchCmdEscape text
   return (botState, s)
 applyEffect (botState, Free (LogMsg msg s)) = do
   putStrLn $ T.unpack msg
@@ -145,9 +138,7 @@ applyEffect (botState, Free (Listen effect s)) = do
 applyEffect (botState, Free (TwitchCommand name args s)) = do
   atomically $
     writeTQueue (bsOutcoming botState) $
-    ircPrivmsg
-      (tpChannel $ bsConfig botState)
-      [qms|/{name} {T.concat $ intersperse " " args}|]
+    OutMsg $ [qms|/{name} {T.concat $ intersperse " " args}|]
   return (botState, s)
 applyEffect (botState, Free (RandomMarkov s)) = do
   let markov = MaybeT $ return $ bsMarkov botState
@@ -171,9 +162,6 @@ runEffectTransIO botState effect =
   SQLite.withTransaction (bsSqliteConn botState) $
   runEffectIO applyEffect (botState, effect)
 
-joinChannel :: Bot -> BotState -> T.Text -> IO BotState
-joinChannel b botState = runEffectTransIO botState . b . Joined
-
 advanceTimeouts :: Integer -> BotState -> IO BotState
 advanceTimeouts dt botState =
   foldlM runEffectTransIO (botState {bsTimeouts = unripe}) $ map snd ripe
@@ -183,40 +171,5 @@ advanceTimeouts dt botState =
       sortBy (compare `on` fst) $
       map (\(t, e) -> (t - dt, e)) $ bsTimeouts botState
 
-valueOfTag :: TagEntry -> T.Text
-valueOfTag (TagEntry _ value) = value
-
-handleIrcMessage :: Bot -> RawIrcMsg -> BotState -> IO BotState
-handleIrcMessage b msg botState = do
-  let badges =
-        concat $
-        maybeToList $
-        fmap (T.splitOn "," . valueOfTag) $
-        find (\(TagEntry ident _) -> ident == "badges") $ _msgTags msg
-  let cookedMsg = cookIrcMsg msg
-  print cookedMsg
-  case cookedMsg of
-    (Ping xs) -> do
-      atomically $ writeTQueue (bsOutcoming botState) (ircPong xs)
-      return botState
-    (Privmsg userInfo target msgText) ->
-      runEffectTransIO botState $
-      b $
-      Msg
-        Sender
-          { senderName = name
-          , senderDisplayName = displayName
-          , senderChannel = idText target
-          , senderSubscriber = any (T.isPrefixOf "subscriber") badges
-          , senderMod = any (T.isPrefixOf "moderator") badges
-          , senderBroadcaster = any (T.isPrefixOf "broadcaster") badges
-          , senderOwner = name == tpOwner (bsConfig botState)
-          }
-        msgText
-      where name = idText $ userNick userInfo
-            displayName =
-              maybe name valueOfTag $
-              find (\(TagEntry ident _) -> ident == "display-name") $
-              _msgTags msg
-    (Join userInfo _ _) -> joinChannel b botState $ idText $ userNick userInfo
-    _ -> return botState
+handleInEvent :: Bot -> InEvent -> BotState -> IO BotState
+handleInEvent b event botState = runEffectTransIO botState $ b event

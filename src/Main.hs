@@ -19,7 +19,7 @@ eventLoop b prevCPUTime botState = do
   currCPUTime <- getTime Monotonic
   let deltaTime = toNanoSecs (currCPUTime - prevCPUTime) `div` 1000000
   pollMessage <-
-    maybe return (handleIrcMessage b) <$>
+    maybe return (handleInEvent b) <$>
     atomically (tryReadTQueue $ bsIncoming botState)
   pollMessage botState >>= advanceTimeouts deltaTime >>= eventLoop b currCPUTime
 

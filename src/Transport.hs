@@ -7,10 +7,9 @@ import qualified Data.Text as T
 import Data.Maybe
 import Safe
 import Control.Concurrent.STM
-import Irc.RawIrcMsg (RawIrcMsg)
 
-type IncomingQueue = TQueue Irc.RawIrcMsg.RawIrcMsg
-type OutcomingQueue = TQueue Irc.RawIrcMsg.RawIrcMsg
+type IncomingQueue = TQueue InEvent
+type OutcomingQueue = TQueue OutEvent
 
 data Sender = Sender
   { senderName :: T.Text
@@ -26,10 +25,12 @@ senderAuthority :: Sender -> Bool
 senderAuthority sender =
   senderMod sender || senderBroadcaster sender || senderOwner sender
 
-data Event
+data InEvent
   = Joined T.Text
-  | Msg Sender
-        T.Text
+  | InMsg Sender
+          T.Text
+
+data OutEvent = OutMsg T.Text
 
 data Message a = Message
   { messageSender :: Sender

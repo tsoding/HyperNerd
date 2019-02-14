@@ -49,7 +49,7 @@ import qualified Text.Regex.Base.RegexLike as Regex
 import Text.Regex.TDFA (defaultCompOpt, defaultExecOpt)
 import Text.Regex.TDFA.String
 
-type Bot = Event -> Effect ()
+type Bot = InEvent -> Effect ()
 
 builtinCommands :: CommandTable
 builtinCommands =
@@ -354,7 +354,7 @@ bot (Joined nickname) = do
   updateBotUserInfo nickname
   startPeriodicCommands dispatchCommand
   periodicEffect (60 * 1000) announceRunningPoll
-bot event@(Msg sender text) = do
+bot event@(InMsg sender text) = do
   recordUserMsg sender text
   linkForbidden <- forbidLinksForPlebs event
   banwordsForbidden <- forbidBanwords $ Message sender text

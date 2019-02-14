@@ -74,8 +74,8 @@ textContainsLink t =
       Just x -> Right x
       Nothing -> Left "No match found"
 
-forbidLinksForPlebs :: Event -> Effect Bool
-forbidLinksForPlebs (Msg sender text)
+forbidLinksForPlebs :: InEvent -> Effect Bool
+forbidLinksForPlebs (InMsg sender text)
   | textContainsLink text = do
     trustedUser <-
       runMaybeT (findTrustedSender sender <|> autoTrustSender sender)
