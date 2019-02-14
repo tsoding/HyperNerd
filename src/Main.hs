@@ -8,7 +8,7 @@ import BotState
 import Control.Concurrent
 import Control.Concurrent.STM
 import Control.Monad
-import IrcTransport
+import TwitchTransport
 import System.Clock
 import System.Environment
 import Text.InterpolatedString.QM
@@ -40,7 +40,7 @@ entry :: String -> String -> Maybe String -> IO ()
 entry configPath databasePath markovPath =
   withBotState markovPath configPath databasePath $ \botState -> do
     supavisah $ logicEntry botState
-    ircTransportEntry
+    twitchTransportEntry
       (bsIncoming botState)
       (bsOutcoming botState)
       (bsConfig botState)

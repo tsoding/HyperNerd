@@ -1,7 +1,7 @@
 {-# LANGUAGE OverloadedStrings #-}
 
-module IrcTransport
-  ( ircTransportEntry
+module TwitchTransport
+  ( twitchTransportEntry
   , IncomingQueue
   , OutcomingQueue
   ) where
@@ -76,8 +76,8 @@ sendLoop outcoming ircConn = do
   sendLoop outcoming ircConn
 
 -- TODO(#17): check unsuccessful authorization
-ircTransportEntry :: IncomingQueue -> OutcomingQueue -> TwitchParams -> IO ()
-ircTransportEntry incoming outcoming conf = do
+twitchTransportEntry :: IncomingQueue -> OutcomingQueue -> TwitchParams -> IO ()
+twitchTransportEntry incoming outcoming conf = do
   withConnection twitchConnectionParams $ \ircConn -> do
     authorize conf ircConn
     withAsync (sendLoop outcoming ircConn) $ \sender ->
