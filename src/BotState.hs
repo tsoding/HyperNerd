@@ -32,7 +32,7 @@ import Irc.Identifier (idText)
 import Irc.Message (IrcMsg(Join, Ping, Privmsg), cookIrcMsg)
 import Irc.RawIrcMsg (RawIrcMsg(..), TagEntry(..))
 import Irc.UserInfo (userNick)
-import TwitchTransport
+import Transport.Twitch
 import Markov
 import Network.HTTP.Simple
 import qualified Sqlite.EntityPersistence as SEP

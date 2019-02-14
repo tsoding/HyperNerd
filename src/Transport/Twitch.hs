@@ -1,6 +1,6 @@
 {-# LANGUAGE OverloadedStrings #-}
 
-module TwitchTransport
+module Transport.Twitch
   ( twitchTransportEntry
   , IncomingQueue
   , OutcomingQueue

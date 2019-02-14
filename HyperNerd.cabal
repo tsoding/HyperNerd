@@ -80,7 +80,7 @@ executable HyperNerd
                      , Effect
                      , Entity
                      , Events
-                     , TwitchTransport
+                     , Transport.Twitch
                      , Property
                      , Reaction
                      , Sqlite.Compiler

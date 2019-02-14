@@ -8,7 +8,7 @@ import BotState
 import Control.Concurrent
 import Control.Concurrent.STM
 import Control.Monad
-import TwitchTransport
+import Transport.Twitch
 import System.Clock
 import System.Environment
 import Text.InterpolatedString.QM
