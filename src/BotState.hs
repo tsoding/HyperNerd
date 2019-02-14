@@ -139,7 +139,7 @@ applyEffect (botState, Free (Listen effect s)) = do
 applyEffect (botState, Free (TwitchCommand name args s)) = do
   atomically $
     writeTQueue (bsOutcoming botState) $
-    OutMsg $ [qms|/{name} {T.concat $ intersperse " " args}|]
+    OutMsg [qms|/{name} {T.concat $ intersperse " " args}|]
   return (botState, s)
 applyEffect (botState, Free (RandomMarkov s)) = do
   let markov = MaybeT $ return $ bsMarkov botState

@@ -10,15 +10,14 @@ import Control.Exception
 import Data.Foldable
 import Data.Traversable
 import Hookup
-import Irc.Commands (ircCapReq, ircJoin, ircNick, ircPass)
-import Irc.RawIrcMsg (RawIrcMsg, asUtf8, parseRawIrcMsg, renderRawIrcMsg)
+import Irc.Commands (ircCapReq, ircJoin, ircNick, ircPass, ircPong, ircPrivmsg)
+import Irc.RawIrcMsg (RawIrcMsg(..), TagEntry(..), asUtf8, parseRawIrcMsg, renderRawIrcMsg)
 import Network.Socket (Family(..))
 import Transport
 import Control.Concurrent.STM
 import Irc.Message (IrcMsg(Join, Ping, Privmsg), cookIrcMsg)
-import Irc.Commands (ircPong, ircPrivmsg)
 import qualified Data.Text as T
-import Irc.RawIrcMsg (RawIrcMsg(..), TagEntry(..))
+
 import Irc.Identifier (idText)
 import Data.Maybe
 import Irc.UserInfo (userNick)
@@ -80,8 +79,7 @@ receiveLoop owner incoming ircConn = do
     let cookedMsg = cookIrcMsg msg
     print cookedMsg
     case cookedMsg of
-      (Ping xs) -> do
-        sendMsg ircConn (ircPong xs)
+      (Ping xs) -> sendMsg ircConn (ircPong xs)
       (Privmsg userInfo target msgText) ->
         atomically $
         writeTQueue incoming $

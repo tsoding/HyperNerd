@@ -30,7 +30,7 @@ data InEvent
   | InMsg Sender
           T.Text
 
-data OutEvent = OutMsg T.Text
+newtype OutEvent = OutMsg T.Text
 
 data Message a = Message
   { messageSender :: Sender
