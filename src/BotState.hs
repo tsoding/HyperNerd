@@ -78,7 +78,7 @@ withBotState markovPath tcPath databasePath block = do
     TwitchConfig twitchParams -> do
       markov <- runMaybeT (MaybeT (return markovPath) >>= lift . loadMarkov)
       withBotState' markov twitchParams databasePath block
-    -- TODO: Discord bot instance is not supported
+    -- TODO(#451): Discord bot instance is not supported
     DiscordConfig _ -> error "Discord bot instance is not supported"
 
 twitchCmdEscape :: T.Text -> T.Text
