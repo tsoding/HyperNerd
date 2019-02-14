@@ -9,9 +9,11 @@ import Control.Concurrent
 import Control.Concurrent.STM
 import Control.Monad
 import Transport.Twitch
+import Transport.Discord
 import System.Clock
 import System.Environment
 import Text.InterpolatedString.QM
+import Config
 
 eventLoop :: Bot -> TimeSpec -> BotState -> IO ()
 eventLoop b prevCPUTime botState = do
@@ -40,10 +42,17 @@ entry :: String -> String -> Maybe String -> IO ()
 entry configPath databasePath markovPath =
   withBotState markovPath configPath databasePath $ \botState -> do
     supavisah $ logicEntry botState
-    twitchTransportEntry
-      (bsIncoming botState)
-      (bsOutcoming botState)
-      (bsConfig botState)
+    case bsConfig botState of
+      TwitchConfig twitchConfig ->
+        twitchTransportEntry
+          (bsIncoming botState)
+          (bsOutcoming botState)
+          twitchConfig
+      DiscordConfig discordConfig ->
+        discordTransportEntry
+          (bsIncoming botState)
+          (bsOutcoming botState)
+          discordConfig
 
 mainWithArgs :: [String] -> IO ()
 mainWithArgs [configPath, databasePath] = entry configPath databasePath Nothing

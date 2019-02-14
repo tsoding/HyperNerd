@@ -2,8 +2,6 @@
 
 module Transport.Twitch
   ( twitchTransportEntry
-  , IncomingQueue
-  , OutcomingQueue
   ) where
 
 import Config

@@ -81,6 +81,7 @@ executable HyperNerd
                      , Entity
                      , Transport.Twitch
                      , Transport
+                     , Transport.Discord
                      , Property
                      , Reaction
                      , Sqlite.Compiler

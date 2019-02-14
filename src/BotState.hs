@@ -34,7 +34,7 @@ import Text.InterpolatedString.QM
 import Text.Printf
 
 data BotState = BotState
-  { bsConfig :: TwitchParams
+  { bsConfig :: Config
   , bsSqliteConn :: SQLite.Connection
   , bsTimeouts :: [(Integer, Effect ())]
   , bsIncoming :: IncomingQueue
@@ -42,7 +42,7 @@ data BotState = BotState
   , bsMarkov :: Maybe Markov
   }
 
-newBotState :: Maybe Markov -> TwitchParams -> SQLite.Connection -> IO BotState
+newBotState :: Maybe Markov -> Config -> SQLite.Connection -> IO BotState
 newBotState markov conf sqliteConn = do
   incoming <- atomically newTQueue
   outcoming <- atomically newTQueue
@@ -57,7 +57,7 @@ newBotState markov conf sqliteConn = do
       }
 
 withBotState' ::
-     Maybe Markov -> TwitchParams -> FilePath -> (BotState -> IO ()) -> IO ()
+     Maybe Markov -> Config -> FilePath -> (BotState -> IO ()) -> IO ()
 withBotState' markov conf databasePath block =
   SQLite.withConnection databasePath $ \sqliteConn -> do
     SEP.prepareSchema sqliteConn
@@ -67,12 +67,8 @@ withBotState ::
      Maybe FilePath -> FilePath -> FilePath -> (BotState -> IO ()) -> IO ()
 withBotState markovPath tcPath databasePath block = do
   conf <- configFromFile tcPath
-  case conf of
-    TwitchConfig twitchParams -> do
-      markov <- runMaybeT (MaybeT (return markovPath) >>= lift . loadMarkov)
-      withBotState' markov twitchParams databasePath block
-    -- TODO(#451): Discord bot instance is not supported
-    DiscordConfig _ -> error "Discord bot instance is not supported"
+  markov <- runMaybeT (MaybeT (return markovPath) >>= lift . loadMarkov)
+  withBotState' markov conf databasePath block
 
 twitchCmdEscape :: T.Text -> T.Text
 twitchCmdEscape = T.dropWhile (`elem` ['/', '.']) . T.strip
@@ -127,7 +123,12 @@ applyEffect (botState, Free (HttpRequest request s)) = do
     Just response' -> return (botState, s response')
     Nothing -> return (botState, Pure ())
 applyEffect (botState, Free (TwitchApiRequest request s)) = do
-  let clientId = fromString $ T.unpack $ tpTwitchClientId $ bsConfig botState
+  let clientId =
+        fromString $
+        T.unpack $
+        case bsConfig botState of
+          (TwitchConfig params) -> tpTwitchClientId params
+          (DiscordConfig params) -> dpTwitchClientId params
   response <- httpLBS (addRequestHeader "Client-ID" clientId request)
   return (botState, s response)
 applyEffect (botState, Free (Timeout ms e s)) =
