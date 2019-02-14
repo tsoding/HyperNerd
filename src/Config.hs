@@ -25,7 +25,7 @@ data DiscordParams = DiscordParams
   } deriving (Show)
 
 twitchParamsFromIni :: Ini -> Either String TwitchParams
-twitchParamsFromIni ini = do
+twitchParamsFromIni ini =
   TwitchParams <$> lookupValue "Bot" "nick" ini <*>
     lookupValue "Bot" "password" ini <*>
     (T.cons '#' <$> lookupValue "Bot" "channel" ini) <*>
@@ -33,7 +33,7 @@ twitchParamsFromIni ini = do
     lookupValue "Bot" "owner" ini
 
 discordParamsFromIni :: Ini -> Either String DiscordParams
-discordParamsFromIni ini = do
+discordParamsFromIni ini =
   DiscordParams <$> lookupValue "Bot" "authToken" ini <*>
     lookupValue "Bot" "guild" ini <*>
     lookupValue "Bot" "channel" ini
@@ -42,7 +42,7 @@ configFromFile :: FilePath -> IO Config
 configFromFile filePath = do
   ini <- readIniFile filePath
   either (ioError . userError) return $ do
-    configType <- (ini >>= lookupValue "Bot" "type")
+    configType <- ini >>= lookupValue "Bot" "type"
     case configType of
       "twitch"  -> TwitchConfig <$> (ini >>= twitchParamsFromIni)
       "discord" -> DiscordConfig <$> (ini >>= discordParamsFromIni)
