@@ -218,6 +218,7 @@ test-suite HyperNerdTest
                      , unordered-containers
                      , uri-encode
                      , comonad
+                     , stm
 
   other-modules:       Bot.BttvFfz
                      , Bot.Links
