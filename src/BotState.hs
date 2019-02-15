@@ -3,7 +3,7 @@
 
 module BotState
   ( advanceTimeouts
-  , handleIrcMessage
+  , handleInEvent
   , withBotState
   , withBotState'
   , newBotState
@@ -20,28 +20,21 @@ import Control.Monad.Trans.Maybe
 import Data.Foldable
 import Data.Function
 import Data.List
-import Data.Maybe
 import Data.String
 import qualified Data.Text as T
 import Data.Time
 import qualified Database.SQLite.Simple as SQLite
 import Effect
-import Events
-import Irc.Commands (ircPong, ircPrivmsg)
-import Irc.Identifier (idText)
-import Irc.Message (IrcMsg(Join, Ping, Privmsg), cookIrcMsg)
-import Irc.RawIrcMsg (RawIrcMsg(..), TagEntry(..))
-import Irc.UserInfo (userNick)
-import IrcTransport
 import Markov
 import Network.HTTP.Simple
 import qualified Sqlite.EntityPersistence as SEP
 import System.IO
 import Text.InterpolatedString.QM
 import Text.Printf
+import Transport
 
 data BotState = BotState
-  { bsConfig :: TwitchParams
+  { bsConfig :: Config
   , bsSqliteConn :: SQLite.Connection
   , bsTimeouts :: [(Integer, Effect ())]
   , bsIncoming :: IncomingQueue
@@ -49,7 +42,7 @@ data BotState = BotState
   , bsMarkov :: Maybe Markov
   }
 
-newBotState :: Maybe Markov -> TwitchParams -> SQLite.Connection -> IO BotState
+newBotState :: Maybe Markov -> Config -> SQLite.Connection -> IO BotState
 newBotState markov conf sqliteConn = do
   incoming <- atomically newTQueue
   outcoming <- atomically newTQueue
@@ -64,7 +57,7 @@ newBotState markov conf sqliteConn = do
       }
 
 withBotState' ::
-     Maybe Markov -> TwitchParams -> FilePath -> (BotState -> IO ()) -> IO ()
+     Maybe Markov -> Config -> FilePath -> (BotState -> IO ()) -> IO ()
 withBotState' markov conf databasePath block =
   SQLite.withConnection databasePath $ \sqliteConn -> do
     SEP.prepareSchema sqliteConn
@@ -74,12 +67,8 @@ withBotState ::
      Maybe FilePath -> FilePath -> FilePath -> (BotState -> IO ()) -> IO ()
 withBotState markovPath tcPath databasePath block = do
   conf <- configFromFile tcPath
-  case conf of
-    TwitchConfig twitchParams -> do
-      markov <- runMaybeT (MaybeT (return markovPath) >>= lift . loadMarkov)
-      withBotState' markov twitchParams databasePath block
-    -- TODO(#451): Discord bot instance is not supported
-    DiscordConfig _ -> error "Discord bot instance is not supported"
+  markov <- runMaybeT (MaybeT (return markovPath) >>= lift . loadMarkov)
+  withBotState' markov conf databasePath block
 
 twitchCmdEscape :: T.Text -> T.Text
 twitchCmdEscape = T.dropWhile (`elem` ['/', '.']) . T.strip
@@ -88,8 +77,7 @@ applyEffect :: (BotState, Effect ()) -> IO (BotState, Effect ())
 applyEffect self@(_, Pure _) = return self
 applyEffect (botState, Free (Say text s)) = do
   atomically $
-    writeTQueue (bsOutcoming botState) $
-    ircPrivmsg (tpChannel $ bsConfig botState) $ twitchCmdEscape text
+    writeTQueue (bsOutcoming botState) $ OutMsg $ twitchCmdEscape text
   return (botState, s)
 applyEffect (botState, Free (LogMsg msg s)) = do
   putStrLn $ T.unpack msg
@@ -135,7 +123,12 @@ applyEffect (botState, Free (HttpRequest request s)) = do
     Just response' -> return (botState, s response')
     Nothing -> return (botState, Pure ())
 applyEffect (botState, Free (TwitchApiRequest request s)) = do
-  let clientId = fromString $ T.unpack $ tpClientId $ bsConfig botState
+  let clientId =
+        fromString $
+        T.unpack $
+        case bsConfig botState of
+          (TwitchConfig params) -> tpTwitchClientId params
+          (DiscordConfig params) -> dpTwitchClientId params
   response <- httpLBS (addRequestHeader "Client-ID" clientId request)
   return (botState, s response)
 applyEffect (botState, Free (Timeout ms e s)) =
@@ -146,9 +139,7 @@ applyEffect (botState, Free (Listen effect s)) = do
 applyEffect (botState, Free (TwitchCommand name args s)) = do
   atomically $
     writeTQueue (bsOutcoming botState) $
-    ircPrivmsg
-      (tpChannel $ bsConfig botState)
-      [qms|/{name} {T.concat $ intersperse " " args}|]
+    OutMsg [qms|/{name} {T.concat $ intersperse " " args}|]
   return (botState, s)
 applyEffect (botState, Free (RandomMarkov s)) = do
   let markov = MaybeT $ return $ bsMarkov botState
@@ -172,9 +163,6 @@ runEffectTransIO botState effect =
   SQLite.withTransaction (bsSqliteConn botState) $
   runEffectIO applyEffect (botState, effect)
 
-joinChannel :: Bot -> BotState -> T.Text -> IO BotState
-joinChannel b botState = runEffectTransIO botState . b . Joined
-
 advanceTimeouts :: Integer -> BotState -> IO BotState
 advanceTimeouts dt botState =
   foldlM runEffectTransIO (botState {bsTimeouts = unripe}) $ map snd ripe
@@ -184,40 +172,5 @@ advanceTimeouts dt botState =
       sortBy (compare `on` fst) $
       map (\(t, e) -> (t - dt, e)) $ bsTimeouts botState
 
-valueOfTag :: TagEntry -> T.Text
-valueOfTag (TagEntry _ value) = value
-
-handleIrcMessage :: Bot -> RawIrcMsg -> BotState -> IO BotState
-handleIrcMessage b msg botState = do
-  let badges =
-        concat $
-        maybeToList $
-        fmap (T.splitOn "," . valueOfTag) $
-        find (\(TagEntry ident _) -> ident == "badges") $ _msgTags msg
-  let cookedMsg = cookIrcMsg msg
-  print cookedMsg
-  case cookedMsg of
-    (Ping xs) -> do
-      atomically $ writeTQueue (bsOutcoming botState) (ircPong xs)
-      return botState
-    (Privmsg userInfo target msgText) ->
-      runEffectTransIO botState $
-      b $
-      Msg
-        Sender
-          { senderName = name
-          , senderDisplayName = displayName
-          , senderChannel = idText target
-          , senderSubscriber = any (T.isPrefixOf "subscriber") badges
-          , senderMod = any (T.isPrefixOf "moderator") badges
-          , senderBroadcaster = any (T.isPrefixOf "broadcaster") badges
-          , senderOwner = name == tpOwner (bsConfig botState)
-          }
-        msgText
-      where name = idText $ userNick userInfo
-            displayName =
-              maybe name valueOfTag $
-              find (\(TagEntry ident _) -> ident == "display-name") $
-              _msgTags msg
-    (Join userInfo _ _) -> joinChannel b botState $ idText $ userNick userInfo
-    _ -> return botState
+handleInEvent :: Bot -> InEvent -> BotState -> IO BotState
+handleInEvent b event botState = runEffectTransIO botState $ b event

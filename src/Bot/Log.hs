@@ -12,11 +12,11 @@ import qualified Data.Text as T
 import Data.Time
 import Effect
 import Entity
-import Events
 import Numeric.Natural
 import Property
 import Reaction
 import Text.InterpolatedString.QM
+import Transport
 
 data LogRecord = LogRecord
   { lrUser :: T.Text

@@ -14,11 +14,11 @@ import qualified Data.Text as T
 import Data.Time
 import Effect
 import Entity
-import Events
 import HyperNerd.Functor
 import Property
 import Reaction
 import Text.InterpolatedString.QM
+import Transport
 
 data Quote = Quote
   { quoteContent :: T.Text

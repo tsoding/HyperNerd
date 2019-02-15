@@ -16,7 +16,7 @@ data TwitchParams = TwitchParams
   { tpNick :: T.Text
   , tpPass :: T.Text
   , tpChannel :: T.Text
-  , tpClientId :: T.Text
+  , tpTwitchClientId :: T.Text
   , tpOwner :: T.Text
   } deriving (Show)
 
@@ -24,6 +24,7 @@ data DiscordParams = DiscordParams
   { dpAuthToken :: T.Text
   , dpGuild :: T.Text
   , dpChannel :: T.Text
+  , dpTwitchClientId :: T.Text
   } deriving (Show)
 
 twitchParamsFromIni :: Ini -> Either String TwitchParams
@@ -38,7 +39,8 @@ discordParamsFromIni :: Ini -> Either String DiscordParams
 discordParamsFromIni ini =
   DiscordParams <$> lookupValue "Bot" "authToken" ini <*>
   lookupValue "Bot" "guild" ini <*>
-  lookupValue "Bot" "channel" ini
+  lookupValue "Bot" "channel" ini <*>
+  lookupValue "Bot" "clientId" ini
 
 configFromFile :: FilePath -> IO Config
 configFromFile filePath = do

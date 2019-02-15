@@ -10,8 +10,8 @@ import qualified Data.Map as M
 import Data.Maybe
 import qualified Data.Text as T
 import Effect
-import Events
 import Reaction
+import Transport
 
 -- TODO(#341): CommandHandler can be easily replaced by MsgReaction only
 type CommandHandler a = Message a -> Effect ()

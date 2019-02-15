@@ -16,12 +16,12 @@ import qualified Data.Text as T
 import Data.Time
 import Effect
 import Entity
-import Events
 import Property
 import Reaction
 import Safe
 import Text.InterpolatedString.QM
 import Text.Read
+import Transport
 
 data PollOption = PollOption
   { poPollId :: Int

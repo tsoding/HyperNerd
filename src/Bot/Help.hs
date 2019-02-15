@@ -10,9 +10,9 @@ import Command
 import Data.List
 import qualified Data.Map as M
 import qualified Data.Text as T
-import Events
 import Reaction
 import Text.InterpolatedString.QM
+import Transport
 
 helpCommand :: CommandTable -> Reaction Message T.Text
 helpCommand commandTable =

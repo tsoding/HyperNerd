@@ -5,13 +5,15 @@ module Main where
 
 import Bot
 import BotState
+import Config
 import Control.Concurrent
 import Control.Concurrent.STM
 import Control.Monad
-import IrcTransport
 import System.Clock
 import System.Environment
 import Text.InterpolatedString.QM
+import Transport.Discord
+import Transport.Twitch
 
 eventLoop :: Bot -> TimeSpec -> BotState -> IO ()
 eventLoop b prevCPUTime botState = do
@@ -19,7 +21,7 @@ eventLoop b prevCPUTime botState = do
   currCPUTime <- getTime Monotonic
   let deltaTime = toNanoSecs (currCPUTime - prevCPUTime) `div` 1000000
   pollMessage <-
-    maybe return (handleIrcMessage b) <$>
+    maybe return (handleInEvent b) <$>
     atomically (tryReadTQueue $ bsIncoming botState)
   pollMessage botState >>= advanceTimeouts deltaTime >>= eventLoop b currCPUTime
 
@@ -40,10 +42,17 @@ entry :: String -> String -> Maybe String -> IO ()
 entry configPath databasePath markovPath =
   withBotState markovPath configPath databasePath $ \botState -> do
     supavisah $ logicEntry botState
-    ircTransportEntry
-      (bsIncoming botState)
-      (bsOutcoming botState)
-      (bsConfig botState)
+    case bsConfig botState of
+      TwitchConfig twitchConfig ->
+        twitchTransportEntry
+          (bsIncoming botState)
+          (bsOutcoming botState)
+          twitchConfig
+      DiscordConfig discordConfig ->
+        discordTransportEntry
+          (bsIncoming botState)
+          (bsOutcoming botState)
+          discordConfig
 
 mainWithArgs :: [String] -> IO ()
 mainWithArgs [configPath, databasePath] = entry configPath databasePath Nothing

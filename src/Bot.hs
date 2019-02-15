@@ -38,7 +38,6 @@ import qualified Data.Map as M
 import qualified Data.Text as T
 import Effect
 import Entity
-import Events
 import Network.HTTP.Simple
 import qualified Network.URI.Encode as URI
 import Reaction
@@ -48,8 +47,9 @@ import Text.Read
 import qualified Text.Regex.Base.RegexLike as Regex
 import Text.Regex.TDFA (defaultCompOpt, defaultExecOpt)
 import Text.Regex.TDFA.String
+import Transport
 
-type Bot = Event -> Effect ()
+type Bot = InEvent -> Effect ()
 
 builtinCommands :: CommandTable
 builtinCommands =
@@ -354,7 +354,7 @@ bot (Joined nickname) = do
   updateBotUserInfo nickname
   startPeriodicCommands dispatchCommand
   periodicEffect (60 * 1000) announceRunningPoll
-bot event@(Msg sender text) = do
+bot event@(InMsg sender text) = do
   recordUserMsg sender text
   linkForbidden <- forbidLinksForPlebs event
   banwordsForbidden <- forbidBanwords $ Message sender text

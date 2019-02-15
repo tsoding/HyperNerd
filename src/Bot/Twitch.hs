@@ -11,12 +11,12 @@ import Data.Maybe
 import qualified Data.Text as T
 import Data.Time
 import Effect
-import Events
 import Network.HTTP.Simple
 import qualified Network.URI.Encode as URI
 import Reaction
 import Text.InterpolatedString.QM
 import Text.Printf
+import Transport
 
 newtype TwitchResponse a = TwitchResponse
   { trData :: [a]

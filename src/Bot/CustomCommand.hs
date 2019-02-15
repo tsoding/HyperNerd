@@ -22,9 +22,9 @@ import qualified Data.Text as T
 import Data.Time
 import Effect
 import Entity
-import Events
 import Property
 import Text.InterpolatedString.QM
+import Transport
 
 data CustomCommand = CustomCommand
   { customCommandName :: T.Text

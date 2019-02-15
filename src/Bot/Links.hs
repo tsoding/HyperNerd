@@ -21,7 +21,6 @@ import Data.Maybe
 import qualified Data.Text as T
 import Effect
 import Entity
-import Events
 import HyperNerd.Comonad
 import HyperNerd.Functor
 import Property
@@ -29,6 +28,7 @@ import Reaction
 import Text.InterpolatedString.QM
 import Text.Regex.TDFA (defaultCompOpt, defaultExecOpt)
 import Text.Regex.TDFA.String
+import Transport
 
 -- TODO(#264): trusted users system doesn't handle name changes
 newtype TrustedUser = TrustedUser
@@ -74,8 +74,8 @@ textContainsLink t =
       Just x -> Right x
       Nothing -> Left "No match found"
 
-forbidLinksForPlebs :: Event -> Effect Bool
-forbidLinksForPlebs (Msg sender text)
+forbidLinksForPlebs :: InEvent -> Effect Bool
+forbidLinksForPlebs (InMsg sender text)
   | textContainsLink text = do
     trustedUser <-
       runMaybeT (findTrustedSender sender <|> autoTrustSender sender)
