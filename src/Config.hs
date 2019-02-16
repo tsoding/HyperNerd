@@ -6,6 +6,7 @@ module Config where
 import Data.Ini
 import qualified Data.Text as T
 import Text.InterpolatedString.QM
+import Discord
 
 data Config
   = TwitchConfig TwitchParams
@@ -23,8 +24,9 @@ data TwitchParams = TwitchParams
 data DiscordParams = DiscordParams
   { dpAuthToken :: T.Text
   , dpGuild :: T.Text
-  , dpChannel :: T.Text
+  , dpChannel :: ChannelId
   , dpTwitchClientId :: T.Text
+  , dpOwner :: T.Text
   } deriving (Show)
 
 twitchParamsFromIni :: Ini -> Either String TwitchParams
@@ -39,8 +41,9 @@ discordParamsFromIni :: Ini -> Either String DiscordParams
 discordParamsFromIni ini =
   DiscordParams <$> lookupValue "Bot" "authToken" ini <*>
   lookupValue "Bot" "guild" ini <*>
-  lookupValue "Bot" "channel" ini <*>
-  lookupValue "Bot" "clientId" ini
+  (Snowflake . read . T.unpack <$> lookupValue "Bot" "channel" ini) <*>
+  lookupValue "Bot" "clientId" ini <*>
+  lookupValue "Bot" "owner" ini
 
 configFromFile :: FilePath -> IO Config
 configFromFile filePath = do

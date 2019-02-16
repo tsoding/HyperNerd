@@ -89,7 +89,7 @@ cabal.project.local
 
 # End of https://www.gitignore.io/api/emacs,haskell
 
-secret.ini
+*.ini
 *.db
 *.txt
 *.csv
