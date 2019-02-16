@@ -57,7 +57,7 @@ receiveLoop owner channel incoming dis = do
               , senderChannel = T.pack $ show $ channel
               -- TODO(#455): Subscribers are not detected by Discord transport
               , senderSubscriber = False
-              -- TODO: Mods are not detected by Discord transport
+              -- TODO(#456): Mods are not detected by Discord transport
               , senderMod = False
               , senderBroadcaster = False
               , senderOwner = name == owner
