@@ -66,7 +66,7 @@ receiveLoop owner channel incoming dis = do
     _ -> return ()
   receiveLoop owner channel incoming dis
 
--- TODO: Joined event is not send for Discord Transport
+-- TODO(#457): Joined event is not send for Discord Transport
 discordTransportEntry ::
      IncomingQueue -> OutcomingQueue -> DiscordParams -> IO ()
 discordTransportEntry incoming outcoming conf = do
