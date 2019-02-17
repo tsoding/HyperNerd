@@ -39,6 +39,5 @@ mainWithArgs (authTokenFile:markovCsvFile:_) = do
   finally (loopingPing dis markov) (stopDiscord dis)
 mainWithArgs _ = error "Usage: Discord <auth-token-file> <markov.csv>"
 
--- TODO(#448): How can we integrate Discord Bot proof-of-concept with HyperNerd?
 main :: IO ()
 main = getArgs >>= mainWithArgs

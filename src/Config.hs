@@ -1,10 +1,18 @@
 {-# LANGUAGE QuasiQuotes #-}
 {-# LANGUAGE OverloadedStrings #-}
 
-module Config where
+module Config
+  ( Config(..)
+  , TwitchParams(..)
+  , DiscordParams(..)
+  , configFromFile
+  ) where
 
+import Data.Either.Extra
 import Data.Ini
 import qualified Data.Text as T
+import Discord
+import Safe
 import Text.InterpolatedString.QM
 
 data Config
@@ -23,8 +31,9 @@ data TwitchParams = TwitchParams
 data DiscordParams = DiscordParams
   { dpAuthToken :: T.Text
   , dpGuild :: T.Text
-  , dpChannel :: T.Text
+  , dpChannel :: ChannelId
   , dpTwitchClientId :: T.Text
+  , dpOwner :: T.Text
   } deriving (Show)
 
 twitchParamsFromIni :: Ini -> Either String TwitchParams
@@ -39,8 +48,12 @@ discordParamsFromIni :: Ini -> Either String DiscordParams
 discordParamsFromIni ini =
   DiscordParams <$> lookupValue "Bot" "authToken" ini <*>
   lookupValue "Bot" "guild" ini <*>
-  lookupValue "Bot" "channel" ini <*>
-  lookupValue "Bot" "clientId" ini
+  fmap
+    Snowflake
+    ((maybeToEither "channel is not a number" . readMay . T.unpack) =<<
+     lookupValue "Bot" "channel" ini) <*>
+  lookupValue "Bot" "clientId" ini <*>
+  lookupValue "Bot" "owner" ini
 
 configFromFile :: FilePath -> IO Config
 configFromFile filePath = do
