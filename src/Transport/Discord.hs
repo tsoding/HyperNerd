@@ -24,7 +24,7 @@ import Discord
   , userName
   )
 import Transport
-import Control.Monad (when)
+import Control.Monad (unless)
 import qualified Data.Text as T
 
 sendLoop :: ChannelId -> OutcomingQueue -> (RestChan, Gateway, z) -> IO ()
@@ -46,7 +46,7 @@ receiveLoop owner channel incoming dis = do
   case e of
     Left er -> putStrLn ("Event error: " <> show er)
     Right (MessageCreate m) ->
-      when (not (fromBot m)) $ do
+      unless (fromBot m) $ do
         let name = T.pack $ userName $ messageAuthor m
         atomically $
           writeTQueue incoming $
@@ -54,7 +54,7 @@ receiveLoop owner channel incoming dis = do
             Sender
               { senderName = name
               , senderDisplayName = name
-              , senderChannel = T.pack $ show $ channel
+              , senderChannel = T.pack $ show channel
               -- TODO(#455): Subscribers are not detected by Discord transport
               , senderSubscriber = False
               -- TODO(#456): Mods are not detected by Discord transport

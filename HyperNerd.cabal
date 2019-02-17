@@ -93,6 +93,7 @@ executable HyperNerd
                      , Bot.BotUserInfo
                      , Bot.Raffle
                      , Config
+                     , Data.Either.Extra
 
   -- LANGUAGE extensions used by modules in this package.
   other-extensions:    OverloadedStrings
