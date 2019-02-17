@@ -8,12 +8,12 @@ module Config
   , configFromFile
   ) where
 
+import Data.Either.Extra
 import Data.Ini
 import qualified Data.Text as T
-import Text.InterpolatedString.QM
 import Discord
 import Safe
-import Data.Either.Extra
+import Text.InterpolatedString.QM
 
 data Config
   = TwitchConfig TwitchParams

@@ -6,6 +6,8 @@ import Config
 import Control.Concurrent.Async
 import Control.Concurrent.STM
 import Control.Exception (bracket, throwIO)
+import Control.Monad (unless)
+import qualified Data.Text as T
 import qualified Discord as D
 import Discord
   ( Auth(..)
@@ -24,8 +26,6 @@ import Discord
   , userName
   )
 import Transport
-import Control.Monad (unless)
-import qualified Data.Text as T
 
 sendLoop :: ChannelId -> OutcomingQueue -> (RestChan, Gateway, z) -> IO ()
 sendLoop channel outcoming dis = do
