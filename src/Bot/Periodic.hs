@@ -30,6 +30,7 @@ god =
     , senderMod = True
     , senderBroadcaster = True
     , senderOwner = True
+    , senderId = ""
     }
 
 newtype PeriodicCommand = PeriodicCommand
