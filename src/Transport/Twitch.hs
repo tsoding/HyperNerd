@@ -98,7 +98,7 @@ receiveLoop owner incoming ircConn = do
             , senderMod = any (T.isPrefixOf "moderator") badges
             , senderBroadcaster = any (T.isPrefixOf "broadcaster") badges
             , senderOwner = name == owner
-            -- TODO: Twitch does not provide the id of the user
+            -- TODO(#468): Twitch does not provide the id of the user
             , senderId = ""
             }
           msgText
