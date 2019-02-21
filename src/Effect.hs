@@ -26,6 +26,7 @@ module Effect
   , periodicEffect
   , twitchCommand
   , randomMarkov
+  , getTransport
   ) where
 
 import Control.Monad.Catch
@@ -36,6 +37,7 @@ import Data.Time
 import Entity
 import Network.HTTP.Simple
 import Property
+import Transport
 
 data Condition =
   PropertyEquals T.Text
@@ -100,6 +102,7 @@ data EffectF s
                   [T.Text]
                   s
   | RandomMarkov (Maybe T.Text -> s)
+  | GetTransport (TransportType -> s)
   deriving (Functor)
 
 type Effect = Free EffectF
@@ -170,3 +173,6 @@ twitchCommand name args = liftF $ TwitchCommand name args ()
 
 randomMarkov :: Effect (Maybe T.Text)
 randomMarkov = liftF $ RandomMarkov id
+
+getTransport :: Effect TransportType
+getTransport = liftF $ GetTransport id

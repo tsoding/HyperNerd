@@ -23,6 +23,7 @@ import Discord
   , nextEvent
   , restCall
   , stopDiscord
+  , userId
   , userIsBot
   , userName
   )
@@ -57,6 +58,7 @@ receiveLoop owner channel incoming dis = do
             Sender
               { senderName = name
               , senderDisplayName = name
+              , senderId = T.pack $ show $ userId $ messageAuthor m
               , senderChannel = T.pack $ show channel
               -- TODO(#455): Subscribers are not detected by Discord transport
               , senderSubscriber = False
