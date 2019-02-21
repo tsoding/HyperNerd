@@ -69,7 +69,7 @@ receiveLoop owner channel incoming dis = do
     _ -> return ()
   receiveLoop owner channel incoming dis
 
--- TODO: Discord transport does not handle authorization failure
+-- TODO(#465): Discord transport does not handle authorization failure
 discordTransportEntry ::
      IncomingQueue -> OutcomingQueue -> DiscordParams -> IO ()
 discordTransportEntry incoming outcoming conf = do
