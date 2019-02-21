@@ -72,6 +72,7 @@ type = discord
 authToken = <auth-token>
 guild = <guild-id>
 channel = <channel-id>
+clientId = <client-id-token>
 ```
 
 | name        | description                                                                                                               |
@@ -79,6 +80,7 @@ channel = <channel-id>
 | `authToken` | Authentication Token for the bot: https://github.com/reactiflux/discord-irc/wiki/Creating-a-discord-bot-&-getting-a-token |
 | `guild`     | The id of the guild the bot listens to                                                                                    |
 | `channel`   | The id of the channel the bot listens to                                                                                  |
+| `clientId`  | Client ID for Twitch API calls.                                                                                           |
 
 ## Markov Chain Responses
 
