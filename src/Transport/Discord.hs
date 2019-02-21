@@ -6,7 +6,7 @@ import Config
 import Control.Concurrent.Async
 import Control.Concurrent.STM
 import Control.Exception (bracket, throwIO)
-import Control.Monad (unless)
+import Control.Monad (void, when)
 import qualified Data.Text as T
 import qualified Discord as D
 import Discord
@@ -18,6 +18,7 @@ import Discord
   , RestChan
   , loginRestGateway
   , messageAuthor
+  , messageChannel
   , messageText
   , nextEvent
   , restCall
@@ -31,13 +32,14 @@ sendLoop :: ChannelId -> OutcomingQueue -> (RestChan, Gateway, z) -> IO ()
 sendLoop channel outcoming dis = do
   outMsg <- atomically $ readTQueue outcoming
   case outMsg of
-    OutMsg text -> do
-      resp <- restCall dis (CreateMessage channel text)
-      print resp
+    OutMsg text -> void $ restCall dis (CreateMessage channel text)
   sendLoop channel outcoming dis
 
 fromBot :: D.Message -> Bool
 fromBot = userIsBot . messageAuthor
+
+fromChannel :: ChannelId -> D.Message -> Bool
+fromChannel channel message = messageChannel message == channel
 
 receiveLoop ::
      T.Text -> ChannelId -> IncomingQueue -> (RestChan, Gateway, z) -> IO ()
@@ -46,7 +48,7 @@ receiveLoop owner channel incoming dis = do
   case e of
     Left er -> putStrLn ("Event error: " <> show er)
     Right (MessageCreate m) ->
-      unless (fromBot m) $ do
+      when (not (fromBot m) && fromChannel channel m) $ do
         let name = T.pack $ userName $ messageAuthor m
         atomically $
           writeTQueue incoming $
