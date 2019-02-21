@@ -75,7 +75,7 @@ discordTransportEntry ::
 discordTransportEntry incoming outcoming conf = do
   bracket (loginRestGateway $ Auth $ dpAuthToken conf) stopDiscord $ \dis -> do
     resp <- restCall dis GetCurrentUser
-    -- TODO: restCall errors are not handled properly
+    -- TODO(#466): restCall errors are not handled properly
     case resp of
       Left _ -> error "Getting current user call failed"
       Right user ->
