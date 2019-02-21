@@ -12,6 +12,11 @@ type IncomingQueue = TQueue InEvent
 
 type OutcomingQueue = TQueue OutEvent
 
+data TransportType
+  = DiscordTransport
+  | TwitchTransport
+  deriving (Show)
+
 data Sender = Sender
   { senderName :: T.Text
   , senderDisplayName :: T.Text

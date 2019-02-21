@@ -226,6 +226,10 @@ builtinCommands =
         , authorizeSender senderAuthority $
           replyOnNothing "Only for mods" $ cmapR (const 5) raffleCommand))
     , ("join", ("Join the raffle", joinCommand))
+    , ("transport", ("Check the current transport",
+                     liftR (const $ getTransport) $
+                     cmapR (T.pack . show) $
+                     Reaction replyMessage))
     ]
 
 mockMessage :: T.Text -> T.Text

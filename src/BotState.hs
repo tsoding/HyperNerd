@@ -145,6 +145,10 @@ applyEffect (botState, Free (RandomMarkov s)) = do
   let markov = MaybeT $ return $ bsMarkov botState
   sentence <- runMaybeT (eventsAsText <$> (markov >>= lift . simulate))
   return (botState, s sentence)
+applyEffect (botState, Free (GetTransport s)) =
+  case bsConfig botState of
+    TwitchConfig _ -> return (botState, s TwitchTransport)
+    DiscordConfig _ -> return (botState, s DiscordTransport)
 
 runEffectIO :: ((a, Effect ()) -> IO (a, Effect ())) -> (a, Effect ()) -> IO a
 runEffectIO _ (x, Pure _) = return x
