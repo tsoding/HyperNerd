@@ -23,9 +23,9 @@ import Discord
   , nextEvent
   , restCall
   , stopDiscord
+  , userId
   , userIsBot
   , userName
-  , userId
   )
 import Discord.Rest.User (UserRequest(GetCurrentUser))
 import Transport
