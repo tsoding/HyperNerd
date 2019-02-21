@@ -26,6 +26,7 @@ import Discord
   , userIsBot
   , userName
   )
+import Discord.Rest.User (UserRequest(GetCurrentUser))
 import Transport
 
 sendLoop :: ChannelId -> OutcomingQueue -> (RestChan, Gateway, z) -> IO ()
@@ -68,11 +69,17 @@ receiveLoop owner channel incoming dis = do
     _ -> return ()
   receiveLoop owner channel incoming dis
 
--- TODO(#457): Joined event is not send for Discord Transport
+-- TODO: Discord transport does not handle authorization failure
 discordTransportEntry ::
      IncomingQueue -> OutcomingQueue -> DiscordParams -> IO ()
 discordTransportEntry incoming outcoming conf = do
-  bracket (loginRestGateway $ Auth $ dpAuthToken conf) stopDiscord $ \dis ->
+  bracket (loginRestGateway $ Auth $ dpAuthToken conf) stopDiscord $ \dis -> do
+    resp <- restCall dis GetCurrentUser
+    -- TODO: restCall errors are not handled properly
+    case resp of
+      Left _ -> error "Getting current user call failed"
+      Right user ->
+        atomically $ writeTQueue incoming $ Joined $ T.pack $ userName user
     withAsync (sendLoop (dpChannel conf) outcoming dis) $ \sender ->
       withAsync (receiveLoop (dpOwner conf) (dpChannel conf) incoming dis) $ \receive -> do
         res <- waitEitherCatch sender receive
