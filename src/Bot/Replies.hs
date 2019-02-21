@@ -9,11 +9,12 @@ import Reaction
 import Text.InterpolatedString.QM
 import Transport
 
-replyToUser :: T.Text -> T.Text -> Effect ()
-replyToUser user text = say [qms|@{user} {text}|]
-
 replyToSender :: Sender -> T.Text -> Effect ()
-replyToSender sender = replyToUser (senderName sender)
+replyToSender sender text = do
+  transport <- getTransport
+  case transport of
+    TwitchTransport -> say [qms|@{senderName sender} {text}|]
+    DiscordTransport -> say [qms|<@{senderId sender}> {text}|]
 
 replyMessage :: Message T.Text -> Effect ()
 replyMessage Message {messageSender = sender, messageContent = text} =
