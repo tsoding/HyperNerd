@@ -105,7 +105,7 @@ updateFfzEmotesCommand :: Reaction Message ()
 updateFfzEmotesCommand =
   transR duplicate $
   cmapR (twitchChannelName . senderChannel . messageSender) $
-  replyOnNothing "Only works in a Twitch channel" $
+  replyOnNothing "Only works in Twitch channels" $
   cmapR ffzUrl $
   jsonHttpRequest $
   cmapR ffzResEmotes $
@@ -120,7 +120,7 @@ updateBttvEmotesCommand :: Reaction Message ()
 updateBttvEmotesCommand =
   transR duplicate $
   cmapR (twitchChannelName . senderChannel . messageSender) $
-  replyOnNothing "Only works in a Twitch channel" $
+  replyOnNothing "Only works in Twitch channels" $
   cmapR bttvUrl $
   jsonHttpRequest $
   cmapR bttvResEmotes $

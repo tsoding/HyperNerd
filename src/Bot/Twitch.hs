@@ -81,7 +81,7 @@ uptimeCommand :: Reaction Message ()
 uptimeCommand =
   transR duplicate $
   cmapR (twitchChannelName . senderChannel . messageSender) $
-  replyOnNothing "Does not work on non-Twitch channels" $
+  replyOnNothing "Only works in Twitch channels" $
   liftR twitchStreamByLogin $
   replyOnNothing "Not even streaming LUL" $
   liftR streamUptime $
