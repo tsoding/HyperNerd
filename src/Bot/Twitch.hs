@@ -76,7 +76,7 @@ streamUptime twitchStream = do
   let streamStartTime = tsStartedAt twitchStream
   return $ diffUTCTime currentTime streamStartTime
 
--- TODO: The target of uptime command should be customizable
+-- TODO(#475): The target of uptime command should be customizable
 uptimeCommand :: Reaction Message ()
 uptimeCommand =
   transR duplicate $
