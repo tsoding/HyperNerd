@@ -6,6 +6,7 @@ module Config
   , TwitchParams(..)
   , DiscordParams(..)
   , configFromFile
+  , configsFromFile
   ) where
 
 import Data.Either.Extra
@@ -14,6 +15,7 @@ import qualified Data.Text as T
 import Discord
 import Safe
 import Text.InterpolatedString.QM
+import qualified Data.HashMap.Strict as HM
 
 data Config
   = TwitchConfig TwitchParams
@@ -55,12 +57,22 @@ discordParamsFromIni ini =
   lookupValue "Bot" "clientId" ini <*>
   lookupValue "Bot" "owner" ini
 
+configFromIniSection :: T.Text -> Ini -> Either String Config
+configFromIniSection sectionName ini = do
+  configType <- lookupValue sectionName "type" ini
+  case configType of
+    "twitch" -> TwitchConfig <$> (twitchParamsFromIni ini)
+    "discord" -> DiscordConfig <$> (discordParamsFromIni ini)
+    _ -> Left [qms|"Unrecognized config type: {configType}"|]
+
 configFromFile :: FilePath -> IO Config
 configFromFile filePath = do
   ini <- readIniFile filePath
+  either (ioError . userError) return (ini >>= configFromIniSection "Bot")
+
+configsFromFile :: FilePath -> IO [Config]
+configsFromFile filePath = do
+  ini <- readIniFile filePath
   either (ioError . userError) return $ do
-    configType <- ini >>= lookupValue "Bot" "type"
-    case configType of
-      "twitch" -> TwitchConfig <$> (ini >>= twitchParamsFromIni)
-      "discord" -> DiscordConfig <$> (ini >>= discordParamsFromIni)
-      _ -> Left [qms|"Unrecognized config type: {configType}"|]
+    bots <- HM.keys . unIni <$> ini
+    ini >>= \ini' -> mapM (flip configFromIniSection ini') bots
