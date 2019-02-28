@@ -10,6 +10,8 @@ module Bot.BttvFfz
   , updateBttvEmotesCommand
   ) where
 
+import Bot.Replies
+import Control.Comonad
 import Control.Monad
 import Data.Aeson
 import Data.Aeson.Types
@@ -68,17 +70,15 @@ instance FromJSON FfzRes where
       v .: "sets" >>= (.: (T.pack $ show setId)) >>= (.: "emoticons")
   parseJSON invalid = typeMismatch "FfzRes" invalid
 
-ffzUrl :: Message a -> Message String
-ffzUrl message = fmap (const url) message
+ffzUrl :: T.Text -> String
+ffzUrl channel = [qms|https://api.frankerfacez.com/v1/room/{encodedChannel}|]
   where
-    url = [qms|https://api.frankerfacez.com/v1/room/{encodedChannel}|]
-    encodedChannel = URI.encode $ T.unpack $ channelOfMessage message
+    encodedChannel = URI.encode $ T.unpack channel
 
-bttvUrl :: Message a -> Message String
-bttvUrl message = fmap (const url) message
+bttvUrl :: T.Text -> String
+bttvUrl channel = [qms|https://api.betterttv.net/2/channels/{encodedChannel}|]
   where
-    url = [qms|https://api.betterttv.net/2/channels/{encodedChannel}|]
-    encodedChannel = URI.encode $ T.unpack $ channelOfMessage message
+    encodedChannel = URI.encode $ T.unpack channel
 
 ffzCommand :: Reaction Message ()
 ffzCommand =
@@ -103,7 +103,10 @@ jsonHttpRequest =
 
 updateFfzEmotesCommand :: Reaction Message ()
 updateFfzEmotesCommand =
-  transR ffzUrl $
+  transR duplicate $
+  cmapR (twitchChannelName . senderChannel . messageSender) $
+  replyOnNothing "Only works in Twitch channels" $
+  cmapR ffzUrl $
   jsonHttpRequest $
   cmapR ffzResEmotes $
   liftR
@@ -115,7 +118,10 @@ updateFfzEmotesCommand =
 
 updateBttvEmotesCommand :: Reaction Message ()
 updateBttvEmotesCommand =
-  transR bttvUrl $
+  transR duplicate $
+  cmapR (twitchChannelName . senderChannel . messageSender) $
+  replyOnNothing "Only works in Twitch channels" $
+  cmapR bttvUrl $
   jsonHttpRequest $
   cmapR bttvResEmotes $
   liftR

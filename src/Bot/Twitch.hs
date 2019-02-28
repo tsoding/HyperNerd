@@ -76,10 +76,12 @@ streamUptime twitchStream = do
   let streamStartTime = tsStartedAt twitchStream
   return $ diffUTCTime currentTime streamStartTime
 
+-- TODO(#475): The target of uptime command should be customizable
 uptimeCommand :: Reaction Message ()
 uptimeCommand =
   transR duplicate $
-  cmapR channelOfMessage $
+  cmapR (twitchChannelName . senderChannel . messageSender) $
+  replyOnNothing "Only works in Twitch channels" $
   liftR twitchStreamByLogin $
   replyOnNothing "Not even streaming LUL" $
   liftR streamUptime $

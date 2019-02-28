@@ -6,6 +6,7 @@ import Control.Comonad
 import Control.Concurrent.STM
 import Data.Maybe
 import qualified Data.Text as T
+import Discord (ChannelId)
 import Safe
 
 type IncomingQueue = TQueue InEvent
@@ -17,11 +18,15 @@ data TransportType
   | TwitchTransport
   deriving (Show)
 
+data Channel
+  = DiscordChannel ChannelId
+  | TwitchChannel T.Text
+
 data Sender = Sender
   { senderName :: T.Text
   , senderDisplayName :: T.Text
   , senderId :: T.Text
-  , senderChannel :: T.Text
+  , senderChannel :: Channel
   , senderSubscriber :: Bool
   , senderMod :: Bool
   , senderBroadcaster :: Bool
@@ -49,6 +54,7 @@ instance Comonad Message where
   extract = messageContent
   duplicate m = m <$ m
 
-channelOfMessage :: Message a -> T.Text
-channelOfMessage Message {messageSender = sender} =
-  T.pack $ fromMaybe "tsoding" $ tailMay $ T.unpack $ senderChannel sender
+twitchChannelName :: Channel -> Maybe T.Text
+twitchChannelName (TwitchChannel channel) =
+  Just $ T.pack $ fromMaybe "tsoding" $ tailMay $ T.unpack channel
+twitchChannelName (DiscordChannel _) = Nothing

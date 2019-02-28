@@ -93,7 +93,7 @@ receiveLoop owner incoming ircConn = do
           Sender
             { senderName = name
             , senderDisplayName = displayName
-            , senderChannel = idText target
+            , senderChannel = TwitchChannel $ idText target
             , senderSubscriber = any (T.isPrefixOf "subscriber") badges
             , senderMod = any (T.isPrefixOf "moderator") badges
             , senderBroadcaster = any (T.isPrefixOf "broadcaster") badges
