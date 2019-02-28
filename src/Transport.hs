@@ -6,8 +6,8 @@ import Control.Comonad
 import Control.Concurrent.STM
 import Data.Maybe
 import qualified Data.Text as T
-import Safe
 import Discord (ChannelId)
+import Safe
 
 type IncomingQueue = TQueue InEvent
 
@@ -18,8 +18,9 @@ data TransportType
   | TwitchTransport
   deriving (Show)
 
-data Channel = DiscordChannel ChannelId
-             | TwitchChannel T.Text
+data Channel
+  = DiscordChannel ChannelId
+  | TwitchChannel T.Text
 
 data Sender = Sender
   { senderName :: T.Text

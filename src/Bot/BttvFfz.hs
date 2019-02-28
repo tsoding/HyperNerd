@@ -10,6 +10,8 @@ module Bot.BttvFfz
   , updateBttvEmotesCommand
   ) where
 
+import Bot.Replies
+import Control.Comonad
 import Control.Monad
 import Data.Aeson
 import Data.Aeson.Types
@@ -24,8 +26,6 @@ import Property
 import Reaction
 import Text.InterpolatedString.QM
 import Transport
-import Control.Comonad
-import Bot.Replies
 
 newtype FfzEmote = FfzEmote
   { ffzName :: T.Text
@@ -71,7 +71,8 @@ instance FromJSON FfzRes where
   parseJSON invalid = typeMismatch "FfzRes" invalid
 
 ffzUrl :: T.Text -> String
-ffzUrl channel = [qms|https://api.frankerfacez.com/v1/room/{encodedChannel}|]   where
+ffzUrl channel = [qms|https://api.frankerfacez.com/v1/room/{encodedChannel}|]
+  where
     encodedChannel = URI.encode $ T.unpack channel
 
 bttvUrl :: T.Text -> String

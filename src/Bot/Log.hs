@@ -60,10 +60,10 @@ recordUserMsg sender msg = do
       "LogRecord"
       LogRecord
         { lrUser = senderName sender
-        , lrChannel = case senderChannel sender of
-                        TwitchChannel name -> name
-                        DiscordChannel channelId ->
-                            T.pack $ show channelId
+        , lrChannel =
+            case senderChannel sender of
+              TwitchChannel name -> name
+              DiscordChannel channelId -> T.pack $ show channelId
         , lrMsg = msg
         , lrTimestamp = timestamp
         }
