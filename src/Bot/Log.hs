@@ -20,6 +20,7 @@ import Transport
 
 data LogRecord = LogRecord
   { lrUser :: T.Text
+  -- TODO: LogRecord does not distinguish Twitch and Discord channels
   , lrChannel :: T.Text
   , lrMsg :: T.Text
   , lrTimestamp :: UTCTime
@@ -59,7 +60,10 @@ recordUserMsg sender msg = do
       "LogRecord"
       LogRecord
         { lrUser = senderName sender
-        , lrChannel = senderChannel sender
+        , lrChannel = case senderChannel sender of
+                        TwitchChannel name -> name
+                        DiscordChannel channelId ->
+                            T.pack $ show channelId
         , lrMsg = msg
         , lrTimestamp = timestamp
         }
