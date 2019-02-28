@@ -20,7 +20,7 @@ import Transport
 
 data LogRecord = LogRecord
   { lrUser :: T.Text
-  -- TODO: LogRecord does not distinguish Twitch and Discord channels
+  -- TODO(#474): LogRecord does not distinguish Twitch and Discord channels
   , lrChannel :: T.Text
   , lrMsg :: T.Text
   , lrTimestamp :: UTCTime
