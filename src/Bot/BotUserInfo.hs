@@ -10,7 +10,7 @@ import Effect
 import Entity
 import Property
 
--- TODO: BotUserInfo does not work in multi-channel setting
+-- TODO(#473): BotUserInfo does not work in multi-channel setting
 newtype BotUserInfo = BotUserInfo
   { buiNickname :: T.Text
   }
