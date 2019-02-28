@@ -35,7 +35,8 @@ trainMain (databasePath:output:_) =
       fold .
       map text2Markov .
       commandsFilter .
-      mentionsFilter . asteriskCorrectionFilter . map SQLite.fromOnly <$>
+      mentionsFilter .
+      asteriskCorrectionFilter . filter (not . T.null) . map SQLite.fromOnly <$>
       SQLite.query_
         sqliteConn
         [qms|select ep1.propertyText
