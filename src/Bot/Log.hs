@@ -64,7 +64,6 @@ recordUserMsg sender msg = do
             case senderChannel sender of
               TwitchChannel name -> name
               DiscordChannel channelId -> T.pack $ show channelId
-              DebugChannel -> "<debug>"
         , lrMsg = msg
         , lrTimestamp = timestamp
         }

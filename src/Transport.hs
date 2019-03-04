@@ -16,13 +16,11 @@ type OutcomingQueue = TQueue OutEvent
 data TransportType
   = DiscordTransport
   | TwitchTransport
-  | DebugTransport
   deriving (Show)
 
 data Channel
   = DiscordChannel ChannelId
   | TwitchChannel T.Text
-  | DebugChannel
 
 data Sender = Sender
   { senderName :: T.Text
