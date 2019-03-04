@@ -86,7 +86,7 @@ clientId = <client-id-token>
 
 TBD
 
-<!-- TODO: Debug mode is not documented -->
+<!-- TODO(#478): Debug mode is not documented -->
 
 ## Markov Chain Responses
 
