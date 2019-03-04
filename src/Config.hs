@@ -64,12 +64,18 @@ discordParamsFromIni ini =
   lookupValue "Bot" "clientId" ini <*>
   lookupValue "Bot" "owner" ini
 
+debugParamsFromIni :: Ini -> Either String DebugParams
+debugParamsFromIni ini =
+  DebugParams <$> lookupValue "Bot" "owner" ini <*>
+  lookupValue "Bot" "clientId" ini
+
 configFromIniSection :: T.Text -> Ini -> Either String Config
 configFromIniSection sectionName ini = do
   configType <- lookupValue sectionName "type" ini
   case configType of
     "twitch" -> TwitchConfig <$> twitchParamsFromIni ini
     "discord" -> DiscordConfig <$> discordParamsFromIni ini
+    "debug" -> DebugConfig <$> debugParamsFromIni ini
     _ -> Left [qms|"Unrecognized config type: {configType}"|]
 
 configFromFile :: FilePath -> IO Config
