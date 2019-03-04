@@ -82,6 +82,12 @@ clientId = <client-id-token>
 | `channel`   | The id of the channel the bot listens to                                                                                  |
 | `clientId`  | Client ID for Twitch API calls.                                                                                           |
 
+#### Debug Bot
+
+TBD
+
+<!-- TODO: Debug mode is not documented -->
+
 ## Markov Chain Responses
 
 To trigger a Markov chain response, just mention the bot in the chat.
