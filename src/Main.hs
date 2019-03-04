@@ -12,9 +12,9 @@ import Control.Monad
 import System.Clock
 import System.Environment
 import Text.InterpolatedString.QM
+import Transport.Debug
 import Transport.Discord
 import Transport.Twitch
-import Transport.Debug
 
 eventLoop :: Bot -> TimeSpec -> BotState -> IO ()
 eventLoop b prevCPUTime botState = do
@@ -57,7 +57,7 @@ entry configPath databasePath markovPath =
           (bsOutcoming botState)
           discordConfig
       DebugConfig debugConfig ->
-       debugTransportEntry
+        debugTransportEntry
           (bsIncoming botState)
           (bsOutcoming botState)
           debugConfig

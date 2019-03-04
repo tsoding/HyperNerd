@@ -1,12 +1,15 @@
 {-# LANGUAGE OverloadedStrings #-}
-module Transport.Debug (debugTransportEntry) where
 
-import Transport
+module Transport.Debug
+  ( debugTransportEntry
+  ) where
+
 import Config
 import Control.Concurrent.STM
+import Control.Monad
 import qualified Data.Text as T
 import System.IO
-import Control.Monad
+import Transport
 
 flushOutcomingMessages :: OutcomingQueue -> IO ()
 flushOutcomingMessages outcoming = do
