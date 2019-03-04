@@ -33,7 +33,7 @@ debugRepl incoming outcoming config = do
       Sender
         { senderName = dbgOwner config
         , senderDisplayName = dbgOwner config
-        -- TODO: Sender id, channel and roles are not configurable in Debug Mode
+        -- TODO(#480): Sender id, channel and roles are not configurable in Debug Mode
         --   We can make them configurable via the config file
         --   and/or via CLI commands.
         , senderChannel = TwitchChannel "#tsoding"
