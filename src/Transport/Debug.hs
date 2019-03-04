@@ -1,9 +1,12 @@
+{-# LANGUAGE OverloadedStrings #-}
 module Transport.Debug (debugTransportEntry) where
 
 import Transport
 import Config
 import Control.Concurrent.STM
 import qualified Data.Text as T
+import System.IO
+import Control.Monad
 
 flushOutcomingMessages :: OutcomingQueue -> IO ()
 flushOutcomingMessages outcoming = do
@@ -18,8 +21,10 @@ debugRepl :: IncomingQueue -> OutcomingQueue -> DebugParams -> IO ()
 debugRepl incoming outcoming config = do
   flushOutcomingMessages outcoming
   putStr "> "
+  hFlush stdout
   message <- getLine
-  atomically $
+  when (not $ null message) $
+    atomically $
     writeTQueue incoming $
     InMsg
       Sender
@@ -36,6 +41,7 @@ debugRepl incoming outcoming config = do
         , senderOwner = True
         }
       (T.pack message)
+  debugRepl incoming outcoming config
 
 debugTransportEntry :: IncomingQueue -> OutcomingQueue -> DebugParams -> IO ()
 debugTransportEntry incoming outcoming config = do
