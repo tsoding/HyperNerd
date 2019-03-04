@@ -16,11 +16,13 @@ type OutcomingQueue = TQueue OutEvent
 data TransportType
   = DiscordTransport
   | TwitchTransport
+  | DebugTransport
   deriving (Show)
 
 data Channel
   = DiscordChannel ChannelId
   | TwitchChannel T.Text
+  | DebugChannel
 
 data Sender = Sender
   { senderName :: T.Text
@@ -57,4 +59,4 @@ instance Comonad Message where
 twitchChannelName :: Channel -> Maybe T.Text
 twitchChannelName (TwitchChannel channel) =
   Just $ T.pack $ fromMaybe "tsoding" $ tailMay $ T.unpack channel
-twitchChannelName (DiscordChannel _) = Nothing
+twitchChannelName _ = Nothing
