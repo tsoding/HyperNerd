@@ -129,6 +129,7 @@ applyEffect (botState, Free (TwitchApiRequest request s)) = do
         case bsConfig botState of
           (TwitchConfig params) -> tpTwitchClientId params
           (DiscordConfig params) -> dpTwitchClientId params
+          (DebugConfig params) -> dbgTwitchClientId params
   response <- httpLBS (addRequestHeader "Client-ID" clientId request)
   return (botState, s response)
 applyEffect (botState, Free (Timeout ms e s)) =
@@ -149,6 +150,10 @@ applyEffect (botState, Free (GetTransport s)) =
   case bsConfig botState of
     TwitchConfig _ -> return (botState, s TwitchTransport)
     DiscordConfig _ -> return (botState, s DiscordTransport)
+    -- TODO(#479): Result of getTransport Effect is hardcoded in Debug Mode
+    --    I think it should be configurable via config file
+    --    or/and CLI commands of Debug Mode
+    DebugConfig _ -> return (botState, s TwitchTransport)
 
 runEffectIO :: ((a, Effect ()) -> IO (a, Effect ())) -> (a, Effect ()) -> IO a
 runEffectIO _ (x, Pure _) = return x

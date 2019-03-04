@@ -12,6 +12,7 @@ import Control.Monad
 import System.Clock
 import System.Environment
 import Text.InterpolatedString.QM
+import Transport.Debug
 import Transport.Discord
 import Transport.Twitch
 
@@ -55,6 +56,11 @@ entry configPath databasePath markovPath =
           (bsIncoming botState)
           (bsOutcoming botState)
           discordConfig
+      DebugConfig debugConfig ->
+        debugTransportEntry
+          (bsIncoming botState)
+          (bsOutcoming botState)
+          debugConfig
 
 mainWithArgs :: [String] -> IO ()
 mainWithArgs [configPath, databasePath] = entry configPath databasePath Nothing

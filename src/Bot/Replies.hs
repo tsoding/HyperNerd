@@ -13,8 +13,8 @@ replyToSender :: Sender -> T.Text -> Effect ()
 replyToSender sender text = do
   transport <- getTransport
   case transport of
-    TwitchTransport -> say [qms|@{senderName sender} {text}|]
     DiscordTransport -> say [qms|<@{senderId sender}> {text}|]
+    _ -> say [qms|@{senderName sender} {text}|]
 
 replyMessage :: Message T.Text -> Effect ()
 replyMessage Message {messageSender = sender, messageContent = text} =

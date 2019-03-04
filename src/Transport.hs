@@ -57,4 +57,4 @@ instance Comonad Message where
 twitchChannelName :: Channel -> Maybe T.Text
 twitchChannelName (TwitchChannel channel) =
   Just $ T.pack $ fromMaybe "tsoding" $ tailMay $ T.unpack channel
-twitchChannelName (DiscordChannel _) = Nothing
+twitchChannelName _ = Nothing

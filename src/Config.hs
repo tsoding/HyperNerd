@@ -5,6 +5,7 @@ module Config
   ( Config(..)
   , TwitchParams(..)
   , DiscordParams(..)
+  , DebugParams(..)
   , configFromFile
   , configsFromFile
   ) where
@@ -20,6 +21,7 @@ import Text.InterpolatedString.QM
 data Config
   = TwitchConfig TwitchParams
   | DiscordConfig DiscordParams
+  | DebugConfig DebugParams
   deriving (Show)
 
 data TwitchParams = TwitchParams
@@ -36,6 +38,12 @@ data DiscordParams = DiscordParams
   , dpChannel :: ChannelId
   , dpTwitchClientId :: T.Text
   , dpOwner :: T.Text
+  } deriving (Show)
+
+data DebugParams = DebugParams
+  { dbgOwner :: T.Text
+  , dbgTwitchClientId :: T.Text
+  , dbgNick :: T.Text
   } deriving (Show)
 
 twitchParamsFromIni :: Ini -> Either String TwitchParams
@@ -57,12 +65,19 @@ discordParamsFromIni ini =
   lookupValue "Bot" "clientId" ini <*>
   lookupValue "Bot" "owner" ini
 
+debugParamsFromIni :: Ini -> Either String DebugParams
+debugParamsFromIni ini =
+  DebugParams <$> lookupValue "Bot" "owner" ini <*>
+  lookupValue "Bot" "clientId" ini <*>
+  lookupValue "Bot" "nick" ini
+
 configFromIniSection :: T.Text -> Ini -> Either String Config
 configFromIniSection sectionName ini = do
   configType <- lookupValue sectionName "type" ini
   case configType of
     "twitch" -> TwitchConfig <$> twitchParamsFromIni ini
     "discord" -> DiscordConfig <$> discordParamsFromIni ini
+    "debug" -> DebugConfig <$> debugParamsFromIni ini
     _ -> Left [qms|"Unrecognized config type: {configType}"|]
 
 configFromFile :: FilePath -> IO Config
