@@ -23,7 +23,7 @@ debugRepl incoming outcoming config = do
   putStr "> "
   hFlush stdout
   message <- getLine
-  when (not $ null message) $
+  unless (null message) $
     atomically $
     writeTQueue incoming $
     InMsg
