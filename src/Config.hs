@@ -5,6 +5,7 @@ module Config
   ( Config(..)
   , TwitchParams(..)
   , DiscordParams(..)
+  , DebugParams(..)
   , configFromFile
   , configsFromFile
   ) where
@@ -20,6 +21,7 @@ import Text.InterpolatedString.QM
 data Config
   = TwitchConfig TwitchParams
   | DiscordConfig DiscordParams
+  | DebugConfig DebugParams
   deriving (Show)
 
 data TwitchParams = TwitchParams
@@ -36,6 +38,11 @@ data DiscordParams = DiscordParams
   , dpChannel :: ChannelId
   , dpTwitchClientId :: T.Text
   , dpOwner :: T.Text
+  } deriving (Show)
+
+data DebugParams = DebugParams
+  { dbgOwner :: T.Text
+  , dbgTwitchClientId :: T.Text
   } deriving (Show)
 
 twitchParamsFromIni :: Ini -> Either String TwitchParams
