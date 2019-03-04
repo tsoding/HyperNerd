@@ -43,6 +43,7 @@ data DiscordParams = DiscordParams
 data DebugParams = DebugParams
   { dbgOwner :: T.Text
   , dbgTwitchClientId :: T.Text
+  , dbgNick :: T.Text
   } deriving (Show)
 
 twitchParamsFromIni :: Ini -> Either String TwitchParams
@@ -67,7 +68,8 @@ discordParamsFromIni ini =
 debugParamsFromIni :: Ini -> Either String DebugParams
 debugParamsFromIni ini =
   DebugParams <$> lookupValue "Bot" "owner" ini <*>
-  lookupValue "Bot" "clientId" ini
+  lookupValue "Bot" "clientId" ini <*>
+  lookupValue "Bot" "nick" ini
 
 configFromIniSection :: T.Text -> Ini -> Either String Config
 configFromIniSection sectionName ini = do
