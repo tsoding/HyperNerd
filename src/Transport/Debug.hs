@@ -5,9 +5,14 @@ import Config
 import Control.Concurrent.STM
 import qualified Data.Text as T
 
--- TODO: flushOutcomingMessages is not implemented
 flushOutcomingMessages :: OutcomingQueue -> IO ()
-flushOutcomingMessages = undefined
+flushOutcomingMessages outcoming = do
+  msg <- atomically $ tryReadTQueue outcoming
+  case msg of
+    Just (OutMsg msg') -> do
+      putStrLn $ T.unpack msg'
+      flushOutcomingMessages outcoming
+    Nothing -> return ()
 
 debugRepl :: IncomingQueue -> OutcomingQueue -> DebugParams -> IO ()
 debugRepl incoming outcoming config = do
