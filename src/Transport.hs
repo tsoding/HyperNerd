@@ -13,11 +13,6 @@ type IncomingQueue = TQueue InEvent
 
 type OutcomingQueue = TQueue OutEvent
 
-data TransportType
-  = DiscordTransport
-  | TwitchTransport
-  deriving (Show)
-
 data Channel
   = DiscordChannel Word64
   | TwitchChannel T.Text
