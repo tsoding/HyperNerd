@@ -49,17 +49,17 @@ entry configPath databasePath markovPath =
       TwitchConfig twitchConfig ->
         twitchTransportEntry
           (bsIncoming botState)
-          (bsOutcoming botState)
+          (bsOutgoing botState)
           twitchConfig
       DiscordConfig discordConfig ->
         discordTransportEntry
           (bsIncoming botState)
-          (bsOutcoming botState)
+          (bsOutgoing botState)
           discordConfig
       DebugConfig debugConfig ->
         debugTransportEntry
           (bsIncoming botState)
-          (bsOutcoming botState)
+          (bsOutgoing botState)
           debugConfig
 
 mainWithArgs :: [String] -> IO ()
