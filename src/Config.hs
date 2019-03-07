@@ -88,8 +88,12 @@ configFromFile filePath = do
 configsFromFile :: FilePath -> IO [Config]
 configsFromFile filePath = do
   ini <- readIniFile filePath
-  -- TODO: it is not clear where exactly the parsing error happend
-  --   Filename and section would be nice
-  either (ioError . userError) return $ do
-    bots <- HM.keys . unIni <$> ini
-    ini >>= \ini' -> mapM (`configFromIniSection` ini') bots
+  either (ioError . userError) return $
+    mapLeft ([qms|In file '{filePath}':\ |] <>) $ do
+      bots <- HM.keys . unIni <$> ini
+      ini >>= \ini' ->
+        mapM
+          (\section ->
+             mapLeft ([qms|In section '{section}':\ |] <>) $
+             configFromIniSection section ini')
+          bots
