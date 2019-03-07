@@ -11,7 +11,7 @@ import Safe
 
 type IncomingQueue = TQueue InEvent
 
-type OutcomingQueue = TQueue OutEvent
+type OutgoingQueue = TQueue OutEvent
 
 data TransportType
   = DiscordTransport
