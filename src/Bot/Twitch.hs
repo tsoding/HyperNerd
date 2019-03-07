@@ -82,7 +82,7 @@ uptimeCommand =
   transR duplicate $
   cmapR (twitchChannelName . senderChannel . messageSender) $
   replyOnNothing "Only works in Twitch channels" $
-  transR (\msg -> ((,) (senderChannel $ messageSender msg)) <$> msg) $
+  transR (\msg -> (,) (senderChannel $ messageSender msg) <$> msg) $
   liftR twitchStreamByLogin $
   replyOnNothing "Not even streaming LUL" $
   liftR streamUptime $

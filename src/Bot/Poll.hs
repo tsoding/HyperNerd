@@ -61,14 +61,15 @@ instance IsEntity Poll where
        , ("duration", PropertyInt $ pollDuration poll)
        , ("cancelled", PropertyInt $ boolAsInt $ pollCancelled poll)
        ] ++
-       (fmap (((,) "channel") . PropertyText . T.pack . show) $
-        maybeToList $ pollChannel poll))
+       fmap
+         ((,) "channel" . PropertyText . T.pack . show)
+         (maybeToList $ pollChannel poll))
   fromProperties properties =
     Poll <$> extractProperty "author" properties <*>
     extractProperty "startedAt" properties <*>
     pure (fromMaybe 10000 $ extractProperty "duration" properties) <*>
     pure (maybe False intAsBool $ extractProperty "cancelled" properties) <*>
-    pure (read . T.unpack <$> extractProperty "channel" properties)
+    pure ((readMaybe . T.unpack) =<< extractProperty "channel" properties)
 
 instance IsEntity PollOption where
   toProperties pollOption =
@@ -99,7 +100,7 @@ cancelPollCommand Message {messageSender = sender} = do
         updateEntityById $ fmap (\poll'' -> poll'' {pollCancelled = True}) poll'
       fromMaybe
         (return ())
-        (say <$> (pollChannel $ entityPayload poll') <*>
+        (say <$> pollChannel (entityPayload poll') <*>
          return [qms|TwitchVotes The current poll has been cancelled!|])
     Nothing -> replyToSender sender "No polls are in place"
 
@@ -289,13 +290,13 @@ announceRunningPoll = do
         Filter (PropertyEquals "pollId" $ PropertyInt $ entityId pollEntity) All
       fromMaybe
         (return ())
-        (say <$> (pollChannel $ entityPayload pollEntity) <*>
+        (say <$> pollChannel (entityPayload pollEntity) <*>
          return "TwitchVotes The poll is still going")
       traverse_
         (\(i, op) ->
            fromMaybe
              (return ())
-             (say <$> (pollChannel $ entityPayload pollEntity) <*>
+             (say <$> pollChannel (entityPayload pollEntity) <*>
               return [qms|[{i}] {op}|])) $
         zip [0 :: Int ..] $ map (poName . entityPayload) pollOptions
     Nothing -> return ()

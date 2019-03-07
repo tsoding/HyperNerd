@@ -150,7 +150,7 @@ applyEffect (botState, Free (HttpRequest request s)) = do
   case response of
     Just response' -> return (botState, s response')
     Nothing -> return (botState, Pure ())
-applyEffect (botState, Free (TwitchApiRequest channel request s)) = do
+applyEffect (botState, Free (TwitchApiRequest channel request s)) =
   case stateOfChannel botState channel of
     Just channelState -> do
       let clientId =
@@ -170,7 +170,7 @@ applyEffect (botState, Free (Timeout ms e s)) =
 applyEffect (botState, Free (Listen effect s)) = do
   (botState', sayLog) <- listenEffectIO applyEffect (botState, effect)
   return (botState', s sayLog)
-applyEffect (botState, Free (TwitchCommand channel name args s)) = do
+applyEffect (botState, Free (TwitchCommand channel name args s)) =
   case stateOfChannel botState channel of
     Just channelState -> do
       atomically $

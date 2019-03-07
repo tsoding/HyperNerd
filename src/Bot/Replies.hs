@@ -43,7 +43,7 @@ whisperToUser channel user message = twitchCommand channel "w" [user, message]
 
 whisperToSender :: Sender -> T.Text -> Effect ()
 whisperToSender sender =
-  whisperToUser (senderChannel sender) $ (senderName sender)
+  whisperToUser (senderChannel sender) $ senderName sender
 
 replyOnNothing :: T.Text -> Reaction Message a -> Reaction Message (Maybe a)
 replyOnNothing reply =
