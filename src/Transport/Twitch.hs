@@ -112,8 +112,8 @@ receiveLoop owner incoming ircConn = do
       _ -> return ()
   receiveLoop owner incoming ircConn
 
-sendLoop :: T.Text -> OutcomingQueue -> Connection -> IO ()
-sendLoop channel outcoming ircConn = do
+sendLoop :: T.Text -> OutgoingQueue -> Connection -> IO ()
+sendLoop channel outgoing ircConn = do
   outMsg <- atomically $ readTQueue outcoming
   case outMsg of
     OutMsg text -> sendMsg ircConn $ ircPrivmsg channel text
