@@ -114,17 +114,17 @@ receiveLoop owner incoming ircConn = do
 
 sendLoop :: T.Text -> OutgoingQueue -> Connection -> IO ()
 sendLoop channel outgoing ircConn = do
-  outMsg <- atomically $ readTQueue outcoming
+  outMsg <- atomically $ readTQueue outgoing
   case outMsg of
     OutMsg text -> sendMsg ircConn $ ircPrivmsg channel text
-  sendLoop channel outcoming ircConn
+  sendLoop channel outgoing ircConn
 
 -- TODO(#17): check unsuccessful authorization
-twitchTransportEntry :: IncomingQueue -> OutcomingQueue -> TwitchParams -> IO ()
-twitchTransportEntry incoming outcoming conf = do
+twitchTransportEntry :: IncomingQueue -> OutgoingQueue -> TwitchParams -> IO ()
+twitchTransportEntry incoming outgoing conf = do
   withConnection twitchConnectionParams $ \ircConn -> do
     authorize conf ircConn
-    withAsync (sendLoop (tpChannel conf) outcoming ircConn) $ \sender ->
+    withAsync (sendLoop (tpChannel conf) outgoing ircConn) $ \sender ->
       withAsync (receiveLoop (tpOwner conf) incoming ircConn) $ \receive -> do
         res <- waitEitherCatch sender receive
         case res of
