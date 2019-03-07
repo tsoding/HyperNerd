@@ -15,16 +15,19 @@ import Text.InterpolatedString.QM
 import Transport.Debug
 import Transport.Discord
 import Transport.Twitch
+import Data.Maybe
+import Data.Foldable
 
 eventLoop :: Bot -> TimeSpec -> BotState -> IO ()
 eventLoop b prevCPUTime botState = do
   threadDelay 10000 -- to prevent busy looping
   currCPUTime <- getTime Monotonic
   let deltaTime = toNanoSecs (currCPUTime - prevCPUTime) `div` 1000000
-  pollMessage <-
-    maybe return (handleInEvent b) <$>
-    atomically (tryReadTQueue $ bsIncoming botState)
-  pollMessage botState >>= advanceTimeouts deltaTime >>= eventLoop b currCPUTime
+  messages <-
+    fmap (join . map maybeToList) $
+    atomically $ mapM (tryReadTQueue . csIncoming) $ bsChannels botState
+  foldrM (handleInEvent b) botState messages >>= advanceTimeouts deltaTime >>=
+    eventLoop b currCPUTime
 
 logicEntry :: BotState -> IO ()
 logicEntry botState = do
@@ -39,28 +42,43 @@ supavisah x =
     putStrLn [qms|Thread died because of {reason}. Restarting...|]
     supavisah x
 
+block :: IO ()
+block = do
+  threadDelay 10000 -- to prevent busy looping
+  block
+
 -- TODO(#476): Bot spawns only single transport thread
 --   It should use configsFromFile file to read several channel configuration from a single config file and spawn the transports accordingly
 entry :: String -> String -> Maybe String -> IO ()
 entry configPath databasePath markovPath =
   withBotState markovPath configPath databasePath $ \botState -> do
     supavisah $ logicEntry botState
-    case bsConfig botState of
-      TwitchConfig twitchConfig ->
-        twitchTransportEntry
-          (bsIncoming botState)
-          (bsOutcoming botState)
-          twitchConfig
-      DiscordConfig discordConfig ->
-        discordTransportEntry
-          (bsIncoming botState)
-          (bsOutcoming botState)
-          discordConfig
-      DebugConfig debugConfig ->
-        debugTransportEntry
-          (bsIncoming botState)
-          (bsOutcoming botState)
-          debugConfig
+    mapM_
+      (\channelState ->
+         case csConfig channelState of
+           TwitchConfig twitchConfig ->
+             void $
+             forkIO $
+             twitchTransportEntry
+               (csIncoming channelState)
+               (csOutcoming channelState)
+               twitchConfig
+           DiscordConfig discordConfig ->
+             void $
+             forkIO $
+             discordTransportEntry
+               (csIncoming channelState)
+               (csOutcoming channelState)
+               discordConfig
+           DebugConfig debugConfig ->
+             void $
+             forkIO $
+             debugTransportEntry
+               (csIncoming channelState)
+               (csOutcoming channelState)
+               debugConfig) $
+      bsChannels botState
+    block
 
 mainWithArgs :: [String] -> IO ()
 mainWithArgs [configPath, databasePath] = entry configPath databasePath Nothing

@@ -12,12 +12,12 @@ import qualified Data.Map.Lazy as M
 import Data.Maybe
 import qualified Data.Text as T
 import Data.Text.Encoding
-import Effect
 import Reaction
 import Transport
+import Bot.Replies
 
 russifyCommand :: Reaction Message T.Text
-russifyCommand = cmapR russify $ liftR say ignore
+russifyCommand = cmapR russify $ Reaction sayMessage
 
 mazarusha :: M.Map T.Text T.Text
 mazarusha =

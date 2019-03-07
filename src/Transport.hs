@@ -6,11 +6,10 @@ import Control.Comonad
 import Control.Concurrent.STM
 import Data.Maybe
 import qualified Data.Text as T
-import Discord (ChannelId)
 import Safe
+import Data.Word
 
 type IncomingQueue = TQueue InEvent
-
 type OutcomingQueue = TQueue OutEvent
 
 data TransportType
@@ -19,8 +18,9 @@ data TransportType
   deriving (Show)
 
 data Channel
-  = DiscordChannel ChannelId
+  = DiscordChannel Word64
   | TwitchChannel T.Text
+  deriving (Show, Read, Eq)
 
 data Sender = Sender
   { senderName :: T.Text

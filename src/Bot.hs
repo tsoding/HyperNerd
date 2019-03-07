@@ -164,7 +164,9 @@ builtinCommands =
         , Reaction $
           modCommand $
           regexArgsCommand "([0-9]+) (.*)" $
-          pairArgsCommand $ \Message {messageContent = (strN, regexStr)} -> do
+          pairArgsCommand $ \Message { messageContent = (strN, regexStr)
+                                     , messageSender = sender
+                                     } -> do
             let parsedN =
                   maybe (Left "Could not parse N") Right $
                   readMaybe $ T.unpack strN
@@ -177,11 +179,12 @@ builtinCommands =
                 logs <-
                   selectEntities "LogRecord" $
                   Take n $ SortBy "timestamp" Desc All
-                traverse_ (banUser . lrUser . entityPayload) $
+                traverse_
+                  (banUser (senderChannel sender) . lrUser . entityPayload) $
                   filter
                     (isRight . execute regex . T.unpack . lrMsg . entityPayload)
                     logs))
-    , ("cycle", ("Mock the message", cmapR mockMessage $ liftR say ignore))
+    , ("cycle", ("Mock the message", cmapR mockMessage $ Reaction sayMessage))
     , ( "trust"
       , ( "Makes the user trusted"
         , Reaction $
@@ -205,14 +208,6 @@ builtinCommands =
             request <-
               parseRequest [qms|http://localhost:8081/wiggle/{URI.encode name}|]
             void $ httpRequest request))
-    , ( "count"
-      , ( "Count numbers from 1 to n"
-        , authorizeSender senderAuthority $
-          replyOnNothing "Only for mods" $
-          cmapR (readMaybe . T.unpack) $
-          replyOnNothing "Expected number" $
-          Reaction $ \w ->
-            mapM_ (say . T.pack . show @Int) [1 .. min 20 $ extract w]))
     , ( "wme"
       , ( "Whisper yourself something"
         , Reaction $ \msg ->
@@ -226,10 +221,6 @@ builtinCommands =
         , authorizeSender senderAuthority $
           replyOnNothing "Only for mods" $ cmapR (const 5) raffleCommand))
     , ("join", ("Join the raffle", joinCommand))
-    , ( "transport"
-      , ( "Check the current transport"
-        , liftR (const getTransport) $
-          cmapR (T.pack . show) $ Reaction replyMessage))
     ]
 
 mockMessage :: T.Text -> T.Text

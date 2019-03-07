@@ -84,13 +84,13 @@ ffzCommand :: Reaction Message ()
 ffzCommand =
   liftR (const $ selectEntities "FfzEmote" All) $
   cmapR (T.concat . intersperse " " . map (ffzName . entityPayload)) $
-  liftR say ignore
+  Reaction sayMessage
 
 bttvCommand :: Reaction Message ()
 bttvCommand =
   liftR (const $ selectEntities "BttvEmote" All) $
   cmapR (T.concat . intersperse " " . map (bttvName . entityPayload)) $
-  liftR say ignore
+  Reaction sayMessage
 
 jsonHttpRequest :: FromJSON a => Reaction Message a -> Reaction Message String
 jsonHttpRequest =
@@ -114,7 +114,7 @@ updateFfzEmotesCommand =
        void $ deleteEntities "FfzEmote" All
        traverse (createEntity "FfzEmote") emotes) $
   cmapR (T.concat . intersperse " " . map (ffzName . entityPayload)) $
-  liftR say ignore
+  Reaction sayMessage
 
 updateBttvEmotesCommand :: Reaction Message ()
 updateBttvEmotesCommand =
@@ -129,4 +129,4 @@ updateBttvEmotesCommand =
        void $ deleteEntities "BttvEmote" All
        traverse (createEntity "BttvEmote") emotes) $
   cmapR (T.concat . intersperse " " . map (bttvName . entityPayload)) $
-  liftR say ignore
+  Reaction sayMessage

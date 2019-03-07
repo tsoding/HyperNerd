@@ -34,6 +34,7 @@ data Poll = Poll
   , pollDuration :: Int
   -- TODO(#299): Entity doesn't support boolean types
   , pollCancelled :: Bool
+  , pollChannel :: Maybe Channel
   }
 
 data Vote = Vote
@@ -55,16 +56,19 @@ boolAsInt False = 0
 instance IsEntity Poll where
   toProperties poll =
     M.fromList
-      [ ("author", PropertyText $ pollAuthor poll)
-      , ("startedAt", PropertyUTCTime $ pollStartedAt poll)
-      , ("duration", PropertyInt $ pollDuration poll)
-      , ("cancelled", PropertyInt $ boolAsInt $ pollCancelled poll)
-      ]
+      ([ ("author", PropertyText $ pollAuthor poll)
+       , ("startedAt", PropertyUTCTime $ pollStartedAt poll)
+       , ("duration", PropertyInt $ pollDuration poll)
+       , ("cancelled", PropertyInt $ boolAsInt $ pollCancelled poll)
+       ] ++
+       (fmap (((,) "channel") . PropertyText . T.pack . show) $
+        maybeToList $ pollChannel poll))
   fromProperties properties =
     Poll <$> extractProperty "author" properties <*>
     extractProperty "startedAt" properties <*>
     pure (fromMaybe 10000 $ extractProperty "duration" properties) <*>
-    pure (maybe False intAsBool $ extractProperty "cancelled" properties)
+    pure (maybe False intAsBool $ extractProperty "cancelled" properties) <*>
+    pure (read . T.unpack <$> extractProperty "channel" properties)
 
 instance IsEntity PollOption where
   toProperties pollOption =
@@ -93,7 +97,10 @@ cancelPollCommand Message {messageSender = sender} = do
     Just poll' -> do
       void $
         updateEntityById $ fmap (\poll'' -> poll'' {pollCancelled = True}) poll'
-      say [qms|TwitchVotes The current poll has been cancelled!|]
+      fromMaybe
+        (return ())
+        (say <$> (pollChannel $ entityPayload poll') <*>
+         return [qms|TwitchVotes The current poll has been cancelled!|])
     Nothing -> replyToSender sender "No polls are in place"
 
 -- TODO(#359): consider using rank function in implementation of announcePollResults
@@ -126,26 +133,27 @@ pollCommand Message { messageSender = sender
           pollId <- startPoll sender options durationMs
           -- TODO(#296): duration of poll is not human-readable in poll start announcement
           say
+            (senderChannel sender)
             [qms|TwitchVotes The poll has been started.
                  You have {durationSecs} seconds:|]
-          traverse_ (\(i, op) -> say [qms|[{i}] {op}|]) $
+          traverse_ (\(i, op) -> say (senderChannel sender) [qms|[{i}] {op}|]) $
             zip [0 :: Int ..] options
           timeout (fromIntegral durationMs) $ announcePollResults pollId
         else do
           let offset = fromInteger $ toInteger $ negate durationSecs
           -- TODO(#361): Polls with negative durations are not stored in the database
-          instantlyReportResults offset options
+          instantlyReportResults (senderChannel sender)offset options
 
-instantlyReportResults :: Seconds -> [T.Text] -> Effect ()
-instantlyReportResults durationSecs options = do
+instantlyReportResults :: Channel -> Seconds -> [T.Text] -> Effect ()
+instantlyReportResults channel durationSecs options = do
   logs <- getRecentLogs durationSecs
   unless (null logs) $ do
     let votes = filter (`elem` options) $ map lrMsg logs
     case votes of
-      [] -> say [qms|No votes yet.|]
+      [] -> say channel [qms|No votes yet.|]
       _ -> do
         let ranks = rank votes
-        say [qms|Poll results: {showRanks ranks}|]
+        say channel [qms|Poll results: {showRanks ranks}|]
 
 voteMessage :: Reaction Message T.Text
 voteMessage =
@@ -195,6 +203,7 @@ startPoll sender options duration = do
         , pollStartedAt = startedAt
         , pollDuration = duration
         , pollCancelled = False
+        , pollChannel = Just $ senderChannel sender
         }
   let pollId = entityId poll
   for_ options $ \name ->
@@ -225,10 +234,16 @@ announcePollResults pollId = do
   (options, votes) <- getOptionsAndVotesByPollId pollId
   poll <- getEntityById "Poll" pollId
   unless (maybe True (pollCancelled . entityPayload) poll) $ do
-    say [qms|TwitchVotes Poll has finished:|]
+    fromMaybe
+      (return ())
+      (say <$> (pollChannel =<< entityPayload <$> poll) <*>
+       return [qms|TwitchVotes Poll has finished:|])
     traverse_
       (\(option, count) ->
-         say [qms|{poName $ entityPayload $ option} : {count}|]) $
+         (fromMaybe
+            (return ())
+            (say <$> (pollChannel =<< entityPayload <$> poll) <*>
+             return [qms|{poName $ entityPayload $ option} : {count}|]))) $
       sortBy (flip compare `on` snd) $ zip options $ map length votes
 
 registerOptionVote :: Entity PollOption -> Sender -> Effect ()
@@ -272,7 +287,15 @@ announceRunningPoll = do
       pollOptions <-
         selectEntities "PollOption" $
         Filter (PropertyEquals "pollId" $ PropertyInt $ entityId pollEntity) All
-      say "TwitchVotes The poll is still going"
-      traverse_ (\(i, op) -> say [qms|[{i}] {op}|]) $
+      fromMaybe
+        (return ())
+        (say <$> (pollChannel $ entityPayload pollEntity) <*>
+         return "TwitchVotes The poll is still going")
+      traverse_
+        (\(i, op) ->
+           fromMaybe
+             (return ())
+             (say <$> (pollChannel $ entityPayload pollEntity) <*>
+              return [qms|[{i}] {op}|])) $
         zip [0 :: Int ..] $ map (poName . entityPayload) pollOptions
     Nothing -> return ()

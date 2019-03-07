@@ -36,13 +36,13 @@ instance FromJSON TwitchStream where
     TwitchStream <$> obj .: "started_at" <*> obj .: "title"
   parseJSON invalid = typeMismatch "TwitchStream" invalid
 
-twitchStreamByLogin :: T.Text -> Effect (Maybe TwitchStream)
-twitchStreamByLogin login = do
+twitchStreamByLogin :: (Channel, T.Text) -> Effect (Maybe TwitchStream)
+twitchStreamByLogin (channel, login) = do
   request <-
     parseRequest $
     printf "https://api.twitch.tv/helix/streams?user_login=%s" $
     URI.encode $ T.unpack login
-  response <- twitchApiRequest request
+  response <- twitchApiRequest channel request
   either
     (errorEff . T.pack)
     (return . listToMaybe . trData)
@@ -82,6 +82,7 @@ uptimeCommand =
   transR duplicate $
   cmapR (twitchChannelName . senderChannel . messageSender) $
   replyOnNothing "Only works in Twitch channels" $
+  transR (\msg -> ((,) (senderChannel $ messageSender msg)) <$> msg) $
   liftR twitchStreamByLogin $
   replyOnNothing "Not even streaming LUL" $
   liftR streamUptime $

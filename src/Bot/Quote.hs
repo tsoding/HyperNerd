@@ -70,4 +70,4 @@ quoteAsReplyMessage entity =
 quoteFoundReply :: Reaction Message (Maybe (Entity Quote))
 quoteFoundReply =
   replyOnNothing "Couldn't find any quotes" $
-  cmapR quoteAsReplyMessage $ liftR say ignore
+  cmapR quoteAsReplyMessage $ Reaction sayMessage

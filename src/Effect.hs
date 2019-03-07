@@ -26,7 +26,6 @@ module Effect
   , periodicEffect
   , twitchCommand
   , randomMarkov
-  , getTransport
   ) where
 
 import Control.Monad.Catch
@@ -62,7 +61,8 @@ data Selector
   deriving (Show)
 
 data EffectF s
-  = Say T.Text
+  = Say Channel
+        T.Text
         s
   | LogMsg T.Text
            s
@@ -91,18 +91,19 @@ data EffectF s
   | Now (UTCTime -> s)
   | HttpRequest Request
                 (Response B8.ByteString -> s)
-  | TwitchApiRequest Request
+  | TwitchApiRequest Channel
+                     Request
                      (Response B8.ByteString -> s)
   | Timeout Integer
             (Effect ())
             s
   | Listen (Effect ())
            ([T.Text] -> s)
-  | TwitchCommand T.Text
+  | TwitchCommand Channel
+                  T.Text
                   [T.Text]
                   s
   | RandomMarkov (Maybe T.Text -> s)
-  | GetTransport (TransportType -> s)
   deriving (Functor)
 
 type Effect = Free EffectF
@@ -111,8 +112,8 @@ instance MonadThrow Effect where
   throwM :: Exception e => e -> Effect a
   throwM = errorEff . T.pack . displayException
 
-say :: T.Text -> Effect ()
-say msg = liftF $ Say msg ()
+say :: Channel -> T.Text -> Effect ()
+say channel msg = liftF $ Say channel msg ()
 
 logMsg :: T.Text -> Effect ()
 logMsg msg = liftF $ LogMsg msg ()
@@ -151,8 +152,8 @@ now = liftF $ Now id
 httpRequest :: Request -> Effect (Response B8.ByteString)
 httpRequest request = liftF $ HttpRequest request id
 
-twitchApiRequest :: Request -> Effect (Response B8.ByteString)
-twitchApiRequest request = liftF $ TwitchApiRequest request id
+twitchApiRequest :: Channel -> Request -> Effect (Response B8.ByteString)
+twitchApiRequest channel request = liftF $ TwitchApiRequest channel request id
 
 timeout :: Integer -> Effect () -> Effect ()
 timeout t e = liftF $ Timeout t e ()
@@ -168,11 +169,8 @@ periodicEffect period effect = do
   effect
   timeout period $ periodicEffect period effect
 
-twitchCommand :: T.Text -> [T.Text] -> Effect ()
-twitchCommand name args = liftF $ TwitchCommand name args ()
+twitchCommand :: Channel -> T.Text -> [T.Text] -> Effect ()
+twitchCommand channel name args = liftF $ TwitchCommand channel name args ()
 
 randomMarkov :: Effect (Maybe T.Text)
 randomMarkov = liftF $ RandomMarkov id
-
-getTransport :: Effect TransportType
-getTransport = liftF $ GetTransport id

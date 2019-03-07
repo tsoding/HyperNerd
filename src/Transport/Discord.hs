@@ -58,7 +58,7 @@ receiveLoop owner channel incoming dis = do
             Sender
               { senderName = name
               , senderDisplayName = name
-              , senderChannel = DiscordChannel channel
+              , senderChannel = DiscordChannel $ fromIntegral channel
               , senderId = T.pack $ show $ userId $ messageAuthor m
               -- TODO(#455): Subscribers are not detected by Discord transport
               , senderSubscriber = False
