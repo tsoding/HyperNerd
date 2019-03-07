@@ -38,21 +38,21 @@ data BotState = BotState
   , bsSqliteConn :: SQLite.Connection
   , bsTimeouts :: [(Integer, Effect ())]
   , bsIncoming :: IncomingQueue
-  , bsOutcoming :: OutcomingQueue
+  , bsOutgoing :: OutgoingQueue
   , bsMarkov :: Maybe Markov
   }
 
 newBotState :: Maybe Markov -> Config -> SQLite.Connection -> IO BotState
 newBotState markov conf sqliteConn = do
   incoming <- atomically newTQueue
-  outcoming <- atomically newTQueue
+  outgoing <- atomically newTQueue
   return
     BotState
       { bsConfig = conf
       , bsSqliteConn = sqliteConn
       , bsTimeouts = []
       , bsIncoming = incoming
-      , bsOutcoming = outcoming
+      , bsOutgoing = outgoing
       , bsMarkov = markov
       }
 
@@ -77,7 +77,7 @@ applyEffect :: (BotState, Effect ()) -> IO (BotState, Effect ())
 applyEffect self@(_, Pure _) = return self
 applyEffect (botState, Free (Say text s)) = do
   atomically $
-    writeTQueue (bsOutcoming botState) $ OutMsg $ twitchCmdEscape text
+    writeTQueue (bsOutgoing botState) $ OutMsg $ twitchCmdEscape text
   return (botState, s)
 applyEffect (botState, Free (LogMsg msg s)) = do
   putStrLn $ T.unpack msg
@@ -139,7 +139,7 @@ applyEffect (botState, Free (Listen effect s)) = do
   return (botState', s sayLog)
 applyEffect (botState, Free (TwitchCommand name args s)) = do
   atomically $
-    writeTQueue (bsOutcoming botState) $
+    writeTQueue (bsOutgoing botState) $
     OutMsg [qms|/{name} {T.concat $ intersperse " " args}|]
   return (botState, s)
 applyEffect (botState, Free (RandomMarkov s)) = do
