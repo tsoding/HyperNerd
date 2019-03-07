@@ -11,18 +11,18 @@ import qualified Data.Text as T
 import System.IO
 import Transport
 
-flushOutcomingMessages :: OutcomingQueue -> IO ()
-flushOutcomingMessages outcoming = do
-  msg <- atomically $ tryReadTQueue outcoming
+flushOutgoingMessages :: OutgoingQueue -> IO ()
+flushOutgoingMessages outgoing = do
+  msg <- atomically $ tryReadTQueue outgoing
   case msg of
     Just (OutMsg msg') -> do
       putStrLn $ T.unpack msg'
-      flushOutcomingMessages outcoming
+      flushOutgoingMessages outgoing
     Nothing -> return ()
 
-debugRepl :: IncomingQueue -> OutcomingQueue -> DebugParams -> IO ()
-debugRepl incoming outcoming config = do
-  flushOutcomingMessages outcoming
+debugRepl :: IncomingQueue -> OutgoingQueue -> DebugParams -> IO ()
+debugRepl incoming outgoing config = do
+  flushOutgoingMessages outgoing
   putStr "> "
   hFlush stdout
   message <- getLine
@@ -44,9 +44,9 @@ debugRepl incoming outcoming config = do
         , senderOwner = True
         }
       (T.pack message)
-  debugRepl incoming outcoming config
+  debugRepl incoming outgoing config
 
-debugTransportEntry :: IncomingQueue -> OutcomingQueue -> DebugParams -> IO ()
-debugTransportEntry incoming outcoming config = do
+debugTransportEntry :: IncomingQueue -> OutgoingQueue -> DebugParams -> IO ()
+debugTransportEntry incoming outgoing config = do
   atomically $ writeTQueue incoming $ Joined $ dbgNick config
-  debugRepl incoming outcoming config
+  debugRepl incoming outgoing config
