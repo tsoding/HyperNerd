@@ -16,8 +16,7 @@ replyToSender :: Sender -> T.Text -> Effect ()
 replyToSender sender text = do
   let channel = senderChannel sender
   case channel of
-    DiscordChannel _ ->
-      say channel [qms|<@{senderId sender}> {text}|]
+    DiscordChannel _ -> say channel [qms|<@{senderId sender}> {text}|]
     _ -> say channel [qms|@{senderName sender} {text}|]
 
 replyMessage :: Message T.Text -> Effect ()

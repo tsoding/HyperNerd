@@ -6,10 +6,11 @@ import Control.Comonad
 import Control.Concurrent.STM
 import Data.Maybe
 import qualified Data.Text as T
-import Safe
 import Data.Word
+import Safe
 
 type IncomingQueue = TQueue InEvent
+
 type OutcomingQueue = TQueue OutEvent
 
 data TransportType

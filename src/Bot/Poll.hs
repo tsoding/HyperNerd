@@ -143,7 +143,7 @@ pollCommand Message { messageSender = sender
         else do
           let offset = fromInteger $ toInteger $ negate durationSecs
           -- TODO(#361): Polls with negative durations are not stored in the database
-          instantlyReportResults (senderChannel sender)offset options
+          instantlyReportResults (senderChannel sender) offset options
 
 instantlyReportResults :: Channel -> Seconds -> [T.Text] -> Effect ()
 instantlyReportResults channel durationSecs options = do

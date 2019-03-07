@@ -5,6 +5,7 @@ module Bot.Russify
   ( russifyCommand
   ) where
 
+import Bot.Replies
 import Data.Aeson
 import qualified Data.ByteString.Lazy.Char8 as B
 import Data.FileEmbed
@@ -14,7 +15,6 @@ import qualified Data.Text as T
 import Data.Text.Encoding
 import Reaction
 import Transport
-import Bot.Replies
 
 russifyCommand :: Reaction Message T.Text
 russifyCommand = cmapR russify $ Reaction sayMessage

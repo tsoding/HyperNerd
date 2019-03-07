@@ -9,14 +9,14 @@ import Config
 import Control.Concurrent
 import Control.Concurrent.STM
 import Control.Monad
+import Data.Foldable
+import Data.Maybe
 import System.Clock
 import System.Environment
 import Text.InterpolatedString.QM
 import Transport.Debug
 import Transport.Discord
 import Transport.Twitch
-import Data.Maybe
-import Data.Foldable
 
 eventLoop :: Bot -> TimeSpec -> BotState -> IO ()
 eventLoop b prevCPUTime botState = do
