@@ -6,7 +6,6 @@ module Config
   , TwitchParams(..)
   , DiscordParams(..)
   , DebugParams(..)
-  , configFromFile
   , configsFromFile
   ) where
 
@@ -79,11 +78,6 @@ configFromIniSection sectionName ini = do
     "discord" -> DiscordConfig <$> discordParamsFromIni sectionName ini
     "debug" -> DebugConfig <$> debugParamsFromIni sectionName ini
     _ -> Left [qms|"Unrecognized config type: {configType}"|]
-
-configFromFile :: FilePath -> IO Config
-configFromFile filePath = do
-  ini <- readIniFile filePath
-  either (ioError . userError) return (ini >>= configFromIniSection "Bot")
 
 configsFromFile :: FilePath -> IO [Config]
 configsFromFile filePath = do
