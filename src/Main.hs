@@ -52,6 +52,8 @@ block = do
 entry :: String -> String -> Maybe String -> IO ()
 entry configPath databasePath markovPath =
   withBotState markovPath configPath databasePath $ \botState -> do
+    when (null $ bsChannels botState) $
+      ioError $ userError "Could not find a single 'bot:' section"
     supavisah $ logicEntry botState
     mapM_
       (\channelState ->

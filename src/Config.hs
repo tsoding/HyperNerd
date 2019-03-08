@@ -90,7 +90,7 @@ configsFromFile filePath = do
   ini <- readIniFile filePath
   either (ioError . userError) return $
     mapLeft ([qms|In file '{filePath}':\ |] <>) $ do
-      bots <- HM.keys . unIni <$> ini
+      bots <- filter (T.isPrefixOf "bot:") . HM.keys . unIni <$> ini
       ini >>= \ini' ->
         mapM
           (\section ->
