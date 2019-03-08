@@ -241,10 +241,10 @@ announcePollResults pollId = do
        return [qms|TwitchVotes Poll has finished:|])
     traverse_
       (\(option, count) ->
-         (fromMaybe
-            (return ())
-            (say <$> (pollChannel =<< entityPayload <$> poll) <*>
-             return [qms|{poName $ entityPayload $ option} : {count}|]))) $
+         fromMaybe
+           (return ())
+           (say <$> (pollChannel =<< entityPayload <$> poll) <*>
+            return [qms|{poName $ entityPayload $ option} : {count}|])) $
       sortBy (flip compare `on` snd) $ zip options $ map length votes
 
 registerOptionVote :: Entity PollOption -> Sender -> Effect ()
