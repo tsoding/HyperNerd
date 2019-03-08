@@ -33,6 +33,7 @@ god =
     , senderId = ""
     }
 
+-- TODO(#485): Periodic commands have no channel to send them to
 newtype PeriodicCommand = PeriodicCommand
   { periodicCommand :: Command T.Text
   }
