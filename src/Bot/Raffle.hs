@@ -53,11 +53,11 @@ raffleCommand =
           [qms|Cannot start a new raffle while
                the previous one is still going|]) $
      Reaction replyMessage)
-    (Reaction $
-     const $
-     say
-       [qms|The raffle has been started. Use !join
-            command to join.)|])
+    (cmapR
+       (const
+          [qms|The raffle has been started. Use !join
+               command to join.|]) $
+     Reaction sayMessage)
 
 joinCommand :: Reaction Message a
 joinCommand =

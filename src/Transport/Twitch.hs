@@ -83,6 +83,8 @@ receiveLoop owner incoming ircConn = do
           fmap (T.splitOn "," . valueOfTag) $
           find (\(TagEntry ident _) -> ident == "badges") $ _msgTags msg
     let cookedMsg = cookIrcMsg msg
+    -- TODO(#483): Logs from different channels clash together
+    --   Let's introduce logging to files. A file per channel.
     print cookedMsg
     case cookedMsg of
       (Ping xs) -> sendMsg ircConn (ircPong xs)

@@ -9,34 +9,40 @@ import Reaction
 import Text.InterpolatedString.QM
 import Transport
 
+sayMessage :: Message T.Text -> Effect ()
+sayMessage msg = say (senderChannel $ messageSender msg) (messageContent msg)
+
 replyToSender :: Sender -> T.Text -> Effect ()
 replyToSender sender text = do
-  transport <- getTransport
-  case transport of
-    DiscordTransport -> say [qms|<@{senderId sender}> {text}|]
-    _ -> say [qms|@{senderName sender} {text}|]
+  let channel = senderChannel sender
+  case channel of
+    DiscordChannel _ -> say channel [qms|<@{senderId sender}> {text}|]
+    _ -> say channel [qms|@{senderName sender} {text}|]
 
 replyMessage :: Message T.Text -> Effect ()
 replyMessage Message {messageSender = sender, messageContent = text} =
   replyToSender sender text
 
-banUser :: T.Text -> Effect ()
-banUser user = twitchCommand "ban" [user]
+banUser :: Channel -> T.Text -> Effect ()
+banUser channel user = twitchCommand channel "ban" [user]
 
-timeoutUser :: Int -> T.Text -> Effect ()
-timeoutUser t user = twitchCommand "timeout" [user, T.pack $ show t]
+timeoutUser :: Channel -> Int -> T.Text -> Effect ()
+timeoutUser channel t user =
+  twitchCommand channel "timeout" [user, T.pack $ show t]
 
 timeoutSender :: Int -> Sender -> Effect ()
-timeoutSender t = timeoutUser t . senderName
+timeoutSender t sender =
+  timeoutUser (senderChannel sender) t (senderName sender)
 
 timeoutMessage :: Int -> Message a -> Effect ()
 timeoutMessage t = timeoutSender t . messageSender
 
-whisperToUser :: T.Text -> T.Text -> Effect ()
-whisperToUser user message = twitchCommand "w" [user, message]
+whisperToUser :: Channel -> T.Text -> T.Text -> Effect ()
+whisperToUser channel user message = twitchCommand channel "w" [user, message]
 
 whisperToSender :: Sender -> T.Text -> Effect ()
-whisperToSender = whisperToUser . senderName
+whisperToSender sender =
+  whisperToUser (senderChannel sender) $ senderName sender
 
 replyOnNothing :: T.Text -> Reaction Message a -> Reaction Message (Maybe a)
 replyOnNothing reply =

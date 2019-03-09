@@ -34,6 +34,12 @@ $ stack exec HyperNerd secret.ini database.db
 
 ### Example of a secret.ini file
 
+<!--
+ TODO(#484): Documentation about ini files is outdated
+   - Several bot configurations per file
+   - Sections with `bot:` prefix
+-->
+
 The `secret.ini` file consist of a single section `Bot` the format of which depends on its `type`.
 
 ```ini

@@ -6,7 +6,6 @@ module Config
   , TwitchParams(..)
   , DiscordParams(..)
   , DebugParams(..)
-  , configFromFile
   , configsFromFile
   ) where
 
@@ -46,48 +45,49 @@ data DebugParams = DebugParams
   , dbgNick :: T.Text
   } deriving (Show)
 
-twitchParamsFromIni :: Ini -> Either String TwitchParams
-twitchParamsFromIni ini =
-  TwitchParams <$> lookupValue "Bot" "nick" ini <*>
-  lookupValue "Bot" "password" ini <*>
-  (T.cons '#' <$> lookupValue "Bot" "channel" ini) <*>
-  lookupValue "Bot" "clientId" ini <*>
-  lookupValue "Bot" "owner" ini
+twitchParamsFromIni :: T.Text -> Ini -> Either String TwitchParams
+twitchParamsFromIni section ini =
+  TwitchParams <$> lookupValue section "nick" ini <*>
+  lookupValue section "password" ini <*>
+  (T.cons '#' <$> lookupValue section "channel" ini) <*>
+  lookupValue section "clientId" ini <*>
+  lookupValue section "owner" ini
 
-discordParamsFromIni :: Ini -> Either String DiscordParams
-discordParamsFromIni ini =
-  DiscordParams <$> lookupValue "Bot" "authToken" ini <*>
-  lookupValue "Bot" "guild" ini <*>
+discordParamsFromIni :: T.Text -> Ini -> Either String DiscordParams
+discordParamsFromIni section ini =
+  DiscordParams <$> lookupValue section "authToken" ini <*>
+  lookupValue section "guild" ini <*>
   fmap
     Snowflake
     ((maybeToEither "channel is not a number" . readMay . T.unpack) =<<
-     lookupValue "Bot" "channel" ini) <*>
-  lookupValue "Bot" "clientId" ini <*>
-  lookupValue "Bot" "owner" ini
+     lookupValue section "channel" ini) <*>
+  lookupValue section "clientId" ini <*>
+  lookupValue section "owner" ini
 
-debugParamsFromIni :: Ini -> Either String DebugParams
-debugParamsFromIni ini =
-  DebugParams <$> lookupValue "Bot" "owner" ini <*>
-  lookupValue "Bot" "clientId" ini <*>
-  lookupValue "Bot" "nick" ini
+debugParamsFromIni :: T.Text -> Ini -> Either String DebugParams
+debugParamsFromIni section ini =
+  DebugParams <$> lookupValue section "owner" ini <*>
+  lookupValue section "clientId" ini <*>
+  lookupValue section "nick" ini
 
 configFromIniSection :: T.Text -> Ini -> Either String Config
 configFromIniSection sectionName ini = do
   configType <- lookupValue sectionName "type" ini
   case configType of
-    "twitch" -> TwitchConfig <$> twitchParamsFromIni ini
-    "discord" -> DiscordConfig <$> discordParamsFromIni ini
-    "debug" -> DebugConfig <$> debugParamsFromIni ini
+    "twitch" -> TwitchConfig <$> twitchParamsFromIni sectionName ini
+    "discord" -> DiscordConfig <$> discordParamsFromIni sectionName ini
+    "debug" -> DebugConfig <$> debugParamsFromIni sectionName ini
     _ -> Left [qms|"Unrecognized config type: {configType}"|]
-
-configFromFile :: FilePath -> IO Config
-configFromFile filePath = do
-  ini <- readIniFile filePath
-  either (ioError . userError) return (ini >>= configFromIniSection "Bot")
 
 configsFromFile :: FilePath -> IO [Config]
 configsFromFile filePath = do
   ini <- readIniFile filePath
-  either (ioError . userError) return $ do
-    bots <- HM.keys . unIni <$> ini
-    ini >>= \ini' -> mapM (`configFromIniSection` ini') bots
+  either (ioError . userError) return $
+    mapLeft ([qms|In file '{filePath}':\ |] <>) $ do
+      bots <- filter (T.isPrefixOf "bot:") . HM.keys . unIni <$> ini
+      ini >>= \ini' ->
+        mapM
+          (\section ->
+             mapLeft ([qms|In section '{section}':\ |] <>) $
+             configFromIniSection section ini')
+          bots

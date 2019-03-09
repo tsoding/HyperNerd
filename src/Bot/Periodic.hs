@@ -19,13 +19,12 @@ import Property
 import Text.InterpolatedString.QM
 import Transport
 
--- TODO(#238): Periodic command sender should be the bot itself
-god :: Sender
-god =
+mrbotka :: Sender
+mrbotka =
   Sender
-    { senderName = "god"
-    , senderDisplayName = "God"
-    , senderChannel = TwitchChannel "dimension10"
+    { senderName = "mrbotka"
+    , senderDisplayName = "MrBotka"
+    , senderChannel = TwitchChannel "#tsoding"
     , senderSubscriber = True
     , senderMod = True
     , senderBroadcaster = True
@@ -33,6 +32,7 @@ god =
     , senderId = ""
     }
 
+-- TODO(#485): Periodic commands have no channel to send them to
 newtype PeriodicCommand = PeriodicCommand
   { periodicCommand :: Command T.Text
   }
@@ -62,7 +62,7 @@ startPeriodicCommands dispatchCommand = do
     fmap listToMaybe $ selectEntities "PeriodicCommand" $ Take 1 $ Shuffle All
   maybe
     (return ())
-    (dispatchCommand . Message god . periodicCommand . entityPayload)
+    (dispatchCommand . Message mrbotka . periodicCommand . entityPayload)
     maybePc
   timeout (10 * 60 * 1000) $ startPeriodicCommands dispatchCommand
 

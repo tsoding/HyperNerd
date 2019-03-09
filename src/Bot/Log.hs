@@ -97,7 +97,7 @@ randomLogRecordCommand =
   cmapR extractUser $
   liftR (selectEntities "LogRecord" . randomUserQuoteSelector) $
   cmapR listToMaybe $
-  ignoreNothing $ cmapR (lrAsMsg . entityPayload) $ liftR say ignore
+  ignoreNothing $ cmapR (lrAsMsg . entityPayload) $ Reaction sayMessage
   where
     extractUser :: Message T.Text -> T.Text
     extractUser msg =
