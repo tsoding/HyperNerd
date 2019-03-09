@@ -262,7 +262,7 @@ registerOptionVote option sender = do
            "Vote"
            Vote {voteUser = senderName sender, voteOptionId = entityId option}
 
--- TODO: poll votes are registered across the channels
+-- TODO(#488): poll votes are registered across the channels
 registerPollVote :: Message Int -> Effect ()
 registerPollVote Message {messageSender = sender, messageContent = optionNumber} = do
   poll' <- currentPoll
