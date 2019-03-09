@@ -99,7 +99,7 @@ receiveLoop conf incoming ircConn = do
             , senderSubscriber = any (T.isPrefixOf "subscriber") badges
             , senderMod = any (T.isPrefixOf "moderator") badges
             , senderBroadcaster = any (T.isPrefixOf "broadcaster") badges
-            , senderOwner = name == (tpOwner conf)
+            , senderOwner = name == tpOwner conf
             -- TODO(#468): Twitch does not provide the id of the user
             , senderId = ""
             }

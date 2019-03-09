@@ -286,7 +286,7 @@ announceRunningPoll channel = do
   poll <- currentPoll
   case poll of
     Just pollEntity
-      | (Just channel) == pollChannel (entityPayload pollEntity) -> do
+      | Just channel == pollChannel (entityPayload pollEntity) -> do
         pollOptions <-
           selectEntities "PollOption" $
           Filter
