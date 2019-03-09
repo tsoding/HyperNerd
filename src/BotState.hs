@@ -105,7 +105,7 @@ applyEffect (botState, Free (Say channel text s)) = do
           atomically $
           writeTQueue (csOutcoming channelState) $ OutMsg $ twitchCmdEscape text
         _ -> atomically $ writeTQueue (csOutcoming channelState) $ OutMsg text
-    Nothing -> hPutStr stderr [qms|[ERROR] Channel does not exist {channel} |]
+    Nothing -> hPutStrLn stderr [qms|[ERROR] Channel does not exist {channel} |]
   return (botState, s)
 applyEffect (botState, Free (LogMsg msg s)) = do
   putStrLn $ T.unpack msg
@@ -142,7 +142,7 @@ applyEffect (botState, Free (HttpRequest request s)) = do
     catch
       (Just <$> httpLBS request)
       (\e -> do
-         hPutStr
+         hPutStrLn
            stderr
            [qms|[ERROR] HTTP request failed:
                 {e :: HttpException}|]
@@ -163,7 +163,7 @@ applyEffect (botState, Free (TwitchApiRequest channel request s)) =
       response <- httpLBS (addRequestHeader "Client-ID" clientId request)
       return (botState, s response)
     Nothing -> do
-      hPutStr stderr [qms|[ERROR] Channel does not exist {channel} |]
+      hPutStrLn stderr [qms|[ERROR] Channel does not exist {channel} |]
       return (botState, Pure ())
 applyEffect (botState, Free (Timeout ms e s)) =
   return ((botState {bsTimeouts = (ms, e) : bsTimeouts botState}), s)
@@ -178,7 +178,7 @@ applyEffect (botState, Free (TwitchCommand channel name args s)) =
         OutMsg [qms|/{name} {T.concat $ intersperse " " args}|]
       return (botState, s)
     Nothing -> do
-      hPutStr stderr [qms|[ERROR] Channel does not exist {channel} |]
+      hPutStrLn stderr [qms|[ERROR] Channel does not exist {channel} |]
       return (botState, Pure ())
 applyEffect (botState, Free (RandomMarkov s)) = do
   let markov = MaybeT $ return $ bsMarkov botState
