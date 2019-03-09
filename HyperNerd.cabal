@@ -110,12 +110,11 @@ executable HyperNerd
                      , exceptions
                      , file-embed
                      , free
-                     , hlint
                      , hookup
                      , http-conduit
                      , ini
                      , irc-core
-                     , network
+                     , network>=2.3 && <2.9
                      , qm-interpolated-string
                      , raw-strings-qq
                      , regex-base
