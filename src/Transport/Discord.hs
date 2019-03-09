@@ -81,7 +81,10 @@ discordTransportEntry incoming outcoming conf = do
     case resp of
       Left _ -> error "Getting current user call failed"
       Right user ->
-        atomically $ writeTQueue incoming $ Joined $ T.pack $ userName user
+        atomically $
+        writeTQueue incoming $
+        Joined (DiscordChannel $ fromIntegral $ dpChannel conf) $
+        T.pack $ userName user
     withAsync (sendLoop (dpChannel conf) outcoming dis) $ \sender ->
       withAsync (receiveLoop (dpOwner conf) (dpChannel conf) incoming dis) $ \receive -> do
         res <- waitEitherCatch sender receive

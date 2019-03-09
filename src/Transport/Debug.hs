@@ -11,6 +11,9 @@ import qualified Data.Text as T
 import System.IO
 import Transport
 
+debugChannel :: Channel
+debugChannel = TwitchChannel "#tsoding"
+
 flushOutcomingMessages :: OutcomingQueue -> IO ()
 flushOutcomingMessages outcoming = do
   msg <- atomically $ tryReadTQueue outcoming
@@ -36,7 +39,7 @@ debugRepl incoming outcoming config = do
         -- TODO(#480): Sender id, channel and roles are not configurable in Debug Mode
         --   We can make them configurable via the config file
         --   and/or via CLI commands.
-        , senderChannel = TwitchChannel "#tsoding"
+        , senderChannel = debugChannel
         , senderId = ""
         , senderSubscriber = True
         , senderMod = True
@@ -48,5 +51,5 @@ debugRepl incoming outcoming config = do
 
 debugTransportEntry :: IncomingQueue -> OutcomingQueue -> DebugParams -> IO ()
 debugTransportEntry incoming outcoming config = do
-  atomically $ writeTQueue incoming $ Joined $ dbgNick config
+  atomically $ writeTQueue incoming $ Joined debugChannel $ dbgNick config
   debugRepl incoming outcoming config
