@@ -34,7 +34,8 @@ senderAuthority sender =
   senderMod sender || senderBroadcaster sender || senderOwner sender
 
 data InEvent
-  = Joined Channel T.Text
+  = Joined Channel
+           T.Text
   | InMsg Sender
           T.Text
 
