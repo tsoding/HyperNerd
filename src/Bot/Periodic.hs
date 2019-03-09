@@ -56,15 +56,18 @@ getPeriodicCommandByName name =
   selectEntities "PeriodicCommand" $
   Take 1 $ Filter (PropertyEquals "name" (PropertyText name)) All
 
-startPeriodicCommands :: (Message (Command T.Text) -> Effect ()) -> Effect ()
-startPeriodicCommands dispatchCommand = do
+startPeriodicCommands ::
+     Channel -> (Message (Command T.Text) -> Effect ()) -> Effect ()
+startPeriodicCommands channel dispatchCommand = do
   maybePc <-
     fmap listToMaybe $ selectEntities "PeriodicCommand" $ Take 1 $ Shuffle All
   maybe
     (return ())
-    (dispatchCommand . Message mrbotka . periodicCommand . entityPayload)
+    (dispatchCommand .
+     Message (mrbotka {senderChannel = channel}) .
+     periodicCommand . entityPayload)
     maybePc
-  timeout (10 * 60 * 1000) $ startPeriodicCommands dispatchCommand
+  timeout (10 * 60 * 1000) $ startPeriodicCommands channel dispatchCommand
 
 addPeriodicCommand :: CommandHandler (Command T.Text)
 addPeriodicCommand Message { messageSender = sender

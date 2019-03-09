@@ -73,8 +73,8 @@ readIrcLine conn = do
 valueOfTag :: TagEntry -> T.Text
 valueOfTag (TagEntry _ value) = value
 
-receiveLoop :: T.Text -> IncomingQueue -> Connection -> IO ()
-receiveLoop owner incoming ircConn = do
+receiveLoop :: TwitchParams -> IncomingQueue -> Connection -> IO ()
+receiveLoop conf incoming ircConn = do
   mb <- readIrcLine ircConn
   for_ mb $ \msg -> do
     let badges =
@@ -99,7 +99,7 @@ receiveLoop owner incoming ircConn = do
             , senderSubscriber = any (T.isPrefixOf "subscriber") badges
             , senderMod = any (T.isPrefixOf "moderator") badges
             , senderBroadcaster = any (T.isPrefixOf "broadcaster") badges
-            , senderOwner = name == owner
+            , senderOwner = name == tpOwner conf
             -- TODO(#468): Twitch does not provide the id of the user
             , senderId = ""
             }
@@ -110,9 +110,11 @@ receiveLoop owner incoming ircConn = do
                 find (\(TagEntry ident _) -> ident == "display-name") $
                 _msgTags msg
       (Join userInfo _ _) ->
-        atomically $ writeTQueue incoming $ Joined $ idText $ userNick userInfo
+        atomically $
+        writeTQueue incoming $
+        Joined (TwitchChannel $ tpChannel conf) $ idText $ userNick userInfo
       _ -> return ()
-  receiveLoop owner incoming ircConn
+  receiveLoop conf incoming ircConn
 
 sendLoop :: T.Text -> OutcomingQueue -> Connection -> IO ()
 sendLoop channel outcoming ircConn = do
@@ -127,7 +129,7 @@ twitchTransportEntry incoming outcoming conf = do
   withConnection twitchConnectionParams $ \ircConn -> do
     authorize conf ircConn
     withAsync (sendLoop (tpChannel conf) outcoming ircConn) $ \sender ->
-      withAsync (receiveLoop (tpOwner conf) incoming ircConn) $ \receive -> do
+      withAsync (receiveLoop conf incoming ircConn) $ \receive -> do
         res <- waitEitherCatch sender receive
         case res of
           Left Right {} -> fail "PANIC: sendLoop returned"

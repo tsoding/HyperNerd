@@ -262,6 +262,7 @@ registerOptionVote option sender = do
            "Vote"
            Vote {voteUser = senderName sender, voteOptionId = entityId option}
 
+-- TODO(#488): poll votes are registered across the channels
 registerPollVote :: Message Int -> Effect ()
 registerPollVote Message {messageSender = sender, messageContent = optionNumber} = do
   poll' <- currentPoll
@@ -280,23 +281,18 @@ registerPollVote Message {messageSender = sender, messageContent = optionNumber}
                  unexisting option {optionNumber}|]
     Nothing -> return ()
 
-announceRunningPoll :: Effect ()
-announceRunningPoll = do
+announceRunningPoll :: Channel -> Effect ()
+announceRunningPoll channel = do
   poll <- currentPoll
   case poll of
-    Just pollEntity -> do
-      pollOptions <-
-        selectEntities "PollOption" $
-        Filter (PropertyEquals "pollId" $ PropertyInt $ entityId pollEntity) All
-      fromMaybe
-        (return ())
-        (say <$> pollChannel (entityPayload pollEntity) <*>
-         return "TwitchVotes The poll is still going")
-      traverse_
-        (\(i, op) ->
-           fromMaybe
-             (return ())
-             (say <$> pollChannel (entityPayload pollEntity) <*>
-              return [qms|[{i}] {op}|])) $
-        zip [0 :: Int ..] $ map (poName . entityPayload) pollOptions
-    Nothing -> return ()
+    Just pollEntity
+      | Just channel == pollChannel (entityPayload pollEntity) -> do
+        pollOptions <-
+          selectEntities "PollOption" $
+          Filter
+            (PropertyEquals "pollId" $ PropertyInt $ entityId pollEntity)
+            All
+        say channel "TwitchVotes The poll is still going"
+        traverse_ (\(i, op) -> say channel [qms|[{i}] {op}|]) $
+          zip [0 :: Int ..] $ map (poName . entityPayload) pollOptions
+    _ -> return ()

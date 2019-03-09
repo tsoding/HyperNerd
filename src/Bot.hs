@@ -344,11 +344,10 @@ mention =
     ignore
 
 bot :: Bot
-bot (Joined nickname) = do
+bot (Joined channel nickname) = do
   updateBotUserInfo nickname
-  -- TODO(#486): the periodic timers are started several times in case of several channels
-  startPeriodicCommands dispatchCommand
-  periodicEffect (60 * 1000) announceRunningPoll
+  startPeriodicCommands channel dispatchCommand
+  periodicEffect (60 * 1000) (announceRunningPoll channel)
 bot event@(InMsg sender text) = do
   recordUserMsg sender text
   linkForbidden <- forbidLinksForPlebs event
