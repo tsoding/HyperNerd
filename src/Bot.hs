@@ -346,6 +346,7 @@ mention =
 bot :: Bot
 bot (Joined nickname) = do
   updateBotUserInfo nickname
+  -- TODO(#486): the periodic timers are started several times in case of several channels
   startPeriodicCommands dispatchCommand
   periodicEffect (60 * 1000) announceRunningPoll
 bot event@(InMsg sender text) = do
