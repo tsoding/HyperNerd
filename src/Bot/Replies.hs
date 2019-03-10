@@ -12,12 +12,21 @@ import Transport
 sayMessage :: Message T.Text -> Effect ()
 sayMessage msg = say (senderChannel $ messageSender msg) (messageContent msg)
 
+mentionSender :: Sender -> T.Text
+mentionSender Sender { senderChannel = sndrChannel
+                     , senderName = sndrName
+                     , senderId = sndrId
+                     } =
+  case sndrChannel of
+    DiscordChannel _ -> [qms|<@{sndrId}>|]
+    _ -> [qms|@{sndrName}|]
+
 replyToSender :: Sender -> T.Text -> Effect ()
 replyToSender sender text = do
   let channel = senderChannel sender
   case channel of
-    DiscordChannel _ -> say channel [qms|<@{senderId sender}> {text}|]
-    _ -> say channel [qms|@{senderName sender} {text}|]
+    DiscordChannel _ -> say channel [qms|{mentionSender sender} {text}|]
+    _ -> say channel [qms|{mentionSender sender} {text}|]
 
 replyMessage :: Message T.Text -> Effect ()
 replyMessage Message {messageSender = sender, messageContent = text} =
