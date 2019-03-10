@@ -51,6 +51,7 @@ receiveLoop owner channel incoming dis = do
     Left er -> putStrLn ("Event error: " <> show er)
     Right (MessageCreate m) ->
       when (not (fromBot m) && fromChannel channel m) $ do
+        print m
         let name = T.pack $ userName $ messageAuthor m
         atomically $
           writeTQueue incoming $
