@@ -184,7 +184,7 @@ expandCustomCommandVars sender args customCommand = do
         , ("%month", [qms|{month}|])
         , ("%day", [qms|{day}|])
         , ("%date", [qms|{day}.{month}.{year}|])
-        , ("%sender", [qms|{senderName sender}|])
+        , ("%sender", mentionSender sender)
         , ("%1", args)
         ]
   expandedMessage <-
