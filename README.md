@@ -94,6 +94,18 @@ TBD
 
 <!-- TODO(#478): Debug mode is not documented -->
 
+## Docker
+
+```console
+$ docker build -t hypernerd .
+$ mkdir hypernerd-state
+$ cp secret.ini hypernerd-state
+$ docker create -v /absolute/path/to/hypernerd-state/:/tmp/hypernerd/ \
+                --name hypernerd-bot hypernerd
+$ docker start -a hypernerd-bot
+$ docker stop hypernerd-bot
+```
+
 ## Markov Chain Responses
 
 To trigger a Markov chain response, just mention the bot in the chat.
