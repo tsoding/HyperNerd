@@ -13,12 +13,12 @@ RUN apk add --no-cache build-base
 RUN apk add --no-cache zlib-dev
 
 RUN cabal update
-RUN mkdir hypernerd/
-COPY . hypernerd/
-WORKDIR hypernerd/
+RUN mkdir /hypernerd/
+COPY . /hypernerd/
+WORKDIR /hypernerd/
 RUN cabal sandbox init
 RUN cabal install happy-1.19.9
 RUN cabal install --only-dependencies
 RUN cabal build
 
-CMD ["/hypernerd/dist/build/HyperNerd/HyperNerd", "/tmp/hypernerd/secret.ini", "/tmp/hypernerd/database.db"]
+CMD ["/hypernerd/dist/build/HyperNerd/HyperNerd", "/tmp/hypernerd/secret.ini", "/tmp/hypernerd/database.db", "/tmp/hypernerd/markov.csv"]
