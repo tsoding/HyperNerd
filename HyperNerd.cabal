@@ -111,7 +111,7 @@ executable HyperNerd
                      , file-embed
                      , free
                      , hookup
-                     , http-conduit
+                     , http-conduit == 2.3.2
                      , ini
                      , irc-core
                      , network>=2.3 && <2.9
@@ -183,7 +183,7 @@ test-suite HyperNerdTest
                      , exceptions
                      , file-embed
                      , free
-                     , http-conduit
+                     , http-conduit == 2.3.2
                      , qm-interpolated-string
                      , raw-strings-qq
                      , regex-tdfa
