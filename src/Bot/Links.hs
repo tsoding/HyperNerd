@@ -75,7 +75,7 @@ textContainsLink t =
       Nothing -> Left "No match found"
 
 forbidLinksForPlebs :: InEvent -> Effect Bool
-forbidLinksForPlebs (InMsg sender text)
+forbidLinksForPlebs (InMsg sender@Sender {senderChannel = TwitchChannel _} text)
   | textContainsLink text = do
     trustedUser <-
       runMaybeT (findTrustedSender sender <|> autoTrustSender sender)
