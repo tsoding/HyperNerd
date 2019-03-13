@@ -15,3 +15,5 @@ ssh "${DEPLOY_TARGET}" -t "docker stop hypernerd-bot; docker rm hypernerd-bot"
 ssh "${DEPLOY_TARGET}" -t "docker load -i hypernerd.tar && mkdir -p ${DEPLOY_FOLDER}/hypernerd-state/"
 ssh "${DEPLOY_TARGET}" -t "docker create -v ${DEPLOY_FOLDER}/hypernerd-state:/tmp/hypernerd/ --name hypernerd-bot hypernerd"
 ssh "${DEPLOY_TARGET}" -t "docker start hypernerd-bot"
+
+# TODO(#502): deploy-docker.sh doesn't not remove older hypernerd images
