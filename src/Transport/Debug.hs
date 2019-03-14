@@ -32,7 +32,8 @@ debugRepl incoming outcoming config = do
   unless (null message) $
     atomically $
     writeTQueue incoming $
-    InMsg
+    InMsg $
+    Message
       Sender
         { senderName = dbgOwner config
         , senderDisplayName = dbgOwner config

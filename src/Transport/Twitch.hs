@@ -91,7 +91,8 @@ receiveLoop conf incoming ircConn = do
       (Privmsg userInfo target msgText) ->
         atomically $
         writeTQueue incoming $
-        InMsg
+        InMsg $
+        Message
           Sender
             { senderName = name
             , senderDisplayName = displayName

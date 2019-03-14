@@ -55,7 +55,8 @@ receiveLoop owner channel incoming dis = do
         let name = T.pack $ userName $ messageAuthor m
         atomically $
           writeTQueue incoming $
-          InMsg
+          InMsg $
+          Message
             Sender
               { senderName = name
               , senderDisplayName = name
