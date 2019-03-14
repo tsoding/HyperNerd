@@ -43,6 +43,7 @@ newtype OutEvent =
 
 data Message a = Message
   { messageSender :: Sender
+  , messageMentioned :: Bool
   , messageContent :: a
   } deriving (Functor)
 

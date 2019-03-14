@@ -20,15 +20,19 @@ import Discord
   , messageAuthor
   , messageChannel
   , messageText
+  , messageMentions
   , nextEvent
   , restCall
   , stopDiscord
   , userId
   , userIsBot
   , userName
+  , User(..)
   )
 import Discord.Rest.User (UserRequest(GetCurrentUser))
 import Transport
+import Data.Maybe
+import Data.List
 
 sendLoop :: ChannelId -> OutcomingQueue -> (RestChan, Gateway, z) -> IO ()
 sendLoop channel outcoming dis = do
@@ -44,8 +48,13 @@ fromChannel :: ChannelId -> D.Message -> Bool
 fromChannel channel message = messageChannel message == channel
 
 receiveLoop ::
-     T.Text -> ChannelId -> IncomingQueue -> (RestChan, Gateway, z) -> IO ()
-receiveLoop owner channel incoming dis = do
+     User
+  -> T.Text
+  -> ChannelId
+  -> IncomingQueue
+  -> (RestChan, Gateway, z)
+  -> IO ()
+receiveLoop botUser owner channel incoming dis = do
   e <- nextEvent dis
   case e of
     Left er -> putStrLn ("Event error: " <> show er)
@@ -69,9 +78,11 @@ receiveLoop owner channel incoming dis = do
               , senderBroadcaster = False
               , senderOwner = name == owner
               }
+            (isJust $
+             find (== (userId botUser)) $ map userId $ messageMentions m)
             (messageText m)
     _ -> return ()
-  receiveLoop owner channel incoming dis
+  receiveLoop botUser owner channel incoming dis
 
 -- TODO(#465): Discord transport does not handle authorization failure
 discordTransportEntry ::
@@ -82,17 +93,14 @@ discordTransportEntry incoming outcoming conf = do
     -- TODO(#466): restCall errors are not handled properly
     case resp of
       Left _ -> error "Getting current user call failed"
-      Right user ->
-        atomically $
-        writeTQueue incoming $
-        Joined (DiscordChannel $ fromIntegral $ dpChannel conf) $
-        T.pack $ userName user
-    withAsync (sendLoop (dpChannel conf) outcoming dis) $ \sender ->
-      withAsync (receiveLoop (dpOwner conf) (dpChannel conf) incoming dis) $ \receive -> do
-        res <- waitEitherCatch sender receive
-        case res of
-          Left Right {} -> fail "PANIC: sendLoop returned"
-          Right Right {} -> return ()
-          Left (Left e) -> throwIO e
-          Right (Left e) -> throwIO e
+      Right user -> do
+        atomically $ writeTQueue incoming $ Joined (DiscordChannel $ fromIntegral $ dpChannel conf) $ T.pack $ userName user
+        withAsync (sendLoop (dpChannel conf) outcoming dis) $ \sender ->
+          withAsync (receiveLoop user (dpOwner conf) (dpChannel conf) incoming dis) $ \receive -> do
+            res <- waitEitherCatch sender receive
+            case res of
+              Left Right {} -> fail "PANIC: sendLoop returned"
+              Right Right {} -> return ()
+              Left (Left e) -> throwIO e
+              Right (Left e) -> throwIO e
   return ()
