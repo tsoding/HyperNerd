@@ -52,8 +52,8 @@ randomUserQuoteSelector :: T.Text -> Selector
 randomUserQuoteSelector user =
   Take 1 $ Shuffle $ Filter (PropertyEquals "user" $ PropertyText user) All
 
-recordUserMsg :: Sender -> T.Text -> Effect ()
-recordUserMsg sender msg = do
+recordUserMsg :: Message T.Text -> Effect ()
+recordUserMsg Message {messageSender = sender, messageContent = msg} = do
   timestamp <- now
   _ <-
     createEntity

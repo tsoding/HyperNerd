@@ -9,7 +9,6 @@ module Bot
 
 import Bot.Alias
 import Bot.Banwords
-import Bot.BotUserInfo
 import Bot.BttvFfz
 import Bot.CustomCommand
 import Bot.Dubtrack
@@ -311,10 +310,11 @@ regexArgs regexString reaction =
 regexArgsCommand :: String -> CommandHandler [T.Text] -> CommandHandler T.Text
 regexArgsCommand regexString commandHandler Message { messageSender = sender
                                                     , messageContent = args
+                                                    , messageMentioned = mentioned
                                                     } =
   either
     (replyToSender sender . T.pack)
-    (commandHandler . Message sender)
+    (commandHandler . Message sender mentioned)
     parsedArgs
   where
     parsedArgs = do
@@ -331,32 +331,32 @@ regexArgsCommand regexString commandHandler Message { messageSender = sender
 mention :: Reaction Message T.Text
 mention =
   cmapR T.toUpper $
-  liftR
+  transR
     (\msg ->
-       getCompose
-         ((, msg) . T.toUpper . buiNickname . entityPayload <$>
-          Compose botUserInfo)) $
+       if messageMentioned msg
+         then Just <$> msg
+         else Nothing <$ msg) $
   ignoreNothing $
-  ifR
-    (uncurry T.isInfixOf)
-    (liftR (const randomMarkov) $
-     replyOnNothing "I have nothing to say to you" $ Reaction replyMessage)
-    ignore
+  liftR (const randomMarkov) $
+  replyOnNothing "I have nothing to say to you" $ Reaction replyMessage
 
 bot :: Bot
-bot (Joined channel nickname) = do
-  updateBotUserInfo nickname
+bot (Joined channel _) = do
   startPeriodicCommands channel dispatchCommand
   periodicEffect (60 * 1000) (announceRunningPoll channel)
-bot event@(InMsg sender text) = do
-  recordUserMsg sender text
+bot event@(InMsg msg@Message { messageContent = text
+                             , messageSender = sender
+                             , messageMentioned = mentioned
+                             }) = do
+  recordUserMsg msg
   linkForbidden <- forbidLinksForPlebs event
-  banwordsForbidden <- forbidBanwords $ Message sender text
+  banwordsForbidden <- forbidBanwords msg
   unless (linkForbidden || banwordsForbidden) $ do
-    runReaction voteMessage $ Message sender text
+    runReaction voteMessage msg
     case textAsPipe text of
-      [] -> runReaction mention $ Message sender text
-      pipe -> mapM redirectAlias pipe >>= dispatchPipe . Message sender
+      [] -> runReaction mention msg
+      pipe ->
+        mapM redirectAlias pipe >>= dispatchPipe . Message sender mentioned
 
 dispatchRedirect :: Effect () -> Message (Command T.Text) -> Effect ()
 dispatchRedirect effect cmd = do

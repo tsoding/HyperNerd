@@ -91,7 +91,8 @@ receiveLoop conf incoming ircConn = do
       (Privmsg userInfo target msgText) ->
         atomically $
         writeTQueue incoming $
-        InMsg
+        InMsg $
+        Message
           Sender
             { senderName = name
             , senderDisplayName = displayName
@@ -103,6 +104,7 @@ receiveLoop conf incoming ircConn = do
             -- TODO(#468): Twitch does not provide the id of the user
             , senderId = ""
             }
+          (T.toLower (tpNick conf) `T.isInfixOf` T.toLower msgText)
           msgText
         where name = idText $ userNick userInfo
               displayName =

@@ -32,7 +32,8 @@ debugRepl incoming outcoming config = do
   unless (null message) $
     atomically $
     writeTQueue incoming $
-    InMsg
+    InMsg $
+    Message
       Sender
         { senderName = dbgOwner config
         , senderDisplayName = dbgOwner config
@@ -46,6 +47,7 @@ debugRepl incoming outcoming config = do
         , senderBroadcaster = True
         , senderOwner = True
         }
+      (T.toLower (dbgNick config) `T.isInfixOf` T.toLower (T.pack message))
       (T.pack message)
   debugRepl incoming outcoming config
 

@@ -36,14 +36,14 @@ senderAuthority sender =
 data InEvent
   = Joined Channel
            T.Text
-  | InMsg Sender
-          T.Text
+  | InMsg (Message T.Text)
 
 newtype OutEvent =
   OutMsg T.Text
 
 data Message a = Message
   { messageSender :: Sender
+  , messageMentioned :: Bool
   , messageContent :: a
   } deriving (Functor)
 

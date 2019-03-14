@@ -91,7 +91,6 @@ executable HyperNerd
                      , HyperNerd.Functor
                      , HyperNerd.Comonad
                      , Markov
-                     , Bot.BotUserInfo
                      , Bot.Raffle
                      , Config
                      , Data.Either.Extra

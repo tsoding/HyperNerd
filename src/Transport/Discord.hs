@@ -7,6 +7,8 @@ import Control.Concurrent.Async
 import Control.Concurrent.STM
 import Control.Exception (bracket, throwIO)
 import Control.Monad (void, when)
+import Data.List
+import Data.Maybe
 import qualified Data.Text as T
 import qualified Discord as D
 import Discord
@@ -16,9 +18,11 @@ import Discord
   , Event(..)
   , Gateway
   , RestChan
+  , User(..)
   , loginRestGateway
   , messageAuthor
   , messageChannel
+  , messageMentions
   , messageText
   , nextEvent
   , restCall
@@ -44,8 +48,13 @@ fromChannel :: ChannelId -> D.Message -> Bool
 fromChannel channel message = messageChannel message == channel
 
 receiveLoop ::
-     T.Text -> ChannelId -> IncomingQueue -> (RestChan, Gateway, z) -> IO ()
-receiveLoop owner channel incoming dis = do
+     User
+  -> T.Text
+  -> ChannelId
+  -> IncomingQueue
+  -> (RestChan, Gateway, z)
+  -> IO ()
+receiveLoop botUser owner channel incoming dis = do
   e <- nextEvent dis
   case e of
     Left er -> putStrLn ("Event error: " <> show er)
@@ -55,7 +64,8 @@ receiveLoop owner channel incoming dis = do
         let name = T.pack $ userName $ messageAuthor m
         atomically $
           writeTQueue incoming $
-          InMsg
+          InMsg $
+          Message
             Sender
               { senderName = name
               , senderDisplayName = name
@@ -68,9 +78,10 @@ receiveLoop owner channel incoming dis = do
               , senderBroadcaster = False
               , senderOwner = name == owner
               }
+            (isJust $ find (== userId botUser) $ map userId $ messageMentions m)
             (messageText m)
     _ -> return ()
-  receiveLoop owner channel incoming dis
+  receiveLoop botUser owner channel incoming dis
 
 -- TODO(#465): Discord transport does not handle authorization failure
 discordTransportEntry ::
@@ -81,17 +92,18 @@ discordTransportEntry incoming outcoming conf = do
     -- TODO(#466): restCall errors are not handled properly
     case resp of
       Left _ -> error "Getting current user call failed"
-      Right user ->
+      Right user -> do
         atomically $
-        writeTQueue incoming $
-        Joined (DiscordChannel $ fromIntegral $ dpChannel conf) $
-        T.pack $ userName user
-    withAsync (sendLoop (dpChannel conf) outcoming dis) $ \sender ->
-      withAsync (receiveLoop (dpOwner conf) (dpChannel conf) incoming dis) $ \receive -> do
-        res <- waitEitherCatch sender receive
-        case res of
-          Left Right {} -> fail "PANIC: sendLoop returned"
-          Right Right {} -> return ()
-          Left (Left e) -> throwIO e
-          Right (Left e) -> throwIO e
+          writeTQueue incoming $
+          Joined (DiscordChannel $ fromIntegral $ dpChannel conf) $
+          T.pack $ userName user
+        withAsync (sendLoop (dpChannel conf) outcoming dis) $ \sender ->
+          withAsync
+            (receiveLoop user (dpOwner conf) (dpChannel conf) incoming dis) $ \receive -> do
+            res <- waitEitherCatch sender receive
+            case res of
+              Left Right {} -> fail "PANIC: sendLoop returned"
+              Right Right {} -> return ()
+              Left (Left e) -> throwIO e
+              Right (Left e) -> throwIO e
   return ()

@@ -64,7 +64,7 @@ startPeriodicCommands channel dispatchCommand = do
   maybe
     (return ())
     (dispatchCommand .
-     Message (mrbotka {senderChannel = channel}) .
+     Message (mrbotka {senderChannel = channel}) False .
      periodicCommand . entityPayload)
     maybePc
   timeout (10 * 60 * 1000) $ startPeriodicCommands channel dispatchCommand
