@@ -79,7 +79,7 @@ receiveLoop botUser owner channel incoming dis = do
               , senderOwner = name == owner
               }
             (isJust $
-             find (== (userId botUser)) $ map userId $ messageMentions m)
+             find (== userId botUser) $ map userId $ messageMentions m)
             (messageText m)
     _ -> return ()
   receiveLoop botUser owner channel incoming dis
