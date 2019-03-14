@@ -17,14 +17,75 @@ import Property
 import Reaction
 import Text.InterpolatedString.QM
 import Transport
+import Safe
+import Control.Monad.Catch
+
+data LogRecordV1 = LogRecordV1
+  { lr1User :: T.Text
+  , lr1Channel :: T.Text
+  , lr1Msg :: T.Text
+  , lr1Timestamp :: UTCTime
+  }
+
+instance IsEntity LogRecordV1 where
+  toProperties lr =
+    M.fromList
+      [ ("user", PropertyText $ lr1User lr)
+      , ("channel", PropertyText $ lr1Channel lr)
+      , ("msg", PropertyText $ lr1Msg lr)
+      , (timestampPV, PropertyUTCTime $ lr1Timestamp lr)
+      ]
+  fromProperties properties =
+    LogRecordV1 <$> extractProperty "user" properties <*>
+    extractProperty "channel" properties <*>
+    extractProperty "msg" properties <*>
+    extractProperty timestampPV properties
+
 
 data LogRecord = LogRecord
   { lrUser :: T.Text
-  -- TODO(#474): LogRecord does not distinguish Twitch and Discord channels
-  , lrChannel :: T.Text
+  , lrChannel :: Channel
   , lrMsg :: T.Text
   , lrTimestamp :: UTCTime
   }
+
+instance IsEntity LogRecord where
+  toProperties lr =
+    M.fromList
+      [ ("version", PropertyInt 2)
+      , ("user", PropertyText $ lrUser lr)
+      , ("channel", PropertyText $ T.pack $ show $ lrChannel lr)
+      , ("msg", PropertyText $ lrMsg lr)
+      , (timestampPV, PropertyUTCTime $ lrTimestamp lr)
+      ]
+  fromProperties properties =
+    case extractProperty "version" properties of
+      Nothing -> migrateV1toV2 <$> fromProperties properties
+      Just x
+        | x == (2 :: Int) ->
+          LogRecord <$> extractProperty "user" properties <*>
+          -- TODO: an error should be thrown on unparsable channel
+          (fromMaybe (TwitchChannel "#tsoding") . readMay . T.unpack <$>
+           extractProperty "channel" properties) <*>
+          extractProperty "msg" properties <*>
+          extractProperty timestampPV properties
+      _ -> throwM $ UnexpectedPropertyType "LogRecord Version 2"
+
+migrateV1toV2 :: LogRecordV1 -> LogRecord
+migrateV1toV2 lr1 =
+  LogRecord
+    { lrUser = lr1User lr1
+    , lrChannel = newChannel
+    , lrMsg = lr1Msg lr1
+    , lrTimestamp = lr1Timestamp lr1
+    }
+  where
+    newChannel =
+      case T.uncons $ lr1Channel lr1 of
+        Just ('#', _) -> TwitchChannel $ lr1Channel lr1
+        -- TODO: an error should be thrown on unparsable Discord channel id
+        _ -> DiscordChannel $ fromMaybe 0 $ readMay $ T.unpack $ lr1Channel lr1
+
 
 lrAsMsg :: LogRecord -> T.Text
 lrAsMsg lr = [qms|<{lrUser lr}> {lrMsg lr}|]
@@ -33,20 +94,6 @@ timestampPV :: T.Text
 timestampPV = "timestamp"
 
 type Seconds = Natural
-
-instance IsEntity LogRecord where
-  toProperties lr =
-    M.fromList
-      [ ("user", PropertyText $ lrUser lr)
-      , ("channel", PropertyText $ lrChannel lr)
-      , ("msg", PropertyText $ lrMsg lr)
-      , (timestampPV, PropertyUTCTime $ lrTimestamp lr)
-      ]
-  fromProperties properties =
-    LogRecord <$> extractProperty "user" properties <*>
-    extractProperty "channel" properties <*>
-    extractProperty "msg" properties <*>
-    extractProperty timestampPV properties
 
 randomUserQuoteSelector :: T.Text -> Selector
 randomUserQuoteSelector user =
@@ -60,10 +107,7 @@ recordUserMsg Message {messageSender = sender, messageContent = msg} = do
       "LogRecord"
       LogRecord
         { lrUser = senderName sender
-        , lrChannel =
-            case senderChannel sender of
-              TwitchChannel name -> name
-              DiscordChannel channelId -> T.pack $ show channelId
+        , lrChannel = senderChannel sender
         , lrMsg = msg
         , lrTimestamp = timestamp
         }
@@ -90,6 +134,7 @@ randomLogRecord =
   cmapR listToMaybe $
   ignoreNothing $ cmapR (lrMsg . entityPayload) $ Reaction replyMessage
 
+-- TODO: !rq should query random message only for the channel it was called in
 randomLogRecordCommand :: Reaction Message T.Text
 randomLogRecordCommand =
   cmapR (T.toLower . T.strip) $
