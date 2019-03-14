@@ -64,7 +64,7 @@ instance IsEntity LogRecord where
       Just x
         | x == (2 :: Int) ->
           LogRecord <$> extractProperty "user" properties <*>
-          -- TODO: an error should be thrown on unparsable channel
+          -- TODO(#507): an error should be thrown on unparsable channel
           (fromMaybe (TwitchChannel "#tsoding") . readMay . T.unpack <$>
            extractProperty "channel" properties) <*>
           extractProperty "msg" properties <*>
