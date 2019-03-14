@@ -7,6 +7,8 @@ import Control.Concurrent.Async
 import Control.Concurrent.STM
 import Control.Exception (bracket, throwIO)
 import Control.Monad (void, when)
+import Data.List
+import Data.Maybe
 import qualified Data.Text as T
 import qualified Discord as D
 import Discord
@@ -16,23 +18,21 @@ import Discord
   , Event(..)
   , Gateway
   , RestChan
+  , User(..)
   , loginRestGateway
   , messageAuthor
   , messageChannel
-  , messageText
   , messageMentions
+  , messageText
   , nextEvent
   , restCall
   , stopDiscord
   , userId
   , userIsBot
   , userName
-  , User(..)
   )
 import Discord.Rest.User (UserRequest(GetCurrentUser))
 import Transport
-import Data.Maybe
-import Data.List
 
 sendLoop :: ChannelId -> OutcomingQueue -> (RestChan, Gateway, z) -> IO ()
 sendLoop channel outcoming dis = do
@@ -78,8 +78,7 @@ receiveLoop botUser owner channel incoming dis = do
               , senderBroadcaster = False
               , senderOwner = name == owner
               }
-            (isJust $
-             find (== userId botUser) $ map userId $ messageMentions m)
+            (isJust $ find (== userId botUser) $ map userId $ messageMentions m)
             (messageText m)
     _ -> return ()
   receiveLoop botUser owner channel incoming dis
@@ -94,9 +93,13 @@ discordTransportEntry incoming outcoming conf = do
     case resp of
       Left _ -> error "Getting current user call failed"
       Right user -> do
-        atomically $ writeTQueue incoming $ Joined (DiscordChannel $ fromIntegral $ dpChannel conf) $ T.pack $ userName user
+        atomically $
+          writeTQueue incoming $
+          Joined (DiscordChannel $ fromIntegral $ dpChannel conf) $
+          T.pack $ userName user
         withAsync (sendLoop (dpChannel conf) outcoming dis) $ \sender ->
-          withAsync (receiveLoop user (dpOwner conf) (dpChannel conf) incoming dis) $ \receive -> do
+          withAsync
+            (receiveLoop user (dpOwner conf) (dpChannel conf) incoming dis) $ \receive -> do
             res <- waitEitherCatch sender receive
             case res of
               Left Right {} -> fail "PANIC: sendLoop returned"
