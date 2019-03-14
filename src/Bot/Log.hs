@@ -83,7 +83,7 @@ migrateV1toV2 lr1 =
     newChannel =
       case T.uncons $ lr1Channel lr1 of
         Just ('#', _) -> TwitchChannel $ lr1Channel lr1
-        -- TODO: an error should be thrown on unparsable Discord channel id
+        -- TODO(#508): an error should be thrown on unparsable Discord channel id
         _ -> DiscordChannel $ fromMaybe 0 $ readMay $ T.unpack $ lr1Channel lr1
 
 
