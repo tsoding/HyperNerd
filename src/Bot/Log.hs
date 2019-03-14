@@ -134,7 +134,7 @@ randomLogRecord =
   cmapR listToMaybe $
   ignoreNothing $ cmapR (lrMsg . entityPayload) $ Reaction replyMessage
 
--- TODO: !rq should query random message only for the channel it was called in
+-- TODO(#509): !rq should query random message only for the channel it was called in
 randomLogRecordCommand :: Reaction Message T.Text
 randomLogRecordCommand =
   cmapR (T.toLower . T.strip) $
