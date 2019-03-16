@@ -93,3 +93,6 @@ cabal.project.local
 *.db
 *.txt
 *.csv
+*.tar
+*.tar.gz
+*.tgz
