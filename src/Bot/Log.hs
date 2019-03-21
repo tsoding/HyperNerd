@@ -15,9 +15,9 @@ import Entity
 import Numeric.Natural
 import Property
 import Reaction
+import Safe
 import Text.InterpolatedString.QM
 import Transport
-import Safe
 
 data LogRecord = LogRecord
   { lrUser :: T.Text
