@@ -138,6 +138,18 @@ entityMigrations =
   , [r| DROP TABLE EntityProperty; |]
   , [r| ALTER TABLE EntityProperty_Unique
           RENAME TO EntityProperty; |]
+  , [r| UPDATE EntityProperty
+        SET propertyText = 'TwitchChannel "' || propertyText || '"'
+        WHERE entityName = 'LogRecord'
+          AND propertyName = 'channel'
+          AND propertyText LIKE '#%';|]
+  , [r| UPDATE EntityProperty
+        SET propertyText = 'DiscordChannel ' || propertyText
+        WHERE entityName = 'LogRecord'
+          AND propertyName = 'channel'
+          AND propertyText NOT LIKE 'TwitchChannel%'
+          AND propertyText NOT LIKE 'DiscordChannel%'
+          AND propertyText NOT LIKE '#%';|]
   ]
 
 prepareSchema :: Connection -> IO ()
