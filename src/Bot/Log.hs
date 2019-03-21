@@ -15,13 +15,13 @@ import Entity
 import Numeric.Natural
 import Property
 import Reaction
+import Safe
 import Text.InterpolatedString.QM
 import Transport
 
 data LogRecord = LogRecord
   { lrUser :: T.Text
-  -- TODO(#474): LogRecord does not distinguish Twitch and Discord channels
-  , lrChannel :: T.Text
+  , lrChannel :: Channel
   , lrMsg :: T.Text
   , lrTimestamp :: UTCTime
   }
@@ -38,13 +38,14 @@ instance IsEntity LogRecord where
   toProperties lr =
     M.fromList
       [ ("user", PropertyText $ lrUser lr)
-      , ("channel", PropertyText $ lrChannel lr)
+      , ("channel", PropertyText $ T.pack $ show $ lrChannel lr)
       , ("msg", PropertyText $ lrMsg lr)
       , (timestampPV, PropertyUTCTime $ lrTimestamp lr)
       ]
   fromProperties properties =
     LogRecord <$> extractProperty "user" properties <*>
-    extractProperty "channel" properties <*>
+    (fromMaybe (TwitchChannel "#tsoding") . readMay . T.unpack <$>
+     extractProperty "channel" properties) <*>
     extractProperty "msg" properties <*>
     extractProperty timestampPV properties
 
@@ -60,10 +61,7 @@ recordUserMsg Message {messageSender = sender, messageContent = msg} = do
       "LogRecord"
       LogRecord
         { lrUser = senderName sender
-        , lrChannel =
-            case senderChannel sender of
-              TwitchChannel name -> name
-              DiscordChannel channelId -> T.pack $ show channelId
+        , lrChannel = senderChannel sender
         , lrMsg = msg
         , lrTimestamp = timestamp
         }
