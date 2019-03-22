@@ -8,6 +8,7 @@ module Bot.Log
   , recordUserMsg
   , getRecentLogs
   , randomLogRecord
+  , secondsAsBackwardsDiff
   ) where
 
 import Bot.Replies
