@@ -17,6 +17,12 @@ instance Semigroup (Reaction w a) where
 instance Monoid (Reaction w a) where
   mempty = ignore
 
+transCmapR :: Comonad w => (w a -> b) -> Reaction w b -> Reaction w a
+transCmapR f = transR duplicate . cmapR f
+
+transLiftR :: Comonad w => (w a -> Effect b) -> Reaction w b -> Reaction w a
+transLiftR f = transR duplicate . liftR f
+
 transR ::
      (Functor f1, Functor f2)
   => (f1 a -> f2 b)

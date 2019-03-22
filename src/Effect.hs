@@ -38,9 +38,10 @@ import Network.HTTP.Simple
 import Property
 import Transport
 
-data Condition =
-  PropertyEquals T.Text
-                 Property
+data Condition
+  = PropertyEquals T.Text
+                   Property
+  | ConditionAnd [Condition]
   deriving (Show)
 
 data Order

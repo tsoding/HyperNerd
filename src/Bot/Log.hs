@@ -1,11 +1,17 @@
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE QuasiQuotes #-}
 
-module Bot.Log where
+module Bot.Log
+  ( LogRecord(..)
+  , Seconds
+  , randomLogRecordCommand
+  , recordUserMsg
+  , getRecentLogs
+  , randomLogRecord
+  , secondsAsBackwardsDiff
+  ) where
 
 import Bot.Replies
-import Control.Comonad
-import Data.Foldable
 import qualified Data.Map as M
 import Data.Maybe
 import qualified Data.Text as T
@@ -25,9 +31,6 @@ data LogRecord = LogRecord
   , lrMsg :: T.Text
   , lrTimestamp :: UTCTime
   }
-
-lrAsMsg :: LogRecord -> T.Text
-lrAsMsg lr = [qms|<{lrUser lr}> {lrMsg lr}|]
 
 timestampPV :: T.Text
 timestampPV = "timestamp"
@@ -49,9 +52,17 @@ instance IsEntity LogRecord where
     extractProperty "msg" properties <*>
     extractProperty timestampPV properties
 
-randomUserQuoteSelector :: T.Text -> Selector
-randomUserQuoteSelector user =
-  Take 1 $ Shuffle $ Filter (PropertyEquals "user" $ PropertyText user) All
+randomUserQuoteSelector :: Message T.Text -> Selector
+randomUserQuoteSelector msg =
+  Take 1 $
+  Shuffle $
+  Filter
+    (ConditionAnd
+       [ PropertyEquals "user" $ PropertyText $ messageContent msg
+       , PropertyEquals "channel" $
+         PropertyText $ T.pack $ show $ senderChannel $ messageSender msg
+       ])
+    All
 
 recordUserMsg :: Message T.Text -> Effect ()
 recordUserMsg Message {messageSender = sender, messageContent = msg} = do
@@ -91,13 +102,13 @@ randomLogRecord =
 randomLogRecordCommand :: Reaction Message T.Text
 randomLogRecordCommand =
   cmapR (T.toLower . T.strip) $
-  transR duplicate $
-  cmapR extractUser $
-  liftR (selectEntities "LogRecord" . randomUserQuoteSelector) $
-  cmapR listToMaybe $
-  ignoreNothing $ cmapR (lrAsMsg . entityPayload) $ Reaction sayMessage
+  transCmapR extractUser $
+  transLiftR (selectEntities "LogRecord" . randomUserQuoteSelector) $
+  cmapR listToMaybe $ ignoreNothing $ cmapR (lrAsMsg . entityPayload) sayMessage
   where
     extractUser :: Message T.Text -> T.Text
-    extractUser msg =
-      fromMaybe (senderName $ messageSender msg) $
-      find (not . T.null) $ Just $ messageContent msg
+    extractUser msg
+      | T.null $ messageContent msg = senderName $ messageSender msg
+      | otherwise = messageContent msg
+    lrAsMsg :: LogRecord -> T.Text
+    lrAsMsg lr = [qms|<{lrUser lr}> {lrMsg lr}|]

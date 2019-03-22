@@ -9,8 +9,10 @@ import Reaction
 import Text.InterpolatedString.QM
 import Transport
 
-sayMessage :: Message T.Text -> Effect ()
-sayMessage msg = say (senderChannel $ messageSender msg) (messageContent msg)
+sayMessage :: Reaction Message T.Text
+sayMessage =
+  Reaction $ \msg ->
+    say (senderChannel $ messageSender msg) (messageContent msg)
 
 mentionSender :: Sender -> T.Text
 mentionSender Sender { senderChannel = sndrChannel

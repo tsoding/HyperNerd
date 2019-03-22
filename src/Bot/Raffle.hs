@@ -56,8 +56,8 @@ raffleCommand =
     (cmapR
        (const
           [qms|The raffle has been started. Use !join
-               command to join.|]) $
-     Reaction sayMessage)
+               command to join.|])
+       sayMessage)
 
 joinCommand :: Reaction Message a
 joinCommand =

@@ -17,7 +17,7 @@ import Reaction
 import Transport
 
 russifyCommand :: Reaction Message T.Text
-russifyCommand = cmapR russify $ Reaction sayMessage
+russifyCommand = cmapR russify sayMessage
 
 mazarusha :: M.Map T.Text T.Text
 mazarusha =
