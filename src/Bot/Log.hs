@@ -58,7 +58,8 @@ randomUserQuoteSelector msg =
   Filter
     (ConditionAnd
        [ PropertyEquals "user" $ PropertyText $ messageContent msg
-       , PropertyEquals "channel" $ PropertyText $ T.pack $ show $ senderChannel $ messageSender msg
+       , PropertyEquals "channel" $
+         PropertyText $ T.pack $ show $ senderChannel $ messageSender msg
        ])
     All
 
