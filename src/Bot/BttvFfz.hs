@@ -83,14 +83,12 @@ bttvUrl channel = [qms|https://api.betterttv.net/2/channels/{encodedChannel}|]
 ffzCommand :: Reaction Message ()
 ffzCommand =
   liftR (const $ selectEntities "FfzEmote" All) $
-  cmapR (T.concat . intersperse " " . map (ffzName . entityPayload)) $
-  Reaction sayMessage
+  cmapR (T.concat . intersperse " " . map (ffzName . entityPayload)) sayMessage
 
 bttvCommand :: Reaction Message ()
 bttvCommand =
   liftR (const $ selectEntities "BttvEmote" All) $
-  cmapR (T.concat . intersperse " " . map (bttvName . entityPayload)) $
-  Reaction sayMessage
+  cmapR (T.concat . intersperse " " . map (bttvName . entityPayload)) sayMessage
 
 jsonHttpRequest :: FromJSON a => Reaction Message a -> Reaction Message String
 jsonHttpRequest =
@@ -113,8 +111,7 @@ updateFfzEmotesCommand =
     (\emotes -> do
        void $ deleteEntities "FfzEmote" All
        traverse (createEntity "FfzEmote") emotes) $
-  cmapR (T.concat . intersperse " " . map (ffzName . entityPayload)) $
-  Reaction sayMessage
+  cmapR (T.concat . intersperse " " . map (ffzName . entityPayload)) sayMessage
 
 updateBttvEmotesCommand :: Reaction Message ()
 updateBttvEmotesCommand =
@@ -128,5 +125,4 @@ updateBttvEmotesCommand =
     (\emotes -> do
        void $ deleteEntities "BttvEmote" All
        traverse (createEntity "BttvEmote") emotes) $
-  cmapR (T.concat . intersperse " " . map (bttvName . entityPayload)) $
-  Reaction sayMessage
+  cmapR (T.concat . intersperse " " . map (bttvName . entityPayload)) sayMessage
