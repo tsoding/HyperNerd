@@ -39,6 +39,8 @@ compileCondition cteId (E.PropertyEquals propertyName property) =
     , [qm| :propertyUTCTimeValue{cteId} |] :=
       (fromProperty property :: Maybe UTCTime)
     ])
+-- TODO: E.ConditionAnd is not interpreted in Sqlite.Compiler.compileCondition
+compileCondition _ (E.ConditionAnd _) = undefined
 
 -- TODO(#253): compileCteChain doesn't optimize common patterns like Sqlite.EntityPersistence.selectEntityIds
 compileCteChain :: T.Text -> E.Selector -> (Int, NamedQuery)

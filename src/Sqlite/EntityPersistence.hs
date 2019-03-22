@@ -284,6 +284,37 @@ selectEntityIds conn name (Take n (Shuffle (Filter (PropertyEquals propertyName 
     , ":propertyUTCTime" := (fromProperty property :: Maybe UTCTime)
     , ":n" := n
     ]
+selectEntityIds conn name (Take n (Shuffle (Filter (ConditionAnd [PropertyEquals propertyName1 property1, PropertyEquals propertyName2 property2]) All))) =
+  map fromOnly <$>
+  queryNamed
+    conn
+    [r| select eid from (select entityId eid, count(entityId) ceid
+        from EntityProperty
+        where entityName = :entityName
+          and ((propertyName = :propertyName1 and
+                propertyInt is :propertyIntValue1 and
+                propertyText is :propertyTextValue1 and
+                propertyUTCTime is :propertyUTCTimeValue1)
+               or
+               (propertyName = :propertyName2 and
+                propertyInt is :propertyIntValue2 and
+                propertyText is :propertyTextValue2 and
+                propertyUTCTime is :propertyUTCTimeValue2))
+        group by entityId)
+        where ceid = 2
+        ORDER BY RANDOM()
+        LIMIT :n; |]
+    [ ":entityName" := name
+    , ":propertyName1" := propertyName1
+    , ":propertyIntValue1" := (fromProperty property1 :: Maybe Int)
+    , ":propertyTextValue1" := (fromProperty property1 :: Maybe T.Text)
+    , ":propertyUTCTimeValue1" := (fromProperty property1 :: Maybe UTCTime)
+    , ":propertyName2" := propertyName2
+    , ":propertyIntValue2" := (fromProperty property2 :: Maybe Int)
+    , ":propertyTextValue2" := (fromProperty property2 :: Maybe T.Text)
+    , ":propertyUTCTimeValue2" := (fromProperty property2 :: Maybe UTCTime)
+    , ":n" := n
+    ]
 -- TODO(#255): SortBy selector supports only UTCTime properties
 -- TODO(#256): SortBy selector supports only Desc order
 selectEntityIds conn name (Take n (SortBy propertyName Desc All)) =
