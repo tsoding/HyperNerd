@@ -37,3 +37,12 @@ textAsPipeSingleCommandSpec =
   TestLabel "Parse Command Pipe with single command" $
   TestCase $
   assertEqual "Unexpected parse result" [Command "rq" ""] (textAsPipe "!rq")
+
+textAsPipeEscapeSpec :: Test
+textAsPipeEscapeSpec =
+  TestLabel "Parse Command Pipe with escaped bar" $
+  TestCase $
+  assertEqual
+    "Unexpected parse result"
+    [Command "addcmd" "spoiler ||%1||", Command "cycle" ""]
+    (textAsPipe "!addcmd spoiler \\|\\|%1\\|\\| | !cycle")

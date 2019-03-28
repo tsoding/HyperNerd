@@ -39,4 +39,11 @@ textAsCommand (T.uncons -> Just ('!', restText)) =
 textAsCommand _ = Nothing
 
 textAsPipe :: T.Text -> [Command T.Text]
-textAsPipe = fromMaybe [] . mapM (textAsCommand . T.strip) . T.splitOn "|"
+textAsPipe s =
+  fromMaybe [] $
+  mapM (textAsCommand . T.strip) $
+  map (T.replace placeholder "|") $
+  T.splitOn "|" $ T.replace "\\|" placeholder s
+  where
+    placeholder =
+      head $ dropWhile (flip T.isInfixOf s) $ iterate (T.cons '\r') "\r"

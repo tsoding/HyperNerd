@@ -19,6 +19,7 @@ main = do
       , CS.commandWithRussians
       , CS.textAsPipeSpec
       , CS.textAsPipeSingleCommandSpec
+      , CS.textAsPipeEscapeSpec
       , SEPS.createEntityAndGetItById
       , SEPS.createSeveralEntityTypes
       , SEPS.deleteEntitiesWithPropertyEquals
