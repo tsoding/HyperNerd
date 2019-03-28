@@ -38,8 +38,9 @@ data InEvent
            T.Text
   | InMsg (Message T.Text)
 
-newtype OutEvent =
-  OutMsg T.Text
+data OutEvent =
+  OutMsg Channel
+         T.Text
 
 data Message a = Message
   { messageSender :: Sender

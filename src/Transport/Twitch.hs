@@ -122,7 +122,7 @@ sendLoop :: T.Text -> OutcomingQueue -> Connection -> IO ()
 sendLoop channel outcoming ircConn = do
   outMsg <- atomically $ readTQueue outcoming
   case outMsg of
-    OutMsg text -> sendMsg ircConn $ ircPrivmsg channel text
+    OutMsg _ text -> sendMsg ircConn $ ircPrivmsg channel text
   sendLoop channel outcoming ircConn
 
 -- TODO(#17): check unsuccessful authorization

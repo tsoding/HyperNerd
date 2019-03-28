@@ -18,7 +18,7 @@ flushOutcomingMessages :: OutcomingQueue -> IO ()
 flushOutcomingMessages outcoming = do
   msg <- atomically $ tryReadTQueue outcoming
   case msg of
-    Just (OutMsg msg') -> do
+    Just (OutMsg _ msg') -> do
       putStrLn $ T.unpack msg'
       flushOutcomingMessages outcoming
     Nothing -> return ()
