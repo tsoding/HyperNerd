@@ -33,7 +33,6 @@ data TwitchParams = TwitchParams
 
 data DiscordParams = DiscordParams
   { dpAuthToken :: T.Text
-  , dpGuild :: T.Text
   , dpChannel :: ChannelId
   , dpTwitchClientId :: T.Text
   , dpOwner :: T.Text
@@ -56,7 +55,6 @@ twitchParamsFromIni section ini =
 discordParamsFromIni :: T.Text -> Ini -> Either String DiscordParams
 discordParamsFromIni section ini =
   DiscordParams <$> lookupValue section "authToken" ini <*>
-  lookupValue section "guild" ini <*>
   fmap
     Snowflake
     ((maybeToEither "channel is not a number" . readMay . T.unpack) =<<
