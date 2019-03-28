@@ -24,9 +24,9 @@ data FridayVideo = FridayVideo
 instance IsEntity FridayVideo where
   toProperties fridayVideo =
     M.fromList
-      [ ("name", PropertyText $ fridayVideoName $ fridayVideo)
-      , ("author", PropertyText $ fridayVideoAuthor $ fridayVideo)
-      , ("date", PropertyUTCTime $ fridayVideoDate $ fridayVideo)
+      [ ("name", PropertyText $ fridayVideoName fridayVideo)
+      , ("author", PropertyText $ fridayVideoAuthor fridayVideo)
+      , ("date", PropertyUTCTime $ fridayVideoDate fridayVideo)
       ]
   fromProperties properties =
     FridayVideo <$> extractProperty "name" properties <*>
@@ -35,14 +35,13 @@ instance IsEntity FridayVideo where
 
 messageTrustedGate :: Message a -> MaybeT Effect a
 messageTrustedGate msg =
-  messageContent msg <$ (findTrustedSender $ messageSender msg)
+  messageContent msg <$ findTrustedSender (messageSender msg)
 
 trustedCommand :: Reaction Message T.Text -> Reaction Message T.Text
 trustedCommand reaction =
-    transR duplicate $
-    liftR (runMaybeT . messageTrustedGate) $
-    replyOnNothing "This command is only for trusted users" $
-    reaction
+  transR duplicate $
+  liftR (runMaybeT . messageTrustedGate) $
+  replyOnNothing "This command is only for trusted users" reaction
 
 fridayCommand :: Reaction Message T.Text
 fridayCommand =
@@ -54,4 +53,4 @@ fridayCommand =
        createEntity "FridayVideo" .
        FridayVideo (messageContent msg) (senderName $ messageSender msg) =<<
        now) $
-  cmapR (const $ "Added to the suggestions") $ Reaction replyMessage
+  cmapR (const "Added to the suggestions") $ Reaction replyMessage
