@@ -25,7 +25,7 @@ eventLoop b prevCPUTime botState = do
   let deltaTime = toNanoSecs (currCPUTime - prevCPUTime) `div` 1000000
   messages <-
     fmap (join . map maybeToList) $
-    atomically $ mapM (tryReadTQueue . csIncoming) $ bsChannels botState
+    atomically $ mapM (tryReadTQueue . csIncoming) $ bsTransports botState
   foldrM (handleInEvent b) botState messages >>= advanceTimeouts deltaTime >>=
     eventLoop b currCPUTime
 
@@ -52,7 +52,7 @@ block = do
 entry :: String -> String -> Maybe String -> IO ()
 entry configPath databasePath markovPath =
   withBotState markovPath configPath databasePath $ \botState -> do
-    when (null $ bsChannels botState) $
+    when (null $ bsTransports botState) $
       ioError $ userError "Could not find a single 'bot:' section"
     supavisah $ logicEntry botState
     mapM_
@@ -79,7 +79,7 @@ entry configPath databasePath markovPath =
                (csIncoming channelState)
                (csOutcoming channelState)
                debugConfig) $
-      bsChannels botState
+      bsTransports botState
     block
 
 mainWithArgs :: [String] -> IO ()
