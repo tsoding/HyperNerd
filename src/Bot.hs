@@ -12,6 +12,7 @@ import Bot.Banwords
 import Bot.BttvFfz
 import Bot.CustomCommand
 import Bot.Dubtrack
+import Bot.Friday
 import Bot.Help
 import Bot.Links
 import Bot.Log
@@ -219,6 +220,7 @@ builtinCommands =
         , authorizeSender senderAuthority $
           replyOnNothing "Only for mods" $ cmapR (const 5) raffleCommand))
     , ("join", ("Join the raffle", joinCommand))
+    , ("friday", ("Suggest video for the friday stream", fridayCommand))
     ]
 
 mockMessage :: T.Text -> T.Text

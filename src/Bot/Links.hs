@@ -8,6 +8,7 @@ module Bot.Links
   , untrustCommand
   , amitrustedCommand
   , istrustedCommand
+  , findTrustedSender
   ) where
 
 import Bot.Replies
