@@ -61,39 +61,40 @@ executable HyperNerd
   -- Modules included in this executable, other than Main.
   other-modules:       Bot
                      , Bot.Alias
+                     , Bot.Banwords
                      , Bot.BttvFfz
                      , Bot.CustomCommand
                      , Bot.Dubtrack
+                     , Bot.Friday
+                     , Bot.Help
                      , Bot.Links
                      , Bot.Log
                      , Bot.Periodic
                      , Bot.Poll
                      , Bot.Quote
+                     , Bot.Raffle
                      , Bot.Replies
                      , Bot.Russify
                      , Bot.Twitch
                      , Bot.Variable
-                     , Bot.Help
-                     , Bot.Banwords
                      , BotState
                      , Command
+                     , Config
+                     , Data.Either.Extra
                      , Effect
                      , Entity
-                     , Transport.Twitch
-                     , Transport
-                     , Transport.Discord
-                     , Transport.Debug
+                     , HyperNerd.Comonad
+                     , HyperNerd.Functor
+                     , Markov
                      , Property
                      , Reaction
                      , Sqlite.Compiler
                      , Sqlite.EntityPersistence
                      , Sqlite.Migration
-                     , HyperNerd.Functor
-                     , HyperNerd.Comonad
-                     , Markov
-                     , Bot.Raffle
-                     , Config
-                     , Data.Either.Extra
+                     , Transport
+                     , Transport.Debug
+                     , Transport.Discord
+                     , Transport.Twitch
 
   -- LANGUAGE extensions used by modules in this package.
   other-extensions:    OverloadedStrings
