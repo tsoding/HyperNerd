@@ -11,6 +11,7 @@ import Data.Maybe
 import qualified Data.Text as T
 import Effect
 import Reaction
+import Safe
 import Transport
 
 -- TODO(#341): CommandHandler can be easily replaced by MsgReaction only
@@ -39,4 +40,11 @@ textAsCommand (T.uncons -> Just ('!', restText)) =
 textAsCommand _ = Nothing
 
 textAsPipe :: T.Text -> [Command T.Text]
-textAsPipe = fromMaybe [] . mapM (textAsCommand . T.strip) . T.splitOn "|"
+textAsPipe s =
+  fromMaybe [] $
+  mapM (textAsCommand . T.strip . T.replace placeholder "|") $
+  T.splitOn "|" $ T.replace "\\|" placeholder s
+  where
+    placeholder =
+      fromMaybe "\r" $
+      headMay $ dropWhile (`T.isInfixOf` s) $ iterate (T.cons '\r') "\r"
