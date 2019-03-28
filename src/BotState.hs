@@ -95,7 +95,7 @@ channelsOfState channelState =
 
 stateOfChannel :: BotState -> Channel -> Maybe ChannelState
 stateOfChannel botState channel =
-  find (any (== channel) . channelsOfState) $ bsChannels botState
+  find (elem channel . channelsOfState) $ bsChannels botState
 
 applyEffect :: (BotState, Effect ()) -> IO (BotState, Effect ())
 applyEffect self@(_, Pure _) = return self
