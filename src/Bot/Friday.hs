@@ -1,19 +1,20 @@
 {-# LANGUAGE OverloadedStrings #-}
+
 module Bot.Friday where
 
-import Reaction
-import Transport (Message(..), Sender(..))
+import Bot.Links
+import Bot.Replies
+import Control.Comonad
+import Control.Monad.Trans.Maybe
+import Data.Functor
+import qualified Data.Map as M
 import qualified Data.Text as T
 import Data.Time
-import Entity
-import qualified Data.Map as M
-import Property
 import Effect
-import Data.Functor
-import Control.Comonad
-import Bot.Replies
-import Control.Monad.Trans.Maybe
-import Bot.Links
+import Entity
+import Property
+import Reaction
+import Transport (Message(..), Sender(..))
 
 data FridayVideo = FridayVideo
   { fridayVideoName :: T.Text
