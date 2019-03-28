@@ -11,8 +11,8 @@ import Data.Maybe
 import qualified Data.Text as T
 import Effect
 import Reaction
-import Transport
 import Safe
+import Transport
 
 -- TODO(#341): CommandHandler can be easily replaced by MsgReaction only
 type CommandHandler a = Message a -> Effect ()
