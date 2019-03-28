@@ -1,3 +1,5 @@
+{-# LANGUAGE QuasiQuotes #-}
+
 module Transport.Discord
   ( discordTransportEntry
   ) where
@@ -32,14 +34,22 @@ import Discord
   , userName
   )
 import Discord.Rest.User (UserRequest(GetCurrentUser))
+import System.IO
+import Text.InterpolatedString.QM
 import Transport
 
-sendLoop :: ChannelId -> OutcomingQueue -> (RestChan, Gateway, z) -> IO ()
-sendLoop channel outcoming dis = do
+sendLoop :: OutcomingQueue -> (RestChan, Gateway, z) -> IO ()
+sendLoop outcoming dis = do
   outMsg <- atomically $ readTQueue outcoming
   case outMsg of
-    OutMsg text -> void $ restCall dis (CreateMessage channel text)
-  sendLoop channel outcoming dis
+    OutMsg (DiscordChannel chanId) text ->
+      void $ restCall dis (CreateMessage (D.Snowflake chanId) text)
+    OutMsg channel text ->
+      hPutStrLn
+        stderr
+        [qms|[ERROR] Tried to send {channel} message '{text}'
+             from a Discord transport|]
+  sendLoop outcoming dis
 
 fromBot :: D.Message -> Bool
 fromBot = userIsBot . messageAuthor
@@ -50,16 +60,16 @@ fromChannel channel message = messageChannel message == channel
 receiveLoop ::
      User
   -> T.Text
-  -> ChannelId
+  -> [ChannelId]
   -> IncomingQueue
   -> (RestChan, Gateway, z)
   -> IO ()
-receiveLoop botUser owner channel incoming dis = do
+receiveLoop botUser owner channels incoming dis = do
   e <- nextEvent dis
   case e of
     Left er -> putStrLn ("Event error: " <> show er)
     Right (MessageCreate m) ->
-      when (not (fromBot m) && fromChannel channel m) $ do
+      when (not (fromBot m) && any (`fromChannel` m) channels) $ do
         print m
         let name = T.pack $ userName $ messageAuthor m
         atomically $
@@ -69,7 +79,7 @@ receiveLoop botUser owner channel incoming dis = do
             Sender
               { senderName = name
               , senderDisplayName = name
-              , senderChannel = DiscordChannel $ fromIntegral channel
+              , senderChannel = DiscordChannel $ fromIntegral $ messageChannel m
               , senderId = T.pack $ show $ userId $ messageAuthor m
               -- TODO(#455): Subscribers are not detected by Discord transport
               , senderSubscriber = False
@@ -81,7 +91,7 @@ receiveLoop botUser owner channel incoming dis = do
             (isJust $ find (== userId botUser) $ map userId $ messageMentions m)
             (messageText m)
     _ -> return ()
-  receiveLoop botUser owner channel incoming dis
+  receiveLoop botUser owner channels incoming dis
 
 -- TODO(#465): Discord transport does not handle authorization failure
 discordTransportEntry ::
@@ -90,16 +100,21 @@ discordTransportEntry incoming outcoming conf = do
   bracket (loginRestGateway $ Auth $ dpAuthToken conf) stopDiscord $ \dis -> do
     resp <- restCall dis GetCurrentUser
     -- TODO(#466): restCall errors are not handled properly
+    -- TODO: Discord transport never checks if the bot actually sitting in the dpChannels
     case resp of
       Left _ -> error "Getting current user call failed"
       Right user -> do
-        atomically $
-          writeTQueue incoming $
-          Joined (DiscordChannel $ fromIntegral $ dpChannel conf) $
-          T.pack $ userName user
-        withAsync (sendLoop (dpChannel conf) outcoming dis) $ \sender ->
+        mapM_
+          (\chanId ->
+             atomically $
+             writeTQueue incoming $
+             Joined
+               (DiscordChannel $ fromIntegral chanId)
+               (T.pack $ userName user)) $
+          dpChannels conf
+        withAsync (sendLoop outcoming dis) $ \sender ->
           withAsync
-            (receiveLoop user (dpOwner conf) (dpChannel conf) incoming dis) $ \receive -> do
+            (receiveLoop user (dpOwner conf) (dpChannels conf) incoming dis) $ \receive -> do
             res <- waitEitherCatch sender receive
             case res of
               Left Right {} -> fail "PANIC: sendLoop returned"

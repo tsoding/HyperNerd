@@ -221,6 +221,9 @@ builtinCommands =
           replyOnNothing "Only for mods" $ cmapR (const 5) raffleCommand))
     , ("join", ("Join the raffle", joinCommand))
     , ("friday", ("Suggest video for the friday stream", fridayCommand))
+    , ( "twitch"
+      , ( "Send message to Tsoding Twitch channel"
+        , liftR (say (TwitchChannel "#tsoding")) ignore))
     ]
 
 mockMessage :: T.Text -> T.Text

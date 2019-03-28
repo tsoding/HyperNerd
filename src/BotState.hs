@@ -84,16 +84,17 @@ withBotState markovPath tcPath databasePath block = do
 twitchCmdEscape :: T.Text -> T.Text
 twitchCmdEscape = T.dropWhile (`elem` ['/', '.']) . T.strip
 
-channelOfState :: ChannelState -> Channel
-channelOfState channelState =
+channelsOfState :: ChannelState -> [Channel]
+channelsOfState channelState =
   case csConfig channelState of
-    TwitchConfig param -> TwitchChannel $ tpChannel param
-    DiscordConfig param -> DiscordChannel $ fromIntegral $ dpChannel param
-    DebugConfig _ -> TwitchChannel "#tsoding"
+    TwitchConfig param -> return $ TwitchChannel $ tpChannel param
+    DiscordConfig param ->
+      map (DiscordChannel . fromIntegral) $ dpChannels param
+    DebugConfig _ -> return $ TwitchChannel "#tsoding"
 
 stateOfChannel :: BotState -> Channel -> Maybe ChannelState
 stateOfChannel botState channel =
-  find ((== channel) . channelOfState) $ bsChannels botState
+  find (elem channel . channelsOfState) $ bsChannels botState
 
 applyEffect :: (BotState, Effect ()) -> IO (BotState, Effect ())
 applyEffect self@(_, Pure _) = return self
@@ -103,8 +104,11 @@ applyEffect (botState, Free (Say channel text s)) = do
       case csConfig channelState of
         TwitchConfig _ ->
           atomically $
-          writeTQueue (csOutcoming channelState) $ OutMsg $ twitchCmdEscape text
-        _ -> atomically $ writeTQueue (csOutcoming channelState) $ OutMsg text
+          writeTQueue (csOutcoming channelState) $
+          OutMsg channel (twitchCmdEscape text)
+        _ ->
+          atomically $
+          writeTQueue (csOutcoming channelState) $ OutMsg channel text
     Nothing -> hPutStrLn stderr [qms|[ERROR] Channel does not exist {channel} |]
   return (botState, s)
 applyEffect (botState, Free (LogMsg msg s)) = do
@@ -175,7 +179,7 @@ applyEffect (botState, Free (TwitchCommand channel name args s)) =
     Just channelState -> do
       atomically $
         writeTQueue (csOutcoming channelState) $
-        OutMsg [qms|/{name} {T.concat $ intersperse " " args}|]
+        OutMsg channel [qms|/{name} {T.concat $ intersperse " " args}|]
       return (botState, s)
     Nothing -> do
       hPutStrLn stderr [qms|[ERROR] Channel does not exist {channel} |]
