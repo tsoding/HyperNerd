@@ -1,4 +1,5 @@
 {-# LANGUAGE QuasiQuotes #-}
+
 module Transport.Discord
   ( discordTransportEntry
   ) where
@@ -33,9 +34,9 @@ import Discord
   , userName
   )
 import Discord.Rest.User (UserRequest(GetCurrentUser))
-import Transport
-import Text.InterpolatedString.QM
 import System.IO
+import Text.InterpolatedString.QM
+import Transport
 
 sendLoop :: OutcomingQueue -> (RestChan, Gateway, z) -> IO ()
 sendLoop outcoming dis = do
