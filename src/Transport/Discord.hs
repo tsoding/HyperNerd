@@ -88,7 +88,7 @@ receiveLoop botUser owner channels incoming dis = do
       when (not (fromBot m) && any (`fromChannel` m) channels) $ do
         print m
         let name = T.pack $ userName $ messageAuthor m
-        -- TODO: requesting Discord roles on each message is dangerous for rate limits
+        -- TODO(#522): requesting Discord roles on each message is dangerous for rate limits
         roles <- rolesOfMessage dis m
         atomically $
           writeTQueue incoming $
