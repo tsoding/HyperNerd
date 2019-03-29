@@ -57,6 +57,10 @@ fromBot = userIsBot . messageAuthor
 fromChannel :: ChannelId -> D.Message -> Bool
 fromChannel channel message = messageChannel message == channel
 
+-- TODO: Transport.Discord.rolesOfMessage is not implemented
+rolesOfMessage :: D.Message -> IO [Role]
+rolesOfMessage _ = return []
+
 receiveLoop ::
      User
   -> T.Text
@@ -72,6 +76,7 @@ receiveLoop botUser owner channels incoming dis = do
       when (not (fromBot m) && any (`fromChannel` m) channels) $ do
         print m
         let name = T.pack $ userName $ messageAuthor m
+        roles <- rolesOfMessage m
         atomically $
           writeTQueue incoming $
           InMsg $
@@ -81,12 +86,7 @@ receiveLoop botUser owner channels incoming dis = do
               , senderDisplayName = name
               , senderChannel = DiscordChannel $ fromIntegral $ messageChannel m
               , senderId = T.pack $ show $ userId $ messageAuthor m
-              -- TODO(#455): Subscribers are not detected by Discord transport
-              , senderSubscriber = False
-              -- TODO(#456): Mods are not detected by Discord transport
-              , senderMod = False
-              , senderBroadcaster = False
-              , senderOwner = name == owner
+              , senderRoles = roles
               }
             (isJust $ find (== userId botUser) $ map userId $ messageMentions m)
             (messageText m)

@@ -23,10 +23,10 @@ import Irc.RawIrcMsg
   )
 import Network.Socket (Family(..))
 import Transport
-
 import Data.Maybe
 import Irc.Identifier (idText)
 import Irc.UserInfo (userNick)
+import Data.Maybe.Extra
 
 maxIrcMessage :: Int
 maxIrcMessage = 1000
@@ -77,11 +77,6 @@ receiveLoop :: TwitchParams -> IncomingQueue -> Connection -> IO ()
 receiveLoop conf incoming ircConn = do
   mb <- readIrcLine ircConn
   for_ mb $ \msg -> do
-    let badges =
-          concat $
-          maybeToList $
-          fmap (T.splitOn "," . valueOfTag) $
-          find (\(TagEntry ident _) -> ident == "badges") $ _msgTags msg
     let cookedMsg = cookIrcMsg msg
     -- TODO(#483): Logs from different channels clash together
     --   Let's introduce logging to files. A file per channel.
@@ -97,10 +92,19 @@ receiveLoop conf incoming ircConn = do
             { senderName = name
             , senderDisplayName = displayName
             , senderChannel = TwitchChannel $ idText target
-            , senderSubscriber = any (T.isPrefixOf "subscriber") badges
-            , senderMod = any (T.isPrefixOf "moderator") badges
-            , senderBroadcaster = any (T.isPrefixOf "broadcaster") badges
-            , senderOwner = name == tpOwner conf
+            , senderRoles =
+                concat
+                  [ maybeToList $
+                    fmap (const TwitchSub) $
+                    find (T.isPrefixOf "subscriber") badges
+                  , maybeToList $
+                    fmap (const TwitchMod) $
+                    find (T.isPrefixOf "moderator") badges
+                  , maybeToList $
+                    fmap (const TwitchBroadcaster) $
+                    find (T.isPrefixOf "broadcaster") badges
+                  , maybeToList $ toMaybe (name == tpOwner conf) Owner
+                  ]
             -- TODO(#468): Twitch does not provide the id of the user
             , senderId = ""
             }
@@ -111,6 +115,11 @@ receiveLoop conf incoming ircConn = do
                 maybe name valueOfTag $
                 find (\(TagEntry ident _) -> ident == "display-name") $
                 _msgTags msg
+              badges =
+                concat $
+                maybeToList $
+                fmap (T.splitOn "," . valueOfTag) $
+                find (\(TagEntry ident _) -> ident == "badges") $ _msgTags msg
       (Join userInfo _ _) ->
         atomically $
         writeTQueue incoming $
