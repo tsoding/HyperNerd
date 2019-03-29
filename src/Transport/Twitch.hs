@@ -9,10 +9,13 @@ import Control.Concurrent.Async
 import Control.Concurrent.STM
 import Control.Exception
 import Data.Foldable
+import Data.Maybe
+import Data.Maybe.Extra
 import qualified Data.Text as T
 import Data.Traversable
 import Hookup
 import Irc.Commands (ircCapReq, ircJoin, ircNick, ircPass, ircPong, ircPrivmsg)
+import Irc.Identifier (idText)
 import Irc.Message (IrcMsg(Join, Ping, Privmsg), cookIrcMsg)
 import Irc.RawIrcMsg
   ( RawIrcMsg(..)
@@ -21,12 +24,9 @@ import Irc.RawIrcMsg
   , parseRawIrcMsg
   , renderRawIrcMsg
   )
+import Irc.UserInfo (userNick)
 import Network.Socket (Family(..))
 import Transport
-import Data.Maybe
-import Irc.Identifier (idText)
-import Irc.UserInfo (userNick)
-import Data.Maybe.Extra
 
 maxIrcMessage :: Int
 maxIrcMessage = 1000
