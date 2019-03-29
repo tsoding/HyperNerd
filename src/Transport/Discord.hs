@@ -57,9 +57,21 @@ fromBot = userIsBot . messageAuthor
 fromChannel :: ChannelId -> D.Message -> Bool
 fromChannel channel message = messageChannel message == channel
 
--- TODO: Transport.Discord.rolesOfMessage is not implemented
-rolesOfMessage :: D.Message -> IO [Role]
-rolesOfMessage _ = return []
+rolesOfMessage :: (RestChan, Gateway, z) -> D.Message -> IO [Role]
+rolesOfMessage dis msg =
+  case D.messageGuild msg of
+    Just guildId -> do
+      resp <-
+        D.restCall dis $ D.GetGuildMember guildId (userId $ messageAuthor msg)
+      case resp of
+        Left e -> error $ show e
+        Right guildMember ->
+          return $ map (DiscordRole . fromIntegral) $ D.memberRoles guildMember
+    Nothing -> do
+      hPutStrLn
+        stderr
+        [qms|[WARNING] Could not extract a guild from the message {msg}|]
+      return []
 
 receiveLoop ::
      User
@@ -76,7 +88,8 @@ receiveLoop botUser owner channels incoming dis = do
       when (not (fromBot m) && any (`fromChannel` m) channels) $ do
         print m
         let name = T.pack $ userName $ messageAuthor m
-        roles <- rolesOfMessage m
+        -- TODO: requesting Discord roles on each message is dangerous for rate limits
+        roles <- rolesOfMessage dis m
         atomically $
           writeTQueue incoming $
           InMsg $

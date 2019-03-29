@@ -223,7 +223,10 @@ builtinCommands =
     , ("friday", ("Suggest video for the friday stream", fridayCommand))
     , ( "twitch"
       , ( "Send message to Tsoding Twitch channel"
-        , liftR (say (TwitchChannel "#tsoding")) ignore))
+        , onlyForRole
+            "You have to be a Twitch sub in the Discord server"
+            (DiscordRole 542590649103286273) $
+          liftR (say (TwitchChannel "#tsoding")) ignore))
     ]
 
 mockMessage :: T.Text -> T.Text
@@ -236,6 +239,14 @@ mockMessage =
          then Data.Char.toUpper
          else Data.Char.toLower)
     True
+
+onlyForRole :: T.Text -> Role -> Reaction Message a -> Reaction Message a
+onlyForRole reply role reaction =
+  transR duplicate $
+  ifR
+    (elem role . senderRoles . messageSender)
+    (cmapR extract reaction)
+    (cmapR (const reply) $ Reaction replyMessage)
 
 justCommand :: CommandHandler a -> CommandHandler (Maybe a)
 justCommand commandHandler message@Message {messageContent = Just arg} =

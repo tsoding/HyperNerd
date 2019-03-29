@@ -23,7 +23,7 @@ data Role
   | TwitchMod
   | TwitchBroadcaster
   | Owner
-  | DiscordRole T.Text
+  | DiscordRole Word64
   deriving (Show, Eq)
 
 data Sender = Sender
