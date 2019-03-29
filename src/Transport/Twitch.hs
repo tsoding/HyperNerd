@@ -93,17 +93,12 @@ receiveLoop conf incoming ircConn = do
             , senderDisplayName = displayName
             , senderChannel = TwitchChannel $ idText target
             , senderRoles =
-                concat
-                  [ maybeToList $
-                    fmap (const TwitchSub) $
-                    find (T.isPrefixOf "subscriber") badges
-                  , maybeToList $
-                    fmap (const TwitchMod) $
-                    find (T.isPrefixOf "moderator") badges
-                  , maybeToList $
-                    fmap (const TwitchBroadcaster) $
+                catMaybes
+                  [ TwitchSub <$ find (T.isPrefixOf "subscriber") badges
+                  , TwitchMod <$ find (T.isPrefixOf "moderator") badges
+                  , TwitchBroadcaster <$
                     find (T.isPrefixOf "broadcaster") badges
-                  , maybeToList $ toMaybe (name == tpOwner conf) Owner
+                  , toMaybe (name == tpOwner conf) Owner
                   ]
             -- TODO(#468): Twitch does not provide the id of the user
             , senderId = ""
