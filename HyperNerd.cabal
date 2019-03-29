@@ -81,6 +81,7 @@ executable HyperNerd
                      , Command
                      , Config
                      , Data.Either.Extra
+                     , Data.Maybe.Extra
                      , Effect
                      , Entity
                      , HyperNerd.Comonad

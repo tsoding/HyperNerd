@@ -8,7 +8,7 @@ module BotState
   , withBotState'
   , newBotState
   , BotState(..)
-  , ChannelState(..)
+  , TransportState(..)
   ) where
 
 import Bot
@@ -34,37 +34,37 @@ import Text.InterpolatedString.QM
 import Text.Printf
 import Transport
 
-data ChannelState = ChannelState
+data TransportState = TransportState
   { csConfig :: Config
   , csIncoming :: IncomingQueue
   , csOutcoming :: OutcomingQueue
   }
 
 data BotState = BotState
-  { bsChannels :: [ChannelState]
+  { bsTransports :: [TransportState]
   -- Shared
   , bsTimeouts :: [(Integer, Effect ())]
   , bsSqliteConn :: SQLite.Connection
   , bsMarkov :: Maybe Markov
   }
 
-newChannelState :: Config -> IO ChannelState
-newChannelState config = do
+newTransportState :: Config -> IO TransportState
+newTransportState config = do
   incoming <- atomically newTQueue
   outcoming <- atomically newTQueue
   return
-    ChannelState
+    TransportState
       {csIncoming = incoming, csOutcoming = outcoming, csConfig = config}
 
 newBotState :: Maybe Markov -> [Config] -> SQLite.Connection -> IO BotState
 newBotState markov confs sqliteConn = do
-  channels <- mapM newChannelState confs
+  transports <- mapM newTransportState confs
   return
     BotState
       { bsSqliteConn = sqliteConn
       , bsTimeouts = []
       , bsMarkov = markov
-      , bsChannels = channels
+      , bsTransports = transports
       }
 
 withBotState' ::
@@ -84,7 +84,7 @@ withBotState markovPath tcPath databasePath block = do
 twitchCmdEscape :: T.Text -> T.Text
 twitchCmdEscape = T.dropWhile (`elem` ['/', '.']) . T.strip
 
-channelsOfState :: ChannelState -> [Channel]
+channelsOfState :: TransportState -> [Channel]
 channelsOfState channelState =
   case csConfig channelState of
     TwitchConfig param -> return $ TwitchChannel $ tpChannel param
@@ -92,9 +92,9 @@ channelsOfState channelState =
       map (DiscordChannel . fromIntegral) $ dpChannels param
     DebugConfig _ -> return $ TwitchChannel "#tsoding"
 
-stateOfChannel :: BotState -> Channel -> Maybe ChannelState
+stateOfChannel :: BotState -> Channel -> Maybe TransportState
 stateOfChannel botState channel =
-  find (elem channel . channelsOfState) $ bsChannels botState
+  find (elem channel . channelsOfState) $ bsTransports botState
 
 applyEffect :: (BotState, Effect ()) -> IO (BotState, Effect ())
 applyEffect self@(_, Pure _) = return self

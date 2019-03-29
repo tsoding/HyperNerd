@@ -57,6 +57,22 @@ fromBot = userIsBot . messageAuthor
 fromChannel :: ChannelId -> D.Message -> Bool
 fromChannel channel message = messageChannel message == channel
 
+rolesOfMessage :: (RestChan, Gateway, z) -> D.Message -> IO [Role]
+rolesOfMessage dis msg =
+  case D.messageGuild msg of
+    Just guildId -> do
+      resp <-
+        D.restCall dis $ D.GetGuildMember guildId (userId $ messageAuthor msg)
+      case resp of
+        Left e -> error $ show e
+        Right guildMember ->
+          return $ map (DiscordRole . fromIntegral) $ D.memberRoles guildMember
+    Nothing -> do
+      hPutStrLn
+        stderr
+        [qms|[WARNING] Could not extract a guild from the message {msg}|]
+      return []
+
 receiveLoop ::
      User
   -> T.Text
@@ -72,6 +88,8 @@ receiveLoop botUser owner channels incoming dis = do
       when (not (fromBot m) && any (`fromChannel` m) channels) $ do
         print m
         let name = T.pack $ userName $ messageAuthor m
+        -- TODO(#522): requesting Discord roles on each message is dangerous for rate limits
+        roles <- rolesOfMessage dis m
         atomically $
           writeTQueue incoming $
           InMsg $
@@ -81,12 +99,7 @@ receiveLoop botUser owner channels incoming dis = do
               , senderDisplayName = name
               , senderChannel = DiscordChannel $ fromIntegral $ messageChannel m
               , senderId = T.pack $ show $ userId $ messageAuthor m
-              -- TODO(#455): Subscribers are not detected by Discord transport
-              , senderSubscriber = False
-              -- TODO(#456): Mods are not detected by Discord transport
-              , senderMod = False
-              , senderBroadcaster = False
-              , senderOwner = name == owner
+              , senderRoles = roles
               }
             (isJust $ find (== userId botUser) $ map userId $ messageMentions m)
             (messageText m)
@@ -100,7 +113,7 @@ discordTransportEntry incoming outcoming conf = do
   bracket (loginRestGateway $ Auth $ dpAuthToken conf) stopDiscord $ \dis -> do
     resp <- restCall dis GetCurrentUser
     -- TODO(#466): restCall errors are not handled properly
-    -- TODO: Discord transport never checks if the bot actually sitting in the dpChannels
+    -- TODO(#523): Discord transport never checks if the bot actually sitting in the dpChannels
     case resp of
       Left _ -> error "Getting current user call failed"
       Right user -> do

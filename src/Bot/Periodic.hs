@@ -25,10 +25,7 @@ mrbotka =
     { senderName = "mrbotka"
     , senderDisplayName = "MrBotka"
     , senderChannel = TwitchChannel "#tsoding"
-    , senderSubscriber = True
-    , senderMod = True
-    , senderBroadcaster = True
-    , senderOwner = True
+    , senderRoles = [TwitchSub, TwitchMod, TwitchBroadcaster, Owner]
     , senderId = ""
     }
 

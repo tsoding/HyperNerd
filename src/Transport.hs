@@ -18,16 +18,33 @@ data Channel
   | TwitchChannel T.Text
   deriving (Show, Read, Eq)
 
+data Role
+  = TwitchSub
+  | TwitchMod
+  | TwitchBroadcaster
+  | Owner
+  | DiscordRole Word64
+  deriving (Show, Eq)
+
 data Sender = Sender
   { senderName :: T.Text
   , senderDisplayName :: T.Text
   , senderId :: T.Text
   , senderChannel :: Channel
-  , senderSubscriber :: Bool
-  , senderMod :: Bool
-  , senderBroadcaster :: Bool
-  , senderOwner :: Bool
+  , senderRoles :: [Role]
   }
+
+senderSubscriber :: Sender -> Bool
+senderSubscriber = elem TwitchSub . senderRoles
+
+senderMod :: Sender -> Bool
+senderMod = elem TwitchMod . senderRoles
+
+senderBroadcaster :: Sender -> Bool
+senderBroadcaster = elem TwitchBroadcaster . senderRoles
+
+senderOwner :: Sender -> Bool
+senderOwner = elem Owner . senderRoles
 
 senderAuthority :: Sender -> Bool
 senderAuthority sender =
