@@ -113,7 +113,7 @@ discordTransportEntry incoming outcoming conf = do
   bracket (loginRestGateway $ Auth $ dpAuthToken conf) stopDiscord $ \dis -> do
     resp <- restCall dis GetCurrentUser
     -- TODO(#466): restCall errors are not handled properly
-    -- TODO: Discord transport never checks if the bot actually sitting in the dpChannels
+    -- TODO(#523): Discord transport never checks if the bot actually sitting in the dpChannels
     case resp of
       Left _ -> error "Getting current user call failed"
       Right user -> do
