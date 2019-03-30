@@ -98,7 +98,7 @@ builtinCommands =
           justCommand pollCommand))
     , ( "cancelpoll"
       , ( "Cancels the current poll"
-        , Reaction $ modCommand $ voidCommand cancelPollCommand))
+        , authorizeSender senderAuthority $ transR void cancelPollCommand))
     , ( "checkpoll"
       , ("", Reaction $ modCommand $ voidCommand currentPollCommand))
     , ("uptime", ("Show stream uptime", cmapR (const ()) uptimeCommand))

@@ -91,18 +91,20 @@ instance IsEntity Vote where
     Vote <$> extractProperty "user" properties <*>
     extractProperty "optionId" properties
 
-cancelPollCommand :: CommandHandler ()
-cancelPollCommand Message {messageSender = sender} = do
-  poll <- currentPoll
-  case poll of
-    Just poll' -> do
-      void $
-        updateEntityById $ fmap (\poll'' -> poll'' {pollCancelled = True}) poll'
-      fromMaybe
-        (return ())
-        (say <$> pollChannel (entityPayload poll') <*>
-         return [qms|TwitchVotes The current poll has been cancelled!|])
-    Nothing -> replyToSender sender "No polls are in place"
+cancelPollCommand :: Reaction Message ()
+cancelPollCommand =
+  Reaction $ \Message {messageSender = sender} -> do
+    poll <- currentPoll
+    case poll of
+      Just poll' -> do
+        void $
+          updateEntityById $
+          fmap (\poll'' -> poll'' {pollCancelled = True}) poll'
+        fromMaybe
+          (return ())
+          (say <$> pollChannel (entityPayload poll') <*>
+           return [qms|TwitchVotes The current poll has been cancelled!|])
+      Nothing -> replyToSender sender "No polls are in place"
 
 -- TODO(#359): consider using rank function in implementation of announcePollResults
 rank :: (Ord a) => [a] -> [(Int, a)]
