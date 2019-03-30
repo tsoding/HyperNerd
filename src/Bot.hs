@@ -144,7 +144,9 @@ builtinCommands =
           regexArgs "([a-zA-Z0-9]+) ([a-zA-Z0-9]+)" $
           replyLeft $ pairArgs $ replyLeft addAliasCommand))
     , ( "delalias"
-      , ("Remove command alias", Reaction $ modCommand removeAliasCommand))
+      , ( "Remove command alias"
+        , authorizeSender senderAuthority $
+          replyOnNothing "Only for mods" removeAliasCommand))
     , ( "addvar"
       , ( "Add variable"
         , authorizeSender senderAuthority $

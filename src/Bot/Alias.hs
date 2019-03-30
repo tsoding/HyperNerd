@@ -65,14 +65,15 @@ addAliasCommand =
                 Alias {aliasName = name, aliasRedirect = redirect}
             replyToSender sender [qms|Alias '{name}' has been created|]
 
-removeAliasCommand :: CommandHandler T.Text
-removeAliasCommand Message {messageSender = sender, messageContent = name} = do
-  alias <- getAliasByName name
-  case alias of
-    Just _ -> do
-      void $
-        deleteEntities
-          "Alias"
-          (Filter (PropertyEquals "name" (PropertyText name)) All)
-      replyToSender sender [qms|Alias '{name}' has been removed|]
-    Nothing -> replyToSender sender [qms|Alias '{name}' does not exists"|]
+removeAliasCommand :: Reaction Message T.Text
+removeAliasCommand =
+  Reaction $ \Message {messageSender = sender, messageContent = name} -> do
+    alias <- getAliasByName name
+    case alias of
+      Just _ -> do
+        void $
+          deleteEntities
+            "Alias"
+            (Filter (PropertyEquals "name" (PropertyText name)) All)
+        replyToSender sender [qms|Alias '{name}' has been removed|]
+      Nothing -> replyToSender sender [qms|Alias '{name}' does not exists"|]
