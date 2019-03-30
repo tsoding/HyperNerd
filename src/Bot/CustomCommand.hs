@@ -147,27 +147,26 @@ timesCustomCommand builtinCommands =
       (Nothing, Nothing) ->
         replyToSender sender [qms|Command '{name}' does not exist|]
 
-updateCustomCommand :: CommandTable -> CommandHandler (T.Text, T.Text)
-updateCustomCommand builtinCommands Message { messageSender = sender
-                                            , messageContent = (name, message)
-                                            } = do
-  customCommand <- runMaybeT $ customCommandByName name
-  let builtinCommand = M.lookup name builtinCommands
-  case (customCommand, builtinCommand) of
-    (Just cmd, Nothing) -> do
-      void $ updateEntityById (replaceCustomCommandMessage message <$> cmd)
-      replyToSender sender [qms|Command '{name}' has been updated|]
-    (Nothing, Just _) ->
-      replyToSender
-        sender
-        [qms|Command '{name}' is builtin and
+updateCustomCommand :: CommandTable -> Reaction Message (T.Text, T.Text)
+updateCustomCommand builtinCommands =
+  Reaction $ \Message {messageSender = sender, messageContent = (name, message)} -> do
+    customCommand <- runMaybeT $ customCommandByName name
+    let builtinCommand = M.lookup name builtinCommands
+    case (customCommand, builtinCommand) of
+      (Just cmd, Nothing) -> do
+        void $ updateEntityById (replaceCustomCommandMessage message <$> cmd)
+        replyToSender sender [qms|Command '{name}' has been updated|]
+      (Nothing, Just _) ->
+        replyToSender
+          sender
+          [qms|Command '{name}' is builtin and
              can't be updated like that|]
-    (Just _, Just _) ->
-      errorEff
-        [qms|Custom command '{name}' collide with
+      (Just _, Just _) ->
+        errorEff
+          [qms|Custom command '{name}' collide with
              a built in command|]
-    (Nothing, Nothing) ->
-      replyToSender sender [qms|Command '{name}' does not exist|]
+      (Nothing, Nothing) ->
+        replyToSender sender [qms|Command '{name}' does not exist|]
 
 expandCustomCommandVars ::
      Sender -> T.Text -> CustomCommand -> Effect CustomCommand

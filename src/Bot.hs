@@ -120,10 +120,10 @@ builtinCommands =
           replyOnNothing "Only for mods" $ deleteCustomCommand builtinCommands))
     , ( "updcmd"
       , ( "Update custom command"
-        , Reaction $
-          modCommand $
-          regexArgsCommand "([a-zA-Z0-9]+) ?(.*)" $
-          pairArgsCommand $ updateCustomCommand builtinCommands))
+        , authorizeSender senderAuthority $
+          replyOnNothing "Only for mods" $
+          regexArgs "([a-zA-Z0-9]+) ?(.*)" $
+          replyLeft $ pairArgs $ replyLeft $ updateCustomCommand builtinCommands))
                -- TODO(#337): use help instead of !showcmd
     , ( "showcmd"
       , ( "Show custom command definition"
