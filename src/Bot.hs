@@ -116,7 +116,8 @@ builtinCommands =
           replyLeft $ pairArgs $ replyLeft $ addCustomCommand builtinCommands))
     , ( "delcmd"
       , ( "Delete custom command"
-        , Reaction $ modCommand $ deleteCustomCommand builtinCommands))
+        , authorizeSender senderAuthority $
+          replyOnNothing "Only for mods" $ deleteCustomCommand builtinCommands))
     , ( "updcmd"
       , ( "Update custom command"
         , Reaction $
@@ -126,9 +127,11 @@ builtinCommands =
                -- TODO(#337): use help instead of !showcmd
     , ( "showcmd"
       , ( "Show custom command definition"
-        , Reaction $
-          regexArgsCommand "([a-zA-Z0-9]+)" $
-          firstArgCommand $ showCustomCommand builtinCommands))
+        , regexArgs "([a-zA-Z0-9]+)" $
+          replyLeft $
+          cmapR headMay $
+          replyOnNothing "Not enough arguments" $
+          showCustomCommand builtinCommands))
     , ( "timescmd"
       , ( "Show amount of times the custom commands was invoked"
         , Reaction $
