@@ -134,9 +134,11 @@ builtinCommands =
           showCustomCommand builtinCommands))
     , ( "timescmd"
       , ( "Show amount of times the custom commands was invoked"
-        , Reaction $
-          regexArgsCommand "([a-zA-Z0-9]+)" $
-          firstArgCommand $ timesCustomCommand builtinCommands))
+        , regexArgs "([a-zA-Z0-9]+)" $
+          replyLeft $
+          cmapR headMay $
+          replyOnNothing "Not enough arguments" $
+          timesCustomCommand builtinCommands))
     , ("song", ("Print currently playing song", transR void currentSongCommand))
     , ( "addalias"
       , ( "Add command alias"

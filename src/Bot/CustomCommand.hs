@@ -122,31 +122,30 @@ showCustomCommand builtinCommands =
       (Nothing, Nothing) ->
         replyToSender sender [qms|Command '{name}' does not exist|]
 
-timesCustomCommand :: CommandTable -> CommandHandler T.Text
-timesCustomCommand builtinCommands Message { messageSender = sender
-                                           , messageContent = name
-                                           } = do
-  customCommand <- runMaybeT $ customCommandByName name
-  let builtinCommand = M.lookup name builtinCommands
-  case (customCommand, builtinCommand) of
-    (Just cmd, Nothing) ->
-      replyToSender
-        sender
-        [qms|Command '{name}' was invoked
+timesCustomCommand :: CommandTable -> Reaction Message T.Text
+timesCustomCommand builtinCommands =
+  Reaction $ \Message {messageSender = sender, messageContent = name} -> do
+    customCommand <- runMaybeT $ customCommandByName name
+    let builtinCommand = M.lookup name builtinCommands
+    case (customCommand, builtinCommand) of
+      (Just cmd, Nothing) ->
+        replyToSender
+          sender
+          [qms|Command '{name}' was invoked
              {customCommandTimes $ entityPayload cmd} times.|]
-    (Nothing, Just _) ->
-      replyToSender
-        sender
-        [qms|Command '{name}' is builtin and
+      (Nothing, Just _) ->
+        replyToSender
+          sender
+          [qms|Command '{name}' is builtin and
              we don't track the frequency usage for builtin commands.
              See https://github.com/tsoding/HyperNerd/issues/334
              for more info.|]
-    (Just _, Just _) ->
-      errorEff
-        [qms|Custom command '{name}' collide with
+      (Just _, Just _) ->
+        errorEff
+          [qms|Custom command '{name}' collide with
              a built in command|]
-    (Nothing, Nothing) ->
-      replyToSender sender [qms|Command '{name}' does not exist|]
+      (Nothing, Nothing) ->
+        replyToSender sender [qms|Command '{name}' does not exist|]
 
 updateCustomCommand :: CommandTable -> CommandHandler (T.Text, T.Text)
 updateCustomCommand builtinCommands Message { messageSender = sender
