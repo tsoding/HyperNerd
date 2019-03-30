@@ -12,7 +12,6 @@ module Bot.Links
   ) where
 
 import Bot.Replies
-import Command
 import Control.Applicative
 import Control.Monad
 import Control.Monad.Trans.Maybe
@@ -113,16 +112,17 @@ trustCommand =
         void $ createEntity "TrustedUser" $ TrustedUser user
         replyToSender sender [qm|{user} is now trusted|]
 
-untrustCommand :: CommandHandler T.Text
-untrustCommand Message {messageSender = sender, messageContent = inputUser} = do
-  let user = T.strip $ T.toLower inputUser
-  trustedUser <- runMaybeT $ findTrustedUser user
-  case trustedUser of
-    Just trustedUser' -> do
-      deleteEntityById "TrustedUser" $ entityId trustedUser'
-      replyToSender sender [qm|{user} is not trusted anymore|]
-    Nothing ->
-      replyToSender sender [qm|{user} was not trusted in the first place|]
+untrustCommand :: Reaction Message T.Text
+untrustCommand =
+  Reaction $ \Message {messageSender = sender, messageContent = inputUser} -> do
+    let user = T.strip $ T.toLower inputUser
+    trustedUser <- runMaybeT $ findTrustedUser user
+    case trustedUser of
+      Just trustedUser' -> do
+        deleteEntityById "TrustedUser" $ entityId trustedUser'
+        replyToSender sender [qm|{user} is not trusted anymore|]
+      Nothing ->
+        replyToSender sender [qm|{user} was not trusted in the first place|]
 
 amitrustedCommand :: Reaction Message ()
 amitrustedCommand =

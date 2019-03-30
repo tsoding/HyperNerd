@@ -198,8 +198,11 @@ builtinCommands =
           cmapR headMay $ replyOnNothing "Not enough arguments" $ trustCommand))
     , ( "untrust"
       , ( "Untrusts the user"
-        , Reaction $
-          modCommand $ regexArgsCommand "(.+)" $ firstArgCommand untrustCommand))
+        , authorizeSender senderAuthority $
+          replyOnNothing "Only for mods" $
+          regexArgs "(.+)" $
+          replyLeft $
+          cmapR headMay $ replyOnNothing "Not enough arguments" untrustCommand))
     , ( "amitrusted"
       , ("Check if you are a trusted user", cmapR (const ()) amitrustedCommand))
     , ( "istrusted"
@@ -271,12 +274,6 @@ commandArgsCommand commandHandler message@Message {messageContent = text} =
 
 voidCommand :: CommandHandler () -> CommandHandler a
 voidCommand commandHandler = commandHandler . void
-
-firstArgCommand :: CommandHandler a -> CommandHandler [a]
-firstArgCommand _ message@Message {messageContent = []} =
-  replyMessage $ fmap (const "Not enough arguments") message
-firstArgCommand commandHandler message@Message {messageContent = args:_} =
-  commandHandler $ fmap (const args) message
 
 modCommand :: CommandHandler a -> CommandHandler a
 modCommand = senderAuthorizedCommand senderAuthority "Only for mods"
