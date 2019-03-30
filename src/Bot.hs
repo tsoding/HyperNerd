@@ -1,6 +1,7 @@
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE TupleSections #-}
 {-# LANGUAGE QuasiQuotes #-}
+{-# LANGUAGE LambdaCase #-}
 
 module Bot
   ( Bot
@@ -207,7 +208,7 @@ builtinCommands =
           replyOnNothing "Only for mods" $
           regexArgs "(.+)" $
           replyLeft $
-          cmapR headMay $ replyOnNothing "Not enough arguments" $ trustCommand))
+          cmapR headMay $ replyOnNothing "Not enough arguments" trustCommand))
     , ( "untrust"
       , ( "Untrusts the user"
         , authorizeSender senderAuthority $
@@ -282,11 +283,9 @@ authorizeSender p =
 
 pairArgs :: Comonad w => Reaction w (Either String (a, a)) -> Reaction w [a]
 pairArgs =
-  cmapR $
-  (\args ->
-     case args of
-       [x, y] -> Right (x, y)
-       _ -> Left [qms|Expected 2 arguments but got {length args}|])
+  cmapR $ \case
+    [x, y] -> Right (x, y)
+    args -> Left [qms|Expected 2 arguments but got {length args}|]
 
 regexParseArgs :: T.Text -> T.Text -> Either String [T.Text]
 regexParseArgs regexString textArgs = do
