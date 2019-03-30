@@ -5,7 +5,6 @@ module Bot.Poll where
 
 import Bot.Log (LogRecord(..), Seconds, getRecentLogs)
 import Bot.Replies
-import Command
 import Control.Monad
 import Data.Foldable
 import Data.Function
@@ -91,18 +90,20 @@ instance IsEntity Vote where
     Vote <$> extractProperty "user" properties <*>
     extractProperty "optionId" properties
 
-cancelPollCommand :: CommandHandler ()
-cancelPollCommand Message {messageSender = sender} = do
-  poll <- currentPoll
-  case poll of
-    Just poll' -> do
-      void $
-        updateEntityById $ fmap (\poll'' -> poll'' {pollCancelled = True}) poll'
-      fromMaybe
-        (return ())
-        (say <$> pollChannel (entityPayload poll') <*>
-         return [qms|TwitchVotes The current poll has been cancelled!|])
-    Nothing -> replyToSender sender "No polls are in place"
+cancelPollCommand :: Reaction Message ()
+cancelPollCommand =
+  Reaction $ \Message {messageSender = sender} -> do
+    poll <- currentPoll
+    case poll of
+      Just poll' -> do
+        void $
+          updateEntityById $
+          fmap (\poll'' -> poll'' {pollCancelled = True}) poll'
+        fromMaybe
+          (return ())
+          (say <$> pollChannel (entityPayload poll') <*>
+           return [qms|TwitchVotes The current poll has been cancelled!|])
+      Nothing -> replyToSender sender "No polls are in place"
 
 -- TODO(#359): consider using rank function in implementation of announcePollResults
 rank :: (Ord a) => [a] -> [(Int, a)]
@@ -118,32 +119,35 @@ showRanks :: (Show a) => [(Int, a)] -> String
 showRanks = intercalate ", " . map (\(i, v) -> show v ++ ": " ++ show i)
 
 -- TODO(#294): poll duration doesn't have upper/lower limit
-pollCommand :: CommandHandler (Int, [T.Text])
-pollCommand Message { messageSender = sender
-                    , messageContent = (durationSecs, options)
-                    } = do
-  poll <- currentPoll
-  let durationMs = durationSecs * 1000
-  case poll of
-    Just _ ->
-      replyToSender sender "Cannot create a poll while another poll is in place"
+pollCommand :: Reaction Message (Int, [T.Text])
+pollCommand =
+  Reaction $ \Message { messageSender = sender
+                      , messageContent = (durationSecs, options)
+                      } -> do
+    poll <- currentPoll
+    let durationMs = durationSecs * 1000
+    case poll of
+      Just _ ->
+        replyToSender
+          sender
+          "Cannot create a poll while another poll is in place"
     -- TODO(#295): passing duration of different units is not type safe
-    Nothing ->
-      if durationSecs >= 0
-        then do
-          pollId <- startPoll sender options durationMs
+      Nothing ->
+        if durationSecs >= 0
+          then do
+            pollId <- startPoll sender options durationMs
           -- TODO(#296): duration of poll is not human-readable in poll start announcement
-          say
-            (senderChannel sender)
-            [qms|TwitchVotes The poll has been started.
+            say
+              (senderChannel sender)
+              [qms|TwitchVotes The poll has been started.
                  You have {durationSecs} seconds:|]
-          traverse_ (\(i, op) -> say (senderChannel sender) [qms|[{i}] {op}|]) $
-            zip [0 :: Int ..] options
-          timeout (fromIntegral durationMs) $ announcePollResults pollId
-        else do
-          let offset = fromInteger $ toInteger $ negate durationSecs
+            traverse_ (\(i, op) -> say (senderChannel sender) [qms|[{i}] {op}|]) $
+              zip [0 :: Int ..] options
+            timeout (fromIntegral durationMs) $ announcePollResults pollId
+          else do
+            let offset = fromInteger $ toInteger $ negate durationSecs
           -- TODO(#361): Polls with negative durations are not stored in the database
-          instantlyReportResults (senderChannel sender) offset options
+            instantlyReportResults (senderChannel sender) offset options
 
 instantlyReportResults :: Channel -> Seconds -> [T.Text] -> Effect ()
 instantlyReportResults channel durationSecs options = do
@@ -174,18 +178,19 @@ isPollAlive currentTime pollEntity =
     maxPollLifetime = fromIntegral (pollDuration poll) * 0.001
     poll = entityPayload pollEntity
 
-currentPollCommand :: CommandHandler ()
-currentPollCommand Message {messageSender = sender} = do
-  currentTime <- now
-  poll <- currentPoll
-  case poll of
-    Just poll' ->
-      replyToSender
-        sender
-        [qms|id: {entityId poll'},
+currentPollCommand :: Reaction Message ()
+currentPollCommand =
+  Reaction $ \Message {messageSender = sender} -> do
+    currentTime <- now
+    poll <- currentPoll
+    case poll of
+      Just poll' ->
+        replyToSender
+          sender
+          [qms|id: {entityId poll'},
              {pollLifetime currentTime poll'}
              secs ago|]
-    Nothing -> replyToSender sender "No polls are in place"
+      Nothing -> replyToSender sender "No polls are in place"
 
 currentPoll :: Effect (Maybe (Entity Poll))
 currentPoll = do

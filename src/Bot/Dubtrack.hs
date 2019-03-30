@@ -5,12 +5,12 @@
 module Bot.Dubtrack where
 
 import Bot.Replies
-import Command
 import Data.Aeson
 import Data.Aeson.Types
 import qualified Data.Text as T
 import Effect
 import Network.HTTP.Simple
+import Reaction
 import Text.InterpolatedString.QM
 import Transport
 
@@ -63,16 +63,17 @@ songLink (songType -> SongTypeSoundcloud) =
   "Soundcloud links are not supported yet"
 songLink _ = error "This should never happen Kappa"
 
-currentSongCommand :: CommandHandler ()
-currentSongCommand Message {messageSender = sender}
-  -- TODO(#221): Dubtrack room is hardcode
- = do
-  request <- parseRequest "https://api.dubtrack.fm/room/tsoding"
-  response <- eitherDecode . getResponseBody <$> httpRequest request
-  case response of
-    Left message -> errorEff $ T.pack message
-    Right dubtrackResponse ->
-      maybe
-        (replyToSender sender "Nothing is playing right now")
-        (\song -> replyToSender sender [qms|❝{songName song}❞: {songLink song}|])
-        (roomCurrentSong $ drData dubtrackResponse)
+-- TODO(#221): Dubtrack room is hardcode
+currentSongCommand :: Reaction Message ()
+currentSongCommand =
+  Reaction $ \Message {messageSender = sender} -> do
+    request <- parseRequest "https://api.dubtrack.fm/room/tsoding"
+    response <- eitherDecode . getResponseBody <$> httpRequest request
+    case response of
+      Left message -> errorEff $ T.pack message
+      Right dubtrackResponse ->
+        maybe
+          (replyToSender sender "Nothing is playing right now")
+          (\song ->
+             replyToSender sender [qms|❝{songName song}❞: {songLink song}|])
+          (roomCurrentSong $ drData dubtrackResponse)

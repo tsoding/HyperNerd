@@ -1,6 +1,7 @@
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE TupleSections #-}
 {-# LANGUAGE QuasiQuotes #-}
+{-# LANGUAGE LambdaCase #-}
 
 module Bot
   ( Bot
@@ -85,87 +86,104 @@ builtinCommands =
     , ("help", ("Send help", helpCommand builtinCommands))
     , ( "poll"
       , ( "Starts a poll. !poll <duration:secs> option1; option2; ...; option3"
-        , Reaction $
-          modCommand $
+        , authorizeSender senderAuthority $
+          replyOnNothing "Only for mods" $
           -- TODO(#362): !poll command does not parse negative numbers
-          regexArgsCommand "([0-9]+) (.*)" $
-          pairArgsCommand $
-          contramapCH
+          regexArgs "([0-9]+) (.*)" $
+          replyLeft $
+          pairArgs $
+          replyLeft $
+          cmapR
             (\(duration, options) ->
                fmap
                  (, filter (not . T.null) $ map T.strip $ T.splitOn ";" options) $
                readMaybe $ T.unpack duration) $
-          justCommand pollCommand))
+          replyOnNothing "Could not parse arguments" pollCommand))
     , ( "cancelpoll"
       , ( "Cancels the current poll"
-        , Reaction $ modCommand $ voidCommand cancelPollCommand))
+        , authorizeSender senderAuthority $ transR void cancelPollCommand))
     , ( "checkpoll"
-      , ("", Reaction $ modCommand $ voidCommand currentPollCommand))
+      , ("", authorizeSender senderAuthority $ transR void currentPollCommand))
     , ("uptime", ("Show stream uptime", cmapR (const ()) uptimeCommand))
     , ("rq", ("Get random quote from your log", randomLogRecordCommand))
     , ( "addperiodic"
       , ( "Add periodic command"
-        , Reaction $ modCommand $ commandArgsCommand addPeriodicCommand))
+        , authorizeSender senderAuthority $
+          replyOnNothing "Only for mods" $
+          cmapR textAsCommand $
+          replyOnNothing "Command as an argument is expected" addPeriodicCommand))
     , ( "delperiodic"
-      , ("Delete periodic command", Reaction $ modCommand removePeriodicCommand))
+      , ( "Delete periodic command"
+        , authorizeSender senderAuthority $
+          replyOnNothing "Only for mods" removePeriodicCommand))
     , ( "addcmd"
       , ( "Add custom command"
-        , Reaction $
-          modCommand $
-          regexArgsCommand "([a-zA-Z0-9]+) ?(.*)" $
-          pairArgsCommand $ addCustomCommand builtinCommands))
+        , authorizeSender senderAuthority $
+          replyOnNothing "Only for mods" $
+          regexArgs "([a-zA-Z0-9]+) ?(.*)" $
+          replyLeft $ pairArgs $ replyLeft $ addCustomCommand builtinCommands))
     , ( "delcmd"
       , ( "Delete custom command"
-        , Reaction $ modCommand $ deleteCustomCommand builtinCommands))
+        , authorizeSender senderAuthority $
+          replyOnNothing "Only for mods" $ deleteCustomCommand builtinCommands))
     , ( "updcmd"
       , ( "Update custom command"
-        , Reaction $
-          modCommand $
-          regexArgsCommand "([a-zA-Z0-9]+) ?(.*)" $
-          pairArgsCommand $ updateCustomCommand builtinCommands))
+        , authorizeSender senderAuthority $
+          replyOnNothing "Only for mods" $
+          regexArgs "([a-zA-Z0-9]+) ?(.*)" $
+          replyLeft $ pairArgs $ replyLeft $ updateCustomCommand builtinCommands))
                -- TODO(#337): use help instead of !showcmd
     , ( "showcmd"
       , ( "Show custom command definition"
-        , Reaction $
-          regexArgsCommand "([a-zA-Z0-9]+)" $
-          firstArgCommand $ showCustomCommand builtinCommands))
+        , regexArgs "([a-zA-Z0-9]+)" $
+          replyLeft $
+          cmapR headMay $
+          replyOnNothing "Not enough arguments" $
+          showCustomCommand builtinCommands))
     , ( "timescmd"
       , ( "Show amount of times the custom commands was invoked"
-        , Reaction $
-          regexArgsCommand "([a-zA-Z0-9]+)" $
-          firstArgCommand $ timesCustomCommand builtinCommands))
-    , ( "song"
-      , ( "Print currently playing song"
-        , Reaction $ voidCommand currentSongCommand))
+        , regexArgs "([a-zA-Z0-9]+)" $
+          replyLeft $
+          cmapR headMay $
+          replyOnNothing "Not enough arguments" $
+          timesCustomCommand builtinCommands))
+    , ("song", ("Print currently playing song", transR void currentSongCommand))
     , ( "addalias"
       , ( "Add command alias"
-        , Reaction $
-          modCommand $
-          regexArgsCommand "([a-zA-Z0-9]+) ([a-zA-Z0-9]+)" $
-          pairArgsCommand addAliasCommand))
+        , authorizeSender senderAuthority $
+          replyOnNothing "Only for mods" $
+          regexArgs "([a-zA-Z0-9]+) ([a-zA-Z0-9]+)" $
+          replyLeft $ pairArgs $ replyLeft addAliasCommand))
     , ( "delalias"
-      , ("Remove command alias", Reaction $ modCommand removeAliasCommand))
+      , ( "Remove command alias"
+        , authorizeSender senderAuthority $
+          replyOnNothing "Only for mods" removeAliasCommand))
     , ( "addvar"
       , ( "Add variable"
         , authorizeSender senderAuthority $
           replyOnNothing "Only for mods" addVariable))
     , ( "updvar"
       , ( "Update variable"
-        , Reaction $
-          modCommand $
-          regexArgsCommand "([a-zA-Z0-9]+) ?(.*)" $
-          pairArgsCommand $ runReaction updateVariable))
+        , authorizeSender senderAuthority $
+          replyOnNothing "Only for mods" $
+          regexArgs "([a-zA-Z0-9]+) ?(.*)" $
+          replyLeft $ pairArgs $ replyLeft updateVariable))
     , ( "delvar"
-      , ("Delete variable", Reaction $ modCommand $ runReaction deleteVariable))
+      , ( "Delete variable"
+        , authorizeSender senderAuthority $
+          replyOnNothing "Only for mods" deleteVariable))
     , ( "nuke"
       , ( [qms|Looks at N previous messages and bans all of
                the users whose messages match provided regex|]
-        , Reaction $
-          modCommand $
-          regexArgsCommand "([0-9]+) (.*)" $
-          pairArgsCommand $ \Message { messageContent = (strN, regexStr)
-                                     , messageSender = sender
-                                     } -> do
+        , authorizeSender senderAuthority $
+          replyOnNothing "Only for mods" $
+          regexArgs "([0-9]+) (.*)" $
+          replyLeft $
+          pairArgs $
+          replyLeft $
+          Reaction $ \Message { messageContent = (strN, regexStr)
+                              , messageSender = sender
+                              } -> do
             let parsedN =
                   maybe (Left "Could not parse N") Right $
                   readMaybe $ T.unpack strN
@@ -186,12 +204,18 @@ builtinCommands =
     , ("cycle", ("Mock the message", cmapR mockMessage sayMessage))
     , ( "trust"
       , ( "Makes the user trusted"
-        , Reaction $
-          modCommand $ regexArgsCommand "(.+)" $ firstArgCommand trustCommand))
+        , authorizeSender senderAuthority $
+          replyOnNothing "Only for mods" $
+          regexArgs "(.+)" $
+          replyLeft $
+          cmapR headMay $ replyOnNothing "Not enough arguments" trustCommand))
     , ( "untrust"
       , ( "Untrusts the user"
-        , Reaction $
-          modCommand $ regexArgsCommand "(.+)" $ firstArgCommand untrustCommand))
+        , authorizeSender senderAuthority $
+          replyOnNothing "Only for mods" $
+          regexArgs "(.+)" $
+          replyLeft $
+          cmapR headMay $ replyOnNothing "Not enough arguments" untrustCommand))
     , ( "amitrusted"
       , ("Check if you are a trusted user", cmapR (const ()) amitrustedCommand))
     , ( "istrusted"
@@ -248,41 +272,6 @@ onlyForRole reply role reaction =
     (cmapR extract reaction)
     (cmapR (const reply) $ Reaction replyMessage)
 
-justCommand :: CommandHandler a -> CommandHandler (Maybe a)
-justCommand commandHandler message@Message {messageContent = Just arg} =
-  commandHandler $ fmap (const arg) message
-justCommand _ message =
-  replyMessage $ fmap (const "Could not parse arguments") message
-
-commandArgsCommand :: CommandHandler (Command T.Text) -> CommandHandler T.Text
-commandArgsCommand commandHandler message@Message {messageContent = text} =
-  case textAsCommand text of
-    Just command -> commandHandler $ fmap (const command) message
-    Nothing ->
-      replyMessage $ fmap (const "Command as an argument is expected") message
-
-voidCommand :: CommandHandler () -> CommandHandler a
-voidCommand commandHandler = commandHandler . void
-
-firstArgCommand :: CommandHandler a -> CommandHandler [a]
-firstArgCommand _ message@Message {messageContent = []} =
-  replyMessage $ fmap (const "Not enough arguments") message
-firstArgCommand commandHandler message@Message {messageContent = args:_} =
-  commandHandler $ fmap (const args) message
-
-modCommand :: CommandHandler a -> CommandHandler a
-modCommand = senderAuthorizedCommand senderAuthority "Only for mods"
-
-senderAuthorizedCommand ::
-     (Sender -> Bool) -- sender predicate
-  -> T.Text -- unauthorized response
-  -> CommandHandler a -- command handler
-  -> CommandHandler a
-senderAuthorizedCommand predicate unauthorizedResponse commandHandler message =
-  if predicate $ messageSender message
-    then commandHandler message
-    else replyMessage (unauthorizedResponse <$ message)
-
 authorizeSender ::
      (Sender -> Bool) -> Reaction Message (Maybe a) -> Reaction Message a
 authorizeSender p =
@@ -292,16 +281,11 @@ authorizeSender p =
          then Just <$> msg
          else Nothing <$ msg)
 
-pairArgsCommand :: CommandHandler (a, a) -> CommandHandler [a]
-pairArgsCommand commandHandler message@Message {messageContent = [x, y]} =
-  commandHandler $ fmap (const (x, y)) message
-pairArgsCommand _ message@Message {messageContent = args} =
-  replyMessage $
-  fmap
-    (const
-       [qms|Expected two arguments
-            but got {length args}|])
-    message
+pairArgs :: Comonad w => Reaction w (Either String (a, a)) -> Reaction w [a]
+pairArgs =
+  cmapR $ \case
+    [x, y] -> Right (x, y)
+    args -> Left [qms|Expected 2 arguments but got {length args}|]
 
 regexParseArgs :: T.Text -> T.Text -> Either String [T.Text]
 regexParseArgs regexString textArgs = do
@@ -322,27 +306,6 @@ regexArgs ::
   -> Reaction w T.Text
 regexArgs regexString reaction =
   Reaction $ runReaction reaction . fmap (regexParseArgs regexString)
-
-regexArgsCommand :: String -> CommandHandler [T.Text] -> CommandHandler T.Text
-regexArgsCommand regexString commandHandler Message { messageSender = sender
-                                                    , messageContent = args
-                                                    , messageMentioned = mentioned
-                                                    } =
-  either
-    (replyToSender sender . T.pack)
-    (commandHandler . Message sender mentioned)
-    parsedArgs
-  where
-    parsedArgs = do
-      regex <- compile defaultCompOpt defaultExecOpt regexString
-      result <- execute regex stringArgs
-      case result of
-        Just matches ->
-          case map (T.pack . flip Regex.extract stringArgs) $ elems matches of
-            _:finalArgs -> Right finalArgs
-            [] -> Left "Not enough arguments"
-        Nothing -> Left [qms|Command doesn't match '{regexString}' regex|]
-    stringArgs = T.unpack args
 
 mention :: Reaction Message T.Text
 mention =

@@ -16,6 +16,7 @@ import qualified Data.Text as T
 import Effect
 import Entity
 import Property
+import Reaction
 import Text.InterpolatedString.QM
 import Transport
 
@@ -66,27 +67,30 @@ startPeriodicCommands channel dispatchCommand = do
     maybePc
   timeout (10 * 60 * 1000) $ startPeriodicCommands channel dispatchCommand
 
-addPeriodicCommand :: CommandHandler (Command T.Text)
-addPeriodicCommand Message { messageSender = sender
-                           , messageContent = command@Command {commandName = name}
-                           } = do
-  maybePc <- getPeriodicCommandByName name
-  case maybePc of
-    Just _ -> replyToSender sender [qms|'{name}' is aleady called periodically|]
-    Nothing -> do
-      void $ createEntity "PeriodicCommand" $ PeriodicCommand command
-      replyToSender
-        sender
-        [qms|'{name}' has been scheduled to call periodically|]
+addPeriodicCommand :: Reaction Message (Command T.Text)
+addPeriodicCommand =
+  Reaction $ \Message { messageSender = sender
+                      , messageContent = command@Command {commandName = name}
+                      } -> do
+    maybePc <- getPeriodicCommandByName name
+    case maybePc of
+      Just _ ->
+        replyToSender sender [qms|'{name}' is aleady called periodically|]
+      Nothing -> do
+        void $ createEntity "PeriodicCommand" $ PeriodicCommand command
+        replyToSender
+          sender
+          [qms|'{name}' has been scheduled to call periodically|]
 
-removePeriodicCommand :: CommandHandler T.Text
-removePeriodicCommand Message {messageSender = sender, messageContent = name} = do
-  maybePc <- getPeriodicCommandByName name
-  case maybePc of
-    Just _ -> do
-      void $
-        deleteEntities "PeriodicCommand" $
-        Filter (PropertyEquals "name" $ PropertyText name) All
-      replyToSender sender [qms|'{name}' has been unscheduled|]
-    Nothing ->
-      replyToSender sender [qms|'{name}' was not scheduled to begin with|]
+removePeriodicCommand :: Reaction Message T.Text
+removePeriodicCommand =
+  Reaction $ \Message {messageSender = sender, messageContent = name} -> do
+    maybePc <- getPeriodicCommandByName name
+    case maybePc of
+      Just _ -> do
+        void $
+          deleteEntities "PeriodicCommand" $
+          Filter (PropertyEquals "name" $ PropertyText name) All
+        replyToSender sender [qms|'{name}' has been unscheduled|]
+      Nothing ->
+        replyToSender sender [qms|'{name}' was not scheduled to begin with|]

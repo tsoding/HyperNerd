@@ -16,6 +16,7 @@ import qualified Data.Text as T
 import Effect
 import Entity
 import Property
+import Reaction
 import Text.InterpolatedString.QM
 import Transport
 
@@ -46,30 +47,33 @@ redirectAlias command = do
   alias <- getAliasByName $ commandName command
   return $ maybe command (renameCommand command . aliasRedirect) alias
 
-addAliasCommand :: CommandHandler (T.Text, T.Text)
-addAliasCommand Message { messageSender = sender
-                        , messageContent = (name, redirect)
-                        }
-  | name == redirect = replyToSender sender "Alias cannot redirect to itself"
-  | otherwise = do
+addAliasCommand :: Reaction Message (T.Text, T.Text)
+addAliasCommand =
+  Reaction $ \Message { messageSender = sender
+                      , messageContent = (name, redirect)
+                      } ->
+    if name == redirect
+      then replyToSender sender "Alias cannot redirect to itself"
+      else do
+        alias <- getAliasByName name
+        case alias of
+          Just _ -> replyToSender sender [qms|Alias '{name}' already exists|]
+          Nothing -> do
+            void $
+              createEntity
+                "Alias"
+                Alias {aliasName = name, aliasRedirect = redirect}
+            replyToSender sender [qms|Alias '{name}' has been created|]
+
+removeAliasCommand :: Reaction Message T.Text
+removeAliasCommand =
+  Reaction $ \Message {messageSender = sender, messageContent = name} -> do
     alias <- getAliasByName name
     case alias of
-      Just _ -> replyToSender sender [qms|Alias '{name}' already exists|]
-      Nothing -> do
+      Just _ -> do
         void $
-          createEntity
+          deleteEntities
             "Alias"
-            Alias {aliasName = name, aliasRedirect = redirect}
-        replyToSender sender [qms|Alias '{name}' has been created|]
-
-removeAliasCommand :: CommandHandler T.Text
-removeAliasCommand Message {messageSender = sender, messageContent = name} = do
-  alias <- getAliasByName name
-  case alias of
-    Just _ -> do
-      void $
-        deleteEntities
-          "Alias"
-          (Filter (PropertyEquals "name" (PropertyText name)) All)
-      replyToSender sender [qms|Alias '{name}' has been removed|]
-    Nothing -> replyToSender sender [qms|Alias '{name}' does not exists"|]
+            (Filter (PropertyEquals "name" (PropertyText name)) All)
+        replyToSender sender [qms|Alias '{name}' has been removed|]
+      Nothing -> replyToSender sender [qms|Alias '{name}' does not exists"|]
