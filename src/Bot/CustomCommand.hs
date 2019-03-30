@@ -23,9 +23,9 @@ import Data.Time
 import Effect
 import Entity
 import Property
+import Reaction
 import Text.InterpolatedString.QM
 import Transport
-import Reaction
 
 data CustomCommand = CustomCommand
   { customCommandName :: T.Text

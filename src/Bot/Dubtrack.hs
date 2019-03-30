@@ -10,9 +10,9 @@ import Data.Aeson.Types
 import qualified Data.Text as T
 import Effect
 import Network.HTTP.Simple
+import Reaction
 import Text.InterpolatedString.QM
 import Transport
-import Reaction
 
 data SongType
   = SongTypeYoutube

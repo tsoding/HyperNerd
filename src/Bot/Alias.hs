@@ -16,9 +16,9 @@ import qualified Data.Text as T
 import Effect
 import Entity
 import Property
+import Reaction
 import Text.InterpolatedString.QM
 import Transport
-import Reaction
 
 data Alias = Alias
   { aliasName :: T.Text
