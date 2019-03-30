@@ -163,21 +163,26 @@ builtinCommands =
           replyOnNothing "Only for mods" addVariable))
     , ( "updvar"
       , ( "Update variable"
-        , Reaction $
-          modCommand $
-          regexArgsCommand "([a-zA-Z0-9]+) ?(.*)" $
-          pairArgsCommand $ runReaction updateVariable))
+        , authorizeSender senderAuthority $
+          replyOnNothing "Only for mods" $
+          regexArgs "([a-zA-Z0-9]+) ?(.*)" $
+          replyLeft $ pairArgs $ replyLeft updateVariable))
     , ( "delvar"
-      , ("Delete variable", Reaction $ modCommand $ runReaction deleteVariable))
+      , ( "Delete variable"
+        , authorizeSender senderAuthority $
+          replyOnNothing "Only for mods" deleteVariable))
     , ( "nuke"
       , ( [qms|Looks at N previous messages and bans all of
                the users whose messages match provided regex|]
-        , Reaction $
-          modCommand $
-          regexArgsCommand "([0-9]+) (.*)" $
-          pairArgsCommand $ \Message { messageContent = (strN, regexStr)
-                                     , messageSender = sender
-                                     } -> do
+        , authorizeSender senderAuthority $
+          replyOnNothing "Only for mods" $
+          regexArgs "([0-9]+) (.*)" $
+          replyLeft $
+          pairArgs $
+          replyLeft $
+          Reaction $ \Message { messageContent = (strN, regexStr)
+                              , messageSender = sender
+                              } -> do
             let parsedN =
                   maybe (Left "Could not parse N") Right $
                   readMaybe $ T.unpack strN
@@ -266,19 +271,6 @@ onlyForRole reply role reaction =
     (cmapR extract reaction)
     (cmapR (const reply) $ Reaction replyMessage)
 
-modCommand :: CommandHandler a -> CommandHandler a
-modCommand = senderAuthorizedCommand senderAuthority "Only for mods"
-
-senderAuthorizedCommand ::
-     (Sender -> Bool) -- sender predicate
-  -> T.Text -- unauthorized response
-  -> CommandHandler a -- command handler
-  -> CommandHandler a
-senderAuthorizedCommand predicate unauthorizedResponse commandHandler message =
-  if predicate $ messageSender message
-    then commandHandler message
-    else replyMessage (unauthorizedResponse <$ message)
-
 authorizeSender ::
      (Sender -> Bool) -> Reaction Message (Maybe a) -> Reaction Message a
 authorizeSender p =
@@ -295,17 +287,6 @@ pairArgs =
      case args of
        [x, y] -> Right (x, y)
        _ -> Left [qms|Expected 2 arguments but got {length args}|])
-
-pairArgsCommand :: CommandHandler (a, a) -> CommandHandler [a]
-pairArgsCommand commandHandler message@Message {messageContent = [x, y]} =
-  commandHandler $ fmap (const (x, y)) message
-pairArgsCommand _ message@Message {messageContent = args} =
-  replyMessage $
-  fmap
-    (const
-       [qms|Expected two arguments
-            but got {length args}|])
-    message
 
 regexParseArgs :: T.Text -> T.Text -> Either String [T.Text]
 regexParseArgs regexString textArgs = do
@@ -326,27 +307,6 @@ regexArgs ::
   -> Reaction w T.Text
 regexArgs regexString reaction =
   Reaction $ runReaction reaction . fmap (regexParseArgs regexString)
-
-regexArgsCommand :: String -> CommandHandler [T.Text] -> CommandHandler T.Text
-regexArgsCommand regexString commandHandler Message { messageSender = sender
-                                                    , messageContent = args
-                                                    , messageMentioned = mentioned
-                                                    } =
-  either
-    (replyToSender sender . T.pack)
-    (commandHandler . Message sender mentioned)
-    parsedArgs
-  where
-    parsedArgs = do
-      regex <- compile defaultCompOpt defaultExecOpt regexString
-      result <- execute regex stringArgs
-      case result of
-        Just matches ->
-          case map (T.pack . flip Regex.extract stringArgs) $ elems matches of
-            _:finalArgs -> Right finalArgs
-            [] -> Left "Not enough arguments"
-        Nothing -> Left [qms|Command doesn't match '{regexString}' regex|]
-    stringArgs = T.unpack args
 
 mention :: Reaction Message T.Text
 mention =
