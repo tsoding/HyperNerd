@@ -105,7 +105,10 @@ builtinCommands =
     , ("rq", ("Get random quote from your log", randomLogRecordCommand))
     , ( "addperiodic"
       , ( "Add periodic command"
-        , Reaction $ modCommand $ commandArgsCommand addPeriodicCommand))
+        , authorizeSender senderAuthority $
+          replyOnNothing "Only for mods" $
+          cmapR textAsCommand $
+          replyOnNothing "Command as an argument is expected" addPeriodicCommand))
     , ( "delperiodic"
       , ("Delete periodic command", Reaction $ modCommand removePeriodicCommand))
     , ( "addcmd"
@@ -264,13 +267,6 @@ justCommand commandHandler message@Message {messageContent = Just arg} =
   commandHandler $ fmap (const arg) message
 justCommand _ message =
   replyMessage $ fmap (const "Could not parse arguments") message
-
-commandArgsCommand :: CommandHandler (Command T.Text) -> CommandHandler T.Text
-commandArgsCommand commandHandler message@Message {messageContent = text} =
-  case textAsCommand text of
-    Just command -> commandHandler $ fmap (const command) message
-    Nothing ->
-      replyMessage $ fmap (const "Command as an argument is expected") message
 
 voidCommand :: CommandHandler () -> CommandHandler a
 voidCommand commandHandler = commandHandler . void

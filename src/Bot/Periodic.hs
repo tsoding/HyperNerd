@@ -18,6 +18,7 @@ import Entity
 import Property
 import Text.InterpolatedString.QM
 import Transport
+import Reaction
 
 mrbotka :: Sender
 mrbotka =
@@ -66,18 +67,20 @@ startPeriodicCommands channel dispatchCommand = do
     maybePc
   timeout (10 * 60 * 1000) $ startPeriodicCommands channel dispatchCommand
 
-addPeriodicCommand :: CommandHandler (Command T.Text)
-addPeriodicCommand Message { messageSender = sender
-                           , messageContent = command@Command {commandName = name}
-                           } = do
-  maybePc <- getPeriodicCommandByName name
-  case maybePc of
-    Just _ -> replyToSender sender [qms|'{name}' is aleady called periodically|]
-    Nothing -> do
-      void $ createEntity "PeriodicCommand" $ PeriodicCommand command
-      replyToSender
-        sender
-        [qms|'{name}' has been scheduled to call periodically|]
+addPeriodicCommand :: Reaction Message (Command T.Text)
+addPeriodicCommand =
+  Reaction $ \Message { messageSender = sender
+                      , messageContent = command@Command {commandName = name}
+                      } -> do
+    maybePc <- getPeriodicCommandByName name
+    case maybePc of
+      Just _ ->
+        replyToSender sender [qms|'{name}' is aleady called periodically|]
+      Nothing -> do
+        void $ createEntity "PeriodicCommand" $ PeriodicCommand command
+        replyToSender
+          sender
+          [qms|'{name}' has been scheduled to call periodically|]
 
 removePeriodicCommand :: CommandHandler T.Text
 removePeriodicCommand Message {messageSender = sender, messageContent = name} = do
