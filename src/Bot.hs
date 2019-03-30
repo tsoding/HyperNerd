@@ -110,7 +110,9 @@ builtinCommands =
           cmapR textAsCommand $
           replyOnNothing "Command as an argument is expected" addPeriodicCommand))
     , ( "delperiodic"
-      , ("Delete periodic command", Reaction $ modCommand removePeriodicCommand))
+      , ( "Delete periodic command"
+        , authorizeSender senderAuthority $
+          replyOnNothing "Only for mods" removePeriodicCommand))
     , ( "addcmd"
       , ( "Add custom command"
         , authorizeSender senderAuthority $
