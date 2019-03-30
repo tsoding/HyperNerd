@@ -320,7 +320,7 @@ mention =
   replyOnNothing "I have nothing to say to you" $ Reaction replyMessage
 
 bot :: Bot
-bot (Joined channel _) = do
+bot (Joined channel@(TwitchChannel _) _) = do
   startPeriodicCommands channel dispatchCommand
   periodicEffect (60 * 1000) (announceRunningPoll channel)
 bot event@(InMsg msg@Message { messageContent = text
@@ -336,6 +336,7 @@ bot event@(InMsg msg@Message { messageContent = text
       [] -> runReaction mention msg
       pipe ->
         mapM redirectAlias pipe >>= dispatchPipe . Message sender mentioned
+bot _ = return ()
 
 dispatchRedirect :: Effect () -> Message (Command T.Text) -> Effect ()
 dispatchRedirect effect cmd = do
