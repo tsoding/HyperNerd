@@ -85,10 +85,13 @@ builtinCommands =
     , ("help", ("Send help", helpCommand builtinCommands))
     , ( "poll"
       , ( "Starts a poll. !poll <duration:secs> option1; option2; ...; option3"
-        , authorizeSender senderAuthority $ replyOnNothing "Only for mods" $
+        , authorizeSender senderAuthority $
+          replyOnNothing "Only for mods" $
           -- TODO(#362): !poll command does not parse negative numbers
-          regexArgs "([0-9]+) (.*)" $ replyLeft $
-          pairArgs $ replyLeft $
+          regexArgs "([0-9]+) (.*)" $
+          replyLeft $
+          pairArgs $
+          replyLeft $
           cmapR
             (\(duration, options) ->
                fmap
@@ -99,7 +102,7 @@ builtinCommands =
       , ( "Cancels the current poll"
         , authorizeSender senderAuthority $ transR void cancelPollCommand))
     , ( "checkpoll"
-      , ("", Reaction $ modCommand $ voidCommand currentPollCommand))
+      , ("", authorizeSender senderAuthority $ transR void currentPollCommand))
     , ("uptime", ("Show stream uptime", cmapR (const ()) uptimeCommand))
     , ("rq", ("Get random quote from your log", randomLogRecordCommand))
     , ( "addperiodic"
@@ -262,9 +265,6 @@ onlyForRole reply role reaction =
     (elem role . senderRoles . messageSender)
     (cmapR extract reaction)
     (cmapR (const reply) $ Reaction replyMessage)
-
-voidCommand :: CommandHandler () -> CommandHandler a
-voidCommand commandHandler = commandHandler . void
 
 modCommand :: CommandHandler a -> CommandHandler a
 modCommand = senderAuthorizedCommand senderAuthority "Only for mods"

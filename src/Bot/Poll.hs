@@ -5,7 +5,6 @@ module Bot.Poll where
 
 import Bot.Log (LogRecord(..), Seconds, getRecentLogs)
 import Bot.Replies
-import Command
 import Control.Monad
 import Data.Foldable
 import Data.Function
@@ -179,18 +178,19 @@ isPollAlive currentTime pollEntity =
     maxPollLifetime = fromIntegral (pollDuration poll) * 0.001
     poll = entityPayload pollEntity
 
-currentPollCommand :: CommandHandler ()
-currentPollCommand Message {messageSender = sender} = do
-  currentTime <- now
-  poll <- currentPoll
-  case poll of
-    Just poll' ->
-      replyToSender
-        sender
-        [qms|id: {entityId poll'},
+currentPollCommand :: Reaction Message ()
+currentPollCommand =
+  Reaction $ \Message {messageSender = sender} -> do
+    currentTime <- now
+    poll <- currentPoll
+    case poll of
+      Just poll' ->
+        replyToSender
+          sender
+          [qms|id: {entityId poll'},
              {pollLifetime currentTime poll'}
              secs ago|]
-    Nothing -> replyToSender sender "No polls are in place"
+      Nothing -> replyToSender sender "No polls are in place"
 
 currentPoll :: Effect (Maybe (Entity Poll))
 currentPoll = do
