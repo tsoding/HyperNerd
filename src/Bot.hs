@@ -191,8 +191,11 @@ builtinCommands =
     , ("cycle", ("Mock the message", cmapR mockMessage sayMessage))
     , ( "trust"
       , ( "Makes the user trusted"
-        , Reaction $
-          modCommand $ regexArgsCommand "(.+)" $ firstArgCommand trustCommand))
+        , authorizeSender senderAuthority $
+          replyOnNothing "Only for mods" $
+          regexArgs "(.+)" $
+          replyLeft $
+          cmapR headMay $ replyOnNothing "Not enough arguments" $ trustCommand))
     , ( "untrust"
       , ( "Untrusts the user"
         , Reaction $

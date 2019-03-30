@@ -102,15 +102,16 @@ forbidLinksForPlebs (InMsg Message { messageSender = sender@Sender {senderChanne
   | otherwise = return False
 forbidLinksForPlebs _ = return False
 
-trustCommand :: CommandHandler T.Text
-trustCommand Message {messageSender = sender, messageContent = inputUser} = do
-  let user = T.strip $ T.toLower inputUser
-  trustedUser <- runMaybeT $ findTrustedUser user
-  case trustedUser of
-    Just _ -> replyToSender sender [qm|{user} is already trusted|]
-    Nothing -> do
-      void $ createEntity "TrustedUser" $ TrustedUser user
-      replyToSender sender [qm|{user} is now trusted|]
+trustCommand :: Reaction Message T.Text
+trustCommand =
+  Reaction $ \Message {messageSender = sender, messageContent = inputUser} -> do
+    let user = T.strip $ T.toLower inputUser
+    trustedUser <- runMaybeT $ findTrustedUser user
+    case trustedUser of
+      Just _ -> replyToSender sender [qm|{user} is already trusted|]
+      Nothing -> do
+        void $ createEntity "TrustedUser" $ TrustedUser user
+        replyToSender sender [qm|{user} is now trusted|]
 
 untrustCommand :: CommandHandler T.Text
 untrustCommand Message {messageSender = sender, messageContent = inputUser} = do
