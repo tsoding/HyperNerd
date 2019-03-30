@@ -25,6 +25,7 @@ import Entity
 import Property
 import Text.InterpolatedString.QM
 import Transport
+import Reaction
 
 data CustomCommand = CustomCommand
   { customCommandName :: T.Text
@@ -51,31 +52,30 @@ customCommandByName name =
   selectEntities "CustomCommand" $
   Filter (PropertyEquals "name" $ PropertyText name) All
 
-addCustomCommand :: CommandTable -> CommandHandler (T.Text, T.Text)
-addCustomCommand builtinCommands Message { messageSender = sender
-                                         , messageContent = (name, message)
-                                         } = do
-  customCommand <- runMaybeT $ customCommandByName name
-  let builtinCommand = M.lookup name builtinCommands
-  case (customCommand, builtinCommand) of
-    (Just _, Nothing) ->
-      replyToSender sender [qms|Command '{name}' already exists|]
-    (Nothing, Just _) ->
-      replyToSender
-        sender
-        [qms|There is already a builtin command with name '{name}'|]
-    (Just _, Just _) ->
-      errorEff [qms|Custom command '{name}' collide with a built in command|]
-    (Nothing, Nothing) -> do
-      void $
-        createEntity
-          "CustomCommand"
-          CustomCommand
-            { customCommandName = name
-            , customCommandMessage = message
-            , customCommandTimes = 0
-            }
-      replyToSender sender [qms|Added command '{name}'|]
+addCustomCommand :: CommandTable -> Reaction Message (T.Text, T.Text)
+addCustomCommand builtinCommands =
+  Reaction $ \Message {messageSender = sender, messageContent = (name, message)} -> do
+    customCommand <- runMaybeT $ customCommandByName name
+    let builtinCommand = M.lookup name builtinCommands
+    case (customCommand, builtinCommand) of
+      (Just _, Nothing) ->
+        replyToSender sender [qms|Command '{name}' already exists|]
+      (Nothing, Just _) ->
+        replyToSender
+          sender
+          [qms|There is already a builtin command with name '{name}'|]
+      (Just _, Just _) ->
+        errorEff [qms|Custom command '{name}' collide with a built in command|]
+      (Nothing, Nothing) -> do
+        void $
+          createEntity
+            "CustomCommand"
+            CustomCommand
+              { customCommandName = name
+              , customCommandMessage = message
+              , customCommandTimes = 0
+              }
+        replyToSender sender [qms|Added command '{name}'|]
 
 deleteCustomCommand :: CommandTable -> CommandHandler T.Text
 deleteCustomCommand builtinCommands Message { messageSender = sender

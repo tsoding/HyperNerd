@@ -110,10 +110,10 @@ builtinCommands =
       , ("Delete periodic command", Reaction $ modCommand removePeriodicCommand))
     , ( "addcmd"
       , ( "Add custom command"
-        , Reaction $
-          modCommand $
-          regexArgsCommand "([a-zA-Z0-9]+) ?(.*)" $
-          pairArgsCommand $ addCustomCommand builtinCommands))
+        , authorizeSender senderAuthority $
+          replyOnNothing "Only for mods" $
+          regexArgs "([a-zA-Z0-9]+) ?(.*)" $
+          replyLeft $ pairArgs $ replyLeft $ addCustomCommand builtinCommands))
     , ( "delcmd"
       , ( "Delete custom command"
         , Reaction $ modCommand $ deleteCustomCommand builtinCommands))
