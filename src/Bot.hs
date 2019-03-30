@@ -134,9 +134,7 @@ builtinCommands =
         , Reaction $
           regexArgsCommand "([a-zA-Z0-9]+)" $
           firstArgCommand $ timesCustomCommand builtinCommands))
-    , ( "song"
-      , ( "Print currently playing song"
-        , Reaction $ voidCommand currentSongCommand))
+    , ("song", ("Print currently playing song", transR void currentSongCommand))
     , ( "addalias"
       , ( "Add command alias"
         , authorizeSender senderAuthority $
