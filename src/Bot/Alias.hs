@@ -18,6 +18,7 @@ import Entity
 import Property
 import Text.InterpolatedString.QM
 import Transport
+import Reaction
 
 data Alias = Alias
   { aliasName :: T.Text
@@ -46,21 +47,23 @@ redirectAlias command = do
   alias <- getAliasByName $ commandName command
   return $ maybe command (renameCommand command . aliasRedirect) alias
 
-addAliasCommand :: CommandHandler (T.Text, T.Text)
-addAliasCommand Message { messageSender = sender
-                        , messageContent = (name, redirect)
-                        }
-  | name == redirect = replyToSender sender "Alias cannot redirect to itself"
-  | otherwise = do
-    alias <- getAliasByName name
-    case alias of
-      Just _ -> replyToSender sender [qms|Alias '{name}' already exists|]
-      Nothing -> do
-        void $
-          createEntity
-            "Alias"
-            Alias {aliasName = name, aliasRedirect = redirect}
-        replyToSender sender [qms|Alias '{name}' has been created|]
+addAliasCommand :: Reaction Message (T.Text, T.Text)
+addAliasCommand =
+  Reaction $ \Message { messageSender = sender
+                      , messageContent = (name, redirect)
+                      } ->
+    if name == redirect
+      then replyToSender sender "Alias cannot redirect to itself"
+      else do
+        alias <- getAliasByName name
+        case alias of
+          Just _ -> replyToSender sender [qms|Alias '{name}' already exists|]
+          Nothing -> do
+            void $
+              createEntity
+                "Alias"
+                Alias {aliasName = name, aliasRedirect = redirect}
+            replyToSender sender [qms|Alias '{name}' has been created|]
 
 removeAliasCommand :: CommandHandler T.Text
 removeAliasCommand Message {messageSender = sender, messageContent = name} = do

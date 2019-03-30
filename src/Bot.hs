@@ -139,10 +139,10 @@ builtinCommands =
         , Reaction $ voidCommand currentSongCommand))
     , ( "addalias"
       , ( "Add command alias"
-        , Reaction $
-          modCommand $
-          regexArgsCommand "([a-zA-Z0-9]+) ([a-zA-Z0-9]+)" $
-          pairArgsCommand addAliasCommand))
+        , authorizeSender senderAuthority $
+          replyOnNothing "Only for mods" $
+          regexArgs "([a-zA-Z0-9]+) ([a-zA-Z0-9]+)" $
+          replyLeft $ pairArgs $ replyLeft addAliasCommand))
     , ( "delalias"
       , ("Remove command alias", Reaction $ modCommand removeAliasCommand))
     , ( "addvar"
@@ -291,6 +291,14 @@ authorizeSender p =
        if p $ messageSender msg
          then Just <$> msg
          else Nothing <$ msg)
+
+pairArgs :: Comonad w => Reaction w (Either String (a, a)) -> Reaction w [a]
+pairArgs =
+  cmapR $
+  (\args ->
+     case args of
+       [x, y] -> Right (x, y)
+       _ -> Left [qms|Expected 2 arguments but got {length args}|])
 
 pairArgsCommand :: CommandHandler (a, a) -> CommandHandler [a]
 pairArgsCommand commandHandler message@Message {messageContent = [x, y]} =
