@@ -85,17 +85,16 @@ builtinCommands =
     , ("help", ("Send help", helpCommand builtinCommands))
     , ( "poll"
       , ( "Starts a poll. !poll <duration:secs> option1; option2; ...; option3"
-        , Reaction $
-          modCommand $
+        , authorizeSender senderAuthority $ replyOnNothing "Only for mods" $
           -- TODO(#362): !poll command does not parse negative numbers
-          regexArgsCommand "([0-9]+) (.*)" $
-          pairArgsCommand $
-          contramapCH
+          regexArgs "([0-9]+) (.*)" $ replyLeft $
+          pairArgs $ replyLeft $
+          cmapR
             (\(duration, options) ->
                fmap
                  (, filter (not . T.null) $ map T.strip $ T.splitOn ";" options) $
                readMaybe $ T.unpack duration) $
-          justCommand pollCommand))
+          replyOnNothing "Could not parse arguments" pollCommand))
     , ( "cancelpoll"
       , ( "Cancels the current poll"
         , authorizeSender senderAuthority $ transR void cancelPollCommand))
@@ -263,12 +262,6 @@ onlyForRole reply role reaction =
     (elem role . senderRoles . messageSender)
     (cmapR extract reaction)
     (cmapR (const reply) $ Reaction replyMessage)
-
-justCommand :: CommandHandler a -> CommandHandler (Maybe a)
-justCommand commandHandler message@Message {messageContent = Just arg} =
-  commandHandler $ fmap (const arg) message
-justCommand _ message =
-  replyMessage $ fmap (const "Could not parse arguments") message
 
 voidCommand :: CommandHandler () -> CommandHandler a
 voidCommand commandHandler = commandHandler . void

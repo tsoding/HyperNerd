@@ -120,32 +120,35 @@ showRanks :: (Show a) => [(Int, a)] -> String
 showRanks = intercalate ", " . map (\(i, v) -> show v ++ ": " ++ show i)
 
 -- TODO(#294): poll duration doesn't have upper/lower limit
-pollCommand :: CommandHandler (Int, [T.Text])
-pollCommand Message { messageSender = sender
-                    , messageContent = (durationSecs, options)
-                    } = do
-  poll <- currentPoll
-  let durationMs = durationSecs * 1000
-  case poll of
-    Just _ ->
-      replyToSender sender "Cannot create a poll while another poll is in place"
+pollCommand :: Reaction Message (Int, [T.Text])
+pollCommand =
+  Reaction $ \Message { messageSender = sender
+                      , messageContent = (durationSecs, options)
+                      } -> do
+    poll <- currentPoll
+    let durationMs = durationSecs * 1000
+    case poll of
+      Just _ ->
+        replyToSender
+          sender
+          "Cannot create a poll while another poll is in place"
     -- TODO(#295): passing duration of different units is not type safe
-    Nothing ->
-      if durationSecs >= 0
-        then do
-          pollId <- startPoll sender options durationMs
+      Nothing ->
+        if durationSecs >= 0
+          then do
+            pollId <- startPoll sender options durationMs
           -- TODO(#296): duration of poll is not human-readable in poll start announcement
-          say
-            (senderChannel sender)
-            [qms|TwitchVotes The poll has been started.
+            say
+              (senderChannel sender)
+              [qms|TwitchVotes The poll has been started.
                  You have {durationSecs} seconds:|]
-          traverse_ (\(i, op) -> say (senderChannel sender) [qms|[{i}] {op}|]) $
-            zip [0 :: Int ..] options
-          timeout (fromIntegral durationMs) $ announcePollResults pollId
-        else do
-          let offset = fromInteger $ toInteger $ negate durationSecs
+            traverse_ (\(i, op) -> say (senderChannel sender) [qms|[{i}] {op}|]) $
+              zip [0 :: Int ..] options
+            timeout (fromIntegral durationMs) $ announcePollResults pollId
+          else do
+            let offset = fromInteger $ toInteger $ negate durationSecs
           -- TODO(#361): Polls with negative durations are not stored in the database
-          instantlyReportResults (senderChannel sender) offset options
+            instantlyReportResults (senderChannel sender) offset options
 
 instantlyReportResults :: Channel -> Seconds -> [T.Text] -> Effect ()
 instantlyReportResults channel durationSecs options = do
