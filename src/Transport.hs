@@ -24,6 +24,7 @@ data Role
   | TwitchBroadcaster
   | TwitchBotOwner
   | DiscordRole Word64
+  | DiscordGuildOwner
   deriving (Show, Eq)
 
 data Sender = Sender
@@ -48,7 +49,10 @@ senderOwner = elem TwitchBotOwner . senderRoles
 
 senderAuthority :: Sender -> Bool
 senderAuthority sender =
-  senderMod sender || senderBroadcaster sender || senderOwner sender
+  any
+    (`elem` senderRoles sender)
+    [TwitchMod, TwitchBroadcaster, TwitchBotOwner, DiscordGuildOwner]
+
 
 data InEvent
   = Joined Channel
