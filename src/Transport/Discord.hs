@@ -76,12 +76,11 @@ rolesOfMessage dis msg =
 
 receiveLoop ::
      User
-  -> T.Text
   -> [ChannelId]
   -> IncomingQueue
   -> (RestChan, Gateway, z)
   -> IO ()
-receiveLoop botUser owner channels incoming dis = do
+receiveLoop botUser channels incoming dis = do
   e <- nextEvent dis
   case e of
     Left er -> putStrLn ("Event error: " <> show er)
@@ -105,7 +104,7 @@ receiveLoop botUser owner channels incoming dis = do
             (isJust $ find (== userId botUser) $ map userId $ messageMentions m)
             (messageText m)
     _ -> return ()
-  receiveLoop botUser owner channels incoming dis
+  receiveLoop botUser channels incoming dis
 
 -- TODO(#465): Discord transport does not handle authorization failure
 discordTransportEntry ::
@@ -128,7 +127,7 @@ discordTransportEntry incoming outcoming conf = do
           dpChannels conf
         withAsync (sendLoop outcoming dis) $ \sender ->
           withAsync
-            (receiveLoop user (dpOwner conf) (dpChannels conf) incoming dis) $ \receive -> do
+            (receiveLoop user (dpChannels conf) incoming dis) $ \receive -> do
             res <- waitEitherCatch sender receive
             case res of
               Left Right {} -> fail "PANIC: sendLoop returned"
