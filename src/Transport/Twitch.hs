@@ -98,7 +98,7 @@ receiveLoop conf incoming ircConn = do
                   , TwitchMod <$ find (T.isPrefixOf "moderator") badges
                   , TwitchBroadcaster <$
                     find (T.isPrefixOf "broadcaster") badges
-                  , toMaybe (name == tpOwner conf) Owner
+                  , toMaybe (name == tpOwner conf) TwitchBotOwner
                   ]
             -- TODO(#468): Twitch does not provide the id of the user
             , senderId = ""

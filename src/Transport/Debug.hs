@@ -42,7 +42,8 @@ debugRepl incoming outcoming config = do
         --   and/or via CLI commands.
         , senderChannel = debugChannel
         , senderId = ""
-        , senderRoles = [TwitchSub, TwitchMod, TwitchBroadcaster, Owner]
+        , senderRoles =
+            [TwitchSub, TwitchMod, TwitchBroadcaster, TwitchBotOwner]
         }
       (T.toLower (dbgNick config) `T.isInfixOf` T.toLower (T.pack message))
       (T.pack message)

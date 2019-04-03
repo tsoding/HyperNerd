@@ -22,7 +22,7 @@ data Role
   = TwitchSub
   | TwitchMod
   | TwitchBroadcaster
-  | Owner
+  | TwitchBotOwner
   | DiscordRole Word64
   deriving (Show, Eq)
 
@@ -44,7 +44,7 @@ senderBroadcaster :: Sender -> Bool
 senderBroadcaster = elem TwitchBroadcaster . senderRoles
 
 senderOwner :: Sender -> Bool
-senderOwner = elem Owner . senderRoles
+senderOwner = elem TwitchBotOwner . senderRoles
 
 senderAuthority :: Sender -> Bool
 senderAuthority sender =
