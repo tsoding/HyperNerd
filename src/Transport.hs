@@ -53,7 +53,6 @@ senderAuthority sender =
     (`elem` senderRoles sender)
     [TwitchMod, TwitchBroadcaster, TwitchBotOwner, DiscordGuildOwner]
 
-
 data InEvent
   = Joined Channel
            T.Text

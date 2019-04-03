@@ -75,11 +75,7 @@ rolesOfMessage dis msg =
       return []
 
 receiveLoop ::
-     User
-  -> [ChannelId]
-  -> IncomingQueue
-  -> (RestChan, Gateway, z)
-  -> IO ()
+     User -> [ChannelId] -> IncomingQueue -> (RestChan, Gateway, z) -> IO ()
 receiveLoop botUser channels incoming dis = do
   e <- nextEvent dis
   case e of
@@ -126,8 +122,7 @@ discordTransportEntry incoming outcoming conf = do
                (T.pack $ userName user)) $
           dpChannels conf
         withAsync (sendLoop outcoming dis) $ \sender ->
-          withAsync
-            (receiveLoop user (dpChannels conf) incoming dis) $ \receive -> do
+          withAsync (receiveLoop user (dpChannels conf) incoming dis) $ \receive -> do
             res <- waitEitherCatch sender receive
             case res of
               Left Right {} -> fail "PANIC: sendLoop returned"
