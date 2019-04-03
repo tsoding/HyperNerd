@@ -26,7 +26,7 @@ mrbotka =
     { senderName = "mrbotka"
     , senderDisplayName = "MrBotka"
     , senderChannel = TwitchChannel "#tsoding"
-    , senderRoles = [TwitchSub, TwitchMod, TwitchBroadcaster, Owner]
+    , senderRoles = [TwitchSub, TwitchMod, TwitchBroadcaster, TwitchBotOwner]
     , senderId = ""
     }
 

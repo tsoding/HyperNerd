@@ -57,6 +57,7 @@ fromBot = userIsBot . messageAuthor
 fromChannel :: ChannelId -> D.Message -> Bool
 fromChannel channel message = messageChannel message == channel
 
+-- TODO(#527): Discord transport doesn't set up DiscordGuildOwner role properly
 rolesOfMessage :: (RestChan, Gateway, z) -> D.Message -> IO [Role]
 rolesOfMessage dis msg =
   case D.messageGuild msg of
@@ -74,13 +75,8 @@ rolesOfMessage dis msg =
       return []
 
 receiveLoop ::
-     User
-  -> T.Text
-  -> [ChannelId]
-  -> IncomingQueue
-  -> (RestChan, Gateway, z)
-  -> IO ()
-receiveLoop botUser owner channels incoming dis = do
+     User -> [ChannelId] -> IncomingQueue -> (RestChan, Gateway, z) -> IO ()
+receiveLoop botUser channels incoming dis = do
   e <- nextEvent dis
   case e of
     Left er -> putStrLn ("Event error: " <> show er)
@@ -104,7 +100,7 @@ receiveLoop botUser owner channels incoming dis = do
             (isJust $ find (== userId botUser) $ map userId $ messageMentions m)
             (messageText m)
     _ -> return ()
-  receiveLoop botUser owner channels incoming dis
+  receiveLoop botUser channels incoming dis
 
 -- TODO(#465): Discord transport does not handle authorization failure
 discordTransportEntry ::
@@ -126,8 +122,7 @@ discordTransportEntry incoming outcoming conf = do
                (T.pack $ userName user)) $
           dpChannels conf
         withAsync (sendLoop outcoming dis) $ \sender ->
-          withAsync
-            (receiveLoop user (dpOwner conf) (dpChannels conf) incoming dis) $ \receive -> do
+          withAsync (receiveLoop user (dpChannels conf) incoming dis) $ \receive -> do
             res <- waitEitherCatch sender receive
             case res of
               Left Right {} -> fail "PANIC: sendLoop returned"
