@@ -19,6 +19,7 @@ import Property
 import Reaction
 import Text.InterpolatedString.QM
 import Transport
+import Data.Proxy
 
 mrbotka :: Sender
 mrbotka =
@@ -78,7 +79,7 @@ addPeriodicCommand =
       Just _ ->
         replyToSender sender [qms|'{name}' is aleady called periodically|]
       Nothing -> do
-        void $ createEntity $ PeriodicCommand command
+        void $ createEntity Proxy $ PeriodicCommand command
         replyToSender
           sender
           [qms|'{name}' has been scheduled to call periodically|]

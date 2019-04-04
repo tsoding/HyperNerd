@@ -29,6 +29,7 @@ import Text.InterpolatedString.QM
 import Text.Regex.TDFA (defaultCompOpt, defaultExecOpt)
 import Text.Regex.TDFA.String
 import Transport
+import Data.Proxy
 
 -- TODO(#264): trusted users system doesn't handle name changes
 newtype TrustedUser = TrustedUser
@@ -58,8 +59,7 @@ findTrustedSender = findTrustedUser . senderName
 autoTrustSender :: Sender -> MaybeT Effect (Entity TrustedUser)
 autoTrustSender sender
   | senderSubscriber sender || senderAuthority sender =
-    MaybeT $
-    fmap Just $ createEntity $ TrustedUser $ senderName sender
+    MaybeT $ fmap Just $ createEntity Proxy $ TrustedUser $ senderName sender
   | otherwise = MaybeT $ return Nothing
 
 textContainsLink :: T.Text -> Bool
@@ -110,7 +110,7 @@ trustCommand =
     case trustedUser of
       Just _ -> replyToSender sender [qm|{user} is already trusted|]
       Nothing -> do
-        void $ createEntity $ TrustedUser user
+        void $ createEntity Proxy $ TrustedUser user
         replyToSender sender [qm|{user} is now trusted|]
 
 untrustCommand :: Reaction Message T.Text

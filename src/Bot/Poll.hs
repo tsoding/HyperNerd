@@ -21,6 +21,7 @@ import Safe
 import Text.InterpolatedString.QM
 import Text.Read
 import Transport
+import Data.Proxy
 
 data PollOption = PollOption
   { poPollId :: Int
@@ -206,6 +207,7 @@ startPoll sender options duration = do
   startedAt <- now
   poll <-
     createEntity
+      Proxy
       Poll
         { pollAuthor = senderName sender
         , pollStartedAt = startedAt
@@ -215,7 +217,7 @@ startPoll sender options duration = do
         }
   let pollId = entityId poll
   for_ options $ \name ->
-    createEntity PollOption {poName = name, poPollId = pollId}
+    createEntity Proxy PollOption {poName = name, poPollId = pollId}
   return pollId
 
 getOptionsAndVotesByPollId ::
@@ -266,6 +268,7 @@ registerOptionVote option sender = do
                 voted for {poName $ entityPayload option}|]
     else void $
          createEntity
+           Proxy
            Vote {voteUser = senderName sender, voteOptionId = entityId option}
 
 -- TODO(#488): poll votes are registered across the channels

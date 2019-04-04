@@ -19,6 +19,7 @@ import Property
 import Reaction
 import Text.InterpolatedString.QM
 import Transport
+import Data.Proxy
 
 data Alias = Alias
   { aliasName :: T.Text
@@ -61,7 +62,9 @@ addAliasCommand =
           Just _ -> replyToSender sender [qms|Alias '{name}' already exists|]
           Nothing -> do
             void $
-              createEntity Alias {aliasName = name, aliasRedirect = redirect}
+              createEntity
+                Proxy
+                Alias {aliasName = name, aliasRedirect = redirect}
             replyToSender sender [qms|Alias '{name}' has been created|]
 
 removeAliasCommand :: Reaction Message T.Text

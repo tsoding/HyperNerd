@@ -26,6 +26,7 @@ import Property
 import Reaction
 import Text.InterpolatedString.QM
 import Transport
+import Data.Proxy
 
 data CustomCommand = CustomCommand
   { customCommandName :: T.Text
@@ -70,6 +71,7 @@ addCustomCommand builtinCommands =
       (Nothing, Nothing) -> do
         void $
           createEntity
+            Proxy
             CustomCommand
               { customCommandName = name
               , customCommandMessage = message

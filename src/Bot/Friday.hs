@@ -15,6 +15,7 @@ import Entity
 import Property
 import Reaction
 import Transport (Message(..), Sender(..))
+import Data.Proxy
 
 data FridayVideo = FridayVideo
   { fridayVideoName :: T.Text
@@ -52,7 +53,7 @@ fridayCommand =
   liftR
     (\msg ->
        void $
-       createEntity .
+       createEntity Proxy .
        FridayVideo (messageContent msg) (senderName $ messageSender msg) =<<
        now) $
   cmapR (const "Added to the suggestions") $ Reaction replyMessage

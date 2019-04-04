@@ -24,6 +24,7 @@ import Reaction
 import Safe
 import Text.InterpolatedString.QM
 import Transport
+import Data.Proxy
 
 data LogRecord = LogRecord
   { lrUser :: T.Text
@@ -71,6 +72,7 @@ recordUserMsg Message {messageSender = sender, messageContent = msg} = do
   timestamp <- now
   _ <-
     createEntity
+      Proxy
       LogRecord
         { lrUser = senderName sender
         , lrChannel = senderChannel sender

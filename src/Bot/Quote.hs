@@ -19,6 +19,7 @@ import Property
 import Reaction
 import Text.InterpolatedString.QM
 import Transport
+import Data.Proxy
 
 data Quote = Quote
   { quoteContent :: T.Text
@@ -49,7 +50,7 @@ addQuoteCommand =
   cmapR Quote $
   transR (reflect (senderName . messageSender)) $
   liftR (<$> now) $
-  liftR createEntity $
+  liftR (createEntity Proxy) $
   cmapR (\entity -> [qms|Added the quote under the number {entityId entity}|]) $
   Reaction replyMessage
 

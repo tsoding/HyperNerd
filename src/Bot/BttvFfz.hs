@@ -20,12 +20,13 @@ import qualified Data.Map as M
 import qualified Data.Text as T
 import Effect
 import Entity
-import Network.HTTP.Simple
+import Network.HTTP.Simple (getResponseBody, parseRequest)
 import qualified Network.URI.Encode as URI
 import Property
 import Reaction
 import Text.InterpolatedString.QM
 import Transport
+import Data.Proxy
 
 newtype FfzEmote = FfzEmote
   { ffzName :: T.Text
@@ -112,7 +113,7 @@ updateFfzEmotesCommand =
   liftR
     (\emotes -> do
        void $ deleteEntities "FfzEmote" All
-       traverse createEntity emotes) $
+       traverse (createEntity Proxy) emotes) $
   cmapR (T.concat . intersperse " " . map (ffzName . entityPayload)) sayMessage
 
 updateBttvEmotesCommand :: Reaction Message ()
@@ -126,5 +127,5 @@ updateBttvEmotesCommand =
   liftR
     (\emotes -> do
        void $ deleteEntities "BttvEmote" All
-       traverse createEntity emotes) $
+       traverse (createEntity Proxy) emotes) $
   cmapR (T.concat . intersperse " " . map (bttvName . entityPayload)) sayMessage

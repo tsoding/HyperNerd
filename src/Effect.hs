@@ -37,6 +37,7 @@ import Entity
 import Network.HTTP.Simple (Request, Response)
 import Property
 import Transport
+import Data.Proxy
 
 data Condition
   = PropertyEquals T.Text
@@ -120,10 +121,9 @@ logMsg :: T.Text -> Effect ()
 logMsg msg = liftF $ LogMsg msg ()
 
 -- TODO(#235): the result of createEntity effect is always ignored
-createEntity :: IsEntity e => e -> Effect (Entity e)
-createEntity entity =
-  liftF
-    (CreateEntity (nameOfEntity entity) (toProperties entity) id) >>=
+createEntity :: IsEntity e => Proxy e -> e -> Effect (Entity e)
+createEntity proxy entity =
+  liftF (CreateEntity (nameOfEntity proxy) (toProperties entity) id) >>=
   fromEntityProperties
 
 getEntityById :: IsEntity e => T.Text -> Int -> Effect (Maybe (Entity e))
