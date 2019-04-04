@@ -11,6 +11,7 @@ import Data.Function
 import Data.List
 import qualified Data.Map as M
 import Data.Maybe
+import Data.Proxy
 import qualified Data.Text as T
 import Data.Time
 import Effect
@@ -53,6 +54,7 @@ boolAsInt True = 1
 boolAsInt False = 0
 
 instance IsEntity Poll where
+  nameOfEntity _ = "Poll"
   toProperties poll =
     M.fromList
       ([ ("author", PropertyText $ pollAuthor poll)
@@ -71,6 +73,7 @@ instance IsEntity Poll where
     pure ((readMaybe . T.unpack) =<< extractProperty "channel" properties)
 
 instance IsEntity PollOption where
+  nameOfEntity _ = "PollOption"
   toProperties pollOption =
     M.fromList
       [ ("pollId", PropertyInt $ poPollId pollOption)
@@ -81,6 +84,7 @@ instance IsEntity PollOption where
     extractProperty "name" properties
 
 instance IsEntity Vote where
+  nameOfEntity _ = "Vote"
   toProperties vote =
     M.fromList
       [ ("user", PropertyText $ voteUser vote)
@@ -196,14 +200,14 @@ currentPoll :: Effect (Maybe (Entity Poll))
 currentPoll = do
   currentTime <- now
   fmap (listToMaybe . filter (isPollAlive currentTime)) $
-    selectEntities "Poll" $ Take 1 $ SortBy "startedAt" Desc All
+    selectEntities Proxy $ Take 1 $ SortBy "startedAt" Desc All
 
 startPoll :: Sender -> [T.Text] -> Int -> Effect Int
 startPoll sender options duration = do
   startedAt <- now
   poll <-
     createEntity
-      "Poll"
+      Proxy
       Poll
         { pollAuthor = senderName sender
         , pollStartedAt = startedAt
@@ -213,19 +217,19 @@ startPoll sender options duration = do
         }
   let pollId = entityId poll
   for_ options $ \name ->
-    createEntity "PollOption" PollOption {poName = name, poPollId = pollId}
+    createEntity Proxy PollOption {poName = name, poPollId = pollId}
   return pollId
 
 getOptionsAndVotesByPollId ::
      Int -> Effect ([Entity PollOption], [[Entity Vote]])
 getOptionsAndVotesByPollId pollId = do
   options <-
-    selectEntities "PollOption" $
+    selectEntities Proxy $
     Filter (PropertyEquals "pollId" $ PropertyInt pollId) All
   votes <-
     mapM
       (\option ->
-         selectEntities voteTypeName $
+         selectEntities Proxy $
          Filter
            (PropertyEquals "optionId" $
             PropertyInt $
@@ -238,7 +242,7 @@ getOptionsAndVotesByPollId pollId = do
 announcePollResults :: Int -> Effect ()
 announcePollResults pollId = do
   (options, votes) <- getOptionsAndVotesByPollId pollId
-  poll <- getEntityById "Poll" pollId
+  poll <- getEntityById Proxy pollId
   unless (maybe True (pollCancelled . entityPayload) poll) $ do
     fromMaybe
       (return ())
@@ -255,7 +259,7 @@ announcePollResults pollId = do
 registerOptionVote :: Entity PollOption -> Sender -> Effect ()
 registerOptionVote option sender = do
   existingVotes <-
-    selectEntities "Vote" $
+    selectEntities Proxy $
     Filter (PropertyEquals "optionId" $ PropertyInt $ entityId option) All
   -- TODO(#289): registerOptionVote filters existing votes on the haskell side
   if any ((== senderName sender) . voteUser . entityPayload) existingVotes
@@ -264,7 +268,7 @@ registerOptionVote option sender = do
                 voted for {poName $ entityPayload option}|]
     else void $
          createEntity
-           "Vote"
+           Proxy
            Vote {voteUser = senderName sender, voteOptionId = entityId option}
 
 -- TODO(#488): poll votes are registered across the channels
@@ -276,7 +280,7 @@ registerPollVote Message {messageSender = sender, messageContent = optionNumber}
       options <-
         sortBy (compare `on` entityId) <$>
         selectEntities
-          "PollOption"
+          Proxy
           (Filter (PropertyEquals "pollId" $ PropertyInt $ entityId poll) All)
       case options `atMay` optionNumber of
         Just option -> registerOptionVote option sender
@@ -293,7 +297,7 @@ announceRunningPoll channel = do
     Just pollEntity
       | Just channel == pollChannel (entityPayload pollEntity) -> do
         pollOptions <-
-          selectEntities "PollOption" $
+          selectEntities Proxy $
           Filter
             (PropertyEquals "pollId" $ PropertyInt $ entityId pollEntity)
             All

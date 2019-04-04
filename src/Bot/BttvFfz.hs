@@ -17,10 +17,11 @@ import Data.Aeson
 import Data.Aeson.Types
 import Data.List
 import qualified Data.Map as M
+import Data.Proxy
 import qualified Data.Text as T
 import Effect
 import Entity
-import Network.HTTP.Simple
+import Network.HTTP.Simple (getResponseBody, parseRequest)
 import qualified Network.URI.Encode as URI
 import Property
 import Reaction
@@ -32,6 +33,7 @@ newtype FfzEmote = FfzEmote
   }
 
 instance IsEntity FfzEmote where
+  nameOfEntity _ = "FfzEmote"
   toProperties entity = M.fromList [("name", PropertyText $ ffzName entity)]
   fromProperties properties = FfzEmote <$> extractProperty "name" properties
 
@@ -40,6 +42,7 @@ newtype BttvEmote = BttvEmote
   }
 
 instance IsEntity BttvEmote where
+  nameOfEntity _ = "BttvEmote"
   toProperties entity = M.fromList [("name", PropertyText $ bttvName entity)]
   fromProperties properties = BttvEmote <$> extractProperty "name" properties
 
@@ -82,12 +85,12 @@ bttvUrl channel = [qms|https://api.betterttv.net/2/channels/{encodedChannel}|]
 
 ffzCommand :: Reaction Message ()
 ffzCommand =
-  liftR (const $ selectEntities "FfzEmote" All) $
+  liftR (const $ selectEntities Proxy All) $
   cmapR (T.concat . intersperse " " . map (ffzName . entityPayload)) sayMessage
 
 bttvCommand :: Reaction Message ()
 bttvCommand =
-  liftR (const $ selectEntities "BttvEmote" All) $
+  liftR (const $ selectEntities Proxy All) $
   cmapR (T.concat . intersperse " " . map (bttvName . entityPayload)) sayMessage
 
 jsonHttpRequest :: FromJSON a => Reaction Message a -> Reaction Message String
@@ -109,8 +112,8 @@ updateFfzEmotesCommand =
   cmapR ffzResEmotes $
   liftR
     (\emotes -> do
-       void $ deleteEntities "FfzEmote" All
-       traverse (createEntity "FfzEmote") emotes) $
+       void $ deleteEntities (Proxy :: Proxy FfzEmote) All
+       traverse (createEntity Proxy) emotes) $
   cmapR (T.concat . intersperse " " . map (ffzName . entityPayload)) sayMessage
 
 updateBttvEmotesCommand :: Reaction Message ()
@@ -123,6 +126,6 @@ updateBttvEmotesCommand =
   cmapR bttvResEmotes $
   liftR
     (\emotes -> do
-       void $ deleteEntities "BttvEmote" All
-       traverse (createEntity "BttvEmote") emotes) $
+       void $ deleteEntities (Proxy :: Proxy BttvEmote) All
+       traverse (createEntity Proxy) emotes) $
   cmapR (T.concat . intersperse " " . map (bttvName . entityPayload)) sayMessage

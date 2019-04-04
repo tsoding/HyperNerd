@@ -18,6 +18,7 @@ import Control.Monad.Trans.Maybe
 import Data.Either
 import qualified Data.Map as M
 import Data.Maybe
+import Data.Proxy
 import qualified Data.Text as T
 import Effect
 import Entity
@@ -36,6 +37,7 @@ newtype TrustedUser = TrustedUser
   }
 
 instance IsEntity TrustedUser where
+  nameOfEntity _ = "TrustedUser"
   toProperties trustedUser =
     M.fromList
       [ ( "user"
@@ -48,8 +50,7 @@ findTrustedUser :: T.Text -> MaybeT Effect (Entity TrustedUser)
 findTrustedUser name =
   MaybeT $
   fmap listToMaybe $
-  selectEntities "TrustedUser" $
-  Filter (PropertyEquals "user" $ PropertyText name) All
+  selectEntities Proxy $ Filter (PropertyEquals "user" $ PropertyText name) All
 
 findTrustedSender :: Sender -> MaybeT Effect (Entity TrustedUser)
 findTrustedSender = findTrustedUser . senderName
@@ -57,8 +58,7 @@ findTrustedSender = findTrustedUser . senderName
 autoTrustSender :: Sender -> MaybeT Effect (Entity TrustedUser)
 autoTrustSender sender
   | senderSubscriber sender || senderAuthority sender =
-    MaybeT $
-    fmap Just $ createEntity "TrustedUser" $ TrustedUser $ senderName sender
+    MaybeT $ fmap Just $ createEntity Proxy $ TrustedUser $ senderName sender
   | otherwise = MaybeT $ return Nothing
 
 textContainsLink :: T.Text -> Bool
@@ -109,7 +109,7 @@ trustCommand =
     case trustedUser of
       Just _ -> replyToSender sender [qm|{user} is already trusted|]
       Nothing -> do
-        void $ createEntity "TrustedUser" $ TrustedUser user
+        void $ createEntity Proxy $ TrustedUser user
         replyToSender sender [qm|{user} is now trusted|]
 
 untrustCommand :: Reaction Message T.Text
@@ -119,7 +119,7 @@ untrustCommand =
     trustedUser <- runMaybeT $ findTrustedUser user
     case trustedUser of
       Just trustedUser' -> do
-        deleteEntityById "TrustedUser" $ entityId trustedUser'
+        deleteEntityById (Proxy :: Proxy TrustedUser) $ entityId trustedUser'
         replyToSender sender [qm|{user} is not trusted anymore|]
       Nothing ->
         replyToSender sender [qm|{user} was not trusted in the first place|]

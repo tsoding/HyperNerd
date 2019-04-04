@@ -7,6 +7,7 @@ module Entity where
 import Control.Monad.Catch
 import qualified Data.Map as M
 import Data.Maybe
+import Data.Proxy
 import qualified Data.Text as T
 import Data.Time
 import GHC.Generics
@@ -36,6 +37,7 @@ extractProperty fieldName properties = do
   fromProperty property
 
 class IsEntity e where
+  nameOfEntity :: Proxy e -> T.Text
   toProperties :: e -> Properties
   fromProperties :: MonadThrow m => Properties -> m e
 
@@ -54,7 +56,3 @@ restoreEntity name ident rawProperties = do
              , entityId = ident
              , entityPayload = M.fromList properties
              }
-
-instance IsEntity Properties where
-  toProperties = id
-  fromProperties = return

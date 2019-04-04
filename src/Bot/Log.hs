@@ -14,6 +14,7 @@ module Bot.Log
 import Bot.Replies
 import qualified Data.Map as M
 import Data.Maybe
+import Data.Proxy
 import qualified Data.Text as T
 import Data.Time
 import Effect
@@ -38,6 +39,7 @@ timestampPV = "timestamp"
 type Seconds = Natural
 
 instance IsEntity LogRecord where
+  nameOfEntity _ = "LogRecord"
   toProperties lr =
     M.fromList
       [ ("user", PropertyText $ lrUser lr)
@@ -70,7 +72,7 @@ recordUserMsg Message {messageSender = sender, messageContent = msg} = do
   timestamp <- now
   _ <-
     createEntity
-      "LogRecord"
+      Proxy
       LogRecord
         { lrUser = senderName sender
         , lrChannel = senderChannel sender
@@ -86,7 +88,7 @@ getRecentLogs offset = do
   let startDate = addUTCTime diff currentTime
   -- TODO(#358): use "PropertyGreater" when it's ready
   -- limiting fetched logs by 100 untill then
-  allLogs <- selectEntities "LogRecord" $ Take 100 $ SortBy timestampPV Desc All
+  allLogs <- selectEntities Proxy $ Take 100 $ SortBy timestampPV Desc All
   let result =
         filter (\l -> lrTimestamp l > startDate) $ map entityPayload allLogs
   return result
@@ -96,7 +98,7 @@ secondsAsBackwardsDiff = negate . fromInteger . toInteger
 
 randomLogRecord :: Reaction Message a
 randomLogRecord =
-  liftR (const $ selectEntities "LogRecord" $ Take 1 $ Shuffle All) $
+  liftR (const $ selectEntities Proxy $ Take 1 $ Shuffle All) $
   cmapR listToMaybe $
   ignoreNothing $ cmapR (lrMsg . entityPayload) $ Reaction replyMessage
 
@@ -104,7 +106,7 @@ randomLogRecordCommand :: Reaction Message T.Text
 randomLogRecordCommand =
   cmapR (T.toLower . T.strip) $
   transCmapR extractUser $
-  transLiftR (selectEntities "LogRecord" . randomUserQuoteSelector) $
+  transLiftR (selectEntities Proxy . randomUserQuoteSelector) $
   cmapR listToMaybe $ ignoreNothing $ cmapR (lrAsMsg . entityPayload) sayMessage
   where
     extractUser :: Message T.Text -> T.Text

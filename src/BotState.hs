@@ -138,9 +138,6 @@ applyEffect (botState, Free (SelectEntities name selector s)) = do
 applyEffect (botState, Free (DeleteEntities name selector s)) = do
   n <- SEP.deleteEntities (bsSqliteConn botState) name selector
   return (botState, s n)
-applyEffect (botState, Free (UpdateEntities name selector properties s)) = do
-  n <- SEP.updateEntities (bsSqliteConn botState) name selector properties
-  return (botState, s n)
 applyEffect (botState, Free (HttpRequest request s)) = do
   response <-
     catch

@@ -10,6 +10,7 @@ module Bot.Quote
 import Bot.Replies
 import qualified Data.Map as M
 import Data.Maybe
+import Data.Proxy
 import qualified Data.Text as T
 import Data.Time
 import Effect
@@ -27,6 +28,7 @@ data Quote = Quote
   }
 
 instance IsEntity Quote where
+  nameOfEntity _ = "quote"
   toProperties quote =
     M.fromList
       [ ("content", PropertyText $ quoteContent quote)
@@ -40,7 +42,7 @@ instance IsEntity Quote where
 
 deleteQuoteCommand :: Reaction Message Int
 deleteQuoteCommand =
-  liftR (deleteEntityById "quote") $
+  liftR (deleteEntityById (Proxy :: Proxy Quote)) $
   cmapR (const "Quote has been deleted") $ Reaction replyMessage
 
 addQuoteCommand :: Reaction Message T.Text
@@ -48,17 +50,17 @@ addQuoteCommand =
   cmapR Quote $
   transR (reflect (senderName . messageSender)) $
   liftR (<$> now) $
-  liftR (createEntity "quote") $
+  liftR (createEntity Proxy) $
   cmapR (\entity -> [qms|Added the quote under the number {entityId entity}|]) $
   Reaction replyMessage
 
 replyRandomQuote :: Reaction Message ()
 replyRandomQuote =
-  liftR (const $ selectEntities "quote" $ Take 1 $ Shuffle All) $
+  liftR (const $ selectEntities Proxy $ Take 1 $ Shuffle All) $
   cmapR listToMaybe quoteFoundReply
 
 replyRequestedQuote :: Reaction Message Int
-replyRequestedQuote = liftR (getEntityById "quote") quoteFoundReply
+replyRequestedQuote = liftR (getEntityById Proxy) quoteFoundReply
 
 quoteCommand :: Reaction Message (Maybe Int)
 quoteCommand = maybeReaction replyRandomQuote replyRequestedQuote

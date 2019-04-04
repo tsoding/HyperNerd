@@ -23,6 +23,7 @@ data Raffle = Raffle
   }
 
 instance IsEntity Raffle where
+  nameOfEntity _ = "Raffle"
   toProperties raffle =
     M.fromList
       [ ("startedAt", PropertyUTCTime $ raffleStartedAt raffle)

@@ -12,6 +12,7 @@ import Command
 import Control.Monad
 import qualified Data.Map as M
 import Data.Maybe
+import Data.Proxy
 import qualified Data.Text as T
 import Effect
 import Entity
@@ -36,6 +37,7 @@ newtype PeriodicCommand = PeriodicCommand
   }
 
 instance IsEntity PeriodicCommand where
+  nameOfEntity _ = "PeriodicCommand"
   toProperties pc =
     M.fromList
       [ ("name", PropertyText $ commandName command)
@@ -51,14 +53,13 @@ instance IsEntity PeriodicCommand where
 getPeriodicCommandByName :: T.Text -> Effect (Maybe (Entity PeriodicCommand))
 getPeriodicCommandByName name =
   fmap listToMaybe $
-  selectEntities "PeriodicCommand" $
+  selectEntities Proxy $
   Take 1 $ Filter (PropertyEquals "name" (PropertyText name)) All
 
 startPeriodicCommands ::
      Channel -> (Message (Command T.Text) -> Effect ()) -> Effect ()
 startPeriodicCommands channel dispatchCommand = do
-  maybePc <-
-    fmap listToMaybe $ selectEntities "PeriodicCommand" $ Take 1 $ Shuffle All
+  maybePc <- fmap listToMaybe $ selectEntities Proxy $ Take 1 $ Shuffle All
   maybe
     (return ())
     (dispatchCommand .
@@ -77,7 +78,7 @@ addPeriodicCommand =
       Just _ ->
         replyToSender sender [qms|'{name}' is aleady called periodically|]
       Nothing -> do
-        void $ createEntity "PeriodicCommand" $ PeriodicCommand command
+        void $ createEntity Proxy $ PeriodicCommand command
         replyToSender
           sender
           [qms|'{name}' has been scheduled to call periodically|]
@@ -89,7 +90,7 @@ removePeriodicCommand =
     case maybePc of
       Just _ -> do
         void $
-          deleteEntities "PeriodicCommand" $
+          deleteEntities (Proxy :: Proxy PeriodicCommand) $
           Filter (PropertyEquals "name" $ PropertyText name) All
         replyToSender sender [qms|'{name}' has been unscheduled|]
       Nothing ->

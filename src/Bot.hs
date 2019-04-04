@@ -35,10 +35,11 @@ import Data.Foldable
 import Data.Functor.Compose
 import Data.Functor.Identity
 import qualified Data.Map as M
+import Data.Proxy
 import qualified Data.Text as T
 import Effect
 import Entity
-import Network.HTTP.Simple
+import Network.HTTP.Simple (parseRequest)
 import qualified Network.URI.Encode as URI
 import Reaction
 import Safe
@@ -194,8 +195,7 @@ builtinCommands =
                 logMsg [qms|[WARNING] Could not parse arguments: {msg}|]
               Right (n, regex) -> do
                 logs <-
-                  selectEntities "LogRecord" $
-                  Take n $ SortBy "timestamp" Desc All
+                  selectEntities Proxy $ Take n $ SortBy "timestamp" Desc All
                 traverse_
                   (banUser (senderChannel sender) . lrUser . entityPayload) $
                   filter

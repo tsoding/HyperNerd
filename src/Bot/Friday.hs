@@ -8,6 +8,7 @@ import Control.Comonad
 import Control.Monad.Trans.Maybe
 import Data.Functor
 import qualified Data.Map as M
+import Data.Proxy
 import qualified Data.Text as T
 import Data.Time
 import Effect
@@ -23,6 +24,7 @@ data FridayVideo = FridayVideo
   } deriving (Show, Eq)
 
 instance IsEntity FridayVideo where
+  nameOfEntity _ = "FridayVideo"
   toProperties fridayVideo =
     M.fromList
       [ ("name", PropertyText $ fridayVideoName fridayVideo)
@@ -51,7 +53,7 @@ fridayCommand =
   liftR
     (\msg ->
        void $
-       createEntity "FridayVideo" .
+       createEntity Proxy .
        FridayVideo (messageContent msg) (senderName $ messageSender msg) =<<
        now) $
   cmapR (const "Added to the suggestions") $ Reaction replyMessage

@@ -12,6 +12,7 @@ import Command
 import Control.Monad
 import qualified Data.Map as M
 import Data.Maybe
+import Data.Proxy
 import qualified Data.Text as T
 import Effect
 import Entity
@@ -26,6 +27,7 @@ data Alias = Alias
   }
 
 instance IsEntity Alias where
+  nameOfEntity _ = "Alias"
   toProperties alias =
     M.fromList
       [ ("name", PropertyText $ aliasName alias)
@@ -37,9 +39,9 @@ instance IsEntity Alias where
 
 getAliasByName :: T.Text -> Effect (Maybe Alias)
 getAliasByName name =
-  fmap entityPayload . (>>= fromEntityProperties) . listToMaybe <$>
+  fmap entityPayload . listToMaybe <$>
   selectEntities
-    "Alias"
+    Proxy
     (Take 1 $ Filter (PropertyEquals "name" (PropertyText name)) All)
 
 redirectAlias :: Command a -> Effect (Command a)
@@ -61,7 +63,7 @@ addAliasCommand =
           Nothing -> do
             void $
               createEntity
-                "Alias"
+                Proxy
                 Alias {aliasName = name, aliasRedirect = redirect}
             replyToSender sender [qms|Alias '{name}' has been created|]
 
@@ -73,7 +75,7 @@ removeAliasCommand =
       Just _ -> do
         void $
           deleteEntities
-            "Alias"
+            (Proxy :: Proxy Alias)
             (Filter (PropertyEquals "name" (PropertyText name)) All)
         replyToSender sender [qms|Alias '{name}' has been removed|]
       Nothing -> replyToSender sender [qms|Alias '{name}' does not exists"|]

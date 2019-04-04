@@ -18,6 +18,7 @@ import Control.Monad.Trans.Class
 import Control.Monad.Trans.Maybe
 import qualified Data.Map as M
 import Data.Maybe
+import Data.Proxy
 import qualified Data.Text as T
 import Data.Time
 import Effect
@@ -34,6 +35,7 @@ data CustomCommand = CustomCommand
   }
 
 instance IsEntity CustomCommand where
+  nameOfEntity _ = "CustomCommand"
   toProperties customCommand =
     M.fromList
       [ ("name", PropertyText $ customCommandName customCommand)
@@ -48,9 +50,8 @@ instance IsEntity CustomCommand where
 customCommandByName :: T.Text -> MaybeT Effect (Entity CustomCommand)
 customCommandByName name =
   MaybeT $
-  fmap (listToMaybe >=> fromEntityProperties) $
-  selectEntities "CustomCommand" $
-  Filter (PropertyEquals "name" $ PropertyText name) All
+  fmap listToMaybe $
+  selectEntities Proxy $ Filter (PropertyEquals "name" $ PropertyText name) All
 
 addCustomCommand :: CommandTable -> Reaction Message (T.Text, T.Text)
 addCustomCommand builtinCommands =
@@ -69,7 +70,7 @@ addCustomCommand builtinCommands =
       (Nothing, Nothing) -> do
         void $
           createEntity
-            "CustomCommand"
+            Proxy
             CustomCommand
               { customCommandName = name
               , customCommandMessage = message
@@ -85,7 +86,7 @@ deleteCustomCommand builtinCommands =
     case (customCommand, builtinCommand) of
       (Just _, Nothing) -> do
         void $
-          deleteEntities "CustomCommand" $
+          deleteEntities (Proxy :: Proxy CustomCommand) $
           Filter (PropertyEquals "name" $ PropertyText name) All
         replyToSender sender [qms|Command '{name}' has been removed|]
       (Nothing, Just _) ->
@@ -197,12 +198,6 @@ replaceCustomCommandMessage :: T.Text -> CustomCommand -> CustomCommand
 replaceCustomCommandMessage message customCommand =
   customCommand {customCommandMessage = message}
 
-{-# ANN dispatchCustomCommand ("HLint: ignore Use fmap" :: String)
-        #-}
-
-{-# ANN dispatchCustomCommand ("HLint: ignore Use <$>" :: String)
-        #-}
-
 dispatchCustomCommand :: Message (Command T.Text) -> Effect ()
 dispatchCustomCommand Message { messageContent = Command { commandName = cmd
                                                          , commandArgs = args
@@ -211,9 +206,9 @@ dispatchCustomCommand Message { messageContent = Command { commandName = cmd
                               } = do
   customCommand <-
     runMaybeT
-      (customCommandByName cmd >>= return . fmap bumpCustomCommandTimes >>=
-       MaybeT . updateEntityById >>=
-       return . entityPayload >>=
+      (entityPayload <$>
+       ((fmap bumpCustomCommandTimes <$> customCommandByName cmd) >>=
+        MaybeT . updateEntityById) >>=
        lift . expandCustomCommandVars sender args)
   maybe
     (return ())

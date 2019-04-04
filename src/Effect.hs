@@ -16,7 +16,6 @@ module Effect
   , updateEntityById
   , selectEntities
   , deleteEntities
-  , updateEntities
   , httpRequest
   , now
   , timeout
@@ -31,10 +30,11 @@ module Effect
 import Control.Monad.Catch
 import Control.Monad.Free
 import qualified Data.ByteString.Lazy.Char8 as B8
+import Data.Proxy
 import qualified Data.Text as T
 import Data.Time
 import Entity
-import Network.HTTP.Simple
+import Network.HTTP.Simple (Request, Response)
 import Property
 import Transport
 
@@ -85,10 +85,6 @@ data EffectF s
   | DeleteEntities T.Text
                    Selector
                    (Int -> s)
-  | UpdateEntities T.Text
-                   Selector
-                   Properties
-                   (Int -> s)
   | Now (UTCTime -> s)
   | HttpRequest Request
                 (Response B8.ByteString -> s)
@@ -120,32 +116,33 @@ logMsg :: T.Text -> Effect ()
 logMsg msg = liftF $ LogMsg msg ()
 
 -- TODO(#235): the result of createEntity effect is always ignored
-createEntity :: IsEntity e => T.Text -> e -> Effect (Entity e)
-createEntity name entity =
-  liftF (CreateEntity name (toProperties entity) id) >>= fromEntityProperties
+createEntity :: IsEntity e => Proxy e -> e -> Effect (Entity e)
+createEntity proxy entity =
+  liftF (CreateEntity (nameOfEntity proxy) (toProperties entity) id) >>=
+  fromEntityProperties
 
-getEntityById :: IsEntity e => T.Text -> Int -> Effect (Maybe (Entity e))
-getEntityById name ident =
-  fmap (>>= fromEntityProperties) $ liftF $ GetEntityById name ident id
+getEntityById :: IsEntity e => Proxy e -> Int -> Effect (Maybe (Entity e))
+getEntityById proxy ident =
+  fmap (>>= fromEntityProperties) $
+  liftF $ GetEntityById (nameOfEntity proxy) ident id
 
-deleteEntityById :: T.Text -> Int -> Effect ()
-deleteEntityById name ident = liftF $ DeleteEntityById name ident ()
+deleteEntityById :: IsEntity e => Proxy e -> Int -> Effect ()
+deleteEntityById proxy ident =
+  liftF $ DeleteEntityById (nameOfEntity proxy) ident ()
 
 updateEntityById :: IsEntity e => Entity e -> Effect (Maybe (Entity e))
 updateEntityById entity =
   fmap (>>= fromEntityProperties) $
   liftF $ UpdateEntityById (toProperties <$> entity) id
 
-selectEntities :: IsEntity e => T.Text -> Selector -> Effect [Entity e]
-selectEntities name selector =
-  fmap (>>= fromEntityProperties) $ liftF $ SelectEntities name selector id
+selectEntities :: IsEntity e => Proxy e -> Selector -> Effect [Entity e]
+selectEntities proxy selector =
+  fmap (>>= fromEntityProperties) $
+  liftF $ SelectEntities (nameOfEntity proxy) selector id
 
-deleteEntities :: T.Text -> Selector -> Effect Int
-deleteEntities name selector = liftF $ DeleteEntities name selector id
-
-updateEntities :: T.Text -> Selector -> Properties -> Effect Int
-updateEntities name selector properties =
-  liftF $ UpdateEntities name selector properties id
+deleteEntities :: IsEntity e => Proxy e -> Selector -> Effect Int
+deleteEntities proxy selector =
+  liftF $ DeleteEntities (nameOfEntity proxy) selector id
 
 now :: Effect UTCTime
 now = liftF $ Now id
