@@ -340,10 +340,6 @@ deleteEntities conn name selector = do
   ids <- selectEntityIds conn name selector
   length <$> traverse (deleteEntityById conn name) ids
 
-{-# ANN updateEntityById ("HLint: ignore Use fmap" :: String) #-}
-
-{-# ANN updateEntityById ("HLint: ignore Use <$>" :: String) #-}
-
 updateEntityById ::
      Connection -- conn
   -> Entity Properties -- entity
