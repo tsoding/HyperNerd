@@ -256,6 +256,7 @@ builtinCommands =
         , transR duplicate $
           cmapR (T.pack . show . senderRoles . messageSender) $
           Reaction replyMessage))
+    , ("markov", ("Generate Markov message", markov))
     ]
 
 mockMessage :: T.Text -> T.Text
@@ -312,17 +313,20 @@ regexArgs ::
 regexArgs regexString reaction =
   Reaction $ runReaction reaction . fmap (regexParseArgs regexString)
 
-mention :: Reaction Message T.Text
+markov :: Reaction Message a
+markov =
+  liftR (const randomMarkov) $
+  replyOnNothing "I have nothing to say to you" $ Reaction replyMessage
+
+-- TODO: decouple mention from markov
+mention :: Reaction Message a
 mention =
-  cmapR T.toUpper $
   transR
     (\msg ->
        if messageMentioned msg
          then Just <$> msg
          else Nothing <$ msg) $
-  ignoreNothing $
-  liftR (const randomMarkov) $
-  replyOnNothing "I have nothing to say to you" $ Reaction replyMessage
+  ignoreNothing $ markov
 
 bot :: Bot
 bot (Joined channel@(TwitchChannel _)) = do
