@@ -251,6 +251,12 @@ builtinCommands =
             "You have to be a Twitch sub in the Discord server"
             (DiscordRole 542590649103286273) $
           liftR (say (TwitchChannel "#tsoding")) ignore))
+    , ( "roles"
+      , ( "Show your roles"
+        , transR duplicate $
+          cmapR (T.pack . show . senderRoles . messageSender) $
+          Reaction replyMessage))
+    , ("markov", ("Generate Markov message", markov))
     ]
 
 mockMessage :: T.Text -> T.Text
@@ -307,20 +313,22 @@ regexArgs ::
 regexArgs regexString reaction =
   Reaction $ runReaction reaction . fmap (regexParseArgs regexString)
 
-mention :: Reaction Message T.Text
+markov :: Reaction Message a
+markov =
+  liftR (const randomMarkov) $
+  replyOnNothing "I have nothing to say to you" $ Reaction replyMessage
+
+mention :: Reaction Message a
 mention =
-  cmapR T.toUpper $
   transR
     (\msg ->
        if messageMentioned msg
          then Just <$> msg
          else Nothing <$ msg) $
-  ignoreNothing $
-  liftR (const randomMarkov) $
-  replyOnNothing "I have nothing to say to you" $ Reaction replyMessage
+  ignoreNothing markov
 
 bot :: Bot
-bot (Joined channel@(TwitchChannel _) _) = do
+bot (Joined channel@(TwitchChannel _)) = do
   startPeriodicCommands channel dispatchCommand
   periodicEffect (60 * 1000) (announceRunningPoll channel)
 bot event@(InMsg msg@Message { messageContent = text

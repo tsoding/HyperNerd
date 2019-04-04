@@ -51,5 +51,5 @@ debugRepl incoming outcoming config = do
 
 debugTransportEntry :: IncomingQueue -> OutcomingQueue -> DebugParams -> IO ()
 debugTransportEntry incoming outcoming config = do
-  atomically $ writeTQueue incoming $ Joined debugChannel $ dbgNick config
+  atomically $ writeTQueue incoming $ Joined debugChannel
   debugRepl incoming outcoming config
