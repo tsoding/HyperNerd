@@ -35,6 +35,7 @@ import Data.Foldable
 import Data.Functor.Compose
 import Data.Functor.Identity
 import qualified Data.Map as M
+import Data.Proxy
 import qualified Data.Text as T
 import Effect
 import Entity
@@ -48,7 +49,6 @@ import qualified Text.Regex.Base.RegexLike as Regex
 import Text.Regex.TDFA (defaultCompOpt, defaultExecOpt)
 import Text.Regex.TDFA.String
 import Transport
-import Data.Proxy
 
 type Bot = InEvent -> Effect ()
 

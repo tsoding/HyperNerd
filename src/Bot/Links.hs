@@ -18,6 +18,7 @@ import Control.Monad.Trans.Maybe
 import Data.Either
 import qualified Data.Map as M
 import Data.Maybe
+import Data.Proxy
 import qualified Data.Text as T
 import Effect
 import Entity
@@ -29,7 +30,6 @@ import Text.InterpolatedString.QM
 import Text.Regex.TDFA (defaultCompOpt, defaultExecOpt)
 import Text.Regex.TDFA.String
 import Transport
-import Data.Proxy
 
 -- TODO(#264): trusted users system doesn't handle name changes
 newtype TrustedUser = TrustedUser

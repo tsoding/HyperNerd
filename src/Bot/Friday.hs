@@ -8,6 +8,7 @@ import Control.Comonad
 import Control.Monad.Trans.Maybe
 import Data.Functor
 import qualified Data.Map as M
+import Data.Proxy
 import qualified Data.Text as T
 import Data.Time
 import Effect
@@ -15,7 +16,6 @@ import Entity
 import Property
 import Reaction
 import Transport (Message(..), Sender(..))
-import Data.Proxy
 
 data FridayVideo = FridayVideo
   { fridayVideoName :: T.Text

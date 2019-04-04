@@ -14,6 +14,7 @@ module Bot.Log
 import Bot.Replies
 import qualified Data.Map as M
 import Data.Maybe
+import Data.Proxy
 import qualified Data.Text as T
 import Data.Time
 import Effect
@@ -24,7 +25,6 @@ import Reaction
 import Safe
 import Text.InterpolatedString.QM
 import Transport
-import Data.Proxy
 
 data LogRecord = LogRecord
   { lrUser :: T.Text

@@ -11,6 +11,7 @@ import Data.Function
 import Data.List
 import qualified Data.Map as M
 import Data.Maybe
+import Data.Proxy
 import qualified Data.Text as T
 import Data.Time
 import Effect
@@ -21,7 +22,6 @@ import Safe
 import Text.InterpolatedString.QM
 import Text.Read
 import Transport
-import Data.Proxy
 
 data PollOption = PollOption
   { poPollId :: Int

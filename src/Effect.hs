@@ -30,13 +30,13 @@ module Effect
 import Control.Monad.Catch
 import Control.Monad.Free
 import qualified Data.ByteString.Lazy.Char8 as B8
+import Data.Proxy
 import qualified Data.Text as T
 import Data.Time
 import Entity
 import Network.HTTP.Simple (Request, Response)
 import Property
 import Transport
-import Data.Proxy
 
 data Condition
   = PropertyEquals T.Text

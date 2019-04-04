@@ -7,11 +7,11 @@ module Entity where
 import Control.Monad.Catch
 import qualified Data.Map as M
 import Data.Maybe
+import Data.Proxy
 import qualified Data.Text as T
 import Data.Time
 import GHC.Generics
 import Property
-import Data.Proxy
 
 type Properties = M.Map T.Text Property
 

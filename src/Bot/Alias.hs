@@ -12,6 +12,7 @@ import Command
 import Control.Monad
 import qualified Data.Map as M
 import Data.Maybe
+import Data.Proxy
 import qualified Data.Text as T
 import Effect
 import Entity
@@ -19,7 +20,6 @@ import Property
 import Reaction
 import Text.InterpolatedString.QM
 import Transport
-import Data.Proxy
 
 data Alias = Alias
   { aliasName :: T.Text

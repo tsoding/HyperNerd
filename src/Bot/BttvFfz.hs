@@ -17,6 +17,7 @@ import Data.Aeson
 import Data.Aeson.Types
 import Data.List
 import qualified Data.Map as M
+import Data.Proxy
 import qualified Data.Text as T
 import Effect
 import Entity
@@ -26,7 +27,6 @@ import Property
 import Reaction
 import Text.InterpolatedString.QM
 import Transport
-import Data.Proxy
 
 newtype FfzEmote = FfzEmote
   { ffzName :: T.Text

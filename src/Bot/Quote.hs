@@ -10,6 +10,7 @@ module Bot.Quote
 import Bot.Replies
 import qualified Data.Map as M
 import Data.Maybe
+import Data.Proxy
 import qualified Data.Text as T
 import Data.Time
 import Effect
@@ -19,7 +20,6 @@ import Property
 import Reaction
 import Text.InterpolatedString.QM
 import Transport
-import Data.Proxy
 
 data Quote = Quote
   { quoteContent :: T.Text
