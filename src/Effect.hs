@@ -131,8 +131,9 @@ getEntityById proxy ident =
   fmap (>>= fromEntityProperties) $
   liftF $ GetEntityById (nameOfEntity proxy) ident id
 
-deleteEntityById :: T.Text -> Int -> Effect ()
-deleteEntityById name ident = liftF $ DeleteEntityById name ident ()
+deleteEntityById :: IsEntity e => Proxy e -> Int -> Effect ()
+deleteEntityById proxy ident =
+  liftF $ DeleteEntityById (nameOfEntity proxy) ident ()
 
 updateEntityById :: IsEntity e => Entity e -> Effect (Maybe (Entity e))
 updateEntityById entity =

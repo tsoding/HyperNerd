@@ -120,7 +120,7 @@ untrustCommand =
     trustedUser <- runMaybeT $ findTrustedUser user
     case trustedUser of
       Just trustedUser' -> do
-        deleteEntityById "TrustedUser" $ entityId trustedUser'
+        deleteEntityById (Proxy :: Proxy TrustedUser) $ entityId trustedUser'
         replyToSender sender [qm|{user} is not trusted anymore|]
       Nothing ->
         replyToSender sender [qm|{user} was not trusted in the first place|]

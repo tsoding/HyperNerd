@@ -42,7 +42,7 @@ instance IsEntity Quote where
 
 deleteQuoteCommand :: Reaction Message Int
 deleteQuoteCommand =
-  liftR (deleteEntityById "quote") $
+  liftR (deleteEntityById (Proxy :: Proxy Quote)) $
   cmapR (const "Quote has been deleted") $ Reaction replyMessage
 
 addQuoteCommand :: Reaction Message T.Text
