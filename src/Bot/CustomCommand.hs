@@ -198,12 +198,6 @@ replaceCustomCommandMessage :: T.Text -> CustomCommand -> CustomCommand
 replaceCustomCommandMessage message customCommand =
   customCommand {customCommandMessage = message}
 
-{-# ANN dispatchCustomCommand ("HLint: ignore Use fmap" :: String)
-        #-}
-
-{-# ANN dispatchCustomCommand ("HLint: ignore Use <$>" :: String)
-        #-}
-
 dispatchCustomCommand :: Message (Command T.Text) -> Effect ()
 dispatchCustomCommand Message { messageContent = Command { commandName = cmd
                                                          , commandArgs = args
@@ -212,9 +206,9 @@ dispatchCustomCommand Message { messageContent = Command { commandName = cmd
                               } = do
   customCommand <-
     runMaybeT
-      (customCommandByName cmd >>= return . fmap bumpCustomCommandTimes >>=
-       MaybeT . updateEntityById >>=
-       return . entityPayload >>=
+      (entityPayload <$>
+       ((fmap bumpCustomCommandTimes <$> customCommandByName cmd) >>=
+        MaybeT . updateEntityById) >>=
        lift . expandCustomCommandVars sender args)
   maybe
     (return ())
