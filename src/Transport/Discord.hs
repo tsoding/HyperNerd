@@ -37,6 +37,7 @@ import Discord.Rest.User (UserRequest(GetCurrentUser))
 import System.IO
 import Text.InterpolatedString.QM
 import Transport
+import Data.Maybe.Extra
 
 sendLoop :: OutcomingQueue -> (RestChan, Gateway, z) -> IO ()
 sendLoop outcoming dis = do
@@ -58,8 +59,8 @@ fromChannel :: ChannelId -> D.Message -> Bool
 fromChannel channel message = messageChannel message == channel
 
 -- TODO(#527): Discord transport doesn't set up DiscordGuildOwner role properly
-rolesOfMessage :: (RestChan, Gateway, z) -> D.Message -> IO [Role]
-rolesOfMessage dis msg =
+rolesOfMessage :: (RestChan, Gateway, z) -> D.Message -> D.UserId -> IO [Role]
+rolesOfMessage dis msg ownerId =
   case D.messageGuild msg of
     Just guildId -> do
       resp <-
@@ -67,7 +68,15 @@ rolesOfMessage dis msg =
       case resp of
         Left e -> error $ show e
         Right guildMember ->
-          return $ map (DiscordRole . fromIntegral) $ D.memberRoles guildMember
+          let ownerRole =
+                maybeToList $
+                toMaybe DiscordGuildOwner $
+                (D.userId (D.messageAuthor msg) == ownerId)
+           in return $
+              concat
+                [ map (DiscordRole . fromIntegral) $ D.memberRoles guildMember
+                , ownerRole
+                ]
     Nothing -> do
       hPutStrLn
         stderr
@@ -75,8 +84,13 @@ rolesOfMessage dis msg =
       return []
 
 receiveLoop ::
-     User -> [ChannelId] -> IncomingQueue -> (RestChan, Gateway, z) -> IO ()
-receiveLoop botUser channels incoming dis = do
+     User
+  -> D.UserId
+  -> [ChannelId]
+  -> IncomingQueue
+  -> (RestChan, Gateway, z)
+  -> IO ()
+receiveLoop botUser ownerId channels incoming dis = do
   e <- nextEvent dis
   case e of
     Left er -> putStrLn ("Event error: " <> show er)
@@ -85,7 +99,7 @@ receiveLoop botUser channels incoming dis = do
         print m
         let name = T.pack $ userName $ messageAuthor m
         -- TODO(#522): requesting Discord roles on each message is dangerous for rate limits
-        roles <- rolesOfMessage dis m
+        roles <- rolesOfMessage dis m ownerId
         atomically $
           writeTQueue incoming $
           InMsg $
@@ -100,32 +114,40 @@ receiveLoop botUser channels incoming dis = do
             (isJust $ find (== userId botUser) $ map userId $ messageMentions m)
             (messageText m)
     _ -> return ()
-  receiveLoop botUser channels incoming dis
+  receiveLoop botUser ownerId channels incoming dis
 
 -- TODO(#465): Discord transport does not handle authorization failure
 discordTransportEntry ::
      IncomingQueue -> OutcomingQueue -> DiscordParams -> IO ()
 discordTransportEntry incoming outcoming conf = do
   bracket (loginRestGateway $ Auth $ dpAuthToken conf) stopDiscord $ \dis -> do
-    resp <- restCall dis GetCurrentUser
+    respCurrentUser <- restCall dis GetCurrentUser
     -- TODO(#466): restCall errors are not handled properly
     -- TODO(#523): Discord transport never checks if the bot actually sitting in the dpChannels
-    case resp of
+    case respCurrentUser of
       Left _ -> error "Getting current user call failed"
       Right user -> do
-        mapM_
-          (\chanId ->
-             atomically $
-             writeTQueue incoming $
-             Joined
-               (DiscordChannel $ fromIntegral chanId)) $
-          dpChannels conf
-        withAsync (sendLoop outcoming dis) $ \sender ->
-          withAsync (receiveLoop user (dpChannels conf) incoming dis) $ \receive -> do
-            res <- waitEitherCatch sender receive
-            case res of
-              Left Right {} -> fail "PANIC: sendLoop returned"
-              Right Right {} -> return ()
-              Left (Left e) -> throwIO e
-              Right (Left e) -> throwIO e
-  return ()
+        respGuild <- restCall dis $ D.GetGuild $ dpGuildId conf
+        case respGuild of
+          Left _ -> error "Getting guild id call failed"
+          Right guild -> do
+            mapM_
+              (\chanId ->
+                 atomically $
+                 writeTQueue incoming $
+                 Joined (DiscordChannel $ fromIntegral chanId)) $
+              dpChannels conf
+            withAsync (sendLoop outcoming dis) $ \sender ->
+              withAsync
+                (receiveLoop
+                   user
+                   (D.guildOwnerId guild)
+                   (dpChannels conf)
+                   incoming
+                   dis) $ \receive -> do
+                res <- waitEitherCatch sender receive
+                case res of
+                  Left Right {} -> fail "PANIC: sendLoop returned"
+                  Right Right {} -> return ()
+                  Left (Left e) -> throwIO e
+                  Right (Left e) -> throwIO e
