@@ -115,7 +115,7 @@ receiveLoop conf incoming ircConn = do
                 maybeToList $
                 fmap (T.splitOn "," . valueOfTag) $
                 find (\(TagEntry ident _) -> ident == "badges") $ _msgTags msg
-      (Join _ _ _) ->
+      Join {} ->
         atomically $
         writeTQueue incoming $ Joined (TwitchChannel $ tpChannel conf)
       _ -> return ()

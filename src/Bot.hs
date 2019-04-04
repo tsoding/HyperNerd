@@ -318,7 +318,6 @@ markov =
   liftR (const randomMarkov) $
   replyOnNothing "I have nothing to say to you" $ Reaction replyMessage
 
--- TODO: decouple mention from markov
 mention :: Reaction Message a
 mention =
   transR
@@ -326,7 +325,7 @@ mention =
        if messageMentioned msg
          then Just <$> msg
          else Nothing <$ msg) $
-  ignoreNothing $ markov
+  ignoreNothing markov
 
 bot :: Bot
 bot (Joined channel@(TwitchChannel _)) = do

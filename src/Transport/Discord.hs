@@ -70,13 +70,12 @@ rolesOfMessage dis msg ownerId =
         Right guildMember ->
           let ownerRole =
                 maybeToList $
-                toMaybe DiscordGuildOwner $
-                (D.userId (D.messageAuthor msg) == ownerId)
-           in return $
-              concat
-                [ map (DiscordRole . fromIntegral) $ D.memberRoles guildMember
-                , ownerRole
-                ]
+                toMaybe
+                  DiscordGuildOwner
+                  (D.userId (D.messageAuthor msg) == ownerId)
+           in return
+                (map (DiscordRole . fromIntegral) (D.memberRoles guildMember) ++
+                 ownerRole)
     Nothing -> do
       hPutStrLn
         stderr
@@ -119,7 +118,7 @@ receiveLoop botUser ownerId channels incoming dis = do
 -- TODO(#465): Discord transport does not handle authorization failure
 discordTransportEntry ::
      IncomingQueue -> OutcomingQueue -> DiscordParams -> IO ()
-discordTransportEntry incoming outcoming conf = do
+discordTransportEntry incoming outcoming conf =
   bracket (loginRestGateway $ Auth $ dpAuthToken conf) stopDiscord $ \dis -> do
     respCurrentUser <- restCall dis GetCurrentUser
     -- TODO(#466): restCall errors are not handled properly
