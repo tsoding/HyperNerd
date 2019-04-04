@@ -126,9 +126,10 @@ createEntity proxy entity =
   liftF (CreateEntity (nameOfEntity proxy) (toProperties entity) id) >>=
   fromEntityProperties
 
-getEntityById :: IsEntity e => T.Text -> Int -> Effect (Maybe (Entity e))
-getEntityById name ident =
-  fmap (>>= fromEntityProperties) $ liftF $ GetEntityById name ident id
+getEntityById :: IsEntity e => Proxy e -> Int -> Effect (Maybe (Entity e))
+getEntityById proxy ident =
+  fmap (>>= fromEntityProperties) $
+  liftF $ GetEntityById (nameOfEntity proxy) ident id
 
 deleteEntityById :: T.Text -> Int -> Effect ()
 deleteEntityById name ident = liftF $ DeleteEntityById name ident ()

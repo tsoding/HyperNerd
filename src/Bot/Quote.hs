@@ -60,7 +60,7 @@ replyRandomQuote =
   cmapR listToMaybe quoteFoundReply
 
 replyRequestedQuote :: Reaction Message Int
-replyRequestedQuote = liftR (getEntityById "quote") quoteFoundReply
+replyRequestedQuote = liftR (getEntityById Proxy) quoteFoundReply
 
 quoteCommand :: Reaction Message (Maybe Int)
 quoteCommand = maybeReaction replyRandomQuote replyRequestedQuote

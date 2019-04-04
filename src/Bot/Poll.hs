@@ -242,7 +242,7 @@ getOptionsAndVotesByPollId pollId = do
 announcePollResults :: Int -> Effect ()
 announcePollResults pollId = do
   (options, votes) <- getOptionsAndVotesByPollId pollId
-  poll <- getEntityById "Poll" pollId
+  poll <- getEntityById Proxy pollId
   unless (maybe True (pollCancelled . entityPayload) poll) $ do
     fromMaybe
       (return ())
