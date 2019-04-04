@@ -75,7 +75,7 @@ removeAliasCommand =
       Just _ -> do
         void $
           deleteEntities
-            "Alias"
+            (Proxy :: Proxy Alias)
             (Filter (PropertyEquals "name" (PropertyText name)) All)
         replyToSender sender [qms|Alias '{name}' has been removed|]
       Nothing -> replyToSender sender [qms|Alias '{name}' does not exists"|]

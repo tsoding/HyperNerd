@@ -90,7 +90,7 @@ removePeriodicCommand =
     case maybePc of
       Just _ -> do
         void $
-          deleteEntities "PeriodicCommand" $
+          deleteEntities (Proxy :: Proxy PeriodicCommand) $
           Filter (PropertyEquals "name" $ PropertyText name) All
         replyToSender sender [qms|'{name}' has been unscheduled|]
       Nothing ->

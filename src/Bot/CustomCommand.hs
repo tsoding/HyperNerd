@@ -86,7 +86,7 @@ deleteCustomCommand builtinCommands =
     case (customCommand, builtinCommand) of
       (Just _, Nothing) -> do
         void $
-          deleteEntities "CustomCommand" $
+          deleteEntities (Proxy :: Proxy CustomCommand) $
           Filter (PropertyEquals "name" $ PropertyText name) All
         replyToSender sender [qms|Command '{name}' has been removed|]
       (Nothing, Just _) ->

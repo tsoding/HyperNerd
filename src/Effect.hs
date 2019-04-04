@@ -145,8 +145,9 @@ selectEntities proxy selector =
   fmap (>>= fromEntityProperties) $
   liftF $ SelectEntities (nameOfEntity proxy) selector id
 
-deleteEntities :: T.Text -> Selector -> Effect Int
-deleteEntities name selector = liftF $ DeleteEntities name selector id
+deleteEntities :: IsEntity e => Proxy e -> Selector -> Effect Int
+deleteEntities proxy selector =
+  liftF $ DeleteEntities (nameOfEntity proxy) selector id
 
 updateEntities :: T.Text -> Selector -> Properties -> Effect Int
 updateEntities name selector properties =
