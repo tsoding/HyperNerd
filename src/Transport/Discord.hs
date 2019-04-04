@@ -11,6 +11,7 @@ import Control.Exception (bracket, throwIO)
 import Control.Monad (void, when)
 import Data.List
 import Data.Maybe
+import Data.Maybe.Extra
 import qualified Data.Text as T
 import qualified Discord as D
 import Discord
@@ -37,7 +38,6 @@ import Discord.Rest.User (UserRequest(GetCurrentUser))
 import System.IO
 import Text.InterpolatedString.QM
 import Transport
-import Data.Maybe.Extra
 
 sendLoop :: OutcomingQueue -> (RestChan, Gateway, z) -> IO ()
 sendLoop outcoming dis = do
