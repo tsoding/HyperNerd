@@ -206,7 +206,6 @@ startPoll sender options duration = do
   startedAt <- now
   poll <-
     createEntity
-      "Poll"
       Poll
         { pollAuthor = senderName sender
         , pollStartedAt = startedAt
@@ -216,7 +215,7 @@ startPoll sender options duration = do
         }
   let pollId = entityId poll
   for_ options $ \name ->
-    createEntity "PollOption" PollOption {poName = name, poPollId = pollId}
+    createEntity PollOption {poName = name, poPollId = pollId}
   return pollId
 
 getOptionsAndVotesByPollId ::
@@ -267,7 +266,6 @@ registerOptionVote option sender = do
                 voted for {poName $ entityPayload option}|]
     else void $
          createEntity
-           "Vote"
            Vote {voteUser = senderName sender, voteOptionId = entityId option}
 
 -- TODO(#488): poll votes are registered across the channels

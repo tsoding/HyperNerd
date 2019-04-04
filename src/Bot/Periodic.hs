@@ -78,7 +78,7 @@ addPeriodicCommand =
       Just _ ->
         replyToSender sender [qms|'{name}' is aleady called periodically|]
       Nothing -> do
-        void $ createEntity "PeriodicCommand" $ PeriodicCommand command
+        void $ createEntity $ PeriodicCommand command
         replyToSender
           sender
           [qms|'{name}' has been scheduled to call periodically|]

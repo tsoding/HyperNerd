@@ -71,7 +71,6 @@ recordUserMsg Message {messageSender = sender, messageContent = msg} = do
   timestamp <- now
   _ <-
     createEntity
-      "LogRecord"
       LogRecord
         { lrUser = senderName sender
         , lrChannel = senderChannel sender

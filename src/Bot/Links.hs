@@ -59,7 +59,7 @@ autoTrustSender :: Sender -> MaybeT Effect (Entity TrustedUser)
 autoTrustSender sender
   | senderSubscriber sender || senderAuthority sender =
     MaybeT $
-    fmap Just $ createEntity "TrustedUser" $ TrustedUser $ senderName sender
+    fmap Just $ createEntity $ TrustedUser $ senderName sender
   | otherwise = MaybeT $ return Nothing
 
 textContainsLink :: T.Text -> Bool
@@ -110,7 +110,7 @@ trustCommand =
     case trustedUser of
       Just _ -> replyToSender sender [qm|{user} is already trusted|]
       Nothing -> do
-        void $ createEntity "TrustedUser" $ TrustedUser user
+        void $ createEntity $ TrustedUser user
         replyToSender sender [qm|{user} is now trusted|]
 
 untrustCommand :: Reaction Message T.Text

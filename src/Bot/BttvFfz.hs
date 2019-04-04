@@ -112,7 +112,7 @@ updateFfzEmotesCommand =
   liftR
     (\emotes -> do
        void $ deleteEntities "FfzEmote" All
-       traverse (createEntity "FfzEmote") emotes) $
+       traverse createEntity emotes) $
   cmapR (T.concat . intersperse " " . map (ffzName . entityPayload)) sayMessage
 
 updateBttvEmotesCommand :: Reaction Message ()
@@ -126,5 +126,5 @@ updateBttvEmotesCommand =
   liftR
     (\emotes -> do
        void $ deleteEntities "BttvEmote" All
-       traverse (createEntity "BttvEmote") emotes) $
+       traverse createEntity emotes) $
   cmapR (T.concat . intersperse " " . map (bttvName . entityPayload)) sayMessage

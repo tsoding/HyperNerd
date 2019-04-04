@@ -70,7 +70,6 @@ addCustomCommand builtinCommands =
       (Nothing, Nothing) -> do
         void $
           createEntity
-            "CustomCommand"
             CustomCommand
               { customCommandName = name
               , customCommandMessage = message

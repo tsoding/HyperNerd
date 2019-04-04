@@ -34,7 +34,7 @@ import qualified Data.ByteString.Lazy.Char8 as B8
 import qualified Data.Text as T
 import Data.Time
 import Entity
-import Network.HTTP.Simple
+import Network.HTTP.Simple (Request, Response)
 import Property
 import Transport
 
@@ -120,9 +120,11 @@ logMsg :: T.Text -> Effect ()
 logMsg msg = liftF $ LogMsg msg ()
 
 -- TODO(#235): the result of createEntity effect is always ignored
-createEntity :: IsEntity e => T.Text -> e -> Effect (Entity e)
-createEntity name entity =
-  liftF (CreateEntity name (toProperties entity) id) >>= fromEntityProperties
+createEntity :: IsEntity e => e -> Effect (Entity e)
+createEntity entity =
+  liftF
+    (CreateEntity (nameOfEntity entity) (toProperties entity) id) >>=
+  fromEntityProperties
 
 getEntityById :: IsEntity e => T.Text -> Int -> Effect (Maybe (Entity e))
 getEntityById name ident =

@@ -61,9 +61,7 @@ addAliasCommand =
           Just _ -> replyToSender sender [qms|Alias '{name}' already exists|]
           Nothing -> do
             void $
-              createEntity
-                "Alias"
-                Alias {aliasName = name, aliasRedirect = redirect}
+              createEntity Alias {aliasName = name, aliasRedirect = redirect}
             replyToSender sender [qms|Alias '{name}' has been created|]
 
 removeAliasCommand :: Reaction Message T.Text

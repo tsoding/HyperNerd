@@ -52,7 +52,7 @@ fridayCommand =
   liftR
     (\msg ->
        void $
-       createEntity "FridayVideo" .
+       createEntity .
        FridayVideo (messageContent msg) (senderName $ messageSender msg) =<<
        now) $
   cmapR (const "Added to the suggestions") $ Reaction replyMessage

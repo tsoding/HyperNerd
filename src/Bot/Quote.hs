@@ -49,7 +49,7 @@ addQuoteCommand =
   cmapR Quote $
   transR (reflect (senderName . messageSender)) $
   liftR (<$> now) $
-  liftR (createEntity "quote") $
+  liftR createEntity $
   cmapR (\entity -> [qms|Added the quote under the number {entityId entity}|]) $
   Reaction replyMessage
 
