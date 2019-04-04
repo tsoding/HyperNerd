@@ -171,15 +171,17 @@ updateCustomCommand builtinCommands =
 expandCustomCommandVars ::
      Sender -> T.Text -> CustomCommand -> Effect CustomCommand
 expandCustomCommandVars sender args customCommand = do
-  (year, month, day) <- toGregorian . utctDay <$> now
+  timestamp <- now
+  let day = utctDay timestamp
+  let (yearNum, monthNum, dayNum) = toGregorian day
   let message = customCommandMessage customCommand
   let times = customCommandTimes customCommand
   let vars =
         [ ("%times", [qms|{times}|])
-        , ("%year", [qms|{year}|])
-        , ("%month", [qms|{month}|])
-        , ("%day", [qms|{day}|])
-        , ("%date", [qms|{day}.{month}.{year}|])
+        , ("%year", [qms|{yearNum}|])
+        , ("%month", [qms|{monthNum}|])
+        , ("%day", [qms|{dayNum}|])
+        , ("%date", [qms|{showGregorian day}|])
         , ("%sender", mentionSender sender)
         , ("%1", args)
         ]
