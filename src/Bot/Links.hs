@@ -50,8 +50,7 @@ findTrustedUser :: T.Text -> MaybeT Effect (Entity TrustedUser)
 findTrustedUser name =
   MaybeT $
   fmap listToMaybe $
-  selectEntities "TrustedUser" $
-  Filter (PropertyEquals "user" $ PropertyText name) All
+  selectEntities Proxy $ Filter (PropertyEquals "user" $ PropertyText name) All
 
 findTrustedSender :: Sender -> MaybeT Effect (Entity TrustedUser)
 findTrustedSender = findTrustedUser . senderName

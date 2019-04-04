@@ -56,7 +56,7 @@ addQuoteCommand =
 
 replyRandomQuote :: Reaction Message ()
 replyRandomQuote =
-  liftR (const $ selectEntities "quote" $ Take 1 $ Shuffle All) $
+  liftR (const $ selectEntities Proxy $ Take 1 $ Shuffle All) $
   cmapR listToMaybe quoteFoundReply
 
 replyRequestedQuote :: Reaction Message Int

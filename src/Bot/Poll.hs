@@ -200,7 +200,7 @@ currentPoll :: Effect (Maybe (Entity Poll))
 currentPoll = do
   currentTime <- now
   fmap (listToMaybe . filter (isPollAlive currentTime)) $
-    selectEntities "Poll" $ Take 1 $ SortBy "startedAt" Desc All
+    selectEntities Proxy $ Take 1 $ SortBy "startedAt" Desc All
 
 startPoll :: Sender -> [T.Text] -> Int -> Effect Int
 startPoll sender options duration = do
@@ -224,12 +224,12 @@ getOptionsAndVotesByPollId ::
      Int -> Effect ([Entity PollOption], [[Entity Vote]])
 getOptionsAndVotesByPollId pollId = do
   options <-
-    selectEntities "PollOption" $
+    selectEntities Proxy $
     Filter (PropertyEquals "pollId" $ PropertyInt pollId) All
   votes <-
     mapM
       (\option ->
-         selectEntities voteTypeName $
+         selectEntities Proxy $
          Filter
            (PropertyEquals "optionId" $
             PropertyInt $
@@ -259,7 +259,7 @@ announcePollResults pollId = do
 registerOptionVote :: Entity PollOption -> Sender -> Effect ()
 registerOptionVote option sender = do
   existingVotes <-
-    selectEntities "Vote" $
+    selectEntities Proxy $
     Filter (PropertyEquals "optionId" $ PropertyInt $ entityId option) All
   -- TODO(#289): registerOptionVote filters existing votes on the haskell side
   if any ((== senderName sender) . voteUser . entityPayload) existingVotes
@@ -280,7 +280,7 @@ registerPollVote Message {messageSender = sender, messageContent = optionNumber}
       options <-
         sortBy (compare `on` entityId) <$>
         selectEntities
-          "PollOption"
+          Proxy
           (Filter (PropertyEquals "pollId" $ PropertyInt $ entityId poll) All)
       case options `atMay` optionNumber of
         Just option -> registerOptionVote option sender
@@ -297,7 +297,7 @@ announceRunningPoll channel = do
     Just pollEntity
       | Just channel == pollChannel (entityPayload pollEntity) -> do
         pollOptions <-
-          selectEntities "PollOption" $
+          selectEntities Proxy $
           Filter
             (PropertyEquals "pollId" $ PropertyInt $ entityId pollEntity)
             All

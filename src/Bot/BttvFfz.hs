@@ -85,12 +85,12 @@ bttvUrl channel = [qms|https://api.betterttv.net/2/channels/{encodedChannel}|]
 
 ffzCommand :: Reaction Message ()
 ffzCommand =
-  liftR (const $ selectEntities "FfzEmote" All) $
+  liftR (const $ selectEntities Proxy All) $
   cmapR (T.concat . intersperse " " . map (ffzName . entityPayload)) sayMessage
 
 bttvCommand :: Reaction Message ()
 bttvCommand =
-  liftR (const $ selectEntities "BttvEmote" All) $
+  liftR (const $ selectEntities Proxy All) $
   cmapR (T.concat . intersperse " " . map (bttvName . entityPayload)) sayMessage
 
 jsonHttpRequest :: FromJSON a => Reaction Message a -> Reaction Message String

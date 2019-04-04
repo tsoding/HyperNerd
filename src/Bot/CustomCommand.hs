@@ -51,8 +51,7 @@ customCommandByName :: T.Text -> MaybeT Effect (Entity CustomCommand)
 customCommandByName name =
   MaybeT $
   fmap listToMaybe $
-  selectEntities "CustomCommand" $
-  Filter (PropertyEquals "name" $ PropertyText name) All
+  selectEntities Proxy $ Filter (PropertyEquals "name" $ PropertyText name) All
 
 addCustomCommand :: CommandTable -> Reaction Message (T.Text, T.Text)
 addCustomCommand builtinCommands =

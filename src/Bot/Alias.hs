@@ -41,7 +41,7 @@ getAliasByName :: T.Text -> Effect (Maybe Alias)
 getAliasByName name =
   fmap entityPayload . listToMaybe <$>
   selectEntities
-    "Alias"
+    Proxy
     (Take 1 $ Filter (PropertyEquals "name" (PropertyText name)) All)
 
 redirectAlias :: Command a -> Effect (Command a)

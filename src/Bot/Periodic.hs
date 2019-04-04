@@ -53,14 +53,13 @@ instance IsEntity PeriodicCommand where
 getPeriodicCommandByName :: T.Text -> Effect (Maybe (Entity PeriodicCommand))
 getPeriodicCommandByName name =
   fmap listToMaybe $
-  selectEntities "PeriodicCommand" $
+  selectEntities Proxy $
   Take 1 $ Filter (PropertyEquals "name" (PropertyText name)) All
 
 startPeriodicCommands ::
      Channel -> (Message (Command T.Text) -> Effect ()) -> Effect ()
 startPeriodicCommands channel dispatchCommand = do
-  maybePc <-
-    fmap listToMaybe $ selectEntities "PeriodicCommand" $ Take 1 $ Shuffle All
+  maybePc <- fmap listToMaybe $ selectEntities Proxy $ Take 1 $ Shuffle All
   maybe
     (return ())
     (dispatchCommand .

@@ -140,9 +140,10 @@ updateEntityById entity =
   fmap (>>= fromEntityProperties) $
   liftF $ UpdateEntityById (toProperties <$> entity) id
 
-selectEntities :: IsEntity e => T.Text -> Selector -> Effect [Entity e]
-selectEntities name selector =
-  fmap (>>= fromEntityProperties) $ liftF $ SelectEntities name selector id
+selectEntities :: IsEntity e => Proxy e -> Selector -> Effect [Entity e]
+selectEntities proxy selector =
+  fmap (>>= fromEntityProperties) $
+  liftF $ SelectEntities (nameOfEntity proxy) selector id
 
 deleteEntities :: T.Text -> Selector -> Effect Int
 deleteEntities name selector = liftF $ DeleteEntities name selector id

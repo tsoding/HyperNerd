@@ -38,7 +38,7 @@ import qualified Data.Map as M
 import qualified Data.Text as T
 import Effect
 import Entity
-import Network.HTTP.Simple
+import Network.HTTP.Simple (parseRequest)
 import qualified Network.URI.Encode as URI
 import Reaction
 import Safe
@@ -48,6 +48,7 @@ import qualified Text.Regex.Base.RegexLike as Regex
 import Text.Regex.TDFA (defaultCompOpt, defaultExecOpt)
 import Text.Regex.TDFA.String
 import Transport
+import Data.Proxy
 
 type Bot = InEvent -> Effect ()
 
@@ -194,8 +195,7 @@ builtinCommands =
                 logMsg [qms|[WARNING] Could not parse arguments: {msg}|]
               Right (n, regex) -> do
                 logs <-
-                  selectEntities "LogRecord" $
-                  Take n $ SortBy "timestamp" Desc All
+                  selectEntities Proxy $ Take n $ SortBy "timestamp" Desc All
                 traverse_
                   (banUser (senderChannel sender) . lrUser . entityPayload) $
                   filter
