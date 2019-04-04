@@ -32,6 +32,7 @@ newtype FfzEmote = FfzEmote
   }
 
 instance IsEntity FfzEmote where
+  nameOfEntity _ = "FfzEmote"
   toProperties entity = M.fromList [("name", PropertyText $ ffzName entity)]
   fromProperties properties = FfzEmote <$> extractProperty "name" properties
 
@@ -40,6 +41,7 @@ newtype BttvEmote = BttvEmote
   }
 
 instance IsEntity BttvEmote where
+  nameOfEntity _ = "BttvEmote"
   toProperties entity = M.fromList [("name", PropertyText $ bttvName entity)]
   fromProperties properties = BttvEmote <$> extractProperty "name" properties
 

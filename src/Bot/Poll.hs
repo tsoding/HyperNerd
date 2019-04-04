@@ -53,6 +53,7 @@ boolAsInt True = 1
 boolAsInt False = 0
 
 instance IsEntity Poll where
+  nameOfEntity _ = "Poll"
   toProperties poll =
     M.fromList
       ([ ("author", PropertyText $ pollAuthor poll)
@@ -71,6 +72,7 @@ instance IsEntity Poll where
     pure ((readMaybe . T.unpack) =<< extractProperty "channel" properties)
 
 instance IsEntity PollOption where
+  nameOfEntity _ = "PollOption"
   toProperties pollOption =
     M.fromList
       [ ("pollId", PropertyInt $ poPollId pollOption)
@@ -81,6 +83,7 @@ instance IsEntity PollOption where
     extractProperty "name" properties
 
 instance IsEntity Vote where
+  nameOfEntity _ = "Vote"
   toProperties vote =
     M.fromList
       [ ("user", PropertyText $ voteUser vote)

@@ -23,6 +23,7 @@ data FridayVideo = FridayVideo
   } deriving (Show, Eq)
 
 instance IsEntity FridayVideo where
+  nameOfEntity _ = "FridayVideo"
   toProperties fridayVideo =
     M.fromList
       [ ("name", PropertyText $ fridayVideoName fridayVideo)

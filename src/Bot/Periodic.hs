@@ -36,6 +36,7 @@ newtype PeriodicCommand = PeriodicCommand
   }
 
 instance IsEntity PeriodicCommand where
+  nameOfEntity _ = "PeriodicCommand"
   toProperties pc =
     M.fromList
       [ ("name", PropertyText $ commandName command)

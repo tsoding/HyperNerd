@@ -26,6 +26,7 @@ data Alias = Alias
   }
 
 instance IsEntity Alias where
+  nameOfEntity _ = "Alias"
   toProperties alias =
     M.fromList
       [ ("name", PropertyText $ aliasName alias)
@@ -37,7 +38,7 @@ instance IsEntity Alias where
 
 getAliasByName :: T.Text -> Effect (Maybe Alias)
 getAliasByName name =
-  fmap entityPayload . (>>= fromEntityProperties) . listToMaybe <$>
+  fmap entityPayload . listToMaybe <$>
   selectEntities
     "Alias"
     (Take 1 $ Filter (PropertyEquals "name" (PropertyText name)) All)

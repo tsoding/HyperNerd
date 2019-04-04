@@ -38,6 +38,7 @@ timestampPV = "timestamp"
 type Seconds = Natural
 
 instance IsEntity LogRecord where
+  nameOfEntity _ = "LogRecord"
   toProperties lr =
     M.fromList
       [ ("user", PropertyText $ lrUser lr)

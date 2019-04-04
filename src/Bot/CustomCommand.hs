@@ -34,6 +34,7 @@ data CustomCommand = CustomCommand
   }
 
 instance IsEntity CustomCommand where
+  nameOfEntity _ = "CustomCommand"
   toProperties customCommand =
     M.fromList
       [ ("name", PropertyText $ customCommandName customCommand)
@@ -48,7 +49,7 @@ instance IsEntity CustomCommand where
 customCommandByName :: T.Text -> MaybeT Effect (Entity CustomCommand)
 customCommandByName name =
   MaybeT $
-  fmap (listToMaybe >=> fromEntityProperties) $
+  fmap listToMaybe $
   selectEntities "CustomCommand" $
   Filter (PropertyEquals "name" $ PropertyText name) All
 

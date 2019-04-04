@@ -11,6 +11,7 @@ import qualified Data.Text as T
 import Data.Time
 import GHC.Generics
 import Property
+import Data.Proxy
 
 type Properties = M.Map T.Text Property
 
@@ -36,6 +37,7 @@ extractProperty fieldName properties = do
   fromProperty property
 
 class IsEntity e where
+  nameOfEntity :: Proxy e -> String
   toProperties :: e -> Properties
   fromProperties :: MonadThrow m => Properties -> m e
 
@@ -54,7 +56,3 @@ restoreEntity name ident rawProperties = do
              , entityId = ident
              , entityPayload = M.fromList properties
              }
-
-instance IsEntity Properties where
-  toProperties = id
-  fromProperties = return

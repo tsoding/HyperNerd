@@ -27,6 +27,7 @@ data Quote = Quote
   }
 
 instance IsEntity Quote where
+  nameOfEntity _ = "quote"
   toProperties quote =
     M.fromList
       [ ("content", PropertyText $ quoteContent quote)

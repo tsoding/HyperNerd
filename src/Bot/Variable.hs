@@ -21,6 +21,7 @@ data Variable = Variable
   } deriving (Show)
 
 instance IsEntity Variable where
+  nameOfEntity _ = "Variable"
   toProperties variable =
     M.fromList
       [ ("name", PropertyText $ variableName variable)

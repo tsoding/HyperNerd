@@ -36,6 +36,7 @@ newtype TrustedUser = TrustedUser
   }
 
 instance IsEntity TrustedUser where
+  nameOfEntity _ = "TrustedUser"
   toProperties trustedUser =
     M.fromList
       [ ( "user"
