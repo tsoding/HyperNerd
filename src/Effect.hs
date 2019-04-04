@@ -16,7 +16,6 @@ module Effect
   , updateEntityById
   , selectEntities
   , deleteEntities
-  , updateEntities
   , httpRequest
   , now
   , timeout
@@ -86,10 +85,6 @@ data EffectF s
   | DeleteEntities T.Text
                    Selector
                    (Int -> s)
-  | UpdateEntities T.Text
-                   Selector
-                   Properties
-                   (Int -> s)
   | Now (UTCTime -> s)
   | HttpRequest Request
                 (Response B8.ByteString -> s)
@@ -148,10 +143,6 @@ selectEntities proxy selector =
 deleteEntities :: IsEntity e => Proxy e -> Selector -> Effect Int
 deleteEntities proxy selector =
   liftF $ DeleteEntities (nameOfEntity proxy) selector id
-
-updateEntities :: T.Text -> Selector -> Properties -> Effect Int
-updateEntities name selector properties =
-  liftF $ UpdateEntities name selector properties id
 
 now :: Effect UTCTime
 now = liftF $ Now id

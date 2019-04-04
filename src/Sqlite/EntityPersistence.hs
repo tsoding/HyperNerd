@@ -8,7 +8,6 @@ module Sqlite.EntityPersistence
   , updateEntityById
   , selectEntities
   , deleteEntities
-  , updateEntities
   , deleteEntityById
   , nextEntityId
   , entityNames
@@ -340,15 +339,6 @@ deleteEntities ::
 deleteEntities conn name selector = do
   ids <- selectEntityIds conn name selector
   length <$> traverse (deleteEntityById conn name) ids
-
--- TODO(#184): SEP.updateEntities is not implemented
-updateEntities ::
-     Connection -- conn
-  -> T.Text -- name
-  -> Selector -- selector
-  -> Properties -- properties
-  -> IO Int
-updateEntities _ _ _ _ = return 0
 
 {-# ANN updateEntityById ("HLint: ignore Use fmap" :: String) #-}
 
