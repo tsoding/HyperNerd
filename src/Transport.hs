@@ -55,7 +55,6 @@ senderAuthority sender =
 
 data InEvent
   = Joined Channel
-           T.Text
   | InMsg (Message T.Text)
 
 data OutEvent =

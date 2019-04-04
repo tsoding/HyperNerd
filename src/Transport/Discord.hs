@@ -118,8 +118,7 @@ discordTransportEntry incoming outcoming conf = do
              atomically $
              writeTQueue incoming $
              Joined
-               (DiscordChannel $ fromIntegral chanId)
-               (T.pack $ userName user)) $
+               (DiscordChannel $ fromIntegral chanId)) $
           dpChannels conf
         withAsync (sendLoop outcoming dis) $ \sender ->
           withAsync (receiveLoop user (dpChannels conf) incoming dis) $ \receive -> do
