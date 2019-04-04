@@ -251,6 +251,11 @@ builtinCommands =
             "You have to be a Twitch sub in the Discord server"
             (DiscordRole 542590649103286273) $
           liftR (say (TwitchChannel "#tsoding")) ignore))
+    , ( "roles"
+      , ( "Show your roles"
+        , transR duplicate $
+          cmapR (T.pack . show . senderRoles . messageSender) $
+          Reaction replyMessage))
     ]
 
 mockMessage :: T.Text -> T.Text
