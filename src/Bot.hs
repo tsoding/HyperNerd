@@ -331,20 +331,24 @@ bot :: Bot
 bot (Joined channel@(TwitchChannel _)) = do
   startPeriodicCommands channel dispatchCommand
   periodicEffect (60 * 1000) (announceRunningPoll channel)
-bot event@(InMsg msg@Message { messageContent = text
-                             , messageSender = sender
-                             , messageMentioned = mentioned
-                             }) = do
-  recordUserMsg msg
-  linkForbidden <- forbidLinksForPlebs event
-  banwordsForbidden <- forbidBanwords msg
-  unless (linkForbidden || banwordsForbidden) $ do
-    runReaction voteMessage msg
-    case textAsPipe text of
-      [] -> runReaction mention msg
-      pipe ->
-        mapM redirectAlias pipe >>= dispatchPipe . Message sender mentioned
+bot (InMsg msg) = runReaction messageReaction msg
 bot _ = return ()
+
+messageReaction :: Reaction Message T.Text
+messageReaction =
+  Reaction $ \msg@Message { messageContent = text
+                          , messageSender = sender
+                          , messageMentioned = mentioned
+                          } -> do
+    recordUserMsg msg
+    linkForbidden <- forbidLinksForPlebs msg
+    banwordsForbidden <- forbidBanwords msg
+    unless (linkForbidden || banwordsForbidden) $ do
+      runReaction voteMessage msg
+      case textAsPipe text of
+        [] -> runReaction mention msg
+        pipe ->
+          mapM redirectAlias pipe >>= dispatchPipe . Message sender mentioned
 
 dispatchRedirect :: Effect () -> Message (Command T.Text) -> Effect ()
 dispatchRedirect effect cmd = do
