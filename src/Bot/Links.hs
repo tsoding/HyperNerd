@@ -9,6 +9,7 @@ module Bot.Links
   , amitrustedCommand
   , istrustedCommand
   , findTrustedSender
+  , internalMessageRoles
   ) where
 
 import Bot.Replies
@@ -74,10 +75,11 @@ textContainsLink t =
       Just x -> Right x
       Nothing -> Left "No match found"
 
-forbidLinksForPlebs :: InEvent -> Effect Bool
-forbidLinksForPlebs (InMsg Message { messageSender = sender@Sender {senderChannel = TwitchChannel _}
-                                   , messageContent = text
-                                   })
+-- TODO(#535): forbidLinksForPlebs works only in Twitch
+forbidLinksForPlebs :: Message T.Text -> Effect Bool
+forbidLinksForPlebs Message { messageSender = sender@Sender {senderChannel = TwitchChannel _}
+                            , messageContent = text
+                            }
   | textContainsLink text = do
     trustedUser <-
       runMaybeT (findTrustedSender sender <|> autoTrustSender sender)
@@ -140,3 +142,19 @@ istrustedCommand =
   liftR (runMaybeT . findTrustedUser) $
   cmapR (maybe " is not trusted PepeHands" (const " is trusted Pog")) $
   transR getComposeCC $ cmapR (uncurry T.append) $ Reaction replyMessage
+
+internalSenderRoles :: Sender -> Effect Sender
+internalSenderRoles sender = do
+  trustedUser <- runMaybeT $ findTrustedSender sender
+  case trustedUser of
+    Nothing -> return sender
+    Just _ ->
+      return $
+      sender {senderRoles = senderRoles sender ++ [InternalRole "Trusted"]}
+
+-- TODO(#536): all of the mechanisms that work with Trusted users should look into `InternalRole` "Trusted" instead of queries the database
+-- TODO(#537): there is no way to add more internal roles
+internalMessageRoles :: Message T.Text -> Effect (Message T.Text)
+internalMessageRoles msg = do
+  messageSender' <- internalSenderRoles $ messageSender msg
+  return $ msg {messageSender = messageSender'}

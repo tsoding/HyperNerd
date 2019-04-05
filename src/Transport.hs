@@ -25,6 +25,7 @@ data Role
   | TwitchBotOwner
   | DiscordRole Word64
   | DiscordGuildOwner
+  | InternalRole T.Text
   deriving (Show, Eq)
 
 data Sender = Sender
