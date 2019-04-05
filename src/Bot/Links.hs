@@ -153,7 +153,7 @@ internalSenderRoles sender = do
       sender {senderRoles = senderRoles sender ++ [InternalRole "Trusted"]}
 
 -- TODO(#536): all of the mechanisms that work with Trusted users should look into `InternalRole` "Trusted" instead of queries the database
--- TODO(#537): there is no way to add more trusted roles
+-- TODO(#537): there is no way to add more internal roles
 internalMessageRoles :: Message T.Text -> Effect (Message T.Text)
 internalMessageRoles msg = do
   messageSender' <- internalSenderRoles $ messageSender msg
