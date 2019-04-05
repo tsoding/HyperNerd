@@ -1,6 +1,8 @@
 {-# LANGUAGE OverloadedStrings #-}
 
-module Bot.Friday (fridayCommand) where
+module Bot.Friday
+  ( fridayCommand
+  ) where
 
 import Bot.Replies
 import Control.Comonad
