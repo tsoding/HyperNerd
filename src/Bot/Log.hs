@@ -105,7 +105,7 @@ randomLogRecord =
 randomLogRecordCommand :: Reaction Message T.Text
 randomLogRecordCommand =
   cmapR (T.toLower . T.strip) $
-  transCmapR extractUser $
+  dupCmapR extractUser $
   transLiftR (selectEntities Proxy . randomUserQuoteSelector) $
   cmapR listToMaybe $ ignoreNothing $ cmapR (lrAsMsg . entityPayload) sayMessage
   where
