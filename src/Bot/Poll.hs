@@ -6,6 +6,7 @@ module Bot.Poll where
 import Bot.Log (LogRecord(..), Seconds, getRecentLogs)
 import Bot.Replies
 import Control.Monad
+import Data.Bool.Extra
 import Data.Foldable
 import Data.Function
 import Data.List
@@ -22,7 +23,6 @@ import Safe
 import Text.InterpolatedString.QM
 import Text.Read
 import Transport
-import Data.Bool.Extra
 
 data PollOption = PollOption
   { poPollId :: Int

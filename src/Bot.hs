@@ -117,6 +117,15 @@ builtinCommands =
       , ( "Delete periodic command"
         , authorizeSender senderAuthority $
           replyOnNothing "Only for mods" removePeriodicCommand))
+    , ( "periodicon"
+      , ( "Enable periodic timer"
+        , authorizeSender senderAuthority $
+          replyOnNothing "Only for mods" enablePeriodicTimerCommand))
+    , ( "periodicoff"
+      , ( "Disable periodic timer"
+        , authorizeSender senderAuthority $
+          replyOnNothing "Only for mods" disablePeriodicTimerCommand))
+    , ("periodicstat", ("Status of Periodic Timer", statusPeriodicTimerCommand))
     , ( "addcmd"
       , ( "Add custom command"
         , authorizeSender senderAuthority $

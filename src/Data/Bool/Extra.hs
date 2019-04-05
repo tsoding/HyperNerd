@@ -1,4 +1,7 @@
-module Data.Bool.Extra (intAsBool, boolAsInt) where
+module Data.Bool.Extra
+  ( intAsBool
+  , boolAsInt
+  ) where
 
 intAsBool :: Int -> Bool
 intAsBool 0 = False
