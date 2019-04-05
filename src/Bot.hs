@@ -331,8 +331,18 @@ bot :: Bot
 bot (Joined channel@(TwitchChannel _)) = do
   startPeriodicCommands channel dispatchCommand
   periodicEffect (60 * 1000) (announceRunningPoll channel)
-bot (InMsg msg) = runReaction messageReaction msg
+bot (InMsg msg) =
+  runReaction (dupLiftExtractR internalMessageRoles messageReaction) msg
 bot _ = return ()
+
+-- TODO: internalSenderRoles is not implemented
+internalSenderRoles :: Sender -> Effect Sender
+internalSenderRoles = undefined
+
+internalMessageRoles :: Message T.Text -> Effect (Message T.Text)
+internalMessageRoles msg = do
+  messageSender' <- internalSenderRoles $ messageSender msg
+  return $ msg {messageSender = messageSender'}
 
 messageReaction :: Reaction Message T.Text
 messageReaction =
