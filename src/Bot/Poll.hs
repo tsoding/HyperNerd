@@ -43,11 +43,6 @@ data Vote = Vote
   , voteOptionId :: Int
   }
 
-
--- TODO: voteTypeName is not used anywhere
-voteTypeName :: T.Text
-voteTypeName = "Vote"
-
 instance IsEntity Poll where
   nameOfEntity _ = "Poll"
   toProperties poll =
