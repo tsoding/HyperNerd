@@ -75,7 +75,7 @@ textContainsLink t =
       Just x -> Right x
       Nothing -> Left "No match found"
 
--- TODO: forbidLinksForPlebs works only in Twitch
+-- TODO(#535): forbidLinksForPlebs works only in Twitch
 forbidLinksForPlebs :: Message T.Text -> Effect Bool
 forbidLinksForPlebs Message { messageSender = sender@Sender {senderChannel = TwitchChannel _}
                             , messageContent = text
