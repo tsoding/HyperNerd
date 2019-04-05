@@ -256,9 +256,7 @@ builtinCommands =
     , ("friday", ("Suggest video for the friday stream", fridayCommand))
     , ( "twitch"
       , ( "Send message to Tsoding Twitch channel"
-        , onlyForRole
-            "You have to be a Twitch sub in the Discord server"
-            (DiscordRole 542590649103286273) $
+        , onlyForRoles [DiscordRole 542590649103286273] $
           liftR (say (TwitchChannel "#tsoding")) ignore))
     , ( "roles"
       , ( "Show your roles"
@@ -279,13 +277,13 @@ mockMessage =
          else Data.Char.toLower)
     True
 
-onlyForRole :: T.Text -> Role -> Reaction Message a -> Reaction Message a
-onlyForRole reply role reaction =
+onlyForRoles :: [Role] -> Reaction Message a -> Reaction Message a
+onlyForRoles roles reaction =
   transR duplicate $
   ifR
-    (elem role . senderRoles . messageSender)
+    (any (`elem` roles) . senderRoles . messageSender)
     (cmapR extract reaction)
-    (cmapR (const reply) $ Reaction replyMessage)
+    (cmapR (const [qms|Only for roles: {roles}|]) $ Reaction replyMessage)
 
 authorizeSender ::
      (Sender -> Bool) -> Reaction Message (Maybe a) -> Reaction Message a
