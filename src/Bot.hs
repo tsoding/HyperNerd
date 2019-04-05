@@ -52,6 +52,12 @@ import Transport
 
 type Bot = InEvent -> Effect ()
 
+tsodingTwitchedDiscordRole :: Role
+tsodingTwitchedDiscordRole = DiscordRole 542590649103286273
+
+tsodingTrustedDiscordRole :: Role
+tsodingTrustedDiscordRole = DiscordRole 543864981171470346
+
 builtinCommands :: CommandTable
 builtinCommands =
   M.fromList
@@ -253,10 +259,14 @@ builtinCommands =
         , authorizeSender senderAuthority $
           replyOnNothing "Only for mods" $ cmapR (const 5) raffleCommand))
     , ("join", ("Join the raffle", joinCommand))
-    , ("friday", ("Suggest video for the friday stream", fridayCommand))
+    , ( "friday"
+      , ( "Suggest video for the friday stream"
+        , onlyForRoles
+            [InternalRole "Trusted", tsodingTrustedDiscordRole]
+            fridayCommand))
     , ( "twitch"
       , ( "Send message to Tsoding Twitch channel"
-        , onlyForRoles [DiscordRole 542590649103286273] $
+        , onlyForRoles [tsodingTwitchedDiscordRole] $
           liftR (say (TwitchChannel "#tsoding")) ignore))
     , ( "roles"
       , ( "Show your roles"
