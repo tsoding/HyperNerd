@@ -82,6 +82,7 @@ executable HyperNerd
                      , Config
                      , Data.Either.Extra
                      , Data.Maybe.Extra
+                     , Data.Bool.Extra
                      , Effect
                      , Entity
                      , HyperNerd.Comonad
@@ -223,5 +224,6 @@ test-suite HyperNerdTest
                      , BotSpec.TwitchSpec
                      , Bot.Twitch
                      , Transport
+                     , Data.Bool.Extra
 
   default-language:    Haskell2010

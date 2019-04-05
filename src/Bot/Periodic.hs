@@ -5,11 +5,15 @@ module Bot.Periodic
   ( startPeriodicCommands
   , addPeriodicCommand
   , removePeriodicCommand
+  , enablePeriodicTimerCommand
+  , disablePeriodicTimerCommand
+  , statusPeriodicTimerCommand
   ) where
 
 import Bot.Replies
 import Command
 import Control.Monad
+import Data.Bool.Extra
 import qualified Data.Map as M
 import Data.Maybe
 import Data.Proxy
@@ -36,6 +40,22 @@ newtype PeriodicCommand = PeriodicCommand
   { periodicCommand :: Command T.Text
   }
 
+newtype PeriodicTimer = PeriodicTimer
+  { periodicTimerEnabled :: Bool
+  }
+
+periodicTimerEntity :: Effect (Entity PeriodicTimer)
+periodicTimerEntity = do
+  entity <- listToMaybe <$> selectEntities Proxy All
+  maybe (createEntity Proxy $ PeriodicTimer True) return entity
+
+instance IsEntity PeriodicTimer where
+  nameOfEntity _ = "PeriodicTimer"
+  toProperties pt =
+    M.fromList [("enabled", PropertyInt $ boolAsInt $ periodicTimerEnabled pt)]
+  fromProperties properties =
+    PeriodicTimer <$> (intAsBool <$> extractProperty "enabled" properties)
+
 instance IsEntity PeriodicCommand where
   nameOfEntity _ = "PeriodicCommand"
   toProperties pc =
@@ -60,12 +80,14 @@ startPeriodicCommands ::
      Channel -> (Message (Command T.Text) -> Effect ()) -> Effect ()
 startPeriodicCommands channel dispatchCommand = do
   maybePc <- fmap listToMaybe $ selectEntities Proxy $ Take 1 $ Shuffle All
-  maybe
-    (return ())
-    (dispatchCommand .
-     Message (mrbotka {senderChannel = channel}) False .
-     periodicCommand . entityPayload)
-    maybePc
+  periodicTimer <- entityPayload <$> periodicTimerEntity
+  when (periodicTimerEnabled periodicTimer) $
+    maybe
+      (return ())
+      (dispatchCommand .
+       Message (mrbotka {senderChannel = channel}) False .
+       periodicCommand . entityPayload)
+      maybePc
   timeout (10 * 60 * 1000) $ startPeriodicCommands channel dispatchCommand
 
 addPeriodicCommand :: Reaction Message (Command T.Text)
@@ -95,3 +117,29 @@ removePeriodicCommand =
         replyToSender sender [qms|'{name}' has been unscheduled|]
       Nothing ->
         replyToSender sender [qms|'{name}' was not scheduled to begin with|]
+
+enablePeriodicTimer :: PeriodicTimer -> PeriodicTimer
+enablePeriodicTimer pt = pt {periodicTimerEnabled = True}
+
+disablePeriodicTimer :: PeriodicTimer -> PeriodicTimer
+disablePeriodicTimer pt = pt {periodicTimerEnabled = False}
+
+enablePeriodicTimerCommand :: Reaction Message a
+enablePeriodicTimerCommand =
+  liftR (const periodicTimerEntity) $
+  cmapR (fmap enablePeriodicTimer) $
+  liftR updateEntityById $
+  cmapR (const "Periodic timer has been enabled") $ Reaction replyMessage
+
+disablePeriodicTimerCommand :: Reaction Message a
+disablePeriodicTimerCommand =
+  liftR (const periodicTimerEntity) $
+  cmapR (fmap disablePeriodicTimer) $
+  liftR updateEntityById $
+  cmapR (const "Periodic timer has been disabled") $ Reaction replyMessage
+
+statusPeriodicTimerCommand :: Reaction Message a
+statusPeriodicTimerCommand =
+  liftR (const periodicTimerEntity) $
+  cmapR (T.pack . show . periodicTimerEnabled . entityPayload) $
+  Reaction replyMessage

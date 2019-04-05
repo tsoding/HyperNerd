@@ -6,6 +6,7 @@ module Bot.Poll where
 import Bot.Log (LogRecord(..), Seconds, getRecentLogs)
 import Bot.Replies
 import Control.Monad
+import Data.Bool.Extra
 import Data.Foldable
 import Data.Function
 import Data.List
@@ -41,17 +42,6 @@ data Vote = Vote
   { voteUser :: T.Text
   , voteOptionId :: Int
   }
-
-voteTypeName :: T.Text
-voteTypeName = "Vote"
-
-intAsBool :: Int -> Bool
-intAsBool 0 = False
-intAsBool _ = True
-
-boolAsInt :: Bool -> Int
-boolAsInt True = 1
-boolAsInt False = 0
 
 instance IsEntity Poll where
   nameOfEntity _ = "Poll"
