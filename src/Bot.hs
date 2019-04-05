@@ -328,6 +328,7 @@ mention =
   ignoreNothing markov
 
 bot :: Bot
+-- TODO(#538): Periodic commands and Poll announcements don't work in Discord channels
 bot (Joined channel@(TwitchChannel _)) = do
   startPeriodicCommands channel dispatchCommand
   periodicEffect (60 * 1000) (announceRunningPoll channel)
