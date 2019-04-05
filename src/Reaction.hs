@@ -23,7 +23,8 @@ dupCmapR f = transR duplicate . cmapR f
 dupLiftR :: Comonad w => (w a -> Effect b) -> Reaction w b -> Reaction w a
 dupLiftR f = transR duplicate . liftR f
 
-dupLiftExtractR :: Comonad w => (w a -> Effect (w b)) -> Reaction w b -> Reaction w a
+dupLiftExtractR ::
+     Comonad w => (w a -> Effect (w b)) -> Reaction w b -> Reaction w a
 dupLiftExtractR f = transR duplicate . liftR f . transR extract
 
 transR ::
