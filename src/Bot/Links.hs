@@ -77,9 +77,9 @@ textContainsLink t =
 
 -- TODO: forbidLinksForPlebs works only in Twitch
 forbidLinksForPlebs :: Message T.Text -> Effect Bool
-forbidLinksForPlebs (Message { messageSender = sender@Sender {senderChannel = TwitchChannel _}
-                             , messageContent = text
-                             })
+forbidLinksForPlebs Message { messageSender = sender@Sender {senderChannel = TwitchChannel _}
+                            , messageContent = text
+                            }
   | textContainsLink text = do
     trustedUser <-
       runMaybeT (findTrustedSender sender <|> autoTrustSender sender)
