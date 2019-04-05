@@ -20,6 +20,7 @@ import Property
 import Reaction
 import Text.InterpolatedString.QM
 import Transport
+import Data.Bool.Extra
 
 mrbotka :: Sender
 mrbotka =
@@ -35,6 +36,17 @@ mrbotka =
 newtype PeriodicCommand = PeriodicCommand
   { periodicCommand :: Command T.Text
   }
+
+newtype PeriodicTimer = PeriodicTimer
+  { periodicTimerEnabled :: Bool
+  }
+
+instance IsEntity PeriodicTimer where
+  nameOfEntity _ = "PeriodicTimer"
+  toProperties pt =
+    M.fromList [("enabled", PropertyInt $ boolAsInt $ periodicTimerEnabled pt)]
+  fromProperties properties =
+    PeriodicTimer <$> (intAsBool <$> extractProperty "enabled" properties)
 
 instance IsEntity PeriodicCommand where
   nameOfEntity _ = "PeriodicCommand"

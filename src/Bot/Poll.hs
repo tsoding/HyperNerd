@@ -22,6 +22,7 @@ import Safe
 import Text.InterpolatedString.QM
 import Text.Read
 import Transport
+import Data.Bool.Extra
 
 data PollOption = PollOption
   { poPollId :: Int
@@ -42,16 +43,10 @@ data Vote = Vote
   , voteOptionId :: Int
   }
 
+
+-- TODO: voteTypeName is not used anywhere
 voteTypeName :: T.Text
 voteTypeName = "Vote"
-
-intAsBool :: Int -> Bool
-intAsBool 0 = False
-intAsBool _ = True
-
-boolAsInt :: Bool -> Int
-boolAsInt True = 1
-boolAsInt False = 0
 
 instance IsEntity Poll where
   nameOfEntity _ = "Poll"
