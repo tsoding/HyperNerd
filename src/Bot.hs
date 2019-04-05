@@ -52,6 +52,12 @@ import Transport
 
 type Bot = InEvent -> Effect ()
 
+tsodingTwitchedDiscordRole :: Role
+tsodingTwitchedDiscordRole = DiscordRole 542590649103286273
+
+tsodingTrustedDiscordRole :: Role
+tsodingTrustedDiscordRole = DiscordRole 543864981171470346
+
 builtinCommands :: CommandTable
 builtinCommands =
   M.fromList
@@ -253,12 +259,14 @@ builtinCommands =
         , authorizeSender senderAuthority $
           replyOnNothing "Only for mods" $ cmapR (const 5) raffleCommand))
     , ("join", ("Join the raffle", joinCommand))
-    , ("friday", ("Suggest video for the friday stream", fridayCommand))
+    , ( "friday"
+      , ( "Suggest video for the friday stream"
+        , onlyForRoles
+            [InternalRole "Trusted", tsodingTrustedDiscordRole]
+            fridayCommand))
     , ( "twitch"
       , ( "Send message to Tsoding Twitch channel"
-        , onlyForRole
-            "You have to be a Twitch sub in the Discord server"
-            (DiscordRole 542590649103286273) $
+        , onlyForRoles [tsodingTwitchedDiscordRole] $
           liftR (say (TwitchChannel "#tsoding")) ignore))
     , ( "roles"
       , ( "Show your roles"
@@ -279,13 +287,13 @@ mockMessage =
          else Data.Char.toLower)
     True
 
-onlyForRole :: T.Text -> Role -> Reaction Message a -> Reaction Message a
-onlyForRole reply role reaction =
+onlyForRoles :: [Role] -> Reaction Message a -> Reaction Message a
+onlyForRoles roles reaction =
   transR duplicate $
   ifR
-    (elem role . senderRoles . messageSender)
+    (any (`elem` roles) . senderRoles . messageSender)
     (cmapR extract reaction)
-    (cmapR (const reply) $ Reaction replyMessage)
+    (cmapR (const [qms|Only for roles: {roles}|]) $ Reaction replyMessage)
 
 authorizeSender ::
      (Sender -> Bool) -> Reaction Message (Maybe a) -> Reaction Message a

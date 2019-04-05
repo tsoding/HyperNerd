@@ -1,12 +1,11 @@
 {-# LANGUAGE OverloadedStrings #-}
 
-module Bot.Friday where
+module Bot.Friday
+  ( fridayCommand
+  ) where
 
-import Bot.Links
 import Bot.Replies
 import Control.Comonad
-import Control.Monad.Trans.Maybe
-import Data.Functor
 import qualified Data.Map as M
 import Data.Proxy
 import qualified Data.Text as T
@@ -36,23 +35,11 @@ instance IsEntity FridayVideo where
     extractProperty "author" properties <*>
     extractProperty "date" properties
 
-messageTrustedGate :: Message a -> MaybeT Effect a
-messageTrustedGate msg =
-  messageContent msg <$ findTrustedSender (messageSender msg)
-
-trustedCommand :: Reaction Message T.Text -> Reaction Message T.Text
-trustedCommand reaction =
-  transR duplicate $
-  liftR (runMaybeT . messageTrustedGate) $
-  replyOnNothing "This command is only for trusted users" reaction
-
 fridayCommand :: Reaction Message T.Text
 fridayCommand =
-  trustedCommand $
   transR duplicate $
   liftR
     (\msg ->
-       void $
        createEntity Proxy .
        FridayVideo (messageContent msg) (senderName $ messageSender msg) =<<
        now) $
