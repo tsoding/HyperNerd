@@ -58,6 +58,8 @@ tsodingTwitchedDiscordRole = DiscordRole 542590649103286273
 tsodingTrustedDiscordRole :: Role
 tsodingTrustedDiscordRole = DiscordRole 543864981171470346
 
+-- TODO(#549): Authorization errors are not consistent
+--   Sometimes they say "Only for mods", sometimes — "Only for roles: <role vector>". It should always be the later.
 builtinCommands :: CommandTable
 builtinCommands =
   M.fromList
@@ -345,13 +347,14 @@ mention =
   ignoreNothing markov
 
 bot :: Bot
--- TODO(#538): Periodic commands and Poll announcements don't work in Discord channels
 bot (Joined channel@(TwitchChannel _)) = do
   startPeriodicCommands channel dispatchCommand
   periodicEffect (60 * 1000) (announceRunningPoll channel)
+-- TODO(#550): Periodic commands don't work in Discord channels
+bot (Joined channel@(DiscordChannel _)) =
+  periodicEffect (60 * 1000) (announceRunningPoll channel)
 bot (InMsg msg) =
   runReaction (dupLiftExtractR internalMessageRoles messageReaction) msg
-bot _ = return ()
 
 messageReaction :: Reaction Message T.Text
 messageReaction =
