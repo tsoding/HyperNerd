@@ -285,7 +285,7 @@ builtinCommands =
       , ( "Set the time cursor for the video queue"
         , onlyForRoles authorityRoles $
           cmapR (readMay . T.unpack) $
-          replyOnNothing "Cannot parse this as UTCTime" $ setVideoDateCommand))
+          replyOnNothing "Cannot parse this as UTCTime" setVideoDateCommand))
     ]
 
 mockMessage :: T.Text -> T.Text

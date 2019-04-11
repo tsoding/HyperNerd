@@ -74,7 +74,7 @@ nextVideoCommand = advanceVideoQueue <> videoCommand
     advanceVideoQueue =
       liftR (const currentVideo) $
       ignoreNothing $
-      cmapR (fridayVideoDate . entityPayload) $ setVideoDateCommand
+      cmapR (fridayVideoDate . entityPayload) setVideoDateCommand
 
 videoCommand :: Reaction Message ()
 videoCommand =
