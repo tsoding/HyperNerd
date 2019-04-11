@@ -351,7 +351,7 @@ bot (Joined channel@(TwitchChannel _)) = do
   startPeriodicCommands channel dispatchCommand
   periodicEffect (60 * 1000) (announceRunningPoll channel)
 -- TODO: Periodic commands don't work in Discord channels
-bot (Joined channel@(DiscordChannel _)) = do
+bot (Joined channel@(DiscordChannel _)) =
   periodicEffect (60 * 1000) (announceRunningPoll channel)
 bot (InMsg msg) =
   runReaction (dupLiftExtractR internalMessageRoles messageReaction) msg
