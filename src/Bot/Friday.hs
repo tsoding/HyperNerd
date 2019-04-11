@@ -73,7 +73,7 @@ nextVideoCommand = advanceVideoQueue <> videoCommand
   where
     advanceVideoQueue =
       liftR (const currentVideo) $
-      replyOnNothing "No videos in the queue" $
+      ignoreNothing $
       cmapR (fridayVideoDate . entityPayload) $ setVideoDateCommand
 
 videoCommand :: Reaction Message ()
