@@ -2,6 +2,9 @@
 
 module Bot.Friday
   ( fridayCommand
+  , nextVideoCommand
+  , videoCommand
+  , setVideoDateCommand
   ) where
 
 import Bot.Replies
@@ -44,3 +47,16 @@ fridayCommand =
        FridayVideo (messageContent msg) (senderName $ messageSender msg) =<<
        now) $
   cmapR (const "Added to the suggestions") $ Reaction replyMessage
+
+-- TODO: nextVideoCommand is not implemented
+nextVideoCommand :: Reaction Message ()
+nextVideoCommand = cmapR (const "Not implemented yet") $ Reaction replyMessage
+
+-- TODO: videoCommand is not implemented
+videoCommand :: Reaction Message ()
+videoCommand = cmapR (const "Not implemented yet") $ Reaction replyMessage
+
+-- TODO: setVideoDateCommand is not implemented
+setVideoDateCommand :: Reaction Message UTCTime
+setVideoDateCommand =
+  cmapR (const "Not implemented yet") $ Reaction replyMessage

@@ -276,6 +276,15 @@ builtinCommands =
           cmapR (T.pack . show . senderRoles . messageSender) $
           Reaction replyMessage))
     , ("markov", ("Generate Markov message", markov))
+    , ( "nextvideo"
+      , ( "Get the next video for Smart Stream"
+        , onlyForRoles authorityRoles $ transR void nextVideoCommand))
+    , ("video", ("Print the current video", transR void videoCommand))
+    , ( "setvideodate"
+      , ( "Set the cursor date for the video queue"
+        , onlyForRoles authorityRoles $
+          cmapR (readMay . T.unpack) $
+          replyOnNothing "Cannot parse this as UTCTime" $ setVideoDateCommand))
     ]
 
 mockMessage :: T.Text -> T.Text

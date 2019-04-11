@@ -48,11 +48,12 @@ senderBroadcaster = elem TwitchBroadcaster . senderRoles
 senderOwner :: Sender -> Bool
 senderOwner = elem TwitchBotOwner . senderRoles
 
+authorityRoles :: [Role]
+authorityRoles =
+  [TwitchMod, TwitchBroadcaster, TwitchBotOwner, DiscordGuildOwner]
+
 senderAuthority :: Sender -> Bool
-senderAuthority sender =
-  any
-    (`elem` senderRoles sender)
-    [TwitchMod, TwitchBroadcaster, TwitchBotOwner, DiscordGuildOwner]
+senderAuthority sender = any (`elem` senderRoles sender) authorityRoles
 
 data InEvent
   = Joined Channel
