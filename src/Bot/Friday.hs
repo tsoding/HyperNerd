@@ -18,6 +18,7 @@ import Entity
 import Property
 import Reaction
 import Transport (Message(..), Sender(..))
+import Data.Maybe
 
 data FridayVideo = FridayVideo
   { fridayVideoName :: T.Text
@@ -38,6 +39,16 @@ instance IsEntity FridayVideo where
     extractProperty "author" properties <*>
     extractProperty "date" properties
 
+newtype LastVideoTime = LastVideoTime
+  { lastVideoTime :: UTCTime
+  } deriving (Show, Eq)
+
+instance IsEntity LastVideoTime where
+  nameOfEntity _ = "LastVideoTime"
+  toProperties vt = M.fromList [("time", PropertyUTCTime $ lastVideoTime vt)]
+  fromProperties properties =
+    LastVideoTime <$> extractProperty "time" properties
+
 fridayCommand :: Reaction Message T.Text
 fridayCommand =
   transR duplicate $
@@ -56,7 +67,18 @@ nextVideoCommand = cmapR (const "Not implemented yet") $ Reaction replyMessage
 videoCommand :: Reaction Message ()
 videoCommand = cmapR (const "Not implemented yet") $ Reaction replyMessage
 
--- TODO: setVideoDateCommand is not implemented
+currentLastVideoTime :: Effect (Entity LastVideoTime)
+currentLastVideoTime = do
+  vt <- listToMaybe <$> selectEntities Proxy All
+  case vt of
+    Just vt' -> return vt'
+    Nothing -> createEntity Proxy $ LastVideoTime begginingOfTime
+      where begginingOfTime = UTCTime (fromGregorian 1970 1 1) 0
+
 setVideoDateCommand :: Reaction Message UTCTime
 setVideoDateCommand =
-  cmapR (const "Not implemented yet") $ Reaction replyMessage
+  liftR
+    (\newDate -> do
+       vt <- currentLastVideoTime
+       updateEntityById (LastVideoTime newDate <$ vt)) $
+  cmapR (const "Updated last video time") $ Reaction replyMessage

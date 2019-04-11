@@ -280,8 +280,8 @@ builtinCommands =
       , ( "Get the next video for Smart Stream"
         , onlyForRoles authorityRoles $ transR void nextVideoCommand))
     , ("video", ("Print the current video", transR void videoCommand))
-    , ( "setvideodate"
-      , ( "Set the cursor date for the video queue"
+    , ( "setvideotime"
+      , ( "Set the time cursor for the video queue"
         , onlyForRoles authorityRoles $
           cmapR (readMay . T.unpack) $
           replyOnNothing "Cannot parse this as UTCTime" $ setVideoDateCommand))
