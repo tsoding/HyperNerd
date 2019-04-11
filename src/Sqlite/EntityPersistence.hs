@@ -328,6 +328,23 @@ selectEntityIds conn name (Take n (SortBy propertyName Desc All)) =
                               ORDER BY propertyUTCTime DESC
                               LIMIT :n |]
     [":entityName" := name, ":propertyName" := propertyName, ":n" := n]
+selectEntityIds conn name (SortBy propertyName1 Asc (Filter (PropertyGreater propertyName2 (PropertyUTCTime propertyUTCTime)) All))
+  | propertyName1 == propertyName2 =
+    map fromOnly <$>
+    queryNamed
+      conn
+      [r| SELECT entityId
+        FROM EntityProperty
+        WHERE entityName = :entityName
+          AND propertyName = :propertyName
+          AND propertyUTCTime > :propertyUTCTime
+          GROUP BY entityId
+          ORDER BY propertyUTCTime ASC; |]
+      [ ":entityName" := name
+      , ":propertyName" := propertyName
+      , ":propertyUTCTime" := propertyUTCTime
+      ]
+    where propertyName = propertyName1
 selectEntityIds _ _ selector =
   error ("Unsupported selector combination " ++ show selector)
 

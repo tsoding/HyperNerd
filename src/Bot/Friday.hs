@@ -1,4 +1,5 @@
 {-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE QuasiQuotes #-}
 
 module Bot.Friday
   ( fridayCommand
@@ -19,6 +20,7 @@ import Property
 import Reaction
 import Transport (Message(..), Sender(..))
 import Data.Maybe
+import Text.InterpolatedString.QM
 
 data FridayVideo = FridayVideo
   { fridayVideoName :: T.Text
@@ -65,7 +67,21 @@ nextVideoCommand = cmapR (const "Not implemented yet") $ Reaction replyMessage
 
 -- TODO: videoCommand is not implemented
 videoCommand :: Reaction Message ()
-videoCommand = cmapR (const "Not implemented yet") $ Reaction replyMessage
+videoCommand =
+  liftR (const currentLastVideoTime) $
+  cmapR (lastVideoTime . entityPayload) $
+  liftR
+    (\vt ->
+       fmap listToMaybe $
+       selectEntities Proxy $
+       SortBy "date" Asc $
+       Filter (PropertyGreater "date" $ PropertyUTCTime vt) All) $
+  replyOnNothing "No videos in the queue" $
+  cmapR entityPayload $
+  cmapR
+    (\fv ->
+       [qms|[{fridayVideoDate fv}] <{fridayVideoAuthor fv}> {fridayVideoName fv}|]) $
+  Reaction replyMessage
 
 currentLastVideoTime :: Effect (Entity LastVideoTime)
 currentLastVideoTime = do
