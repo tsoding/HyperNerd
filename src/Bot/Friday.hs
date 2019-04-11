@@ -11,6 +11,7 @@ module Bot.Friday
 import Bot.Replies
 import Control.Comonad
 import qualified Data.Map as M
+import Data.Maybe
 import Data.Proxy
 import qualified Data.Text as T
 import Data.Time
@@ -18,9 +19,8 @@ import Effect
 import Entity
 import Property
 import Reaction
-import Transport (Message(..), Sender(..))
-import Data.Maybe
 import Text.InterpolatedString.QM
+import Transport (Message(..), Sender(..))
 
 data FridayVideo = FridayVideo
   { fridayVideoName :: T.Text

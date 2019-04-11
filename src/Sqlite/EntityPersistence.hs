@@ -344,7 +344,8 @@ selectEntityIds conn name (SortBy propertyName1 Asc (Filter (PropertyGreater pro
       , ":propertyName" := propertyName
       , ":propertyUTCTime" := propertyUTCTime
       ]
-    where propertyName = propertyName1
+  where
+    propertyName = propertyName1
 selectEntityIds _ _ selector =
   error ("Unsupported selector combination " ++ show selector)
 
