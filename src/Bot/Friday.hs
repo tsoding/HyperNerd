@@ -68,9 +68,13 @@ currentVideo = do
     selectEntities Proxy $
     SortBy "date" Asc $ Filter (PropertyGreater "date" $ PropertyUTCTime vt) All
 
--- TODO: nextVideoCommand is not implemented
 nextVideoCommand :: Reaction Message ()
-nextVideoCommand = cmapR (const "Not implemented yet") $ Reaction replyMessage
+nextVideoCommand = advanceVideoQueue <> videoCommand
+  where
+    advanceVideoQueue =
+      liftR (const currentVideo) $
+      replyOnNothing "No videos in the queue" $
+      cmapR (fridayVideoDate . entityPayload) $ setVideoDateCommand
 
 videoCommand :: Reaction Message ()
 videoCommand =
