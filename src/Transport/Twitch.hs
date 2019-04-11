@@ -124,7 +124,7 @@ receiveLoop conf incoming ircConn = do
 sendLoop :: T.Text -> OutcomingQueue -> Connection -> IO ()
 sendLoop channel outcoming ircConn = do
   outMsg <- atomically $ readTQueue outcoming
-  -- TODO: Twitch Transport does not split messages with newlines into several messages
+  -- TODO(#551): Twitch Transport does not split messages with newlines into several messages
   case outMsg of
     OutMsg _ text -> sendMsg ircConn $ ircPrivmsg channel text
   sendLoop channel outcoming ircConn
