@@ -261,6 +261,7 @@ builtinCommands =
         , authorizeSender senderAuthority $
           replyOnNothing "Only for mods" $ cmapR (const 5) raffleCommand))
     , ("join", ("Join the raffle", joinCommand))
+    -- TODO: !friday allows arbitrary text
     , ( "friday"
       , ( "Suggest video for the friday stream"
         , onlyForRoles
@@ -276,6 +277,15 @@ builtinCommands =
           cmapR (T.pack . show . senderRoles . messageSender) $
           Reaction replyMessage))
     , ("markov", ("Generate Markov message", markov))
+    , ( "nextvideo"
+      , ( "Get the next video for Smart Stream"
+        , onlyForRoles authorityRoles $ transR void nextVideoCommand))
+    , ("video", ("Print the current video", transR void videoCommand))
+    , ( "setvideotime"
+      , ( "Set the time cursor for the video queue"
+        , onlyForRoles authorityRoles $
+          cmapR (readMay . T.unpack) $
+          replyOnNothing "Cannot parse this as UTCTime" setVideoDateCommand))
     ]
 
 mockMessage :: T.Text -> T.Text

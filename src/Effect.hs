@@ -41,6 +41,8 @@ import Transport
 data Condition
   = PropertyEquals T.Text
                    Property
+  | PropertyGreater T.Text
+                    Property
   | ConditionAnd [Condition]
   deriving (Show)
 
