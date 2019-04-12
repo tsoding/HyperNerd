@@ -49,7 +49,6 @@ import qualified Text.Regex.Base.RegexLike as Regex
 import Text.Regex.TDFA (defaultCompOpt, defaultExecOpt)
 import Text.Regex.TDFA.String
 import Transport
-import Data.Maybe
 
 type Bot = InEvent -> Effect ()
 
@@ -281,9 +280,7 @@ builtinCommands =
     , ( "nextvideo"
       , ( "Get the next video for Smart Stream"
         , onlyForRoles authorityRoles $ transR void nextVideoCommand))
-    , ( "video"
-      , ( "Print the current video"
-        , cmapR (fromMaybe 1 . readMay . T.unpack) $ videoCommand))
+    , ("video", ("Print the current video", transR void videoCommand))
     , ( "setvideotime"
       , ( "Set the time cursor for the video queue"
         , onlyForRoles authorityRoles $
