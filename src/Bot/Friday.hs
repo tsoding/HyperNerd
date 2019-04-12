@@ -61,7 +61,7 @@ fridayCommand =
        now) $
   cmapR (const "Added to the suggestions") $ Reaction replyMessage
 
-videoQueue :: Int -> Effect ([Entity FridayVideo])
+videoQueue :: Int -> Effect [Entity FridayVideo]
 videoQueue n = do
   vt <- lastVideoTime . entityPayload <$> currentLastVideoTime
   selectEntities Proxy $
@@ -69,7 +69,7 @@ videoQueue n = do
     SortBy "date" Asc $ Filter (PropertyGreater "date" $ PropertyUTCTime vt) All
 
 nextVideoCommand :: Reaction Message ()
-nextVideoCommand = advanceVideoQueue <> (cmapR (const 1) $ videoCommand)
+nextVideoCommand = advanceVideoQueue <> cmapR (const 1) videoCommand
   where
     advanceVideoQueue =
       liftR (const $ videoQueue 1) $

@@ -283,7 +283,7 @@ builtinCommands =
         , onlyForRoles authorityRoles $ transR void nextVideoCommand))
     , ( "video"
       , ( "Print the current video"
-        , cmapR (fromMaybe 1 . readMay . T.unpack) $ videoCommand))
+        , cmapR (fromMaybe 1 . readMay . T.unpack) videoCommand))
     , ( "setvideotime"
       , ( "Set the time cursor for the video queue"
         , onlyForRoles authorityRoles $
