@@ -10,7 +10,7 @@ docker build -t hypernerd .
 docker save hypernerd | gzip > hypernerd.tar.gz
 scp hypernerd.tar.gz "${DEPLOY_TARGET}:${DEPLOY_FOLDER}"
 rm hypernerd.tar.gz
-ssh "${DEPLOY_TARGET}" -t "gunzip hypernerd.tar.gz"
+ssh "${DEPLOY_TARGET}" -t "gunzip -f hypernerd.tar.gz"
 ssh "${DEPLOY_TARGET}" -t "docker stop hypernerd-bot; docker rm hypernerd-bot"
 ssh "${DEPLOY_TARGET}" -t "docker load -i hypernerd.tar && mkdir -p ${DEPLOY_FOLDER}/hypernerd-state/"
 ssh "${DEPLOY_TARGET}" -t "docker create -v ${DEPLOY_FOLDER}/hypernerd-state:/tmp/hypernerd/ --name hypernerd-bot hypernerd"
