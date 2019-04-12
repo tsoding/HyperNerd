@@ -69,17 +69,17 @@ videoQueue n = do
     SortBy "date" Asc $ Filter (PropertyGreater "date" $ PropertyUTCTime vt) All
 
 nextVideoCommand :: Reaction Message ()
-nextVideoCommand = advanceVideoQueue <> videoCommand
+nextVideoCommand = advanceVideoQueue <> (cmapR (const 1) $ videoCommand)
   where
     advanceVideoQueue =
       liftR (const $ videoQueue 1) $
       cmapR listToMaybe $
-      ignoreNothing $
-      cmapR (fridayVideoDate . entityPayload) setVideoDateCommand
+      ignoreNothing $ cmapR (fridayVideoDate . entityPayload) setVideoDate
 
-videoCommand :: Reaction Message ()
+videoCommand :: Reaction Message Int
 videoCommand =
-  liftR (const $ videoQueue 1) $
+  cmapR (min 10) $
+  liftR videoQueue $
   cmapR listToMaybe $
   replyOnNothing "No videos in the queue" $
   cmapR entityPayload $
@@ -96,10 +96,15 @@ currentLastVideoTime = do
     Nothing -> createEntity Proxy $ LastVideoTime begginingOfTime
       where begginingOfTime = UTCTime (fromGregorian 1970 1 1) 0
 
-setVideoDateCommand :: Reaction Message UTCTime
-setVideoDateCommand =
+setVideoDate :: Reaction Message UTCTime
+setVideoDate =
   liftR
     (\newDate -> do
        vt <- currentLastVideoTime
-       updateEntityById (LastVideoTime newDate <$ vt)) $
-  cmapR (const "Updated last video time") $ Reaction replyMessage
+       updateEntityById (LastVideoTime newDate <$ vt))
+    ignore
+
+setVideoDateCommand :: Reaction Message UTCTime
+setVideoDateCommand =
+  setVideoDate <>
+  cmapR (const "Updated last video time") (Reaction replyMessage)
