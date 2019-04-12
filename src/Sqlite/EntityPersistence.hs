@@ -328,7 +328,7 @@ selectEntityIds conn name (Take n (SortBy propertyName Desc All)) =
                               ORDER BY propertyUTCTime DESC
                               LIMIT :n |]
     [":entityName" := name, ":propertyName" := propertyName, ":n" := n]
-selectEntityIds conn name (Take n (SortBy propertyName1 Asc (Filter (PropertyGreater propertyName2 (PropertyUTCTime propertyUTCTime)) All)))
+selectEntityIds conn name (SortBy propertyName1 Asc (Filter (PropertyGreater propertyName2 (PropertyUTCTime propertyUTCTime)) All))
   | propertyName1 == propertyName2 =
     map fromOnly <$>
     queryNamed
@@ -339,12 +339,10 @@ selectEntityIds conn name (Take n (SortBy propertyName1 Asc (Filter (PropertyGre
           AND propertyName = :propertyName
           AND propertyUTCTime > :propertyUTCTime
           GROUP BY entityId
-          ORDER BY propertyUTCTime ASC
-          LIMIT :n; |]
+          ORDER BY propertyUTCTime ASC; |]
       [ ":entityName" := name
       , ":propertyName" := propertyName
       , ":propertyUTCTime" := propertyUTCTime
-      , ":n" := n
       ]
   where
     propertyName = propertyName1

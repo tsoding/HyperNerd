@@ -61,26 +61,24 @@ fridayCommand =
        now) $
   cmapR (const "Added to the suggestions") $ Reaction replyMessage
 
-videoQueue :: Int -> Effect ([Entity FridayVideo])
-videoQueue n = do
+currentVideo :: Effect (Maybe (Entity FridayVideo))
+currentVideo = do
   vt <- lastVideoTime . entityPayload <$> currentLastVideoTime
-  selectEntities Proxy $
-    Take n $
+  fmap listToMaybe $
+    selectEntities Proxy $
     SortBy "date" Asc $ Filter (PropertyGreater "date" $ PropertyUTCTime vt) All
 
 nextVideoCommand :: Reaction Message ()
 nextVideoCommand = advanceVideoQueue <> videoCommand
   where
     advanceVideoQueue =
-      liftR (const $ videoQueue 1) $
-      cmapR listToMaybe $
+      liftR (const currentVideo) $
       ignoreNothing $
       cmapR (fridayVideoDate . entityPayload) setVideoDateCommand
 
 videoCommand :: Reaction Message ()
 videoCommand =
-  liftR (const $ videoQueue 1) $
-  cmapR listToMaybe $
+  liftR (const currentVideo) $
   replyOnNothing "No videos in the queue" $
   cmapR entityPayload $
   cmapR
