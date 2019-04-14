@@ -6,6 +6,7 @@ module Bot.Friday
   , nextVideoCommand
   , videoCommand
   , setVideoDateCommand
+  , videoCountCommand
   ) where
 
 import Bot.Replies
@@ -61,24 +62,25 @@ fridayCommand =
        now) $
   cmapR (const "Added to the suggestions") $ Reaction replyMessage
 
-currentVideo :: Effect (Maybe (Entity FridayVideo))
-currentVideo = do
+videoQueue :: Effect [Entity FridayVideo]
+videoQueue = do
   vt <- lastVideoTime . entityPayload <$> currentLastVideoTime
-  fmap listToMaybe $
-    selectEntities Proxy $
+  selectEntities Proxy $
     SortBy "date" Asc $ Filter (PropertyGreater "date" $ PropertyUTCTime vt) All
 
 nextVideoCommand :: Reaction Message ()
 nextVideoCommand = advanceVideoQueue <> videoCommand
   where
     advanceVideoQueue =
-      liftR (const currentVideo) $
+      liftR (const videoQueue) $
+      cmapR listToMaybe $
       ignoreNothing $
       cmapR (fridayVideoDate . entityPayload) setVideoDateCommand
 
 videoCommand :: Reaction Message ()
 videoCommand =
-  liftR (const currentVideo) $
+  liftR (const videoQueue) $
+  cmapR listToMaybe $
   replyOnNothing "No videos in the queue" $
   cmapR entityPayload $
   cmapR
@@ -101,3 +103,8 @@ setVideoDateCommand =
        vt <- currentLastVideoTime
        updateEntityById (LastVideoTime newDate <$ vt)) $
   cmapR (const "Updated last video time") $ Reaction replyMessage
+
+videoCountCommand :: Reaction Message ()
+videoCountCommand =
+  liftR (const videoQueue) $
+  cmapR (T.pack . show . length) $ Reaction replyMessage

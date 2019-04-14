@@ -281,6 +281,8 @@ builtinCommands =
       , ( "Get the next video for Smart Stream"
         , onlyForRoles authorityRoles $ transR void nextVideoCommand))
     , ("video", ("Print the current video", transR void videoCommand))
+    , ( "videocount"
+      , ("Print amount of videos in the queue", transR void videoCountCommand))
     , ( "setvideotime"
       , ( "Set the time cursor for the video queue"
         , onlyForRoles authorityRoles $
