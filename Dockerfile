@@ -18,6 +18,10 @@ COPY ./HyperNerd.cabal /hypernerd/
 COPY ./Setup.hs /hypernerd/
 WORKDIR /hypernerd/
 RUN cabal sandbox init
+# NOTE: happy package provides an executable that is needed to build
+# qm-interpolated-string package. qm-interpolated-string does not
+# depend on happy for some reason and that's why we have to install it
+# separately.
 RUN cabal install happy-1.19.9
 RUN cabal install --only-dependencies
 COPY ./resources/ /hypernerd/resources/
