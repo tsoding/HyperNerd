@@ -132,6 +132,7 @@ sendLoop channel outcoming ircConn = do
        in mapM_ (sendMsg ircConn . ircPrivmsg channel) $
           T.chunksOf twitchMessageLimit text
   sendLoop channel outcoming ircConn
+
 -- TODO(#17): check unsuccessful authorization
 twitchTransportEntry :: IncomingQueue -> OutcomingQueue -> TwitchParams -> IO ()
 twitchTransportEntry incoming outcoming conf = do
