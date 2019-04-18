@@ -25,7 +25,7 @@ data Token = NumberToken Int
 -- TODO(#569): Multiplication operation is not supported by !calc
 -- TODO(#570): Division operation is not supported by !calc
 -- TODO(#571): Parenthesis are not supported by !calc
--- TODO: !calc produce vague syntax error reports
+-- TODO(#572): !calc produce vague syntax error reports
 -- TODO: !calc does not support negative numbers
 -- TODO: !calc does not support fractional numbers
 
