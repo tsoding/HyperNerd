@@ -126,9 +126,11 @@ sendLoop channel outcoming ircConn = do
   outMsg <- atomically $ readTQueue outcoming
   -- TODO(#551): Twitch Transport does not split messages with newlines into several messages
   case outMsg of
-    OutMsg _ text -> sendMsg ircConn $ ircPrivmsg channel text
+    OutMsg _ text ->
+      let twitchMessageLimit = 499
+       in mapM_ (sendMsg ircConn . ircPrivmsg channel) $
+          T.chunksOf twitchMessageLimit text
   sendLoop channel outcoming ircConn
-
 -- TODO(#17): check unsuccessful authorization
 twitchTransportEntry :: IncomingQueue -> OutcomingQueue -> TwitchParams -> IO ()
 twitchTransportEntry incoming outcoming conf = do
