@@ -261,7 +261,7 @@ builtinCommands =
         , authorizeSender senderAuthority $
           replyOnNothing "Only for mods" $ cmapR (const 5) raffleCommand))
     , ("join", ("Join the raffle", joinCommand))
-    -- TODO: !friday allows arbitrary text
+    -- TODO(#562): !friday allows arbitrary text
     , ( "friday"
       , ( "Suggest video for the friday stream"
         , onlyForRoles
