@@ -26,7 +26,7 @@ data Token = NumberToken Int
 -- TODO(#570): Division operation is not supported by !calc
 -- TODO(#571): Parenthesis are not supported by !calc
 -- TODO(#572): !calc produce vague syntax error reports
--- TODO: !calc does not support negative numbers
+-- TODO(#573): !calc does not support negative numbers
 -- TODO: !calc does not support fractional numbers
 
 tokenize :: T.Text -> Either String [Token]
