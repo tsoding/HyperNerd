@@ -20,7 +20,7 @@ data Token = NumberToken Int
            | PlusToken
              deriving (Eq, Show)
 
--- TODO: !calc Int overflow is not reported as an error
+-- TODO(#567): !calc Int overflow is not reported as an error
 -- TODO: Minusation operation is not supported by !calc
 -- TODO: Multiplication operation is not supported by !calc
 -- TODO: Division operation is not supported by !calc
