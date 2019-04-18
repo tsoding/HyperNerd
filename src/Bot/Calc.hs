@@ -21,7 +21,7 @@ data Token = NumberToken Int
              deriving (Eq, Show)
 
 -- TODO(#567): !calc Int overflow is not reported as an error
--- TODO: Minusation operation is not supported by !calc
+-- TODO(#568): Minusation operation is not supported by !calc
 -- TODO: Multiplication operation is not supported by !calc
 -- TODO: Division operation is not supported by !calc
 -- TODO: Parenthesis are not supported by !calc
