@@ -11,6 +11,7 @@ module Bot
 import Bot.Alias
 import Bot.Banwords
 import Bot.BttvFfz
+import Bot.Calc
 import Bot.CustomCommand
 import Bot.Dubtrack
 import Bot.Friday
@@ -288,6 +289,7 @@ builtinCommands =
         , onlyForRoles authorityRoles $
           cmapR (readMay . T.unpack) $
           replyOnNothing "Cannot parse this as UTCTime" setVideoDateCommand))
+    , ("calc", ("Calculator", calcCommand))
     ]
 
 mockMessage :: T.Text -> T.Text
