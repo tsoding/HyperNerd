@@ -5,20 +5,23 @@ module Bot.Calc
   ) where
 
 import Bot.Replies
+import Data.Char (isDigit)
+import Data.Either.Extra
 import qualified Data.Text as T
 import Reaction
-import Transport
-import Data.Char (isDigit)
 import Safe
-import Data.Either.Extra
+import Transport
 
-data Expr = NumberExpr Int
-          | PlusExpr Expr Expr
-            deriving (Eq, Show)
+data Expr
+  = NumberExpr Int
+  | PlusExpr Expr
+             Expr
+  deriving (Eq, Show)
 
-data Token = NumberToken Int
-           | PlusToken
-             deriving (Eq, Show)
+data Token
+  = NumberToken Int
+  | PlusToken
+  deriving (Eq, Show)
 
 -- TODO(#567): !calc Int overflow is not reported as an error
 -- TODO(#568): Minusation operation is not supported by !calc
@@ -28,9 +31,8 @@ data Token = NumberToken Int
 -- TODO(#572): !calc produce vague syntax error reports
 -- TODO(#573): !calc does not support negative numbers
 -- TODO(#574): !calc does not support fractional numbers
-
 tokenize :: T.Text -> Either String [Token]
-tokenize (T.uncons -> Just(' ', xs)) = tokenize xs
+tokenize (T.uncons -> Just (' ', xs)) = tokenize xs
 tokenize (T.uncons -> Just ('+', xs)) = (PlusToken :) <$> tokenize xs
 tokenize xs@(T.uncons -> Just (x, _))
   | isDigit x = do
