@@ -125,7 +125,7 @@ sendLoop :: T.Text -> OutcomingQueue -> Connection -> IO ()
 sendLoop channel outcoming ircConn = do
   outMsg <- atomically $ readTQueue outcoming
   -- TODO(#551): Twitch Transport does not split messages with newlines into several messages
-  -- TODO: Twitch Transport may split big messages in the middle of the word
+  -- TODO(#564): Twitch Transport may split big messages in the middle of the word
   case outMsg of
     OutMsg _ text ->
       let twitchMessageLimit = 499
