@@ -9,6 +9,8 @@ import qualified Data.Text as T
 import Reaction
 import Transport
 import Data.Char (isDigit)
+import Safe
+import Data.Either.Extra
 
 data Expr = NumberExpr Int
           | PlusExpr Expr Expr
@@ -29,9 +31,12 @@ data Token = NumberToken Int
 tokenize :: T.Text -> Either String [Token]
 tokenize (T.uncons -> Just(' ', xs)) = tokenize xs
 tokenize (T.uncons -> Just ('+', xs)) = (PlusToken :) <$> tokenize xs
-tokenize xs@(T.uncons -> Just(x, _))
-    | isDigit x = (NumberToken (read $ T.unpack digits) :) <$> tokenize rest
-      where (digits, rest) = T.span isDigit xs
+tokenize xs@(T.uncons -> Just (x, _))
+  | isDigit x = do
+    token <- NumberToken <$> maybeToEither "Error 😡" (readMay $ T.unpack digits)
+    (token :) <$> tokenize rest
+  where
+    (digits, rest) = T.span isDigit xs
 tokenize (T.uncons -> Nothing) = return []
 tokenize _ = Left "Error 😡"
 
