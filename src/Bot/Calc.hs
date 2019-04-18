@@ -27,7 +27,7 @@ data Token = NumberToken Int
 -- TODO(#571): Parenthesis are not supported by !calc
 -- TODO(#572): !calc produce vague syntax error reports
 -- TODO(#573): !calc does not support negative numbers
--- TODO: !calc does not support fractional numbers
+-- TODO(#574): !calc does not support fractional numbers
 
 tokenize :: T.Text -> Either String [Token]
 tokenize (T.uncons -> Just(' ', xs)) = tokenize xs
