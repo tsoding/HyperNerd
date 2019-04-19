@@ -1,4 +1,19 @@
+### General ###
+.git
+.gitignore
+.dockerignore
+.hindent.yaml
+.hlint.yaml
+.snitch.yaml
+.travis.yaml
+doc
+scripts
+test
+*.md
+*.nix
+
 ### Haskell ###
+.dir-local.el
 dist
 dist-*
 cabal-dev
@@ -21,7 +36,6 @@ cabal.project.local
 .HTF/
 
 ### HyperNerd ###
-
 *.ini
 *.db
 *.txt

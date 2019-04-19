@@ -94,10 +94,17 @@ TBD
 
 <!-- TODO(#478): Debug mode is not documented -->
 
+## Docker-Compose
+With secrets existing in volume defined in `docker-compose.yaml`,
+```console
+$ docker-compose up --build
+```
+
+
 ## Docker
 
 ```console
-$ docker build -t hypernerd .
+$ docker build --target app -t hypernerd .
 $ mkdir hypernerd-state
 $ cp secret.ini hypernerd-state
 $ docker create -v /absolute/path/to/hypernerd-state/:/tmp/hypernerd/ \

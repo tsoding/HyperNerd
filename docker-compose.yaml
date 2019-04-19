@@ -1,0 +1,10 @@
+version: '3.6'
+
+services:
+  hypernerd:
+    image: hypernerd
+    build:
+      context: .
+      target: app
+    volumes:
+      - ./hypernerd-state/:/tmp/hypernerd/
