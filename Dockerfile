@@ -31,12 +31,6 @@ RUN \
 COPY . /build/
 RUN \
   cabal build exe:HyperNerd
-
-# Install necessary dependencies and build HyperNerd
-# NOTE: happy package provides an executable that is needed to build
-# qm-interpolated-string package. qm-interpolated-string does not
-# depend on happy for some reason and that's why we have to install it
-# separately.
 ################################################################################
 # Application                                                                  #
 ################################################################################
