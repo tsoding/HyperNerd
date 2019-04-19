@@ -34,26 +34,26 @@ $ stack exec HyperNerd secret.ini database.db
 
 ### Example of a secret.ini file
 
-<!--
- TODO(#484): Documentation about ini files is outdated
-   - Several bot configurations per file
-   - Sections with `bot:` prefix
--->
-
-The `secret.ini` file consist of a single section `Bot` the format of which depends on its `type`.
+The `secret.ini` file consist of a several sections with `bot:` prefix the format of which depends on their `type`.
 
 ```ini
-[Bot]
-type = twitch|discord
+[bot:mrbotka@twitch]
+type = twitch
 ...
-... the rest of the parameters ...
+... the rest of the Twitch parameters ...
+...
+
+[bot:hypernerd@discord]
+type = discord
+...
+... the rest of the Discord parameters ...
 ...
 ```
 
 #### Twitch Bot
 
 ```ini
-[Bot]
+[bot:twitch]
 type = twitch
 nick = HyperNerd
 owner = <your-name>
@@ -73,7 +73,7 @@ clientId = <client-id-token>
 #### Discord Bot
 
 ```ini
-[Bot]
+[bot:discord]
 type = discord
 authToken = <auth-token>
 guild = <guild-id>
