@@ -45,6 +45,6 @@ RUN \
 COPY --from=builder /build/dist/build/HyperNerd/HyperNerd /app
 WORKDIR /app
 
-# TODO: Use `ENTRYPOINT` instead and instead pass arguments
+# TODO(#578): Use `ENTRYPOINT` instead and instead pass arguments
 # This won't work with the current setup.  Also `/tmp` is not a idiomatic directory; use /data or (FHS compliant)
 CMD ["/app/HyperNerd", "/tmp/hypernerd/secret.ini", "/tmp/hypernerd/database.db",  "/tmp/hypernerd/markov.csv"]
