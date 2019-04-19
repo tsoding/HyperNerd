@@ -116,7 +116,7 @@ The Markov model is a csv file that is generated from the logs in the
 bot's database file using the `Markov` CLI utility:
 
 ```console
-$ cabal exec Markov database.db markov.csv
+$ cabal exec Markov train database.db markov.csv
 ```
 
 This command will produce the `markov.csv` file.
