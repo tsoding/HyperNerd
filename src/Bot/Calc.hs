@@ -11,8 +11,8 @@ import Data.Either.Extra
 import qualified Data.Text as T
 import Reaction
 import Safe
-import Transport
 import Text.InterpolatedString.QM
+import Transport
 
 data Expr
   = NumberExpr Int
