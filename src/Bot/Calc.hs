@@ -1,4 +1,5 @@
 {-# LANGUAGE ViewPatterns #-}
+{-# LANGUAGE QuasiQuotes #-}
 
 module Bot.Calc
   ( calcCommand
@@ -11,6 +12,7 @@ import qualified Data.Text as T
 import Reaction
 import Safe
 import Transport
+import Text.InterpolatedString.QM
 
 data Expr
   = NumberExpr Int
@@ -44,8 +46,13 @@ tokenize (T.uncons -> Just ('.', _)) =
 tokenize xs@(T.uncons -> Just (x, _))
   | x `elem` ['(', ')'] = Left "https://github.com/tsoding/HyperNerd/issues/571"
   | isDigit x = do
-    token <- NumberToken <$> maybeToEither "Error 😡" (readMay $ T.unpack digits)
+    token <-
+      NumberToken <$>
+      maybeToEither
+        [qms|{digits} does not look like a number|]
+        (readMay $ T.unpack digits)
     (token :) <$> tokenize rest
+  | otherwise = Left [qms|I don't know what's this `{x}`|]
   where
     (digits, rest) = T.span isDigit xs
 tokenize (T.uncons -> Nothing) = return []
