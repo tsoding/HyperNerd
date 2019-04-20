@@ -34,7 +34,16 @@ data Token
 tokenize :: T.Text -> Either String [Token]
 tokenize (T.uncons -> Just (' ', xs)) = tokenize xs
 tokenize (T.uncons -> Just ('+', xs)) = (PlusToken :) <$> tokenize xs
+tokenize (T.uncons -> Just ('-', _)) =
+  Left "https://github.com/tsoding/HyperNerd/issues/568"
+tokenize (T.uncons -> Just ('*', _)) =
+  Left "https://github.com/tsoding/HyperNerd/issues/569"
+tokenize (T.uncons -> Just ('/', _)) =
+  Left "https://github.com/tsoding/HyperNerd/issues/570"
+tokenize (T.uncons -> Just ('.', _)) =
+  Left "https://github.com/tsoding/HyperNerd/issues/574"
 tokenize xs@(T.uncons -> Just (x, _))
+  | x `elem` ['(', ')'] = Left "https://github.com/tsoding/HyperNerd/issues/571"
   | isDigit x = do
     token <- NumberToken <$> maybeToEither "Error 😡" (readMay $ T.unpack digits)
     (token :) <$> tokenize rest
