@@ -1,4 +1,5 @@
 {-# LANGUAGE ViewPatterns #-}
+{-# LANGUAGE QuasiQuotes #-}
 
 module Bot.Calc
   ( calcCommand
@@ -10,6 +11,7 @@ import Data.Either.Extra
 import qualified Data.Text as T
 import Reaction
 import Safe
+import Text.InterpolatedString.QM
 import Transport
 
 data Expr
@@ -23,21 +25,34 @@ data Token
   | PlusToken
   deriving (Eq, Show)
 
--- TODO(#567): !calc Int overflow is not reported as an error
--- TODO(#568): Minusation operation is not supported by !calc
--- TODO(#569): Multiplication operation is not supported by !calc
--- TODO(#570): Division operation is not supported by !calc
--- TODO(#571): Parenthesis are not supported by !calc
--- TODO(#572): !calc produce vague syntax error reports
--- TODO(#573): !calc does not support negative numbers
--- TODO(#574): !calc does not support fractional numbers
 tokenize :: T.Text -> Either String [Token]
 tokenize (T.uncons -> Just (' ', xs)) = tokenize xs
 tokenize (T.uncons -> Just ('+', xs)) = (PlusToken :) <$> tokenize xs
+-- TODO(#568): Minusation operation is not supported by !calc
+tokenize (T.uncons -> Just ('-', _)) =
+  Left "https://github.com/tsoding/HyperNerd/issues/568"
+-- TODO(#569): Multiplication operation is not supported by !calc
+tokenize (T.uncons -> Just ('*', _)) =
+  Left "https://github.com/tsoding/HyperNerd/issues/569"
+-- TODO(#570): Division operation is not supported by !calc
+tokenize (T.uncons -> Just ('/', _)) =
+  Left "https://github.com/tsoding/HyperNerd/issues/570"
+-- TODO(#574): !calc does not support fractional numbers
+tokenize (T.uncons -> Just ('.', _)) =
+  Left "https://github.com/tsoding/HyperNerd/issues/574"
+-- TODO(#571): Parenthesis are not supported by !calc
+-- TODO(#573): !calc does not support negative numbers
+-- TODO(#567): !calc Int overflow is not reported as an error
 tokenize xs@(T.uncons -> Just (x, _))
+  | x `elem` ['(', ')'] = Left "https://github.com/tsoding/HyperNerd/issues/571"
   | isDigit x = do
-    token <- NumberToken <$> maybeToEither "Error 😡" (readMay $ T.unpack digits)
+    token <-
+      NumberToken <$>
+      maybeToEither
+        [qms|{digits} does not look like a number|]
+        (readMay $ T.unpack digits)
     (token :) <$> tokenize rest
+  | otherwise = Left [qms|I don't know what's this `{x}`|]
   where
     (digits, rest) = T.span isDigit xs
 tokenize (T.uncons -> Nothing) = return []
