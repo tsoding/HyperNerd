@@ -394,16 +394,28 @@ dispatchRedirect effect cmd = do
 
 -- TODO(#414): there is not cooldown for pipes
 dispatchPipe :: Message [Command T.Text] -> Effect ()
-dispatchPipe message@Message {messageContent = cmds}
-  | length cmds <= cmdsLimit =
-    foldl dispatchRedirect (return ()) $ map (\x -> fmap (const x) message) cmds
-  | otherwise =
+dispatchPipe message@Message { messageSender = Sender {senderRoles = roles}
+                             , messageContent = cmds
+                             }
+  | not (any (`elem` coolRoles) roles) && length cmds > plebPipeLimit =
     replyMessage $
     fmap
-      (const [qms|The length of the pipe is limited to {cmdsLimit} commands|])
+      (const
+         [qms|The length of the pipe is limited to {plebPipeLimit}.
+              Subscribe to increase the limit:
+              https://www.twitch.tv/products/tsoding|])
       message
+  | any (`elem` coolRoles) roles && length cmds > pipeLimit =
+    replyMessage $
+    fmap
+      (const [qms|The length of the pipe is limited to {pipeLimit} commands|])
+      message
+  | otherwise =
+    foldl dispatchRedirect (return ()) $ map (\x -> fmap (const x) message) cmds
   where
-    cmdsLimit = 10
+    pipeLimit = 10
+    plebPipeLimit = 2
+    coolRoles = [tsodingTwitchedDiscordRole, TwitchSub] ++ authorityRoles
 
 dispatchCommand :: Message (Command T.Text) -> Effect ()
 dispatchCommand message = do
