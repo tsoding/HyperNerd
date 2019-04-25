@@ -293,10 +293,7 @@ builtinCommands =
           cmapR (readMay . T.unpack) $
           replyOnNothing "Cannot parse this as UTCTime" setVideoDateCommand))
     , ("calc", ("Calculator", calcCommand))
-    , ( "omega"
-      , ( "OMEGALUL"
-        , cmapR (omega 3) $
-          Reaction replyMessage))
+    , ("omega", ("OMEGALUL", cmapR (omega 3) sayMessage))
     ]
 
 combineDecks :: [a] -> [a] -> [a]
