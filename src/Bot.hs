@@ -51,6 +51,7 @@ import Text.Regex.TDFA (defaultCompOpt, defaultExecOpt)
 import Text.Regex.TDFA.String
 import Transport
 import Data.List
+import System.Random
 
 type Bot = InEvent -> Effect ()
 
@@ -297,6 +298,20 @@ builtinCommands =
           Reaction replyMessage))
     ]
 
+combineDecks :: [a] -> [a] -> [a]
+combineDecks xs ys
+  | length xs > length ys = combineDecks ys xs
+  | otherwise = concat (zs ++ (map return $ drop (length zs) ys))
+    where zs = zipWith (\a b -> [a, b]) xs ys
+
+swapDeck :: RandomGen gen => ([a], gen) -> ([a], gen)
+swapDeck (xs, g0) = (combineDecks (drop k xs) (take k xs), g1)
+  where
+    (k, g1) = randomR (0, length xs - 1) g0
+
+shuffle :: RandomGen gen => ([a], gen) -> ([a], gen)
+shuffle = (!! 100) . iterate swapDeck
+
 replaceAt :: Int -> T.Text -> T.Text -> T.Text
 replaceAt i rep input = T.concat [left, rep, T.tail right]
     where (left, right) = T.splitAt i input
@@ -304,7 +319,10 @@ replaceAt i rep input = T.concat [left, rep, T.tail right]
 omega :: Int -> T.Text -> T.Text
 omega n s =
   foldl' (\acc i -> replaceAt i " OMEGALUL " acc) s $
-  reverse $ take n $ findIndices (== 'O') $ T.unpack $ T.map toUpper $ s
+  sortBy (flip compare) $ take n $ fst $ shuffle (xs, g)
+  where
+    g = mkStdGen $ sum $ map ord $ T.unpack s
+    xs = findIndices (== 'O') $ T.unpack $ T.map toUpper s
 
 mockMessage :: T.Text -> T.Text
 mockMessage =
