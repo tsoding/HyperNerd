@@ -8,12 +8,12 @@ module Bot.Calc
 import Bot.Replies
 import Data.Char (isDigit)
 import Data.Either.Extra
+import Data.Foldable
 import qualified Data.Text as T
 import Reaction
 import Safe
 import Text.InterpolatedString.QM
 import Transport
-import Data.Foldable
 
 data Token
   = NumberToken Int
@@ -64,9 +64,9 @@ infixToRpn _ _ = Left "Error 😡"
 type RpnState = [Int]
 
 interpretToken :: RpnState -> Token -> Either String RpnState
-interpretToken s (NumberToken x) = return (x:s)
-interpretToken (x1:x2:xs) PlusToken = return (x2 + x1:xs)
-interpretToken (x1:x2:xs) MinusToken = return (x2 - x1:xs)
+interpretToken s (NumberToken x) = return (x : s)
+interpretToken (x1:x2:xs) PlusToken = return (x2 + x1 : xs)
+interpretToken (x1:x2:xs) MinusToken = return (x2 - x1 : xs)
 interpretToken _ _ = Left "Error 😡"
 
 interpretRpn :: [Token] -> Either String Int
@@ -74,7 +74,7 @@ interpretRpn tokens = do
   result <- foldlM interpretToken [] tokens
   case result of
     [x] -> return x
-    _   -> Left "Error 😡"
+    _ -> Left "Error 😡"
 
 calc :: T.Text -> Either String Int
 calc text = do
