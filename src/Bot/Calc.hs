@@ -8,29 +8,23 @@ module Bot.Calc
 import Bot.Replies
 import Data.Char (isDigit)
 import Data.Either.Extra
+import Data.Foldable
 import qualified Data.Text as T
 import Reaction
 import Safe
 import Text.InterpolatedString.QM
 import Transport
 
-data Expr
-  = NumberExpr Int
-  | PlusExpr Expr
-             Expr
-  deriving (Eq, Show)
-
 data Token
   = NumberToken Int
   | PlusToken
+  | MinusToken
   deriving (Eq, Show)
 
 tokenize :: T.Text -> Either String [Token]
 tokenize (T.uncons -> Just (' ', xs)) = tokenize xs
 tokenize (T.uncons -> Just ('+', xs)) = (PlusToken :) <$> tokenize xs
--- TODO(#568): Minusation operation is not supported by !calc
-tokenize (T.uncons -> Just ('-', _)) =
-  Left "https://github.com/tsoding/HyperNerd/issues/568"
+tokenize (T.uncons -> Just ('-', xs)) = (MinusToken :) <$> tokenize xs
 -- TODO(#569): Multiplication operation is not supported by !calc
 tokenize (T.uncons -> Just ('*', _)) =
   Left "https://github.com/tsoding/HyperNerd/issues/569"
@@ -58,21 +52,35 @@ tokenize xs@(T.uncons -> Just (x, _))
 tokenize (T.uncons -> Nothing) = return []
 tokenize _ = Left "Error 😡"
 
-parseExpr :: [Token] -> Either String Expr
-parseExpr [NumberToken x] = Right $ NumberExpr x
-parseExpr (NumberToken x:PlusToken:rest) =
-  PlusExpr (NumberExpr x) <$> parseExpr rest
-parseExpr _ = Left "Error 😡"
+infixToRpn :: Maybe Token -> [Token] -> Either String [Token]
+infixToRpn Nothing (NumberToken x:rest) =
+  (NumberToken x :) <$> infixToRpn Nothing rest
+infixToRpn (Just op) (NumberToken x:rest) =
+  (NumberToken x :) . (op :) <$> infixToRpn Nothing rest
+infixToRpn Nothing (op:rest) = infixToRpn (Just op) rest
+infixToRpn Nothing [] = return []
+infixToRpn _ _ = Left "Error 😡"
 
-interpretExpr :: Expr -> Int
-interpretExpr (NumberExpr x) = x
-interpretExpr (PlusExpr a b) = interpretExpr a + interpretExpr b
+type RpnState = [Int]
+
+interpretToken :: RpnState -> Token -> Either String RpnState
+interpretToken s (NumberToken x) = return (x : s)
+interpretToken (x1:x2:xs) PlusToken = return (x2 + x1 : xs)
+interpretToken (x1:x2:xs) MinusToken = return (x2 - x1 : xs)
+interpretToken _ _ = Left "Error 😡"
+
+interpretRpn :: [Token] -> Either String Int
+interpretRpn tokens = do
+  result <- foldlM interpretToken [] tokens
+  case result of
+    [x] -> return x
+    _ -> Left "Error 😡"
 
 calc :: T.Text -> Either String Int
 calc text = do
   tokens <- tokenize text
-  expr <- parseExpr tokens
-  return $ interpretExpr expr
+  rpn <- infixToRpn Nothing tokens
+  interpretRpn rpn
 
 calcCommand :: Reaction Message T.Text
 calcCommand =
