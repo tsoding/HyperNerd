@@ -50,6 +50,7 @@ import qualified Text.Regex.Base.RegexLike as Regex
 import Text.Regex.TDFA (defaultCompOpt, defaultExecOpt)
 import Text.Regex.TDFA.String
 import Transport
+import Data.List
 
 type Bot = InEvent -> Effect ()
 
@@ -292,9 +293,18 @@ builtinCommands =
     , ("calc", ("Calculator", calcCommand))
     , ( "omega"
       , ( "OMEGALUL"
-        , cmapR (T.replace "O" " OMEGALUL " . T.take 30 . T.map toUpper) $
+        , cmapR (omega 3) $
           Reaction replyMessage))
     ]
+
+replaceAt :: Int -> T.Text -> T.Text -> T.Text
+replaceAt i rep input = T.concat [left, rep, T.tail right]
+    where (left, right) = T.splitAt i input
+
+omega :: Int -> T.Text -> T.Text
+omega n s =
+  foldl' (\acc i -> replaceAt i " OMEGALUL " acc) s $
+  reverse $ take n $ findIndices (== 'O') $ T.unpack $ T.map toUpper $ s
 
 mockMessage :: T.Text -> T.Text
 mockMessage =
