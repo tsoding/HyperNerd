@@ -56,7 +56,7 @@ infixToRpn :: Maybe Token -> [Token] -> Either String [Token]
 infixToRpn Nothing (NumberToken x:rest) =
   (NumberToken x :) <$> infixToRpn Nothing rest
 infixToRpn (Just op) (NumberToken x:rest) =
-  (NumberToken x :) <$> (op :) <$> infixToRpn Nothing rest
+  (NumberToken x :) . (op :) <$> infixToRpn Nothing rest
 infixToRpn Nothing (op:rest) = infixToRpn (Just op) rest
 infixToRpn Nothing [] = return []
 infixToRpn _ _ = Left "Error 😡"
