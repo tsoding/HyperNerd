@@ -290,6 +290,10 @@ builtinCommands =
           cmapR (readMay . T.unpack) $
           replyOnNothing "Cannot parse this as UTCTime" setVideoDateCommand))
     , ("calc", ("Calculator", calcCommand))
+    , ( "omega"
+      , ( "OMEGALUL"
+        , cmapR (T.replace "O" " OMEGALUL " . T.take 30 . T.map toUpper) $
+          Reaction replyMessage))
     ]
 
 mockMessage :: T.Text -> T.Text
