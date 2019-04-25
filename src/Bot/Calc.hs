@@ -58,7 +58,7 @@ infixToRpn Nothing (NumberToken x:rest) =
 infixToRpn (Just op) (NumberToken x:rest) =
   (NumberToken x :) <$> (op :) <$> infixToRpn Nothing rest
 infixToRpn Nothing (op:rest) = infixToRpn (Just op) rest
-infixToRpn _ [] = return []
+infixToRpn Nothing [] = return []
 infixToRpn _ _ = Left "Error 😡"
 
 type RpnState = [Int]
