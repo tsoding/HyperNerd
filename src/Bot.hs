@@ -35,7 +35,9 @@ import Data.Either
 import Data.Foldable
 import Data.Functor.Compose
 import Data.Functor.Identity
+import Data.List
 import qualified Data.Map as M
+import Data.Maybe
 import Data.Proxy
 import qualified Data.Text as T
 import Effect
@@ -44,6 +46,7 @@ import Network.HTTP.Simple (parseRequest)
 import qualified Network.URI.Encode as URI
 import Reaction
 import Safe
+import System.Random
 import Text.InterpolatedString.QM
 import Text.Read
 import qualified Text.Regex.Base.RegexLike as Regex
@@ -290,7 +293,36 @@ builtinCommands =
           cmapR (readMay . T.unpack) $
           replyOnNothing "Cannot parse this as UTCTime" setVideoDateCommand))
     , ("calc", ("Calculator", calcCommand))
+    , ("omega", ("OMEGALUL", cmapR (omega 3) sayMessage))
     ]
+
+combineDecks :: [a] -> [a] -> [a]
+combineDecks xs ys
+  | length xs > length ys = combineDecks ys xs
+  | otherwise = concat (zs ++ map return (drop (length zs) ys))
+  where
+    zs = zipWith (\a b -> [a, b]) xs ys
+
+swapDeck :: RandomGen gen => ([a], gen) -> ([a], gen)
+swapDeck (xs, g0) = (combineDecks (drop k xs) (take k xs), g1)
+  where
+    (k, g1) = randomR (0, length xs - 1) g0
+
+shuffle :: RandomGen gen => ([a], gen) -> ([a], gen)
+shuffle t = fromMaybe t $ headMay $ drop 100 $ iterate swapDeck t
+
+replaceAt :: Int -> T.Text -> T.Text -> T.Text
+replaceAt i rep input = T.concat [left, rep, T.tail right]
+  where
+    (left, right) = T.splitAt i input
+
+omega :: Int -> T.Text -> T.Text
+omega n s =
+  foldl' (\acc i -> replaceAt i " OMEGALUL " acc) s $
+  sortBy (flip compare) $ take n $ fst $ shuffle (xs, g)
+  where
+    g = mkStdGen $ sum $ map ord $ T.unpack s
+    xs = elemIndices 'O' $ T.unpack $ T.map toUpper s
 
 mockMessage :: T.Text -> T.Text
 mockMessage =
