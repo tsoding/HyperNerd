@@ -35,7 +35,9 @@ import Data.Either
 import Data.Foldable
 import Data.Functor.Compose
 import Data.Functor.Identity
+import Data.List
 import qualified Data.Map as M
+import Data.Maybe
 import Data.Proxy
 import qualified Data.Text as T
 import Effect
@@ -44,15 +46,13 @@ import Network.HTTP.Simple (parseRequest)
 import qualified Network.URI.Encode as URI
 import Reaction
 import Safe
+import System.Random
 import Text.InterpolatedString.QM
 import Text.Read
 import qualified Text.Regex.Base.RegexLike as Regex
 import Text.Regex.TDFA (defaultCompOpt, defaultExecOpt)
 import Text.Regex.TDFA.String
 import Transport
-import Data.List
-import System.Random
-import Data.Maybe
 
 type Bot = InEvent -> Effect ()
 
@@ -300,7 +300,8 @@ combineDecks :: [a] -> [a] -> [a]
 combineDecks xs ys
   | length xs > length ys = combineDecks ys xs
   | otherwise = concat (zs ++ map return (drop (length zs) ys))
-    where zs = zipWith (\a b -> [a, b]) xs ys
+  where
+    zs = zipWith (\a b -> [a, b]) xs ys
 
 swapDeck :: RandomGen gen => ([a], gen) -> ([a], gen)
 swapDeck (xs, g0) = (combineDecks (drop k xs) (take k xs), g1)
@@ -312,7 +313,8 @@ shuffle t = fromMaybe t $ headMay $ drop 100 $ iterate swapDeck t
 
 replaceAt :: Int -> T.Text -> T.Text -> T.Text
 replaceAt i rep input = T.concat [left, rep, T.tail right]
-    where (left, right) = T.splitAt i input
+  where
+    (left, right) = T.splitAt i input
 
 omega :: Int -> T.Text -> T.Text
 omega n s =
