@@ -174,7 +174,7 @@ test-suite HyperNerdTest
                        -Werror
                        -fwarn-incomplete-patterns
                        -fwarn-incomplete-uni-patterns
-  main-is:             Spec.hs
+  main-is:             Test.hs
   hs-source-dirs:      src
                      , test
   build-depends:       HUnit
