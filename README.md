@@ -15,8 +15,7 @@ Second iteration of [Tsoder][tsoder]. Chat bot for [Tsoding][tsoding] streams.
 $ nix-shell
 $ cabal sandbox init
 $ cabal install happy-1.19.9
-$ cabal install --only-dependencies
-$ cabal configure --enable-tests
+$ cabal install --only-dependencies --enable-tests
 $ cabal build
 $ cabal test
 $ cabal run HyperNerd secret.ini database.db
