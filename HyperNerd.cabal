@@ -212,7 +212,7 @@ test-suite HyperNerdTest
                      , Bot.PollTest
                      , Bot.Banwords
                      , Command
-                     , CommandSpec
+                     , CommandTest
                      , Effect
                      , Entity
                      , HyperNerd.Functor

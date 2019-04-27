@@ -1,6 +1,6 @@
 {-# LANGUAGE OverloadedStrings #-}
 
-module CommandSpec where
+module CommandTest where
 
 import Command
 import Test.HUnit
