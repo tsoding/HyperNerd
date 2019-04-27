@@ -1,4 +1,6 @@
-module Bot.PollTest (spec) where
+module Bot.PollTest
+  ( spec
+  ) where
 
 import Bot.Poll
 import Test.HUnit
