@@ -1,6 +1,6 @@
 {-# LANGUAGE OverloadedStrings #-}
 
-module BotSpec.LinksSpec
+module Bot.LinksTest
   ( textContainsLinkSpec
   ) where
 

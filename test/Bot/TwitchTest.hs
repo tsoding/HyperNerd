@@ -1,7 +1,7 @@
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE QuasiQuotes #-}
 
-module BotSpec.TwitchSpec where
+module Bot.TwitchTest where
 
 import Bot.Twitch
 import Data.Aeson

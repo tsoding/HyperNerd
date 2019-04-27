@@ -205,9 +205,9 @@ test-suite HyperNerdTest
   other-modules:       Bot.BttvFfz
                      , Bot.Links
                      , Bot.Replies
-                     , BotSpec.LinksSpec
+                     , Bot.LinksTest
                      , Bot.Log
-                     , Bot.LogSpec
+                     , Bot.LogTest
                      , Bot.Poll
                      , Bot.PollTest
                      , Bot.Banwords
@@ -222,7 +222,7 @@ test-suite HyperNerdTest
                      , Sqlite.EntityPersistence
                      , Sqlite.EntityPersistenceSpec
                      , Sqlite.Migration
-                     , BotSpec.TwitchSpec
+                     , Bot.TwitchTest
                      , Bot.Twitch
                      , Transport
                      , Data.Bool.Extra
