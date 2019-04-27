@@ -1,6 +1,6 @@
 module Main where
 
-import qualified Bot.LogTest as LS
+import qualified Bot.LogTest
 import qualified Bot.PollTest
 import qualified Bot.LinksTest as BLS
 import qualified Bot.TwitchTest as TS
@@ -18,7 +18,7 @@ main = do
       , CommandTest.spec
       , Sqlite.EntityPersistenceTest.spec
       , Bot.PollTest.spec
-      , LS.testSecondsAsBackwardsDiff
+      , Bot.LogTest.spec
       , TS.twitchResponseFromJsonSpec
       ]
   if errors results + failures results == 0
