@@ -1,7 +1,7 @@
 {-# LANGUAGE OverloadedStrings #-}
 
-module BotSpec.LinksSpec
-  ( textContainsLinkSpec
+module Bot.LinksTest
+  ( spec
   ) where
 
 import Bot.Links (textContainsLink)
@@ -47,3 +47,6 @@ textContainsLinkSpec =
              -- TLD could be more than 6 characters FAILS
              -- , TestCase $ assertBool "google.cocococ"                           $       textContainsLink "google.cocococ"
     ]
+
+spec :: Test
+spec = textContainsLinkSpec

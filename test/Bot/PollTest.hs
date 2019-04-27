@@ -1,4 +1,6 @@
-module Bot.PollTest where
+module Bot.PollTest
+  ( spec
+  ) where
 
 import Bot.Poll
 import Test.HUnit
@@ -25,3 +27,6 @@ testRankWithEmptyList =
   TestCase $ assertEqual "Unexpected result" [] (actual :: [(Int, Int)])
   where
     actual = rank []
+
+spec :: Test
+spec = TestList [testShowRanks, testRank, testRankWithEmptyList]

@@ -1,6 +1,8 @@
 {-# LANGUAGE OverloadedStrings #-}
 
-module Sqlite.EntityPersistenceSpec where
+module Sqlite.EntityPersistenceTest
+  ( spec
+  ) where
 
 import Control.Monad
 import Data.List
@@ -137,3 +139,15 @@ getRandomEntityIdWithPropertyEquals =
       "Unexpected random entity selected"
       (return createdEntity)
       randomEntity
+
+spec :: Test
+spec =
+  TestList
+    [ doublePrepareSchemaSpec
+    , createEntityAndGetItById
+    , createSeveralEntityTypes
+    , nextEntityId
+    , selectEntitiesWithPropertyEquals
+    , deleteEntitiesWithPropertyEquals
+    , getRandomEntityIdWithPropertyEquals
+    ]

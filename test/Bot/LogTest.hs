@@ -1,4 +1,6 @@
-module Bot.LogSpec where
+module Bot.LogTest
+  ( spec
+  ) where
 
 import Bot.Log (secondsAsBackwardsDiff)
 import Data.Time.Clock (NominalDiffTime)
@@ -11,3 +13,6 @@ testSecondsAsBackwardsDiff =
   where
     expected = -5 :: NominalDiffTime
     actual = secondsAsBackwardsDiff 5
+
+spec :: Test
+spec = testSecondsAsBackwardsDiff

@@ -1,7 +1,9 @@
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE QuasiQuotes #-}
 
-module BotSpec.TwitchSpec where
+module Bot.TwitchTest
+  ( spec
+  ) where
 
 import Bot.Twitch
 import Data.Aeson
@@ -33,3 +35,6 @@ twitchResponseFromJsonSpec =
             (UTCTime (fromGregorian 2018 1 1) (secondsToDiffTime 0))
             "My first PHP experience"
         ]
+
+spec :: Test
+spec = twitchResponseFromJsonSpec
