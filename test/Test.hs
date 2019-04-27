@@ -2,7 +2,7 @@ module Main where
 
 import qualified Bot.LogTest
 import qualified Bot.PollTest
-import qualified Bot.LinksTest as BLS
+import qualified Bot.LinksTest
 import qualified Bot.TwitchTest as TS
 import qualified CommandTest
 import qualified Sqlite.EntityPersistenceTest
@@ -14,7 +14,7 @@ main = do
   results <-
     runTestTT $
     TestList
-      [ BLS.textContainsLinkSpec
+      [ Bot.LinksTest.spec
       , CommandTest.spec
       , Sqlite.EntityPersistenceTest.spec
       , Bot.PollTest.spec
