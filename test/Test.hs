@@ -1,7 +1,7 @@
 module Main where
 
 import qualified Bot.LogTest as LS
-import qualified Bot.PollTest as PT
+import qualified Bot.PollTest
 import qualified Bot.LinksTest as BLS
 import qualified Bot.TwitchTest as TS
 import qualified CommandTest
@@ -17,9 +17,7 @@ main = do
       [ BLS.textContainsLinkSpec
       , CommandTest.spec
       , Sqlite.EntityPersistenceTest.spec
-      , PT.testShowRanks
-      , PT.testRank
-      , PT.testRankWithEmptyList
+      , Bot.PollTest.spec
       , LS.testSecondsAsBackwardsDiff
       , TS.twitchResponseFromJsonSpec
       ]
