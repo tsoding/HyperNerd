@@ -1,6 +1,6 @@
 {-# LANGUAGE OverloadedStrings #-}
 
-module Sqlite.EntityPersistenceSpec where
+module Sqlite.EntityPersistenceTest where
 
 import Control.Monad
 import Data.List

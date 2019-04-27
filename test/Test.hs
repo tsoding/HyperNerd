@@ -5,7 +5,7 @@ import qualified Bot.PollTest as PT
 import qualified Bot.LinksTest as BLS
 import qualified Bot.TwitchTest as TS
 import qualified CommandTest as CS
-import qualified Sqlite.EntityPersistenceSpec as SEPS
+import qualified Sqlite.EntityPersistenceTest as SEPS
 import System.Exit
 import Test.HUnit
 

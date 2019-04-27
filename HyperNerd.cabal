@@ -220,7 +220,7 @@ test-suite HyperNerdTest
                      , Property
                      , Reaction
                      , Sqlite.EntityPersistence
-                     , Sqlite.EntityPersistenceSpec
+                     , Sqlite.EntityPersistenceTest
                      , Sqlite.Migration
                      , Bot.TwitchTest
                      , Bot.Twitch
