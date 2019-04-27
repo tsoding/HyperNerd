@@ -4,7 +4,7 @@ import qualified Bot.LogTest as LS
 import qualified Bot.PollTest as PT
 import qualified Bot.LinksTest as BLS
 import qualified Bot.TwitchTest as TS
-import qualified CommandTest as CS
+import qualified CommandTest
 import qualified Sqlite.EntityPersistenceTest as SEPS
 import System.Exit
 import Test.HUnit
@@ -15,11 +15,7 @@ main = do
     runTestTT $
     TestList
       [ BLS.textContainsLinkSpec
-      , CS.commandWithGermanUmlauts
-      , CS.commandWithRussians
-      , CS.textAsPipeSpec
-      , CS.textAsPipeSingleCommandSpec
-      , CS.textAsPipeEscapeSpec
+      , CommandTest.spec
       , SEPS.createEntityAndGetItById
       , SEPS.createSeveralEntityTypes
       , SEPS.deleteEntitiesWithPropertyEquals

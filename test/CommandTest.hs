@@ -1,6 +1,6 @@
 {-# LANGUAGE OverloadedStrings #-}
 
-module CommandTest where
+module CommandTest (spec) where
 
 import Command
 import Test.HUnit
@@ -46,3 +46,13 @@ textAsPipeEscapeSpec =
     "Unexpected parse result"
     [Command "addcmd" "spoiler ||%1||", Command "cycle" ""]
     (textAsPipe "!addcmd spoiler \\|\\|%1\\|\\| | !cycle")
+
+spec :: Test
+spec =
+  TestList
+    [ commandWithGermanUmlauts
+    , commandWithRussians
+    , textAsPipeSpec
+    , textAsPipeSingleCommandSpec
+    , textAsPipeEscapeSpec
+    ]
