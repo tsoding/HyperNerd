@@ -190,7 +190,7 @@ applyEffect (botState, Free (RandomMarkov s)) = do
 applyEffect (botState, Free (GetVar _ s)) = return (botState, s Nothing)
 applyEffect (botState, Free (CallFun "urlencode" [text] s)) =
   return (botState, s $ Just $ T.pack $ URI.encode $ T.unpack text)
--- TODO: CallFun Effect is ignored
+-- TODO(#602): CallFun Effect is ignored
 applyEffect (botState, Free (CallFun _ _ s)) = return (botState, s Nothing)
 
 runEffectIO :: ((a, Effect ()) -> IO (a, Effect ())) -> (a, Effect ()) -> IO a
