@@ -22,14 +22,20 @@ mentionsFilter =
 commandsFilter :: [T.Text] -> [T.Text]
 commandsFilter = filter ((/= '!') . T.head)
 
+trainTextMain :: [String] -> IO ()
+trainTextMain (textPath:output:_) =
+    file2Markov textPath >>= saveMarkov output
+trainTextMain _ =
+    error "Usage: ./Markov train-txt <textPath:TextFile> <output:CsvFile>"
+
 -- TODO(#430): Markov utility always build the model from scratch
 --   1. Check if `output` file exists
 --   2. Load the `output` file as Markov model `markov`
 --   3. Check the modification date of the `output` file
 --   4. Open the `databasePath` and fetch only the logs after the date
 --   5. Top up the `markov` with the fresh data
-trainMain :: [String] -> IO ()
-trainMain (databasePath:output:_) =
+trainDatabaseMain :: [String] -> IO ()
+trainDatabaseMain (databasePath:output:_) =
   SQLite.withConnection databasePath $ \sqliteConn -> do
     markov <-
       fold .
@@ -44,8 +50,8 @@ trainMain (databasePath:output:_) =
              where ep1.entityName = 'LogRecord'
                and ep1.propertyName = 'msg'|]
     saveMarkov output markov
-trainMain _ =
-  error "Usage: ./Markov train <database:SqliteFile> <output:CsvFile>"
+trainDatabaseMain _ =
+  error "Usage: ./Markov train-db <database:SqliteFile> <output:CsvFile>"
 
 sayMain :: [String] -> IO ()
 sayMain (input:strN:_) =
@@ -61,9 +67,10 @@ sayMain (input:_) = do
 sayMain _ = error "Usage: ./Markov say <input:CsvFile> [n:Int]"
 
 mainWithArgs :: [String] -> IO ()
-mainWithArgs ("train":args) = trainMain args
+mainWithArgs ("train-db":args) = trainDatabaseMain args
+mainWithArgs ("train-txt":args) = trainTextMain args
 mainWithArgs ("say":args) = sayMain args
-mainWithArgs _ = error "Usage: ./Markov <train|say>"
+mainWithArgs _ = error "Usage: ./Markov <train-db|train-txt|say>"
 
 main :: IO ()
 main = getArgs >>= mainWithArgs
