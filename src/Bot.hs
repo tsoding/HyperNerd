@@ -435,7 +435,8 @@ messageReaction =
 
 dispatchRedirect :: Effect () -> Message (Command T.Text) -> Effect ()
 dispatchRedirect effect cmd = do
-  effectOutput <- T.concat . concatMap (\x -> [" ", x]) <$> listen effect
+  effectOutput <-
+    T.strip . T.concat . concatMap (\x -> [" ", x]) <$> listen effect
   dispatchCommand $
     getCompose ((\x -> T.concat [x, effectOutput]) <$> Compose cmd)
 
