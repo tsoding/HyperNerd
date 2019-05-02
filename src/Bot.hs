@@ -40,6 +40,7 @@ import qualified Data.Map as M
 import Data.Maybe
 import Data.Proxy
 import qualified Data.Text as T
+import Data.Time
 import Effect
 import Entity
 import Network.HTTP.Simple (parseRequest)
@@ -294,6 +295,17 @@ builtinCommands =
           replyOnNothing "Cannot parse this as UTCTime" setVideoDateCommand))
     , ("calc", ("Calculator", calcCommand))
     , ("omega", ("OMEGALUL", cmapR (omega 3) sayMessage))
+    , ( "localtime"
+      , ( "A simple command that show local time in a timezone"
+        , cmapR (readMay . T.unpack) $
+          replyOnNothing
+            [qms|Please provide the number of minutes
+                 offset from UTC. Positive means local
+                 time will be later in the
+                 day than UTC.|] $
+          cmapR (return . minutesToTimeZone) $
+          liftR (flip (liftM2 utcToLocalTime) now) $
+          cmapR (T.pack . show) $ Reaction replyMessage))
     ]
 
 combineDecks :: [a] -> [a] -> [a]
