@@ -185,6 +185,12 @@ applyEffect (botState, Free (RandomMarkov s)) = do
   let markov = MaybeT $ return $ bsMarkov botState
   sentence <- runMaybeT (eventsAsText <$> (markov >>= lift . simulate))
   return (botState, s sentence)
+-- TODO: GetVar Effect is ignored
+applyEffect (botState, Free (GetVar _ s)) =
+  return (botState, s Nothing)
+-- TODO: CallFun Effect is ignored
+applyEffect (botState, Free (CallFun _ _ s)) =
+  return (botState, s Nothing)
 
 runEffectIO :: ((a, Effect ()) -> IO (a, Effect ())) -> (a, Effect ()) -> IO a
 runEffectIO _ (x, Pure _) = return x

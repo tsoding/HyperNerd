@@ -103,6 +103,8 @@ data EffectF s
                   [T.Text]
                   s
   | RandomMarkov (Maybe T.Text -> s)
+  | GetVar T.Text (Maybe T.Text -> s)
+  | CallFun T.Text [T.Text] (Maybe T.Text -> s)
   deriving (Functor)
 
 type Effect = Free EffectF
