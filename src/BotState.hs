@@ -186,7 +186,7 @@ applyEffect (botState, Free (RandomMarkov s)) = do
   let markov = MaybeT $ return $ bsMarkov botState
   sentence <- runMaybeT (eventsAsText <$> (markov >>= lift . simulate))
   return (botState, s sentence)
--- TODO: GetVar Effect is ignored
+-- TODO(#601): GetVar Effect is ignored
 applyEffect (botState, Free (GetVar _ s)) = return (botState, s Nothing)
 applyEffect (botState, Free (CallFun "urlencode" [text] s)) =
   return (botState, s $ Just $ T.pack $ URI.encode $ T.unpack text)
