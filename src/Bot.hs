@@ -308,7 +308,7 @@ builtinCommands =
           cmapR (T.pack . show) $ Reaction replyMessage))
     , ( "urlencode"
       , ( "!google URL encode"
-        , liftR (callFun "urlencode" . return) $ ignoreNothing $ sayMessage))
+        , liftR (callFun "urlencode" . return) $ ignoreNothing sayMessage))
     ]
 
 combineDecks :: [a] -> [a] -> [a]
