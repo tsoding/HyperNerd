@@ -306,6 +306,9 @@ builtinCommands =
           cmapR (return . minutesToTimeZone) $
           liftR (flip (liftM2 utcToLocalTime) now) $
           cmapR (T.pack . show) $ Reaction replyMessage))
+    , ( "urlencode"
+      , ( "!google URL encode"
+        , liftR (callFun "urlencode" . return) $ ignoreNothing sayMessage))
     ]
 
 combineDecks :: [a] -> [a] -> [a]
@@ -432,7 +435,8 @@ messageReaction =
 
 dispatchRedirect :: Effect () -> Message (Command T.Text) -> Effect ()
 dispatchRedirect effect cmd = do
-  effectOutput <- T.concat . concatMap (\x -> [" ", x]) <$> listen effect
+  effectOutput <-
+    T.strip . T.concat . concatMap (\x -> [" ", x]) <$> listen effect
   dispatchCommand $
     getCompose ((\x -> T.concat [x, effectOutput]) <$> Compose cmd)
 

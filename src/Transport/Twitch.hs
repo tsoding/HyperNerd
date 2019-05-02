@@ -83,28 +83,29 @@ receiveLoop conf incoming ircConn = do
     print cookedMsg
     case cookedMsg of
       (Ping xs) -> sendMsg ircConn (ircPong xs)
-      (Privmsg userInfo target msgText) ->
-        atomically $
-        writeTQueue incoming $
-        InMsg $
-        Message
-          Sender
-            { senderName = name
-            , senderDisplayName = displayName
-            , senderChannel = TwitchChannel $ idText target
-            , senderRoles =
-                catMaybes
-                  [ TwitchSub <$ find (T.isPrefixOf "subscriber") badges
-                  , TwitchMod <$ find (T.isPrefixOf "moderator") badges
-                  , TwitchBroadcaster <$
-                    find (T.isPrefixOf "broadcaster") badges
-                  , toMaybe TwitchBotOwner (name == tpOwner conf)
-                  ]
+      (Privmsg userInfo target msgText)
+        | T.toLower (tpNick conf) /= T.toLower (idText $ userNick userInfo) ->
+          atomically $
+          writeTQueue incoming $
+          InMsg $
+          Message
+            Sender
+              { senderName = name
+              , senderDisplayName = displayName
+              , senderChannel = TwitchChannel $ idText target
+              , senderRoles =
+                  catMaybes
+                    [ TwitchSub <$ find (T.isPrefixOf "subscriber") badges
+                    , TwitchMod <$ find (T.isPrefixOf "moderator") badges
+                    , TwitchBroadcaster <$
+                      find (T.isPrefixOf "broadcaster") badges
+                    , toMaybe TwitchBotOwner (name == tpOwner conf)
+                    ]
             -- TODO(#468): Twitch does not provide the id of the user
-            , senderId = ""
-            }
-          (T.toLower (tpNick conf) `T.isInfixOf` T.toLower msgText)
-          msgText
+              , senderId = ""
+              }
+            (T.toLower (tpNick conf) `T.isInfixOf` T.toLower msgText)
+            msgText
         where name = idText $ userNick userInfo
               displayName =
                 maybe name valueOfTag $

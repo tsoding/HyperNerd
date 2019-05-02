@@ -28,6 +28,7 @@ import qualified Database.SQLite.Simple as SQLite
 import Effect
 import Markov
 import Network.HTTP.Simple
+import qualified Network.URI.Encode as URI
 import qualified Sqlite.EntityPersistence as SEP
 import System.IO
 import Text.InterpolatedString.QM
@@ -185,6 +186,12 @@ applyEffect (botState, Free (RandomMarkov s)) = do
   let markov = MaybeT $ return $ bsMarkov botState
   sentence <- runMaybeT (eventsAsText <$> (markov >>= lift . simulate))
   return (botState, s sentence)
+-- TODO(#601): GetVar Effect is ignored
+applyEffect (botState, Free (GetVar _ s)) = return (botState, s Nothing)
+applyEffect (botState, Free (CallFun "urlencode" [text] s)) =
+  return (botState, s $ Just $ T.pack $ URI.encode $ T.unpack text)
+-- TODO(#602): CallFun Effect is ignored
+applyEffect (botState, Free (CallFun _ _ s)) = return (botState, s Nothing)
 
 runEffectIO :: ((a, Effect ()) -> IO (a, Effect ())) -> (a, Effect ()) -> IO a
 runEffectIO _ (x, Pure _) = return x
