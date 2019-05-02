@@ -78,6 +78,7 @@ executable HyperNerd
                      , Bot.Twitch
                      , Bot.Variable
                      , Bot.Calc
+                     , Bot.Expr
                      , BotState
                      , Command
                      , Config
