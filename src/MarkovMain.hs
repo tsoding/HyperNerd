@@ -23,10 +23,9 @@ commandsFilter :: [T.Text] -> [T.Text]
 commandsFilter = filter ((/= '!') . T.head)
 
 trainTextMain :: [String] -> IO ()
-trainTextMain (textPath:output:_) =
-    file2Markov textPath >>= saveMarkov output
+trainTextMain (textPath:output:_) = file2Markov textPath >>= saveMarkov output
 trainTextMain _ =
-    error "Usage: ./Markov train-txt <textPath:TextFile> <output:CsvFile>"
+  error "Usage: ./Markov train-txt <textPath:TextFile> <output:CsvFile>"
 
 -- TODO(#430): Markov utility always build the model from scratch
 --   1. Check if `output` file exists
