@@ -96,3 +96,5 @@ cabal.project.local
 *.tar
 *.tar.gz
 *.tgz
+
+.ghc.environment*
