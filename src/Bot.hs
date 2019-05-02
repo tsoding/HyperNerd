@@ -306,6 +306,9 @@ builtinCommands =
           cmapR (return . minutesToTimeZone) $
           liftR (flip (liftM2 utcToLocalTime) now) $
           cmapR (T.pack . show) $ Reaction replyMessage))
+    , ( "urlencode"
+      , ( "!google URL encode"
+        , liftR (callFun "urlencode" . return) $ ignoreNothing $ sayMessage))
     ]
 
 combineDecks :: [a] -> [a] -> [a]

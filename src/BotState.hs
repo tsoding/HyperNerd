@@ -33,6 +33,7 @@ import System.IO
 import Text.InterpolatedString.QM
 import Text.Printf
 import Transport
+import qualified Network.URI.Encode as URI
 
 data TransportState = TransportState
   { csConfig :: Config
@@ -188,6 +189,8 @@ applyEffect (botState, Free (RandomMarkov s)) = do
 -- TODO: GetVar Effect is ignored
 applyEffect (botState, Free (GetVar _ s)) =
   return (botState, s Nothing)
+applyEffect (botState, Free (CallFun "urlencode" [text] s)) =
+  return (botState, s $ Just $ T.pack $ URI.encode $ T.unpack text)
 -- TODO: CallFun Effect is ignored
 applyEffect (botState, Free (CallFun _ _ s)) =
   return (botState, s Nothing)

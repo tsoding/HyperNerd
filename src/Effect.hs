@@ -25,6 +25,7 @@ module Effect
   , periodicEffect
   , twitchCommand
   , randomMarkov
+  , callFun
   ) where
 
 import Control.Monad.Catch
@@ -176,3 +177,6 @@ twitchCommand channel name args = liftF $ TwitchCommand channel name args ()
 
 randomMarkov :: Effect (Maybe T.Text)
 randomMarkov = liftF $ RandomMarkov id
+
+callFun :: T.Text -> [T.Text] -> Effect (Maybe T.Text)
+callFun name args = liftF $ CallFun name args id
