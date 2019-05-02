@@ -117,9 +117,6 @@ applyEffect (botState, Free (LogMsg msg s)) = do
 applyEffect (botState, Free (Now s)) = do
   timestamp <- getCurrentTime
   return (botState, s timestamp)
-applyEffect (botState, Free (CurrentTimeZone s)) = do
-  timezone <- getCurrentTimeZone
-  return (botState, s timezone)
 applyEffect (botState, Free (ErrorEff msg)) = do
   putStrLn $ printf "[ERROR] %s" msg
   return (botState, Pure ())
