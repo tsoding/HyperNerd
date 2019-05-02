@@ -40,6 +40,7 @@ import qualified Data.Map as M
 import Data.Maybe
 import Data.Proxy
 import qualified Data.Text as T
+import Data.Time
 import Effect
 import Entity
 import Network.HTTP.Simple (parseRequest)
@@ -294,7 +295,18 @@ builtinCommands =
           replyOnNothing "Cannot parse this as UTCTime" setVideoDateCommand))
     , ("calc", ("Calculator", calcCommand))
     , ("omega", ("OMEGALUL", cmapR (omega 3) sayMessage))
+    , ( "localtime"
+      , ( "A simple command that show local system time"
+        , liftR (const $ liftM2 utcToLocalTime currentTimeZone now) $
+          cmapR (T.pack . show) $ Reaction replyMessage))
+    , ( "nsktime"
+      , ( "A simple command that returns the current time in Tsoding's city"
+        , liftR (const $ liftM2 utcToLocalTime (return nsk) now) $
+          cmapR (T.pack . show) $ Reaction replyMessage))
     ]
+
+nsk :: TimeZone
+nsk = TimeZone 420 False "+07"
 
 combineDecks :: [a] -> [a] -> [a]
 combineDecks xs ys

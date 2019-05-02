@@ -25,6 +25,7 @@ module Effect
   , periodicEffect
   , twitchCommand
   , randomMarkov
+  , currentTimeZone
   ) where
 
 import Control.Monad.Catch
@@ -88,6 +89,7 @@ data EffectF s
                    Selector
                    (Int -> s)
   | Now (UTCTime -> s)
+  | CurrentTimeZone (TimeZone -> s)
   | HttpRequest Request
                 (Response B8.ByteString -> s)
   | TwitchApiRequest Channel
@@ -148,6 +150,9 @@ deleteEntities proxy selector =
 
 now :: Effect UTCTime
 now = liftF $ Now id
+
+currentTimeZone :: Effect TimeZone
+currentTimeZone = liftF $ CurrentTimeZone id
 
 httpRequest :: Request -> Effect (Response B8.ByteString)
 httpRequest request = liftF $ HttpRequest request id
