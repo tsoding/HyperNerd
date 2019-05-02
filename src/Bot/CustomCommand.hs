@@ -169,7 +169,7 @@ updateCustomCommand builtinCommands =
       (Nothing, Nothing) ->
         replyToSender sender [qms|Command '{name}' does not exist|]
 
--- TODO: reimplement expandCustomCommandVars with Bot.Expr when it's ready
+-- TODO(#598): reimplement expandCustomCommandVars with Bot.Expr when it's ready
 expandCustomCommandVars ::
      Sender -> T.Text -> CustomCommand -> Effect CustomCommand
 expandCustomCommandVars sender args customCommand = do
