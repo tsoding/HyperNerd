@@ -20,6 +20,7 @@ data Channel
 
 data Role
   = TwitchSub
+  | TwitchVip
   | TwitchMod
   | TwitchBroadcaster
   | TwitchBotOwner
