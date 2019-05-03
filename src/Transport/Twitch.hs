@@ -97,6 +97,7 @@ receiveLoop conf incoming ircConn = do
                   catMaybes
                     [ TwitchSub <$ find (T.isPrefixOf "subscriber") badges
                     , TwitchMod <$ find (T.isPrefixOf "moderator") badges
+                    , TwitchVip <$ find (T.isPrefixOf "vip") badges
                     , TwitchBroadcaster <$
                       find (T.isPrefixOf "broadcaster") badges
                     , toMaybe TwitchBotOwner (name == tpOwner conf)
