@@ -32,6 +32,7 @@ import Control.Monad
 import Data.Array
 import Data.Char
 import Data.Either
+import Data.Either.Extra
 import Data.Foldable
 import Data.Functor.Compose
 import Data.Functor.Identity
@@ -54,7 +55,6 @@ import qualified Text.Regex.Base.RegexLike as Regex
 import Text.Regex.TDFA (defaultCompOpt, defaultExecOpt)
 import Text.Regex.TDFA.String
 import Transport
-import Data.Either.Extra
 
 type Bot = InEvent -> Effect ()
 
@@ -307,7 +307,6 @@ builtinCommands =
       , ( "!google URL encode"
         , liftR (callFun "urlencode" . return) $ ignoreNothing sayMessage))
     ]
-
 
 signText :: T.Text -> Either String Int
 signText "-" = Right (-1)
