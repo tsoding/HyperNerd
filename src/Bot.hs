@@ -54,6 +54,7 @@ import qualified Text.Regex.Base.RegexLike as Regex
 import Text.Regex.TDFA (defaultCompOpt, defaultExecOpt)
 import Text.Regex.TDFA.String
 import Transport
+import Data.Either.Extra
 
 type Bot = InEvent -> Effect ()
 
@@ -297,19 +298,36 @@ builtinCommands =
     , ("omega", ("OMEGALUL", cmapR (omega 3) sayMessage))
     , ( "localtime"
       , ( "A simple command that show local time in a timezone"
-        , cmapR (readMay . T.unpack) $
-          replyOnNothing
-            [qms|Please provide the number of minutes
-                 offset from UTC. Positive means local
-                 time will be later in the
-                 day than UTC.|] $
-          cmapR (return . minutesToTimeZone) $
+        , cmapR nameToTimeZone $
+          replyLeft $
+          cmapR return $
           liftR (flip (liftM2 utcToLocalTime) now) $
           cmapR (T.pack . show) $ Reaction replyMessage))
     , ( "urlencode"
       , ( "!google URL encode"
         , liftR (callFun "urlencode" . return) $ ignoreNothing sayMessage))
     ]
+
+
+signText :: T.Text -> Either String Int
+signText "-" = Right (-1)
+signText "+" = Right 1
+signText _ = Left "Could parse the sign"
+
+nameToTimeZone :: T.Text -> Either String TimeZone
+nameToTimeZone text = do
+  groups <- regexParseArgs "UTC([+-])([0-9]{2})(:([0-9]{2}))?" text
+  case groups of
+    [sign, hours, "", ""] -> do
+      h <- maybeToEither "Hours are not number" $ readMay $ T.unpack hours
+      s <- signText sign
+      return $ minutesToTimeZone (h * 60 * s)
+    [sign, hours, _, minutes] -> do
+      h <- maybeToEither "Hours are not number" $ readMay $ T.unpack hours
+      m <- maybeToEither "Minutes are not number" $ readMay $ T.unpack minutes
+      s <- signText sign
+      return $ minutesToTimeZone (h * 60 * s + m)
+    _ -> Left "Please provide time zone designator (Example)"
 
 combineDecks :: [a] -> [a] -> [a]
 combineDecks xs ys
