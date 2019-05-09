@@ -19,7 +19,7 @@ gitHead = do
   headContent <- T.strip <$> TIO.readFile ".git/HEAD"
   if T.take 5 headContent == "ref: "
     then T.unpack . T.strip <$>
-         TIO.readFile (T.unpack $ T.append ".git/" $ T.drop 5 $ headContent)
+         TIO.readFile (T.unpack $ T.append ".git/" $ T.drop 5 headContent)
     else return $ T.unpack headContent
 
 githubLinkLocation :: Q String
