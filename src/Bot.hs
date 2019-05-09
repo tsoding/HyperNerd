@@ -14,6 +14,7 @@ import Bot.Banwords
 import Bot.BttvFfz
 import Bot.Calc
 import Bot.CustomCommand
+import Bot.DocLoc
 import Bot.Dubtrack
 import Bot.Friday
 import Bot.Help
@@ -56,7 +57,6 @@ import qualified Text.Regex.Base.RegexLike as Regex
 import Text.Regex.TDFA (defaultCompOpt, defaultExecOpt)
 import Text.Regex.TDFA.String
 import Transport
-import Bot.DocLoc
 
 type Bot = InEvent -> Effect ()
 
