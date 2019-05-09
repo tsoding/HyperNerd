@@ -318,15 +318,18 @@ nameToTimeZone text = do
   groups <- regexParseArgs "UTC([+-])([0-9]{2})(:([0-9]{2}))?" text
   case groups of
     [sign, hours, "", ""] -> do
-      h <- maybeToEither "Hours are not number" $ readMay $ T.unpack hours
+      h <- maybeToEither badZoneDesignatorError $ readMay $ T.unpack hours
       s <- signText sign
       return $ minutesToTimeZone (h * 60 * s)
     [sign, hours, _, minutes] -> do
-      h <- maybeToEither "Hours are not number" $ readMay $ T.unpack hours
-      m <- maybeToEither "Minutes are not number" $ readMay $ T.unpack minutes
+      h <- maybeToEither badZoneDesignatorError $ readMay $ T.unpack hours
+      m <- maybeToEither badZoneDesignatorError $ readMay $ T.unpack minutes
       s <- signText sign
       return $ minutesToTimeZone (h * 60 * s + m)
-    _ -> Left "Please provide time zone designator (Example)"
+    _ -> Left badZoneDesignatorError
+  where
+    badZoneDesignatorError =
+      "Please provide time zone designator (Examples: UTC-07, UTC+08:35)"
 
 combineDecks :: [a] -> [a] -> [a]
 combineDecks xs ys
