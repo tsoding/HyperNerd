@@ -56,7 +56,7 @@ import qualified Text.Regex.Base.RegexLike as Regex
 import Text.Regex.TDFA (defaultCompOpt, defaultExecOpt)
 import Text.Regex.TDFA.String
 import Transport
--- import Bot.DocLoc
+import Bot.DocLoc
 
 type Bot = InEvent -> Effect ()
 
@@ -71,10 +71,13 @@ tsodingTrustedDiscordRole = DiscordRole 543864981171470346
 builtinCommands :: CommandTable
 builtinCommands =
   M.fromList
-    [ ("russify", stopgap ("Russify western spy text", russifyCommand))
+    [ ( "russify"
+      , stopgap
+          ("Russify western spy text", $githubLinkLocationStr, russifyCommand))
     , ( "addquote"
       , stopgap
           ( "Add quote to quote database"
+          , $githubLinkLocationStr
           , authorizeSender
               (\sender -> senderMod sender || senderSubscriber sender) $
             replyOnNothing
@@ -83,6 +86,7 @@ builtinCommands =
     , ( "delquote"
       , stopgap
           ( "Delete quote from quote database"
+          , $githubLinkLocationStr
           , authorizeSender senderAuthority $
             replyOnNothing "Only for mods" $
             cmapR (readMaybe . T.unpack) $
@@ -90,27 +94,39 @@ builtinCommands =
     , ( "quote"
       , stopgap
           ( "Get a quote from the quote database"
+          , $githubLinkLocationStr
           , cmapR (readMaybe . T.unpack) quoteCommand))
     , ( "bttv"
-      , stopgap ("Show all available BTTV emotes", cmapR (const ()) bttvCommand))
+      , stopgap
+          ( "Show all available BTTV emotes"
+          , $githubLinkLocationStr
+          , cmapR (const ()) bttvCommand))
     , ( "ffz"
-      , stopgap ("Show all available FFZ emotes", cmapR (const ()) ffzCommand))
+      , stopgap
+          ( "Show all available FFZ emotes"
+          , $githubLinkLocationStr
+          , cmapR (const ()) ffzCommand))
     , ( "updateffz"
       , stopgap
           ( "Update FFZ cache"
+          , $githubLinkLocationStr
           , authorizeSender senderAuthority $
             replyOnNothing "Only for mods" $
             cmapR (const ()) updateFfzEmotesCommand))
     , ( "updatebttv"
       , stopgap
           ( "Update BTTV cache"
+          , $githubLinkLocationStr
           , authorizeSender senderAuthority $
             replyOnNothing "Only for mods" $
             cmapR (const ()) updateBttvEmotesCommand))
-    , ("help", stopgap ("Send help", helpCommand builtinCommands))
+    , ( "help"
+      , stopgap
+          ("Send help", $githubLinkLocationStr, helpCommand builtinCommands))
     , ( "poll"
       , stopgap
           ( "Starts a poll. !poll <duration:secs> option1; option2; ...; option3"
+          , $githubLinkLocationStr
           , authorizeSender senderAuthority $
             replyOnNothing "Only for mods" $
           -- TODO(#362): !poll command does not parse negative numbers
@@ -128,15 +144,27 @@ builtinCommands =
     , ( "cancelpoll"
       , stopgap
           ( "Cancels the current poll"
+          , $githubLinkLocationStr
           , authorizeSender senderAuthority $ transR void cancelPollCommand))
     , ( "checkpoll"
       , stopgap
-          ("", authorizeSender senderAuthority $ transR void currentPollCommand))
-    , ("uptime", stopgap ("Show stream uptime", cmapR (const ()) uptimeCommand))
-    , ("rq", stopgap ("Get random quote from your log", randomLogRecordCommand))
+          ( ""
+          , $githubLinkLocationStr
+          , authorizeSender senderAuthority $ transR void currentPollCommand))
+    , ( "uptime"
+      , stopgap
+          ( "Show stream uptime"
+          , $githubLinkLocationStr
+          , cmapR (const ()) uptimeCommand))
+    , ( "rq"
+      , stopgap
+          ( "Get random quote from your log"
+          , $githubLinkLocationStr
+          , randomLogRecordCommand))
     , ( "addperiodic"
       , stopgap
           ( "Add periodic command"
+          , $githubLinkLocationStr
           , authorizeSender senderAuthority $
             replyOnNothing "Only for mods" $
             cmapR textAsCommand $
@@ -146,23 +174,30 @@ builtinCommands =
     , ( "delperiodic"
       , stopgap
           ( "Delete periodic command"
+          , $githubLinkLocationStr
           , authorizeSender senderAuthority $
             replyOnNothing "Only for mods" removePeriodicCommand))
     , ( "periodicon"
       , stopgap
           ( "Enable periodic timer"
+          , $githubLinkLocationStr
           , authorizeSender senderAuthority $
             replyOnNothing "Only for mods" enablePeriodicTimerCommand))
     , ( "periodicoff"
       , stopgap
           ( "Disable periodic timer"
+          , $githubLinkLocationStr
           , authorizeSender senderAuthority $
             replyOnNothing "Only for mods" disablePeriodicTimerCommand))
     , ( "periodicstat"
-      , stopgap ("Status of Periodic Timer", statusPeriodicTimerCommand))
+      , stopgap
+          ( "Status of Periodic Timer"
+          , $githubLinkLocationStr
+          , statusPeriodicTimerCommand))
     , ( "addcmd"
       , stopgap
           ( "Add custom command"
+          , $githubLinkLocationStr
           , authorizeSender senderAuthority $
             replyOnNothing "Only for mods" $
             regexArgs "([a-zA-Z0-9]+) ?(.*)" $
@@ -170,11 +205,13 @@ builtinCommands =
     , ( "delcmd"
       , stopgap
           ( "Delete custom command"
+          , $githubLinkLocationStr
           , authorizeSender senderAuthority $
             replyOnNothing "Only for mods" $ deleteCustomCommand builtinCommands))
     , ( "updcmd"
       , stopgap
           ( "Update custom command"
+          , $githubLinkLocationStr
           , authorizeSender senderAuthority $
             replyOnNothing "Only for mods" $
             regexArgs "([a-zA-Z0-9]+) ?(.*)" $
@@ -184,6 +221,7 @@ builtinCommands =
     , ( "showcmd"
       , stopgap
           ( "Show custom command definition"
+          , $githubLinkLocationStr
           , regexArgs "([a-zA-Z0-9]+)" $
             replyLeft $
             cmapR headMay $
@@ -192,16 +230,21 @@ builtinCommands =
     , ( "timescmd"
       , stopgap
           ( "Show amount of times the custom commands was invoked"
+          , $githubLinkLocationStr
           , regexArgs "([a-zA-Z0-9]+)" $
             replyLeft $
             cmapR headMay $
             replyOnNothing "Not enough arguments" $
             timesCustomCommand builtinCommands))
     , ( "song"
-      , stopgap ("Print currently playing song", transR void currentSongCommand))
+      , stopgap
+          ( "Print currently playing song"
+          , $githubLinkLocationStr
+          , transR void currentSongCommand))
     , ( "addalias"
       , stopgap
           ( "Add command alias"
+          , $githubLinkLocationStr
           , authorizeSender senderAuthority $
             replyOnNothing "Only for mods" $
             regexArgs "([a-zA-Z0-9]+) ([a-zA-Z0-9]+)" $
@@ -209,16 +252,19 @@ builtinCommands =
     , ( "delalias"
       , stopgap
           ( "Remove command alias"
+          , $githubLinkLocationStr
           , authorizeSender senderAuthority $
             replyOnNothing "Only for mods" removeAliasCommand))
     , ( "addvar"
       , stopgap
           ( "Add variable"
+          , $githubLinkLocationStr
           , authorizeSender senderAuthority $
             replyOnNothing "Only for mods" addVariable))
     , ( "updvar"
       , stopgap
           ( "Update variable"
+          , $githubLinkLocationStr
           , authorizeSender senderAuthority $
             replyOnNothing "Only for mods" $
             regexArgs "([a-zA-Z0-9]+) ?(.*)" $
@@ -226,12 +272,14 @@ builtinCommands =
     , ( "delvar"
       , stopgap
           ( "Delete variable"
+          , $githubLinkLocationStr
           , authorizeSender senderAuthority $
             replyOnNothing "Only for mods" deleteVariable))
     , ( "nuke"
       , stopgap
           ( [qms|Looks at N previous messages and bans all of
                the users whose messages match provided regex|]
+          , $githubLinkLocationStr
           , authorizeSender senderAuthority $
             replyOnNothing "Only for mods" $
             regexArgs "([0-9]+) (.*)" $
@@ -258,10 +306,15 @@ builtinCommands =
                       (isRight .
                        execute regex . T.unpack . lrMsg . entityPayload)
                       logs))
-    , ("cycle", stopgap ("Mock the message", cmapR mockMessage sayMessage))
+    , ( "cycle"
+      , stopgap
+          ( "Mock the message"
+          , $githubLinkLocationStr
+          , cmapR mockMessage sayMessage))
     , ( "trust"
       , stopgap
           ( "Makes the user trusted"
+          , $githubLinkLocationStr
           , authorizeSender senderAuthority $
             replyOnNothing "Only for mods" $
             regexArgs "(.+)" $
@@ -270,6 +323,7 @@ builtinCommands =
     , ( "untrust"
       , stopgap
           ( "Untrusts the user"
+          , $githubLinkLocationStr
           , authorizeSender senderAuthority $
             replyOnNothing "Only for mods" $
             regexArgs "(.+)" $
@@ -278,10 +332,12 @@ builtinCommands =
     , ( "amitrusted"
       , stopgap
           ( "Check if you are a trusted user"
+          , $githubLinkLocationStr
           , cmapR (const ()) amitrustedCommand))
     , ( "istrusted"
       , stopgap
           ( "Check if the user is trusted"
+          , $githubLinkLocationStr
           , regexArgs "(.+)" $
             replyLeft $
             cmapR headMay $
@@ -289,6 +345,7 @@ builtinCommands =
     , ( "wiggle"
       , stopgap
           ( "Wiggle the tenticle (integration with https://github.com/tsoding/wiggle)"
+          , $githubLinkLocationStr
           , transR (Identity . messageSender) $
             cmapR (URI.encode . T.unpack . senderDisplayName) $
             Reaction $ \(Identity name) -> do
@@ -299,56 +356,75 @@ builtinCommands =
     , ( "wme"
       , stopgap
           ( "Whisper yourself something"
+          , $githubLinkLocationStr
           , Reaction $ \msg ->
               whisperToSender
                 (messageSender msg)
                 [qms|You asked me to whisper you this: "{messageContent msg}"|]))
     , ( "vanish"
-      , stopgap ("Timeout yourself for one second", Reaction $ timeoutMessage 1))
+      , stopgap
+          ( "Timeout yourself for one second"
+          , $githubLinkLocationStr
+          , Reaction $ timeoutMessage 1))
     , ( "raffle"
       , stopgap
           ( "Start the raffle"
+          , $githubLinkLocationStr
           , authorizeSender senderAuthority $
             replyOnNothing "Only for mods" $ cmapR (const 5) raffleCommand))
-    , ("join", stopgap ("Join the raffle", joinCommand))
+    , ("join", stopgap ("Join the raffle", $githubLinkLocationStr, joinCommand))
     -- TODO(#562): !friday allows arbitrary text
     , ( "friday"
       , stopgap
           ( "Suggest video for the friday stream"
+          , $githubLinkLocationStr
           , onlyForRoles
               [InternalRole "Trusted", tsodingTrustedDiscordRole]
               fridayCommand))
     , ( "twitch"
       , stopgap
           ( "Send message to Tsoding Twitch channel"
+          , $githubLinkLocationStr
           , onlyForRoles [tsodingTwitchedDiscordRole] $
             liftR (say (TwitchChannel "#tsoding")) ignore))
     , ( "roles"
       , stopgap
           ( "Show your roles"
+          , $githubLinkLocationStr
           , transR duplicate $
             cmapR (T.pack . show . senderRoles . messageSender) $
             Reaction replyMessage))
-    , ("markov", stopgap ("Generate Markov message", markov))
+    , ( "markov"
+      , stopgap ("Generate Markov message", $githubLinkLocationStr, markov))
     , ( "nextvideo"
       , stopgap
           ( "Get the next video for Smart Stream"
+          , $githubLinkLocationStr
           , onlyForRoles authorityRoles $ transR void nextVideoCommand))
-    , ("video", stopgap ("Print the current video", transR void videoCommand))
+    , ( "video"
+      , stopgap
+          ( "Print the current video"
+          , $githubLinkLocationStr
+          , transR void videoCommand))
     , ( "videocount"
       , stopgap
-          ("Print amount of videos in the queue", transR void videoCountCommand))
+          ( "Print amount of videos in the queue"
+          , $githubLinkLocationStr
+          , transR void videoCountCommand))
     , ( "setvideotime"
       , stopgap
           ( "Set the time cursor for the video queue"
+          , $githubLinkLocationStr
           , onlyForRoles authorityRoles $
             cmapR (readMay . T.unpack) $
             replyOnNothing "Cannot parse this as UTCTime" setVideoDateCommand))
-    , ("calc", stopgap ("Calculator", calcCommand))
-    , ("omega", stopgap ("OMEGALUL", cmapR (omega 3) sayMessage))
+    , ("calc", stopgap ("Calculator", $githubLinkLocationStr, calcCommand))
+    , ( "omega"
+      , stopgap ("OMEGALUL", $githubLinkLocationStr, cmapR (omega 3) sayMessage))
     , ( "localtime"
       , stopgap
           ( "A simple command that show local time in a timezone"
+          , $githubLinkLocationStr
           , cmapR nameToTimeZone $
             replyLeft $
             cmapR return $
@@ -357,6 +433,7 @@ builtinCommands =
     , ( "urlencode"
       , stopgap
           ( "!google URL encode"
+          , $githubLinkLocationStr
           , liftR (callFun "urlencode" . return) $ ignoreNothing sayMessage))
     ]
 

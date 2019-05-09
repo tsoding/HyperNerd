@@ -25,7 +25,8 @@ replyHelpForCommand :: CommandTable -> Reaction Message T.Text
 replyHelpForCommand commandTable =
   cmapR (`M.lookup` commandTable) $
   replyOnNothing "Cannot find such command FeelsBadMan" $
-  cmapR bcDescription $ Reaction replyMessage
+  cmapR (\bc -> [qms|{bcDescription bc} | Located in {bcGitHubLocation bc}|]) $
+  Reaction replyMessage
 
 replyAvaliableCommands :: CommandTable -> Reaction Message T.Text
 replyAvaliableCommands commandTable =
