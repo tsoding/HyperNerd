@@ -19,8 +19,8 @@ data BuiltinCommand = BuiltinCommand
   , bcReaction :: Reaction Message T.Text
   }
 
-stopgap :: (T.Text, T.Text, Reaction Message T.Text) -> BuiltinCommand
-stopgap (description, gitHubLocation, reaction) =
+mkBuiltinCommand :: (T.Text, T.Text, Reaction Message T.Text) -> BuiltinCommand
+mkBuiltinCommand (description, gitHubLocation, reaction) =
   BuiltinCommand description gitHubLocation reaction
 
 type CommandTable = M.Map T.Text BuiltinCommand
