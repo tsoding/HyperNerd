@@ -2,6 +2,7 @@
 {-# LANGUAGE TupleSections #-}
 {-# LANGUAGE QuasiQuotes #-}
 {-# LANGUAGE LambdaCase #-}
+{-# LANGUAGE TemplateHaskell #-}
 
 module Bot
   ( Bot
@@ -13,6 +14,7 @@ import Bot.Banwords
 import Bot.BttvFfz
 import Bot.Calc
 import Bot.CustomCommand
+import Bot.DocLoc
 import Bot.Dubtrack
 import Bot.Friday
 import Bot.Help
@@ -69,243 +71,375 @@ tsodingTrustedDiscordRole = DiscordRole 543864981171470346
 builtinCommands :: CommandTable
 builtinCommands =
   M.fromList
-    [ ("russify", ("Russify western spy text", russifyCommand))
+    [ ( "russify"
+      , mkBuiltinCommand
+          ("Russify western spy text", $githubLinkLocationStr, russifyCommand))
     , ( "addquote"
-      , ( "Add quote to quote database"
-        , authorizeSender
-            (\sender -> senderMod sender || senderSubscriber sender) $
-          replyOnNothing
-            "Only subs and mods can add quotes, sorry."
-            addQuoteCommand))
+      , mkBuiltinCommand
+          ( "Add quote to quote database"
+          , $githubLinkLocationStr
+          , authorizeSender
+              (\sender -> senderMod sender || senderSubscriber sender) $
+            replyOnNothing
+              "Only subs and mods can add quotes, sorry."
+              addQuoteCommand))
     , ( "delquote"
-      , ( "Delete quote from quote database"
-        , authorizeSender senderAuthority $
-          replyOnNothing "Only for mods" $
-          cmapR (readMaybe . T.unpack) $
-          replyOnNothing "Expected integer as an argument" deleteQuoteCommand))
+      , mkBuiltinCommand
+          ( "Delete quote from quote database"
+          , $githubLinkLocationStr
+          , authorizeSender senderAuthority $
+            replyOnNothing "Only for mods" $
+            cmapR (readMaybe . T.unpack) $
+            replyOnNothing "Expected integer as an argument" deleteQuoteCommand))
     , ( "quote"
-      , ( "Get a quote from the quote database"
-        , cmapR (readMaybe . T.unpack) quoteCommand))
-    , ("bttv", ("Show all available BTTV emotes", cmapR (const ()) bttvCommand))
-    , ("ffz", ("Show all available FFZ emotes", cmapR (const ()) ffzCommand))
+      , mkBuiltinCommand
+          ( "Get a quote from the quote database"
+          , $githubLinkLocationStr
+          , cmapR (readMaybe . T.unpack) quoteCommand))
+    , ( "bttv"
+      , mkBuiltinCommand
+          ( "Show all available BTTV emotes"
+          , $githubLinkLocationStr
+          , cmapR (const ()) bttvCommand))
+    , ( "ffz"
+      , mkBuiltinCommand
+          ( "Show all available FFZ emotes"
+          , $githubLinkLocationStr
+          , cmapR (const ()) ffzCommand))
     , ( "updateffz"
-      , ( "Update FFZ cache"
-        , authorizeSender senderAuthority $
-          replyOnNothing "Only for mods" $
-          cmapR (const ()) updateFfzEmotesCommand))
+      , mkBuiltinCommand
+          ( "Update FFZ cache"
+          , $githubLinkLocationStr
+          , authorizeSender senderAuthority $
+            replyOnNothing "Only for mods" $
+            cmapR (const ()) updateFfzEmotesCommand))
     , ( "updatebttv"
-      , ( "Update BTTV cache"
-        , authorizeSender senderAuthority $
-          replyOnNothing "Only for mods" $
-          cmapR (const ()) updateBttvEmotesCommand))
-    , ("help", ("Send help", helpCommand builtinCommands))
+      , mkBuiltinCommand
+          ( "Update BTTV cache"
+          , $githubLinkLocationStr
+          , authorizeSender senderAuthority $
+            replyOnNothing "Only for mods" $
+            cmapR (const ()) updateBttvEmotesCommand))
+    , ( "help"
+      , mkBuiltinCommand
+          ("Send help", $githubLinkLocationStr, helpCommand builtinCommands))
     , ( "poll"
-      , ( "Starts a poll. !poll <duration:secs> option1; option2; ...; option3"
-        , authorizeSender senderAuthority $
-          replyOnNothing "Only for mods" $
+      , mkBuiltinCommand
+          ( "Starts a poll. !poll <duration:secs> option1; option2; ...; option3"
+          , $githubLinkLocationStr
+          , authorizeSender senderAuthority $
+            replyOnNothing "Only for mods" $
           -- TODO(#362): !poll command does not parse negative numbers
-          regexArgs "([0-9]+) (.*)" $
-          replyLeft $
-          pairArgs $
-          replyLeft $
-          cmapR
-            (\(duration, options) ->
-               fmap
-                 (, filter (not . T.null) $ map T.strip $ T.splitOn ";" options) $
-               readMaybe $ T.unpack duration) $
-          replyOnNothing "Could not parse arguments" pollCommand))
+            regexArgs "([0-9]+) (.*)" $
+            replyLeft $
+            pairArgs $
+            replyLeft $
+            cmapR
+              (\(duration, options) ->
+                 fmap
+                   (
+                   , filter (not . T.null) $ map T.strip $ T.splitOn ";" options) $
+                 readMaybe $ T.unpack duration) $
+            replyOnNothing "Could not parse arguments" pollCommand))
     , ( "cancelpoll"
-      , ( "Cancels the current poll"
-        , authorizeSender senderAuthority $ transR void cancelPollCommand))
+      , mkBuiltinCommand
+          ( "Cancels the current poll"
+          , $githubLinkLocationStr
+          , authorizeSender senderAuthority $ transR void cancelPollCommand))
     , ( "checkpoll"
-      , ("", authorizeSender senderAuthority $ transR void currentPollCommand))
-    , ("uptime", ("Show stream uptime", cmapR (const ()) uptimeCommand))
-    , ("rq", ("Get random quote from your log", randomLogRecordCommand))
+      , mkBuiltinCommand
+          ( ""
+          , $githubLinkLocationStr
+          , authorizeSender senderAuthority $ transR void currentPollCommand))
+    , ( "uptime"
+      , mkBuiltinCommand
+          ( "Show stream uptime"
+          , $githubLinkLocationStr
+          , cmapR (const ()) uptimeCommand))
+    , ( "rq"
+      , mkBuiltinCommand
+          ( "Get random quote from your log"
+          , $githubLinkLocationStr
+          , randomLogRecordCommand))
     , ( "addperiodic"
-      , ( "Add periodic command"
-        , authorizeSender senderAuthority $
-          replyOnNothing "Only for mods" $
-          cmapR textAsCommand $
-          replyOnNothing "Command as an argument is expected" addPeriodicCommand))
+      , mkBuiltinCommand
+          ( "Add periodic command"
+          , $githubLinkLocationStr
+          , authorizeSender senderAuthority $
+            replyOnNothing "Only for mods" $
+            cmapR textAsCommand $
+            replyOnNothing
+              "Command as an argument is expected"
+              addPeriodicCommand))
     , ( "delperiodic"
-      , ( "Delete periodic command"
-        , authorizeSender senderAuthority $
-          replyOnNothing "Only for mods" removePeriodicCommand))
+      , mkBuiltinCommand
+          ( "Delete periodic command"
+          , $githubLinkLocationStr
+          , authorizeSender senderAuthority $
+            replyOnNothing "Only for mods" removePeriodicCommand))
     , ( "periodicon"
-      , ( "Enable periodic timer"
-        , authorizeSender senderAuthority $
-          replyOnNothing "Only for mods" enablePeriodicTimerCommand))
+      , mkBuiltinCommand
+          ( "Enable periodic timer"
+          , $githubLinkLocationStr
+          , authorizeSender senderAuthority $
+            replyOnNothing "Only for mods" enablePeriodicTimerCommand))
     , ( "periodicoff"
-      , ( "Disable periodic timer"
-        , authorizeSender senderAuthority $
-          replyOnNothing "Only for mods" disablePeriodicTimerCommand))
-    , ("periodicstat", ("Status of Periodic Timer", statusPeriodicTimerCommand))
+      , mkBuiltinCommand
+          ( "Disable periodic timer"
+          , $githubLinkLocationStr
+          , authorizeSender senderAuthority $
+            replyOnNothing "Only for mods" disablePeriodicTimerCommand))
+    , ( "periodicstat"
+      , mkBuiltinCommand
+          ( "Status of Periodic Timer"
+          , $githubLinkLocationStr
+          , statusPeriodicTimerCommand))
     , ( "addcmd"
-      , ( "Add custom command"
-        , authorizeSender senderAuthority $
-          replyOnNothing "Only for mods" $
-          regexArgs "([a-zA-Z0-9]+) ?(.*)" $
-          replyLeft $ pairArgs $ replyLeft $ addCustomCommand builtinCommands))
+      , mkBuiltinCommand
+          ( "Add custom command"
+          , $githubLinkLocationStr
+          , authorizeSender senderAuthority $
+            replyOnNothing "Only for mods" $
+            regexArgs "([a-zA-Z0-9]+) ?(.*)" $
+            replyLeft $ pairArgs $ replyLeft $ addCustomCommand builtinCommands))
     , ( "delcmd"
-      , ( "Delete custom command"
-        , authorizeSender senderAuthority $
-          replyOnNothing "Only for mods" $ deleteCustomCommand builtinCommands))
+      , mkBuiltinCommand
+          ( "Delete custom command"
+          , $githubLinkLocationStr
+          , authorizeSender senderAuthority $
+            replyOnNothing "Only for mods" $ deleteCustomCommand builtinCommands))
     , ( "updcmd"
-      , ( "Update custom command"
-        , authorizeSender senderAuthority $
-          replyOnNothing "Only for mods" $
-          regexArgs "([a-zA-Z0-9]+) ?(.*)" $
-          replyLeft $ pairArgs $ replyLeft $ updateCustomCommand builtinCommands))
+      , mkBuiltinCommand
+          ( "Update custom command"
+          , $githubLinkLocationStr
+          , authorizeSender senderAuthority $
+            replyOnNothing "Only for mods" $
+            regexArgs "([a-zA-Z0-9]+) ?(.*)" $
+            replyLeft $
+            pairArgs $ replyLeft $ updateCustomCommand builtinCommands))
                -- TODO(#337): use help instead of !showcmd
     , ( "showcmd"
-      , ( "Show custom command definition"
-        , regexArgs "([a-zA-Z0-9]+)" $
-          replyLeft $
-          cmapR headMay $
-          replyOnNothing "Not enough arguments" $
-          showCustomCommand builtinCommands))
+      , mkBuiltinCommand
+          ( "Show custom command definition"
+          , $githubLinkLocationStr
+          , regexArgs "([a-zA-Z0-9]+)" $
+            replyLeft $
+            cmapR headMay $
+            replyOnNothing "Not enough arguments" $
+            showCustomCommand builtinCommands))
     , ( "timescmd"
-      , ( "Show amount of times the custom commands was invoked"
-        , regexArgs "([a-zA-Z0-9]+)" $
-          replyLeft $
-          cmapR headMay $
-          replyOnNothing "Not enough arguments" $
-          timesCustomCommand builtinCommands))
-    , ("song", ("Print currently playing song", transR void currentSongCommand))
+      , mkBuiltinCommand
+          ( "Show amount of times the custom commands was invoked"
+          , $githubLinkLocationStr
+          , regexArgs "([a-zA-Z0-9]+)" $
+            replyLeft $
+            cmapR headMay $
+            replyOnNothing "Not enough arguments" $
+            timesCustomCommand builtinCommands))
+    , ( "song"
+      , mkBuiltinCommand
+          ( "Print currently playing song"
+          , $githubLinkLocationStr
+          , transR void currentSongCommand))
     , ( "addalias"
-      , ( "Add command alias"
-        , authorizeSender senderAuthority $
-          replyOnNothing "Only for mods" $
-          regexArgs "([a-zA-Z0-9]+) ([a-zA-Z0-9]+)" $
-          replyLeft $ pairArgs $ replyLeft addAliasCommand))
+      , mkBuiltinCommand
+          ( "Add command alias"
+          , $githubLinkLocationStr
+          , authorizeSender senderAuthority $
+            replyOnNothing "Only for mods" $
+            regexArgs "([a-zA-Z0-9]+) ([a-zA-Z0-9]+)" $
+            replyLeft $ pairArgs $ replyLeft addAliasCommand))
     , ( "delalias"
-      , ( "Remove command alias"
-        , authorizeSender senderAuthority $
-          replyOnNothing "Only for mods" removeAliasCommand))
+      , mkBuiltinCommand
+          ( "Remove command alias"
+          , $githubLinkLocationStr
+          , authorizeSender senderAuthority $
+            replyOnNothing "Only for mods" removeAliasCommand))
     , ( "addvar"
-      , ( "Add variable"
-        , authorizeSender senderAuthority $
-          replyOnNothing "Only for mods" addVariable))
+      , mkBuiltinCommand
+          ( "Add variable"
+          , $githubLinkLocationStr
+          , authorizeSender senderAuthority $
+            replyOnNothing "Only for mods" addVariable))
     , ( "updvar"
-      , ( "Update variable"
-        , authorizeSender senderAuthority $
-          replyOnNothing "Only for mods" $
-          regexArgs "([a-zA-Z0-9]+) ?(.*)" $
-          replyLeft $ pairArgs $ replyLeft updateVariable))
+      , mkBuiltinCommand
+          ( "Update variable"
+          , $githubLinkLocationStr
+          , authorizeSender senderAuthority $
+            replyOnNothing "Only for mods" $
+            regexArgs "([a-zA-Z0-9]+) ?(.*)" $
+            replyLeft $ pairArgs $ replyLeft updateVariable))
     , ( "delvar"
-      , ( "Delete variable"
-        , authorizeSender senderAuthority $
-          replyOnNothing "Only for mods" deleteVariable))
+      , mkBuiltinCommand
+          ( "Delete variable"
+          , $githubLinkLocationStr
+          , authorizeSender senderAuthority $
+            replyOnNothing "Only for mods" deleteVariable))
     , ( "nuke"
-      , ( [qms|Looks at N previous messages and bans all of
+      , mkBuiltinCommand
+          ( [qms|Looks at N previous messages and bans all of
                the users whose messages match provided regex|]
-        , authorizeSender senderAuthority $
-          replyOnNothing "Only for mods" $
-          regexArgs "([0-9]+) (.*)" $
-          replyLeft $
-          pairArgs $
-          replyLeft $
-          Reaction $ \Message { messageContent = (strN, regexStr)
-                              , messageSender = sender
-                              } -> do
-            let parsedN =
-                  maybe (Left "Could not parse N") Right $
-                  readMaybe $ T.unpack strN
-            let compiledRegex =
-                  compile defaultCompOpt defaultExecOpt $ T.unpack regexStr
-            case liftM2 (,) parsedN compiledRegex of
-              Left msg ->
-                logMsg [qms|[WARNING] Could not parse arguments: {msg}|]
-              Right (n, regex) -> do
-                logs <-
-                  selectEntities Proxy $ Take n $ SortBy "timestamp" Desc All
-                traverse_
-                  (banUser (senderChannel sender) . lrUser . entityPayload) $
-                  filter
-                    (isRight . execute regex . T.unpack . lrMsg . entityPayload)
-                    logs))
-    , ("cycle", ("Mock the message", cmapR mockMessage sayMessage))
+          , $githubLinkLocationStr
+          , authorizeSender senderAuthority $
+            replyOnNothing "Only for mods" $
+            regexArgs "([0-9]+) (.*)" $
+            replyLeft $
+            pairArgs $
+            replyLeft $
+            Reaction $ \Message { messageContent = (strN, regexStr)
+                                , messageSender = sender
+                                } -> do
+              let parsedN =
+                    maybe (Left "Could not parse N") Right $
+                    readMaybe $ T.unpack strN
+              let compiledRegex =
+                    compile defaultCompOpt defaultExecOpt $ T.unpack regexStr
+              case liftM2 (,) parsedN compiledRegex of
+                Left msg ->
+                  logMsg [qms|[WARNING] Could not parse arguments: {msg}|]
+                Right (n, regex) -> do
+                  logs <-
+                    selectEntities Proxy $ Take n $ SortBy "timestamp" Desc All
+                  traverse_
+                    (banUser (senderChannel sender) . lrUser . entityPayload) $
+                    filter
+                      (isRight .
+                       execute regex . T.unpack . lrMsg . entityPayload)
+                      logs))
+    , ( "cycle"
+      , mkBuiltinCommand
+          ( "Mock the message"
+          , $githubLinkLocationStr
+          , cmapR mockMessage sayMessage))
     , ( "trust"
-      , ( "Makes the user trusted"
-        , authorizeSender senderAuthority $
-          replyOnNothing "Only for mods" $
-          regexArgs "(.+)" $
-          replyLeft $
-          cmapR headMay $ replyOnNothing "Not enough arguments" trustCommand))
+      , mkBuiltinCommand
+          ( "Makes the user trusted"
+          , $githubLinkLocationStr
+          , authorizeSender senderAuthority $
+            replyOnNothing "Only for mods" $
+            regexArgs "(.+)" $
+            replyLeft $
+            cmapR headMay $ replyOnNothing "Not enough arguments" trustCommand))
     , ( "untrust"
-      , ( "Untrusts the user"
-        , authorizeSender senderAuthority $
-          replyOnNothing "Only for mods" $
-          regexArgs "(.+)" $
-          replyLeft $
-          cmapR headMay $ replyOnNothing "Not enough arguments" untrustCommand))
+      , mkBuiltinCommand
+          ( "Untrusts the user"
+          , $githubLinkLocationStr
+          , authorizeSender senderAuthority $
+            replyOnNothing "Only for mods" $
+            regexArgs "(.+)" $
+            replyLeft $
+            cmapR headMay $ replyOnNothing "Not enough arguments" untrustCommand))
     , ( "amitrusted"
-      , ("Check if you are a trusted user", cmapR (const ()) amitrustedCommand))
+      , mkBuiltinCommand
+          ( "Check if you are a trusted user"
+          , $githubLinkLocationStr
+          , cmapR (const ()) amitrustedCommand))
     , ( "istrusted"
-      , ( "Check if the user is trusted"
-        , regexArgs "(.+)" $
-          replyLeft $
-          cmapR headMay $ replyOnNothing "Not enough arguments" istrustedCommand))
+      , mkBuiltinCommand
+          ( "Check if the user is trusted"
+          , $githubLinkLocationStr
+          , regexArgs "(.+)" $
+            replyLeft $
+            cmapR headMay $
+            replyOnNothing "Not enough arguments" istrustedCommand))
     , ( "wiggle"
-      , ( "Wiggle the tenticle (integration with https://github.com/tsoding/wiggle)"
-        , transR (Identity . messageSender) $
-          cmapR (URI.encode . T.unpack . senderDisplayName) $
-          Reaction $ \(Identity name) -> do
-            request <-
-              parseRequest [qms|http://localhost:8081/wiggle/{URI.encode name}|]
-            void $ httpRequest request))
+      , mkBuiltinCommand
+          ( "Wiggle the tenticle (integration with https://github.com/tsoding/wiggle)"
+          , $githubLinkLocationStr
+          , transR (Identity . messageSender) $
+            cmapR (URI.encode . T.unpack . senderDisplayName) $
+            Reaction $ \(Identity name) -> do
+              request <-
+                parseRequest
+                  [qms|http://localhost:8081/wiggle/{URI.encode name}|]
+              void $ httpRequest request))
     , ( "wme"
-      , ( "Whisper yourself something"
-        , Reaction $ \msg ->
-            whisperToSender
-              (messageSender msg)
-              [qms|You asked me to whisper you this: "{messageContent msg}"|]))
+      , mkBuiltinCommand
+          ( "Whisper yourself something"
+          , $githubLinkLocationStr
+          , Reaction $ \msg ->
+              whisperToSender
+                (messageSender msg)
+                [qms|You asked me to whisper you this: "{messageContent msg}"|]))
     , ( "vanish"
-      , ("Timeout yourself for one second", Reaction $ timeoutMessage 1))
+      , mkBuiltinCommand
+          ( "Timeout yourself for one second"
+          , $githubLinkLocationStr
+          , Reaction $ timeoutMessage 1))
     , ( "raffle"
-      , ( "Start the raffle"
-        , authorizeSender senderAuthority $
-          replyOnNothing "Only for mods" $ cmapR (const 5) raffleCommand))
-    , ("join", ("Join the raffle", joinCommand))
+      , mkBuiltinCommand
+          ( "Start the raffle"
+          , $githubLinkLocationStr
+          , authorizeSender senderAuthority $
+            replyOnNothing "Only for mods" $ cmapR (const 5) raffleCommand))
+    , ( "join"
+      , mkBuiltinCommand
+          ("Join the raffle", $githubLinkLocationStr, joinCommand))
     -- TODO(#562): !friday allows arbitrary text
     , ( "friday"
-      , ( "Suggest video for the friday stream"
-        , onlyForRoles
-            [InternalRole "Trusted", tsodingTrustedDiscordRole]
-            fridayCommand))
+      , mkBuiltinCommand
+          ( "Suggest video for the friday stream"
+          , $githubLinkLocationStr
+          , onlyForRoles
+              [InternalRole "Trusted", tsodingTrustedDiscordRole]
+              fridayCommand))
     , ( "twitch"
-      , ( "Send message to Tsoding Twitch channel"
-        , onlyForRoles [tsodingTwitchedDiscordRole] $
-          liftR (say (TwitchChannel "#tsoding")) ignore))
+      , mkBuiltinCommand
+          ( "Send message to Tsoding Twitch channel"
+          , $githubLinkLocationStr
+          , onlyForRoles [tsodingTwitchedDiscordRole] $
+            liftR (say (TwitchChannel "#tsoding")) ignore))
     , ( "roles"
-      , ( "Show your roles"
-        , transR duplicate $
-          cmapR (T.pack . show . senderRoles . messageSender) $
-          Reaction replyMessage))
-    , ("markov", ("Generate Markov message", markov))
+      , mkBuiltinCommand
+          ( "Show your roles"
+          , $githubLinkLocationStr
+          , transR duplicate $
+            cmapR (T.pack . show . senderRoles . messageSender) $
+            Reaction replyMessage))
+    , ( "markov"
+      , mkBuiltinCommand
+          ("Generate Markov message", $githubLinkLocationStr, markov))
     , ( "nextvideo"
-      , ( "Get the next video for Smart Stream"
-        , onlyForRoles authorityRoles $ transR void nextVideoCommand))
-    , ("video", ("Print the current video", transR void videoCommand))
+      , mkBuiltinCommand
+          ( "Get the next video for Smart Stream"
+          , $githubLinkLocationStr
+          , onlyForRoles authorityRoles $ transR void nextVideoCommand))
+    , ( "video"
+      , mkBuiltinCommand
+          ( "Print the current video"
+          , $githubLinkLocationStr
+          , transR void videoCommand))
     , ( "videocount"
-      , ("Print amount of videos in the queue", transR void videoCountCommand))
+      , mkBuiltinCommand
+          ( "Print amount of videos in the queue"
+          , $githubLinkLocationStr
+          , transR void videoCountCommand))
     , ( "setvideotime"
-      , ( "Set the time cursor for the video queue"
-        , onlyForRoles authorityRoles $
-          cmapR (readMay . T.unpack) $
-          replyOnNothing "Cannot parse this as UTCTime" setVideoDateCommand))
-    , ("calc", ("Calculator", calcCommand))
-    , ("omega", ("OMEGALUL", cmapR (omega 3) sayMessage))
+      , mkBuiltinCommand
+          ( "Set the time cursor for the video queue"
+          , $githubLinkLocationStr
+          , onlyForRoles authorityRoles $
+            cmapR (readMay . T.unpack) $
+            replyOnNothing "Cannot parse this as UTCTime" setVideoDateCommand))
+    , ( "calc"
+      , mkBuiltinCommand ("Calculator", $githubLinkLocationStr, calcCommand))
+    , ( "omega"
+      , mkBuiltinCommand
+          ("OMEGALUL", $githubLinkLocationStr, cmapR (omega 3) sayMessage))
     , ( "localtime"
-      , ( "A simple command that show local time in a timezone"
-        , cmapR nameToTimeZone $
-          replyLeft $
-          cmapR return $
-          liftR (flip (liftM2 utcToLocalTime) now) $
-          cmapR (T.pack . show) $ Reaction replyMessage))
+      , mkBuiltinCommand
+          ( "A simple command that show local time in a timezone"
+          , $githubLinkLocationStr
+          , cmapR nameToTimeZone $
+            replyLeft $
+            cmapR return $
+            liftR (flip (liftM2 utcToLocalTime) now) $
+            cmapR (T.pack . show) $ Reaction replyMessage))
     , ( "urlencode"
-      , ( "!google URL encode"
-        , liftR (callFun "urlencode" . return) $ ignoreNothing sayMessage))
+      , mkBuiltinCommand
+          ( "!google URL encode"
+          , $githubLinkLocationStr
+          , liftR (callFun "urlencode" . return) $ ignoreNothing sayMessage))
     ]
 
 signText :: T.Text -> Either String Int
@@ -496,5 +630,5 @@ dispatchBuiltinCommand message@Message {messageContent = Command { commandName =
                                                                  }} =
   maybe
     (return ())
-    (\(_, f) -> runReaction f $ fmap (const args) message)
+    (\bc -> runReaction (bcReaction bc) $ fmap (const args) message)
     (M.lookup name builtinCommands)

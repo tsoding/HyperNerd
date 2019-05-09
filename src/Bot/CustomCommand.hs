@@ -111,15 +111,15 @@ showCustomCommand builtinCommands =
           sender
           [qms|Command '{name}' defined as
              '{customCommandMessage $ entityPayload cmd}'|]
-      (Nothing, Just _) ->
+      (Nothing, Just bc) ->
         replyToSender
           sender
           [qms|Command '{name}' is builtin. Look into the code
-             for the definition: https://github.com/tsoding/HyperNerd|]
+               for the definition: {bcGitHubLocation bc}|]
       (Just _, Just _) ->
         errorEff
           [qms|Custom command '{name}' collide with
-             a built in command|]
+               a built in command|]
       (Nothing, Nothing) ->
         replyToSender sender [qms|Command '{name}' does not exist|]
 
