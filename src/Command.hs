@@ -13,7 +13,16 @@ import Reaction
 import Safe
 import Transport
 
-type CommandTable = M.Map T.Text (T.Text, Reaction Message T.Text)
+data BuiltinCommand = BuiltinCommand
+  { bcDescription :: T.Text
+  , bcGitHubLocation :: T.Text
+  , bcReaction :: Reaction Message T.Text
+  }
+
+stopgap :: (T.Text, Reaction Message T.Text) -> BuiltinCommand
+stopgap (description, reaction) = BuiltinCommand description "" reaction
+
+type CommandTable = M.Map T.Text BuiltinCommand
 
 data Command a = Command
   { commandName :: T.Text

@@ -56,7 +56,7 @@ import qualified Text.Regex.Base.RegexLike as Regex
 import Text.Regex.TDFA (defaultCompOpt, defaultExecOpt)
 import Text.Regex.TDFA.String
 import Transport
-import Bot.DocLoc
+-- import Bot.DocLoc
 
 type Bot = InEvent -> Effect ()
 
@@ -71,243 +71,293 @@ tsodingTrustedDiscordRole = DiscordRole 543864981171470346
 builtinCommands :: CommandTable
 builtinCommands =
   M.fromList
-    [ ("russify", (T.pack ("Russify western spy text. Defined in " ++ $githubLinkLocationStr), russifyCommand))
+    [ ("russify", stopgap ("Russify western spy text", russifyCommand))
     , ( "addquote"
-      , ( "Add quote to quote database"
-        , authorizeSender
-            (\sender -> senderMod sender || senderSubscriber sender) $
-          replyOnNothing
-            "Only subs and mods can add quotes, sorry."
-            addQuoteCommand))
+      , stopgap
+          ( "Add quote to quote database"
+          , authorizeSender
+              (\sender -> senderMod sender || senderSubscriber sender) $
+            replyOnNothing
+              "Only subs and mods can add quotes, sorry."
+              addQuoteCommand))
     , ( "delquote"
-      , ( "Delete quote from quote database"
-        , authorizeSender senderAuthority $
-          replyOnNothing "Only for mods" $
-          cmapR (readMaybe . T.unpack) $
-          replyOnNothing "Expected integer as an argument" deleteQuoteCommand))
+      , stopgap
+          ( "Delete quote from quote database"
+          , authorizeSender senderAuthority $
+            replyOnNothing "Only for mods" $
+            cmapR (readMaybe . T.unpack) $
+            replyOnNothing "Expected integer as an argument" deleteQuoteCommand))
     , ( "quote"
-      , ( "Get a quote from the quote database"
-        , cmapR (readMaybe . T.unpack) quoteCommand))
-    , ("bttv", ("Show all available BTTV emotes", cmapR (const ()) bttvCommand))
-    , ("ffz", ("Show all available FFZ emotes", cmapR (const ()) ffzCommand))
+      , stopgap
+          ( "Get a quote from the quote database"
+          , cmapR (readMaybe . T.unpack) quoteCommand))
+    , ( "bttv"
+      , stopgap ("Show all available BTTV emotes", cmapR (const ()) bttvCommand))
+    , ( "ffz"
+      , stopgap ("Show all available FFZ emotes", cmapR (const ()) ffzCommand))
     , ( "updateffz"
-      , ( "Update FFZ cache"
-        , authorizeSender senderAuthority $
-          replyOnNothing "Only for mods" $
-          cmapR (const ()) updateFfzEmotesCommand))
+      , stopgap
+          ( "Update FFZ cache"
+          , authorizeSender senderAuthority $
+            replyOnNothing "Only for mods" $
+            cmapR (const ()) updateFfzEmotesCommand))
     , ( "updatebttv"
-      , ( "Update BTTV cache"
-        , authorizeSender senderAuthority $
-          replyOnNothing "Only for mods" $
-          cmapR (const ()) updateBttvEmotesCommand))
-    , ("help", ("Send help", helpCommand builtinCommands))
+      , stopgap
+          ( "Update BTTV cache"
+          , authorizeSender senderAuthority $
+            replyOnNothing "Only for mods" $
+            cmapR (const ()) updateBttvEmotesCommand))
+    , ("help", stopgap ("Send help", helpCommand builtinCommands))
     , ( "poll"
-      , ( "Starts a poll. !poll <duration:secs> option1; option2; ...; option3"
-        , authorizeSender senderAuthority $
-          replyOnNothing "Only for mods" $
+      , stopgap
+          ( "Starts a poll. !poll <duration:secs> option1; option2; ...; option3"
+          , authorizeSender senderAuthority $
+            replyOnNothing "Only for mods" $
           -- TODO(#362): !poll command does not parse negative numbers
-          regexArgs "([0-9]+) (.*)" $
-          replyLeft $
-          pairArgs $
-          replyLeft $
-          cmapR
-            (\(duration, options) ->
-               fmap
-                 (, filter (not . T.null) $ map T.strip $ T.splitOn ";" options) $
-               readMaybe $ T.unpack duration) $
-          replyOnNothing "Could not parse arguments" pollCommand))
+            regexArgs "([0-9]+) (.*)" $
+            replyLeft $
+            pairArgs $
+            replyLeft $
+            cmapR
+              (\(duration, options) ->
+                 fmap
+                   (
+                   , filter (not . T.null) $ map T.strip $ T.splitOn ";" options) $
+                 readMaybe $ T.unpack duration) $
+            replyOnNothing "Could not parse arguments" pollCommand))
     , ( "cancelpoll"
-      , ( "Cancels the current poll"
-        , authorizeSender senderAuthority $ transR void cancelPollCommand))
+      , stopgap
+          ( "Cancels the current poll"
+          , authorizeSender senderAuthority $ transR void cancelPollCommand))
     , ( "checkpoll"
-      , ("", authorizeSender senderAuthority $ transR void currentPollCommand))
-    , ("uptime", ("Show stream uptime", cmapR (const ()) uptimeCommand))
-    , ("rq", ("Get random quote from your log", randomLogRecordCommand))
+      , stopgap
+          ("", authorizeSender senderAuthority $ transR void currentPollCommand))
+    , ("uptime", stopgap ("Show stream uptime", cmapR (const ()) uptimeCommand))
+    , ("rq", stopgap ("Get random quote from your log", randomLogRecordCommand))
     , ( "addperiodic"
-      , ( "Add periodic command"
-        , authorizeSender senderAuthority $
-          replyOnNothing "Only for mods" $
-          cmapR textAsCommand $
-          replyOnNothing "Command as an argument is expected" addPeriodicCommand))
+      , stopgap
+          ( "Add periodic command"
+          , authorizeSender senderAuthority $
+            replyOnNothing "Only for mods" $
+            cmapR textAsCommand $
+            replyOnNothing
+              "Command as an argument is expected"
+              addPeriodicCommand))
     , ( "delperiodic"
-      , ( "Delete periodic command"
-        , authorizeSender senderAuthority $
-          replyOnNothing "Only for mods" removePeriodicCommand))
+      , stopgap
+          ( "Delete periodic command"
+          , authorizeSender senderAuthority $
+            replyOnNothing "Only for mods" removePeriodicCommand))
     , ( "periodicon"
-      , ( "Enable periodic timer"
-        , authorizeSender senderAuthority $
-          replyOnNothing "Only for mods" enablePeriodicTimerCommand))
+      , stopgap
+          ( "Enable periodic timer"
+          , authorizeSender senderAuthority $
+            replyOnNothing "Only for mods" enablePeriodicTimerCommand))
     , ( "periodicoff"
-      , ( "Disable periodic timer"
-        , authorizeSender senderAuthority $
-          replyOnNothing "Only for mods" disablePeriodicTimerCommand))
-    , ("periodicstat", ("Status of Periodic Timer", statusPeriodicTimerCommand))
+      , stopgap
+          ( "Disable periodic timer"
+          , authorizeSender senderAuthority $
+            replyOnNothing "Only for mods" disablePeriodicTimerCommand))
+    , ( "periodicstat"
+      , stopgap ("Status of Periodic Timer", statusPeriodicTimerCommand))
     , ( "addcmd"
-      , ( "Add custom command"
-        , authorizeSender senderAuthority $
-          replyOnNothing "Only for mods" $
-          regexArgs "([a-zA-Z0-9]+) ?(.*)" $
-          replyLeft $ pairArgs $ replyLeft $ addCustomCommand builtinCommands))
+      , stopgap
+          ( "Add custom command"
+          , authorizeSender senderAuthority $
+            replyOnNothing "Only for mods" $
+            regexArgs "([a-zA-Z0-9]+) ?(.*)" $
+            replyLeft $ pairArgs $ replyLeft $ addCustomCommand builtinCommands))
     , ( "delcmd"
-      , ( "Delete custom command"
-        , authorizeSender senderAuthority $
-          replyOnNothing "Only for mods" $ deleteCustomCommand builtinCommands))
+      , stopgap
+          ( "Delete custom command"
+          , authorizeSender senderAuthority $
+            replyOnNothing "Only for mods" $ deleteCustomCommand builtinCommands))
     , ( "updcmd"
-      , ( "Update custom command"
-        , authorizeSender senderAuthority $
-          replyOnNothing "Only for mods" $
-          regexArgs "([a-zA-Z0-9]+) ?(.*)" $
-          replyLeft $ pairArgs $ replyLeft $ updateCustomCommand builtinCommands))
+      , stopgap
+          ( "Update custom command"
+          , authorizeSender senderAuthority $
+            replyOnNothing "Only for mods" $
+            regexArgs "([a-zA-Z0-9]+) ?(.*)" $
+            replyLeft $
+            pairArgs $ replyLeft $ updateCustomCommand builtinCommands))
                -- TODO(#337): use help instead of !showcmd
     , ( "showcmd"
-      , ( "Show custom command definition"
-        , regexArgs "([a-zA-Z0-9]+)" $
-          replyLeft $
-          cmapR headMay $
-          replyOnNothing "Not enough arguments" $
-          showCustomCommand builtinCommands))
+      , stopgap
+          ( "Show custom command definition"
+          , regexArgs "([a-zA-Z0-9]+)" $
+            replyLeft $
+            cmapR headMay $
+            replyOnNothing "Not enough arguments" $
+            showCustomCommand builtinCommands))
     , ( "timescmd"
-      , ( "Show amount of times the custom commands was invoked"
-        , regexArgs "([a-zA-Z0-9]+)" $
-          replyLeft $
-          cmapR headMay $
-          replyOnNothing "Not enough arguments" $
-          timesCustomCommand builtinCommands))
-    , ("song", ("Print currently playing song", transR void currentSongCommand))
+      , stopgap
+          ( "Show amount of times the custom commands was invoked"
+          , regexArgs "([a-zA-Z0-9]+)" $
+            replyLeft $
+            cmapR headMay $
+            replyOnNothing "Not enough arguments" $
+            timesCustomCommand builtinCommands))
+    , ( "song"
+      , stopgap ("Print currently playing song", transR void currentSongCommand))
     , ( "addalias"
-      , ( "Add command alias"
-        , authorizeSender senderAuthority $
-          replyOnNothing "Only for mods" $
-          regexArgs "([a-zA-Z0-9]+) ([a-zA-Z0-9]+)" $
-          replyLeft $ pairArgs $ replyLeft addAliasCommand))
+      , stopgap
+          ( "Add command alias"
+          , authorizeSender senderAuthority $
+            replyOnNothing "Only for mods" $
+            regexArgs "([a-zA-Z0-9]+) ([a-zA-Z0-9]+)" $
+            replyLeft $ pairArgs $ replyLeft addAliasCommand))
     , ( "delalias"
-      , ( "Remove command alias"
-        , authorizeSender senderAuthority $
-          replyOnNothing "Only for mods" removeAliasCommand))
+      , stopgap
+          ( "Remove command alias"
+          , authorizeSender senderAuthority $
+            replyOnNothing "Only for mods" removeAliasCommand))
     , ( "addvar"
-      , ( "Add variable"
-        , authorizeSender senderAuthority $
-          replyOnNothing "Only for mods" addVariable))
+      , stopgap
+          ( "Add variable"
+          , authorizeSender senderAuthority $
+            replyOnNothing "Only for mods" addVariable))
     , ( "updvar"
-      , ( "Update variable"
-        , authorizeSender senderAuthority $
-          replyOnNothing "Only for mods" $
-          regexArgs "([a-zA-Z0-9]+) ?(.*)" $
-          replyLeft $ pairArgs $ replyLeft updateVariable))
+      , stopgap
+          ( "Update variable"
+          , authorizeSender senderAuthority $
+            replyOnNothing "Only for mods" $
+            regexArgs "([a-zA-Z0-9]+) ?(.*)" $
+            replyLeft $ pairArgs $ replyLeft updateVariable))
     , ( "delvar"
-      , ( "Delete variable"
-        , authorizeSender senderAuthority $
-          replyOnNothing "Only for mods" deleteVariable))
+      , stopgap
+          ( "Delete variable"
+          , authorizeSender senderAuthority $
+            replyOnNothing "Only for mods" deleteVariable))
     , ( "nuke"
-      , ( [qms|Looks at N previous messages and bans all of
+      , stopgap
+          ( [qms|Looks at N previous messages and bans all of
                the users whose messages match provided regex|]
-        , authorizeSender senderAuthority $
-          replyOnNothing "Only for mods" $
-          regexArgs "([0-9]+) (.*)" $
-          replyLeft $
-          pairArgs $
-          replyLeft $
-          Reaction $ \Message { messageContent = (strN, regexStr)
-                              , messageSender = sender
-                              } -> do
-            let parsedN =
-                  maybe (Left "Could not parse N") Right $
-                  readMaybe $ T.unpack strN
-            let compiledRegex =
-                  compile defaultCompOpt defaultExecOpt $ T.unpack regexStr
-            case liftM2 (,) parsedN compiledRegex of
-              Left msg ->
-                logMsg [qms|[WARNING] Could not parse arguments: {msg}|]
-              Right (n, regex) -> do
-                logs <-
-                  selectEntities Proxy $ Take n $ SortBy "timestamp" Desc All
-                traverse_
-                  (banUser (senderChannel sender) . lrUser . entityPayload) $
-                  filter
-                    (isRight . execute regex . T.unpack . lrMsg . entityPayload)
-                    logs))
-    , ("cycle", ("Mock the message", cmapR mockMessage sayMessage))
+          , authorizeSender senderAuthority $
+            replyOnNothing "Only for mods" $
+            regexArgs "([0-9]+) (.*)" $
+            replyLeft $
+            pairArgs $
+            replyLeft $
+            Reaction $ \Message { messageContent = (strN, regexStr)
+                                , messageSender = sender
+                                } -> do
+              let parsedN =
+                    maybe (Left "Could not parse N") Right $
+                    readMaybe $ T.unpack strN
+              let compiledRegex =
+                    compile defaultCompOpt defaultExecOpt $ T.unpack regexStr
+              case liftM2 (,) parsedN compiledRegex of
+                Left msg ->
+                  logMsg [qms|[WARNING] Could not parse arguments: {msg}|]
+                Right (n, regex) -> do
+                  logs <-
+                    selectEntities Proxy $ Take n $ SortBy "timestamp" Desc All
+                  traverse_
+                    (banUser (senderChannel sender) . lrUser . entityPayload) $
+                    filter
+                      (isRight .
+                       execute regex . T.unpack . lrMsg . entityPayload)
+                      logs))
+    , ("cycle", stopgap ("Mock the message", cmapR mockMessage sayMessage))
     , ( "trust"
-      , ( "Makes the user trusted"
-        , authorizeSender senderAuthority $
-          replyOnNothing "Only for mods" $
-          regexArgs "(.+)" $
-          replyLeft $
-          cmapR headMay $ replyOnNothing "Not enough arguments" trustCommand))
+      , stopgap
+          ( "Makes the user trusted"
+          , authorizeSender senderAuthority $
+            replyOnNothing "Only for mods" $
+            regexArgs "(.+)" $
+            replyLeft $
+            cmapR headMay $ replyOnNothing "Not enough arguments" trustCommand))
     , ( "untrust"
-      , ( "Untrusts the user"
-        , authorizeSender senderAuthority $
-          replyOnNothing "Only for mods" $
-          regexArgs "(.+)" $
-          replyLeft $
-          cmapR headMay $ replyOnNothing "Not enough arguments" untrustCommand))
+      , stopgap
+          ( "Untrusts the user"
+          , authorizeSender senderAuthority $
+            replyOnNothing "Only for mods" $
+            regexArgs "(.+)" $
+            replyLeft $
+            cmapR headMay $ replyOnNothing "Not enough arguments" untrustCommand))
     , ( "amitrusted"
-      , ("Check if you are a trusted user", cmapR (const ()) amitrustedCommand))
+      , stopgap
+          ( "Check if you are a trusted user"
+          , cmapR (const ()) amitrustedCommand))
     , ( "istrusted"
-      , ( "Check if the user is trusted"
-        , regexArgs "(.+)" $
-          replyLeft $
-          cmapR headMay $ replyOnNothing "Not enough arguments" istrustedCommand))
+      , stopgap
+          ( "Check if the user is trusted"
+          , regexArgs "(.+)" $
+            replyLeft $
+            cmapR headMay $
+            replyOnNothing "Not enough arguments" istrustedCommand))
     , ( "wiggle"
-      , ( "Wiggle the tenticle (integration with https://github.com/tsoding/wiggle)"
-        , transR (Identity . messageSender) $
-          cmapR (URI.encode . T.unpack . senderDisplayName) $
-          Reaction $ \(Identity name) -> do
-            request <-
-              parseRequest [qms|http://localhost:8081/wiggle/{URI.encode name}|]
-            void $ httpRequest request))
+      , stopgap
+          ( "Wiggle the tenticle (integration with https://github.com/tsoding/wiggle)"
+          , transR (Identity . messageSender) $
+            cmapR (URI.encode . T.unpack . senderDisplayName) $
+            Reaction $ \(Identity name) -> do
+              request <-
+                parseRequest
+                  [qms|http://localhost:8081/wiggle/{URI.encode name}|]
+              void $ httpRequest request))
     , ( "wme"
-      , ( "Whisper yourself something"
-        , Reaction $ \msg ->
-            whisperToSender
-              (messageSender msg)
-              [qms|You asked me to whisper you this: "{messageContent msg}"|]))
+      , stopgap
+          ( "Whisper yourself something"
+          , Reaction $ \msg ->
+              whisperToSender
+                (messageSender msg)
+                [qms|You asked me to whisper you this: "{messageContent msg}"|]))
     , ( "vanish"
-      , ("Timeout yourself for one second", Reaction $ timeoutMessage 1))
+      , stopgap ("Timeout yourself for one second", Reaction $ timeoutMessage 1))
     , ( "raffle"
-      , ( "Start the raffle"
-        , authorizeSender senderAuthority $
-          replyOnNothing "Only for mods" $ cmapR (const 5) raffleCommand))
-    , ("join", ("Join the raffle", joinCommand))
+      , stopgap
+          ( "Start the raffle"
+          , authorizeSender senderAuthority $
+            replyOnNothing "Only for mods" $ cmapR (const 5) raffleCommand))
+    , ("join", stopgap ("Join the raffle", joinCommand))
     -- TODO(#562): !friday allows arbitrary text
     , ( "friday"
-      , ( "Suggest video for the friday stream"
-        , onlyForRoles
-            [InternalRole "Trusted", tsodingTrustedDiscordRole]
-            fridayCommand))
+      , stopgap
+          ( "Suggest video for the friday stream"
+          , onlyForRoles
+              [InternalRole "Trusted", tsodingTrustedDiscordRole]
+              fridayCommand))
     , ( "twitch"
-      , ( "Send message to Tsoding Twitch channel"
-        , onlyForRoles [tsodingTwitchedDiscordRole] $
-          liftR (say (TwitchChannel "#tsoding")) ignore))
+      , stopgap
+          ( "Send message to Tsoding Twitch channel"
+          , onlyForRoles [tsodingTwitchedDiscordRole] $
+            liftR (say (TwitchChannel "#tsoding")) ignore))
     , ( "roles"
-      , ( "Show your roles"
-        , transR duplicate $
-          cmapR (T.pack . show . senderRoles . messageSender) $
-          Reaction replyMessage))
-    , ("markov", ("Generate Markov message", markov))
+      , stopgap
+          ( "Show your roles"
+          , transR duplicate $
+            cmapR (T.pack . show . senderRoles . messageSender) $
+            Reaction replyMessage))
+    , ("markov", stopgap ("Generate Markov message", markov))
     , ( "nextvideo"
-      , ( "Get the next video for Smart Stream"
-        , onlyForRoles authorityRoles $ transR void nextVideoCommand))
-    , ("video", ("Print the current video", transR void videoCommand))
+      , stopgap
+          ( "Get the next video for Smart Stream"
+          , onlyForRoles authorityRoles $ transR void nextVideoCommand))
+    , ("video", stopgap ("Print the current video", transR void videoCommand))
     , ( "videocount"
-      , ("Print amount of videos in the queue", transR void videoCountCommand))
+      , stopgap
+          ("Print amount of videos in the queue", transR void videoCountCommand))
     , ( "setvideotime"
-      , ( "Set the time cursor for the video queue"
-        , onlyForRoles authorityRoles $
-          cmapR (readMay . T.unpack) $
-          replyOnNothing "Cannot parse this as UTCTime" setVideoDateCommand))
-    , ("calc", ("Calculator", calcCommand))
-    , ("omega", ("OMEGALUL", cmapR (omega 3) sayMessage))
+      , stopgap
+          ( "Set the time cursor for the video queue"
+          , onlyForRoles authorityRoles $
+            cmapR (readMay . T.unpack) $
+            replyOnNothing "Cannot parse this as UTCTime" setVideoDateCommand))
+    , ("calc", stopgap ("Calculator", calcCommand))
+    , ("omega", stopgap ("OMEGALUL", cmapR (omega 3) sayMessage))
     , ( "localtime"
-      , ( "A simple command that show local time in a timezone"
-        , cmapR nameToTimeZone $
-          replyLeft $
-          cmapR return $
-          liftR (flip (liftM2 utcToLocalTime) now) $
-          cmapR (T.pack . show) $ Reaction replyMessage))
+      , stopgap
+          ( "A simple command that show local time in a timezone"
+          , cmapR nameToTimeZone $
+            replyLeft $
+            cmapR return $
+            liftR (flip (liftM2 utcToLocalTime) now) $
+            cmapR (T.pack . show) $ Reaction replyMessage))
     , ( "urlencode"
-      , ( "!google URL encode"
-        , liftR (callFun "urlencode" . return) $ ignoreNothing sayMessage))
+      , stopgap
+          ( "!google URL encode"
+          , liftR (callFun "urlencode" . return) $ ignoreNothing sayMessage))
     ]
 
 signText :: T.Text -> Either String Int
@@ -498,5 +548,5 @@ dispatchBuiltinCommand message@Message {messageContent = Command { commandName =
                                                                  }} =
   maybe
     (return ())
-    (\(_, f) -> runReaction f $ fmap (const args) message)
+    (\bc -> runReaction (bcReaction bc) $ fmap (const args) message)
     (M.lookup name builtinCommands)
