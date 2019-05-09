@@ -1,5 +1,5 @@
 ### General ###
-.git
+#.git           # .git is need for the building process
 .gitignore
 .dockerignore
 .hindent.yaml
