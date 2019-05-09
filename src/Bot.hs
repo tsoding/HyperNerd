@@ -2,6 +2,7 @@
 {-# LANGUAGE TupleSections #-}
 {-# LANGUAGE QuasiQuotes #-}
 {-# LANGUAGE LambdaCase #-}
+{-# LANGUAGE TemplateHaskell #-}
 
 module Bot
   ( Bot
@@ -55,6 +56,7 @@ import qualified Text.Regex.Base.RegexLike as Regex
 import Text.Regex.TDFA (defaultCompOpt, defaultExecOpt)
 import Text.Regex.TDFA.String
 import Transport
+import Bot.DocLoc
 
 type Bot = InEvent -> Effect ()
 
@@ -69,7 +71,7 @@ tsodingTrustedDiscordRole = DiscordRole 543864981171470346
 builtinCommands :: CommandTable
 builtinCommands =
   M.fromList
-    [ ("russify", ("Russify western spy text", russifyCommand))
+    [ ("russify", (T.pack ("Russify western spy text. Defined in " ++ $githubLinkLocationStr), russifyCommand))
     , ( "addquote"
       , ( "Add quote to quote database"
         , authorizeSender

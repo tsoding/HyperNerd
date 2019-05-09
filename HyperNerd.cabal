@@ -79,6 +79,7 @@ executable HyperNerd
                      , Bot.Variable
                      , Bot.Calc
                      , Bot.Expr
+                     , Bot.DocLoc
                      , BotState
                      , Command
                      , Config
@@ -135,6 +136,7 @@ executable HyperNerd
                      , random
                      , cassava
                      , discord-haskell == 0.7.1
+                     , template-haskell
 
   -- Directories containing source files.
   hs-source-dirs:      src
