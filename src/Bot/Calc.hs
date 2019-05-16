@@ -30,8 +30,7 @@ tokenize :: T.Text -> Either String [Token]
 tokenize (T.uncons -> Just (' ', xs)) = tokenize xs
 tokenize (T.uncons -> Just ('+', xs)) = (OpToken Plus :) <$> tokenize xs
 tokenize (T.uncons -> Just ('-', xs)) = (OpToken Minus :) <$> tokenize xs
-tokenize (T.uncons -> Just ('*', xs)) =
-  (OpToken Multiply :) <$> tokenize xs
+tokenize (T.uncons -> Just ('*', xs)) = (OpToken Multiply :) <$> tokenize xs
 -- TODO(#570): Division operation is not supported by !calc
 tokenize (T.uncons -> Just ('/', _)) =
   Left "https://github.com/tsoding/HyperNerd/issues/570"
@@ -83,7 +82,7 @@ interpretOp Multiply = (*)
 
 interpretToken :: RpnState -> Token -> Either String RpnState
 interpretToken s (NumberToken x) = return (x : s)
-interpretToken (x1:x2:xs) (OpToken op) = return (interpretOp op x2 x1:xs)
+interpretToken (x1:x2:xs) (OpToken op) = return (interpretOp op x2 x1 : xs)
 interpretToken _ _ = Left "Error 😡"
 
 interpretRpn :: [Token] -> Either String Int
