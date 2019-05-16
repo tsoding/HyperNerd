@@ -68,7 +68,7 @@ infixToRpn [] (OpToken op:rest) = infixToRpn [op] rest
 infixToRpn opStack@(op0:_) (OpToken op1:rest)
   | precedence op0 < precedence op1 = infixToRpn (op1 : opStack) rest
   | otherwise =
-    ((++) (map OpToken outputOps)) <$> infixToRpn (op1 : restOpStack) rest
+    (map OpToken outputOps ++) <$> infixToRpn (op1 : restOpStack) rest
   where
     (outputOps, restOpStack) =
       span (\opx -> precedence opx >= precedence op1) opStack
