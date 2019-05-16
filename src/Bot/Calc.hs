@@ -15,19 +15,23 @@ import Safe
 import Text.InterpolatedString.QM
 import Transport
 
+data Op
+  = Plus
+  | Minus
+  | Multiply
+  deriving (Eq, Show)
+
 data Token
   = NumberToken Int
-  | PlusToken
-  | MinusToken
+  | OpToken Op
   deriving (Eq, Show)
 
 tokenize :: T.Text -> Either String [Token]
 tokenize (T.uncons -> Just (' ', xs)) = tokenize xs
-tokenize (T.uncons -> Just ('+', xs)) = (PlusToken :) <$> tokenize xs
-tokenize (T.uncons -> Just ('-', xs)) = (MinusToken :) <$> tokenize xs
--- TODO(#569): Multiplication operation is not supported by !calc
-tokenize (T.uncons -> Just ('*', _)) =
-  Left "https://github.com/tsoding/HyperNerd/issues/569"
+tokenize (T.uncons -> Just ('+', xs)) = (OpToken Plus :) <$> tokenize xs
+tokenize (T.uncons -> Just ('-', xs)) = (OpToken Minus :) <$> tokenize xs
+tokenize (T.uncons -> Just ('*', xs)) =
+  (OpToken Multiply :) <$> tokenize xs
 -- TODO(#570): Division operation is not supported by !calc
 tokenize (T.uncons -> Just ('/', _)) =
   Left "https://github.com/tsoding/HyperNerd/issues/570"
@@ -52,21 +56,34 @@ tokenize xs@(T.uncons -> Just (x, _))
 tokenize (T.uncons -> Nothing) = return []
 tokenize _ = Left "Error 😡"
 
-infixToRpn :: Maybe Token -> [Token] -> Either String [Token]
-infixToRpn Nothing (NumberToken x:rest) =
-  (NumberToken x :) <$> infixToRpn Nothing rest
-infixToRpn (Just op) (NumberToken x:rest) =
-  (NumberToken x :) . (op :) <$> infixToRpn Nothing rest
-infixToRpn Nothing (op:rest) = infixToRpn (Just op) rest
-infixToRpn Nothing [] = return []
-infixToRpn _ _ = Left "Error 😡"
+precedence :: Op -> Int
+precedence Plus = 0
+precedence Minus = 0
+precedence Multiply = 1
+
+infixToRpn :: [Op] -> [Token] -> Either String [Token]
+infixToRpn opStack (NumberToken x:restTokens) =
+  (NumberToken x :) <$> infixToRpn opStack restTokens
+infixToRpn [] (OpToken op:rest) = infixToRpn [op] rest
+infixToRpn opStack@(op0:_) (OpToken op1:rest)
+  | precedence op0 < precedence op1 = infixToRpn (op1 : opStack) rest
+  | otherwise =
+    ((++) (map OpToken outputOps)) <$> infixToRpn (op1 : restOpStack) rest
+  where
+    (outputOps, restOpStack) =
+      span (\opx -> precedence opx >= precedence op1) opStack
+infixToRpn opStack [] = return $ map OpToken opStack
 
 type RpnState = [Int]
 
+interpretOp :: Op -> Int -> Int -> Int
+interpretOp Plus = (+)
+interpretOp Minus = (-)
+interpretOp Multiply = (*)
+
 interpretToken :: RpnState -> Token -> Either String RpnState
 interpretToken s (NumberToken x) = return (x : s)
-interpretToken (x1:x2:xs) PlusToken = return (x2 + x1 : xs)
-interpretToken (x1:x2:xs) MinusToken = return (x2 - x1 : xs)
+interpretToken (x1:x2:xs) (OpToken op) = return (interpretOp op x2 x1:xs)
 interpretToken _ _ = Left "Error 😡"
 
 interpretRpn :: [Token] -> Either String Int
@@ -79,7 +96,7 @@ interpretRpn tokens = do
 calc :: T.Text -> Either String Int
 calc text = do
   tokens <- tokenize text
-  rpn <- infixToRpn Nothing tokens
+  rpn <- infixToRpn [] tokens
   interpretRpn rpn
 
 calcCommand :: Reaction Message T.Text
