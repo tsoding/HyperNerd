@@ -19,6 +19,8 @@ data Op
   = Plus
   | Minus
   | Multiply
+  | Division
+  | Mod
   deriving (Eq, Show)
 
 data Token
@@ -31,9 +33,8 @@ tokenize (T.uncons -> Just (' ', xs)) = tokenize xs
 tokenize (T.uncons -> Just ('+', xs)) = (OpToken Plus :) <$> tokenize xs
 tokenize (T.uncons -> Just ('-', xs)) = (OpToken Minus :) <$> tokenize xs
 tokenize (T.uncons -> Just ('*', xs)) = (OpToken Multiply :) <$> tokenize xs
--- TODO(#570): Division operation is not supported by !calc
-tokenize (T.uncons -> Just ('/', _)) =
-  Left "https://github.com/tsoding/HyperNerd/issues/570"
+tokenize (T.uncons -> Just ('/', xs)) = (OpToken Division :) <$> tokenize xs
+tokenize (T.uncons -> Just ('%', xs)) = (OpToken Mod :) <$> tokenize xs
 -- TODO(#574): !calc does not support fractional numbers
 tokenize (T.uncons -> Just ('.', _)) =
   Left "https://github.com/tsoding/HyperNerd/issues/574"
@@ -59,6 +60,8 @@ precedence :: Op -> Int
 precedence Plus = 0
 precedence Minus = 0
 precedence Multiply = 1
+precedence Division = 1
+precedence Mod = 1
 
 infixToRpn :: [Op] -> [Token] -> Either String [Token]
 infixToRpn opStack (NumberToken x:restTokens) =
@@ -75,14 +78,24 @@ infixToRpn opStack [] = return $ map OpToken opStack
 
 type RpnState = [Int]
 
-interpretOp :: Op -> Int -> Int -> Int
-interpretOp Plus = (+)
-interpretOp Minus = (-)
-interpretOp Multiply = (*)
+divEither :: Integral a => a -> a -> Either String a
+divEither _ 0 = Left "Division by zero"
+divEither a b = return $ div a b
+
+modEither :: Integral a => a -> a -> Either String a
+modEither _ 0 = Left "Division by zero"
+modEither a b = return $ mod a b
+
+interpretOp :: Op -> Int -> Int -> Either String Int
+interpretOp Plus a b = return (a + b)
+interpretOp Minus a b = return (a - b)
+interpretOp Multiply a b = return (a * b)
+interpretOp Division a b = divEither a b
+interpretOp Mod a b = modEither a b
 
 interpretToken :: RpnState -> Token -> Either String RpnState
 interpretToken s (NumberToken x) = return (x : s)
-interpretToken (x1:x2:xs) (OpToken op) = return (interpretOp op x2 x1 : xs)
+interpretToken (x1:x2:xs) (OpToken op) = (: xs) <$> interpretOp op x2 x1
 interpretToken _ _ = Left "Error 😡"
 
 interpretRpn :: [Token] -> Either String Int
