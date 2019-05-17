@@ -43,9 +43,7 @@ extra-deps:
 - hookup-0.2.2
 - irc-core-2.5.0
 - discord-haskell-0.7.1
-# use time-1.9.2 from github
-- github: haskell/time
-  commit: 9e96c26132fef01a3113c8b152b1be96c0eccd86
+- time-1.9.2
 
 # relax contraints at HyperNerd.cabal
 allow-newer: true
