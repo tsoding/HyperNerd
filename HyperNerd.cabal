@@ -100,6 +100,7 @@ executable HyperNerd
                      , Transport.Debug
                      , Transport.Discord
                      , Transport.Twitch
+                     , Regexp
 
   -- LANGUAGE extensions used by modules in this package.
   other-extensions:    OverloadedStrings
@@ -203,7 +204,10 @@ test-suite HyperNerdTest
                      , uri-encode
                      , comonad
                      , stm
+                     , regex-base
+                     , regex-tdfa
                      , discord-haskell == 0.7.1
+                     , array
 
   other-modules:       Bot.BttvFfz
                      , Bot.Links
@@ -214,6 +218,10 @@ test-suite HyperNerdTest
                      , Bot.Poll
                      , Bot.PollTest
                      , Bot.Banwords
+                     , Bot.Friday
+                     , Bot.FridayTest
+                     , Data.Maybe.Extra
+                     , Regexp
                      , Command
                      , CommandTest
                      , Effect
