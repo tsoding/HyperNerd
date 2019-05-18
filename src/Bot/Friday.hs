@@ -7,6 +7,7 @@ module Bot.Friday
   , videoCommand
   , setVideoDateCommand
   , videoCountCommand
+  , containsYtLink
   ) where
 
 import Bot.Replies
@@ -22,6 +23,9 @@ import Property
 import Reaction
 import Text.InterpolatedString.QM
 import Transport (Message(..), Sender(..))
+import Regexp
+import Data.Either
+import Data.Maybe.Extra
 
 data FridayVideo = FridayVideo
   { fridayVideoName :: T.Text
@@ -52,8 +56,15 @@ instance IsEntity LastVideoTime where
   fromProperties properties =
     LastVideoTime <$> extractProperty "time" properties
 
+containsYtLink :: T.Text -> Bool
+containsYtLink =
+  isRight .
+  regexParseArgs [qn|https?:\/\/(www\.)?youtu(be\.com\/watch\?v=|\.be\/)[a-zA-Z0-9\-\_]+|]
+
 fridayCommand :: Reaction Message T.Text
 fridayCommand =
+  cmapR (\message -> toMaybe message $ containsYtLink message) $
+  replyOnNothing "You must submit a youtube link" $
   transR duplicate $
   liftR
     (\msg ->

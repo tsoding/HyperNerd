@@ -31,7 +31,6 @@ import Bot.Variable
 import Command
 import Control.Comonad
 import Control.Monad
-import Data.Array
 import Data.Char
 import Data.Either
 import Data.Either.Extra
@@ -53,10 +52,10 @@ import Safe
 import System.Random
 import Text.InterpolatedString.QM
 import Text.Read
-import qualified Text.Regex.Base.RegexLike as Regex
+import Transport
+import Regexp
 import Text.Regex.TDFA (defaultCompOpt, defaultExecOpt)
 import Text.Regex.TDFA.String
-import Transport
 
 type Bot = InEvent -> Effect ()
 
@@ -375,7 +374,6 @@ builtinCommands =
     , ( "join"
       , mkBuiltinCommand
           ("Join the raffle", $githubLinkLocationStr, joinCommand))
-    -- TODO(#562): !friday allows arbitrary text
     , ( "friday"
       , mkBuiltinCommand
           ( "Suggest video for the friday stream"
@@ -526,18 +524,6 @@ pairArgs =
   cmapR $ \case
     [x, y] -> Right (x, y)
     args -> Left [qms|Expected 2 arguments but got {length args}|]
-
-regexParseArgs :: T.Text -> T.Text -> Either String [T.Text]
-regexParseArgs regexString textArgs = do
-  let stringArgs = T.unpack textArgs
-  regex <- compile defaultCompOpt defaultExecOpt $ T.unpack regexString
-  result <- execute regex stringArgs
-  case result of
-    Just matches ->
-      case map (T.pack . flip Regex.extract stringArgs) $ elems matches of
-        _:finalArgs -> Right finalArgs
-        [] -> Left "Not enough arguments"
-    Nothing -> Left [qms|Command doesn't match '{regexString}' regex|]
 
 regexArgs ::
      Comonad w
