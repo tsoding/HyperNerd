@@ -9,13 +9,13 @@ module Main where
 3. All of the `spec`-s from all of the `*Test` modules are accumulated in
    the `main` function and fed into `runTestTT`.
 -}
+import qualified Bot.FridayTest
 import qualified Bot.LinksTest
 import qualified Bot.LogTest
 import qualified Bot.PollTest
 import qualified Bot.TwitchTest
 import qualified CommandTest
 import qualified Sqlite.EntityPersistenceTest
-import qualified Bot.FridayTest
 import System.Exit
 import Test.HUnit
 

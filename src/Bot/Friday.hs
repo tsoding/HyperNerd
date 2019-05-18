@@ -12,8 +12,10 @@ module Bot.Friday
 
 import Bot.Replies
 import Control.Comonad
+import Data.Either
 import qualified Data.Map as M
 import Data.Maybe
+import Data.Maybe.Extra
 import Data.Proxy
 import qualified Data.Text as T
 import Data.Time
@@ -21,11 +23,9 @@ import Effect
 import Entity
 import Property
 import Reaction
+import Regexp
 import Text.InterpolatedString.QM
 import Transport (Message(..), Sender(..))
-import Regexp
-import Data.Either
-import Data.Maybe.Extra
 
 data FridayVideo = FridayVideo
   { fridayVideoName :: T.Text
@@ -59,7 +59,8 @@ instance IsEntity LastVideoTime where
 containsYtLink :: T.Text -> Bool
 containsYtLink =
   isRight .
-  regexParseArgs [qn|https?:\/\/(www\.)?youtu(be\.com\/watch\?v=|\.be\/)[a-zA-Z0-9\-\_]+|]
+  regexParseArgs
+    [qn|https?:\/\/(www\.)?youtu(be\.com\/watch\?v=|\.be\/)[a-zA-Z0-9\-\_]+|]
 
 fridayCommand :: Reaction Message T.Text
 fridayCommand =

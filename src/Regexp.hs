@@ -1,14 +1,16 @@
 {-# LANGUAGE QuasiQuotes #-}
 {-# LANGUAGE OverloadedStrings #-}
 
-module Regexp (regexParseArgs) where
+module Regexp
+  ( regexParseArgs
+  ) where
 
+import Data.Array
 import qualified Data.Text as T
+import Text.InterpolatedString.QM
 import qualified Text.Regex.Base.RegexLike as Regex
 import Text.Regex.TDFA (defaultCompOpt, defaultExecOpt)
 import Text.Regex.TDFA.String
-import Text.InterpolatedString.QM
-import Data.Array
 
 regexParseArgs :: T.Text -> T.Text -> Either String [T.Text]
 regexParseArgs regexString textArgs = do
