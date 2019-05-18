@@ -22,6 +22,6 @@ regexParseArgs regexString textArgs = do
       case map (T.pack . flip Regex.extract stringArgs) $ elems matches of
         _:finalArgs -> Right finalArgs
         [] -> Left "Not enough arguments"
-    -- TODO: regexParseArgs has too specific error messages
+    -- TODO(#613): regexParseArgs has too specific error messages
     --   It mentions commands, but can be used not only for commands
     Nothing -> Left [qms|Command doesn't match '{regexString}' regex|]
