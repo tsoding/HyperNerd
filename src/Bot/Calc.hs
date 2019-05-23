@@ -47,7 +47,7 @@ tokenize (T.uncons -> Just ('+', xs)) = (OpToken Plus :) <$> tokenize xs
 tokenize (T.uncons -> Just ('-', xs)) = (OpToken Minus :) <$> tokenize xs
 tokenize (T.uncons -> Just ('*', xs)) = (OpToken Multiply :) <$> tokenize xs
 tokenize (T.uncons -> Just ('/', xs)) = (OpToken Division :) <$> tokenize xs
--- TODO: Mod operation is not supported anymore by !calc
+-- TODO(#619): Mod operation is not supported anymore by !calc
 --   Because `Data.Fixed.mod' 100.0 0.0` throws an Exception that
 --   somehow short-circuits the supavisah
 tokenize (T.uncons -> Just ('%', _)) =
