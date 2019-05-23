@@ -447,7 +447,7 @@ builtinCommands =
           ( "Reloads Markov model file"
           , $githubLinkLocationStr
           , onlyForRoles authorityRoles $
-            liftR (const $ reloadMarkov) $
+            liftR (const reloadMarkov) $
             replyOnNothing "Nothing to reload" $ Reaction replyMessage))
     ]
 
