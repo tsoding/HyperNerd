@@ -442,6 +442,11 @@ builtinCommands =
           ( "!google URL encode"
           , $githubLinkLocationStr
           , liftR (callFun "urlencode" . return) $ ignoreNothing sayMessage))
+    , ( "reloadmarkov"
+      , mkBuiltinCommand
+          ( "Reloads Markov model file"
+          , $githubLinkLocationStr
+          , onlyForRoles authorityRoles $ liftR (const $ reloadMarkov) ignore))
     ]
 
 signText :: T.Text -> Either String Int

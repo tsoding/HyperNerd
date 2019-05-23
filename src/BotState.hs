@@ -46,6 +46,7 @@ data BotState = BotState
   -- Shared
   , bsTimeouts :: [(Integer, Effect ())]
   , bsSqliteConn :: SQLite.Connection
+  , bsMarkovPath :: Maybe FilePath
   , bsMarkov :: Maybe Markov
   }
 
@@ -57,30 +58,31 @@ newTransportState config = do
     TransportState
       {csIncoming = incoming, csOutcoming = outcoming, csConfig = config}
 
-newBotState :: Maybe Markov -> [Config] -> SQLite.Connection -> IO BotState
-newBotState markov confs sqliteConn = do
+newBotState :: Maybe FilePath -> [Config] -> SQLite.Connection -> IO BotState
+newBotState markovPath confs sqliteConn = do
   transports <- mapM newTransportState confs
+  markov <- runMaybeT (MaybeT (return markovPath) >>= lift . loadMarkov)
   return
     BotState
       { bsSqliteConn = sqliteConn
       , bsTimeouts = []
+      , bsMarkovPath = markovPath
       , bsMarkov = markov
       , bsTransports = transports
       }
 
 withBotState' ::
-     Maybe Markov -> [Config] -> FilePath -> (BotState -> IO ()) -> IO ()
-withBotState' markov confs databasePath block =
+     Maybe FilePath -> [Config] -> FilePath -> (BotState -> IO ()) -> IO ()
+withBotState' markovPath confs databasePath block =
   SQLite.withConnection databasePath $ \sqliteConn -> do
     SEP.prepareSchema sqliteConn
-    newBotState markov confs sqliteConn >>= block
+    newBotState markovPath confs sqliteConn >>= block
 
 withBotState ::
      Maybe FilePath -> FilePath -> FilePath -> (BotState -> IO ()) -> IO ()
 withBotState markovPath tcPath databasePath block = do
   confs <- configsFromFile tcPath
-  markov <- runMaybeT (MaybeT (return markovPath) >>= lift . loadMarkov)
-  withBotState' markov confs databasePath block
+  withBotState' markovPath confs databasePath block
 
 twitchCmdEscape :: T.Text -> T.Text
 twitchCmdEscape = T.dropWhile (`elem` ['/', '.']) . T.strip
@@ -186,6 +188,9 @@ applyEffect (botState, Free (RandomMarkov s)) = do
   let markov = MaybeT $ return $ bsMarkov botState
   sentence <- runMaybeT (eventsAsText <$> (markov >>= lift . simulate))
   return (botState, s sentence)
+applyEffect (botState, Free (ReloadMarkov s)) = do
+  putStrLn "Just reload the model 4HEad"
+  return (botState, s)
 applyEffect (botState, Free (GetVar _ s)) = return (botState, s Nothing)
 applyEffect (botState, Free (CallFun "urlencode" [text] s)) =
   return (botState, s $ Just $ T.pack $ URI.encode $ T.unpack text)

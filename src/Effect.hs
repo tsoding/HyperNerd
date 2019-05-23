@@ -25,6 +25,7 @@ module Effect
   , periodicEffect
   , twitchCommand
   , randomMarkov
+  , reloadMarkov
   , callFun
   ) where
 
@@ -104,6 +105,7 @@ data EffectF s
                   [T.Text]
                   s
   | RandomMarkov (Maybe T.Text -> s)
+  | ReloadMarkov s
   | GetVar T.Text
            (Maybe T.Text -> s)
   | CallFun T.Text
@@ -180,6 +182,9 @@ twitchCommand channel name args = liftF $ TwitchCommand channel name args ()
 
 randomMarkov :: Effect (Maybe T.Text)
 randomMarkov = liftF $ RandomMarkov id
+
+reloadMarkov :: Effect ()
+reloadMarkov = liftF $ ReloadMarkov ()
 
 callFun :: T.Text -> [T.Text] -> Effect (Maybe T.Text)
 callFun name args = liftF $ CallFun name args id
