@@ -420,7 +420,11 @@ builtinCommands =
             cmapR (readMay . T.unpack) $
             replyOnNothing "Cannot parse this as UTCTime" setVideoDateCommand))
     , ( "calc"
-      , mkBuiltinCommand ("Calculator", $githubLinkLocationStr, calcCommand))
+      , mkBuiltinCommand
+          ( [qms|Calculator. Supported operation:
+                 {T.intercalate ", " $ supportedOps}|]
+          , $githubLinkLocationStr
+          , calcCommand))
     , ( "omega"
       , mkBuiltinCommand
           ("OMEGALUL", $githubLinkLocationStr, cmapR (omega 3) sayMessage))

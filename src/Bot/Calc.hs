@@ -1,8 +1,10 @@
+{-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE ViewPatterns #-}
 {-# LANGUAGE QuasiQuotes #-}
 
 module Bot.Calc
   ( calcCommand
+  , supportedOps
   ) where
 
 import Bot.Replies
@@ -21,12 +23,24 @@ data Op
   | Multiply
   | Division
   | Mod
-  deriving (Eq, Show)
+  | Exp
+  deriving (Eq, Show, Enum, Bounded)
 
 data Token
   = NumberToken Int
   | OpToken Op
   deriving (Eq, Show)
+
+opName :: Op -> T.Text
+opName Plus = "+"
+opName Minus = "-"
+opName Multiply = "*"
+opName Division = "/"
+opName Mod = "%"
+opName Exp = "^"
+
+supportedOps :: [T.Text]
+supportedOps = map opName [minBound :: Op .. maxBound]
 
 tokenize :: T.Text -> Either String [Token]
 tokenize (T.uncons -> Just (' ', xs)) = tokenize xs
@@ -35,6 +49,7 @@ tokenize (T.uncons -> Just ('-', xs)) = (OpToken Minus :) <$> tokenize xs
 tokenize (T.uncons -> Just ('*', xs)) = (OpToken Multiply :) <$> tokenize xs
 tokenize (T.uncons -> Just ('/', xs)) = (OpToken Division :) <$> tokenize xs
 tokenize (T.uncons -> Just ('%', xs)) = (OpToken Mod :) <$> tokenize xs
+tokenize (T.uncons -> Just ('^', xs)) = (OpToken Exp :) <$> tokenize xs
 -- TODO(#574): !calc does not support fractional numbers
 tokenize (T.uncons -> Just ('.', _)) =
   Left "https://github.com/tsoding/HyperNerd/issues/574"
@@ -62,6 +77,7 @@ precedence Minus = 0
 precedence Multiply = 1
 precedence Division = 1
 precedence Mod = 1
+precedence Exp = 2
 
 infixToRpn :: [Op] -> [Token] -> Either String [Token]
 infixToRpn opStack (NumberToken x:restTokens) =
@@ -92,6 +108,7 @@ interpretOp Minus a b = return (a - b)
 interpretOp Multiply a b = return (a * b)
 interpretOp Division a b = divEither a b
 interpretOp Mod a b = modEither a b
+interpretOp Exp a b = return (a ^ b)
 
 interpretToken :: RpnState -> Token -> Either String RpnState
 interpretToken s (NumberToken x) = return (x : s)
