@@ -17,17 +17,17 @@ import Safe
 import Text.InterpolatedString.QM
 import Transport
 
+-- TODO: !calc does not support mod anymore
 data Op
   = Plus
   | Minus
   | Multiply
   | Division
-  | Mod
   | Exp
   deriving (Eq, Show, Enum, Bounded)
 
 data Token
-  = NumberToken Int
+  = NumberToken Double
   | OpToken Op
   deriving (Eq, Show)
 
@@ -36,7 +36,6 @@ opName Plus = "+"
 opName Minus = "-"
 opName Multiply = "*"
 opName Division = "/"
-opName Mod = "%"
 opName Exp = "^"
 
 supportedOps :: [T.Text]
@@ -48,7 +47,7 @@ tokenize (T.uncons -> Just ('+', xs)) = (OpToken Plus :) <$> tokenize xs
 tokenize (T.uncons -> Just ('-', xs)) = (OpToken Minus :) <$> tokenize xs
 tokenize (T.uncons -> Just ('*', xs)) = (OpToken Multiply :) <$> tokenize xs
 tokenize (T.uncons -> Just ('/', xs)) = (OpToken Division :) <$> tokenize xs
-tokenize (T.uncons -> Just ('%', xs)) = (OpToken Mod :) <$> tokenize xs
+tokenize (T.uncons -> Just ('%', _)) = Left "Mod is temporary not supported"
 tokenize (T.uncons -> Just ('^', xs)) = (OpToken Exp :) <$> tokenize xs
 -- TODO(#574): !calc does not support fractional numbers
 tokenize (T.uncons -> Just ('.', _)) =
@@ -76,7 +75,6 @@ precedence Plus = 0
 precedence Minus = 0
 precedence Multiply = 1
 precedence Division = 1
-precedence Mod = 1
 precedence Exp = 2
 
 infixToRpn :: [Op] -> [Token] -> Either String [Token]
@@ -92,37 +90,28 @@ infixToRpn opStack@(op0:_) (OpToken op1:rest)
       span (\opx -> precedence opx >= precedence op1) opStack
 infixToRpn opStack [] = return $ map OpToken opStack
 
-type RpnState = [Int]
+type RpnState = [Double]
 
-divEither :: Integral a => a -> a -> Either String a
-divEither _ 0 = Left "Division by zero"
-divEither a b = return $ div a b
-
-modEither :: Integral a => a -> a -> Either String a
-modEither _ 0 = Left "Division by zero"
-modEither a b = return $ mod a b
-
-interpretOp :: Op -> Int -> Int -> Either String Int
+interpretOp :: Op -> Double -> Double -> Either String Double
 interpretOp Plus a b = return (a + b)
 interpretOp Minus a b = return (a - b)
 interpretOp Multiply a b = return (a * b)
-interpretOp Division a b = divEither a b
-interpretOp Mod a b = modEither a b
-interpretOp Exp a b = return (a ^ b)
+interpretOp Division a b = return (a / b)
+interpretOp Exp a b = return (a ** b)
 
 interpretToken :: RpnState -> Token -> Either String RpnState
 interpretToken s (NumberToken x) = return (x : s)
 interpretToken (x1:x2:xs) (OpToken op) = (: xs) <$> interpretOp op x2 x1
 interpretToken _ _ = Left "Error 😡"
 
-interpretRpn :: [Token] -> Either String Int
+interpretRpn :: [Token] -> Either String Double
 interpretRpn tokens = do
   result <- foldlM interpretToken [] tokens
   case result of
     [x] -> return x
     _ -> Left "Error 😡"
 
-calc :: T.Text -> Either String Int
+calc :: T.Text -> Either String Double
 calc text = do
   tokens <- tokenize text
   rpn <- infixToRpn [] tokens
