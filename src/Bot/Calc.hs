@@ -40,7 +40,7 @@ opName Exp = "^"
 supportedOps :: [T.Text]
 supportedOps = map opName [minBound :: Op .. maxBound]
 
--- TODO: !calc does not support scientific notation
+-- TODO(#618): !calc does not support scientific notation
 tokenize :: T.Text -> Either String [Token]
 tokenize (T.uncons -> Just (' ', xs)) = tokenize xs
 tokenize (T.uncons -> Just ('+', xs)) = (OpToken Plus :) <$> tokenize xs
