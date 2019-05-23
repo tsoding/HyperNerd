@@ -17,7 +17,6 @@ import Safe
 import Text.InterpolatedString.QM
 import Transport
 
--- TODO: !calc does not support mod anymore
 data Op
   = Plus
   | Minus
@@ -47,7 +46,11 @@ tokenize (T.uncons -> Just ('+', xs)) = (OpToken Plus :) <$> tokenize xs
 tokenize (T.uncons -> Just ('-', xs)) = (OpToken Minus :) <$> tokenize xs
 tokenize (T.uncons -> Just ('*', xs)) = (OpToken Multiply :) <$> tokenize xs
 tokenize (T.uncons -> Just ('/', xs)) = (OpToken Division :) <$> tokenize xs
-tokenize (T.uncons -> Just ('%', _)) = Left "Mod is temporary not supported"
+-- TODO: Mod operation is not supported anymore by !calc
+--   Because `Data.Fixed.mod' 100.0 0.0` throws an Exception that
+--   somehow short-circuits the supavisah
+tokenize (T.uncons -> Just ('%', _)) =
+  Left "Mod operation is disable for now."
 tokenize (T.uncons -> Just ('^', xs)) = (OpToken Exp :) <$> tokenize xs
 -- TODO(#574): !calc does not support fractional numbers
 tokenize (T.uncons -> Just ('.', _)) =
