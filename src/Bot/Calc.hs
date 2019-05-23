@@ -1,8 +1,10 @@
+{-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE ViewPatterns #-}
 {-# LANGUAGE QuasiQuotes #-}
 
 module Bot.Calc
   ( calcCommand
+  , supportedOps
   ) where
 
 import Bot.Replies
@@ -22,12 +24,23 @@ data Op
   | Division
   | Mod
   | Exp
-  deriving (Eq, Show)
+  deriving (Eq, Show, Enum, Bounded)
 
 data Token
   = NumberToken Int
   | OpToken Op
   deriving (Eq, Show)
+
+opName :: Op -> T.Text
+opName Plus = "+"
+opName Minus = "-"
+opName Multiply = "*"
+opName Division = "/"
+opName Mod = "%"
+opName Exp = "^"
+
+supportedOps :: [T.Text]
+supportedOps = map opName [minBound :: Op .. maxBound]
 
 tokenize :: T.Text -> Either String [Token]
 tokenize (T.uncons -> Just (' ', xs)) = tokenize xs
