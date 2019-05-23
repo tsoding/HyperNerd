@@ -446,7 +446,9 @@ builtinCommands =
       , mkBuiltinCommand
           ( "Reloads Markov model file"
           , $githubLinkLocationStr
-          , onlyForRoles authorityRoles $ liftR (const $ reloadMarkov) ignore))
+          , onlyForRoles authorityRoles $
+            liftR (const $ reloadMarkov) $
+            replyOnNothing "Nothing to reload" $ Reaction replyMessage))
     ]
 
 signText :: T.Text -> Either String Int

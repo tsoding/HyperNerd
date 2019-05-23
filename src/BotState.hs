@@ -189,8 +189,9 @@ applyEffect (botState, Free (RandomMarkov s)) = do
   sentence <- runMaybeT (eventsAsText <$> (markov >>= lift . simulate))
   return (botState, s sentence)
 applyEffect (botState, Free (ReloadMarkov s)) = do
-  putStrLn "Just reload the model 4HEad"
-  return (botState, s)
+  markov <-
+    runMaybeT (MaybeT (return $ bsMarkovPath botState) >>= lift . loadMarkov)
+  return (botState {bsMarkov = markov}, s ("Reloaded the model" <$ markov))
 applyEffect (botState, Free (GetVar _ s)) = return (botState, s Nothing)
 applyEffect (botState, Free (CallFun "urlencode" [text] s)) =
   return (botState, s $ Just $ T.pack $ URI.encode $ T.unpack text)
