@@ -40,6 +40,7 @@ opName Exp = "^"
 supportedOps :: [T.Text]
 supportedOps = map opName [minBound :: Op .. maxBound]
 
+-- TODO: !calc does not support scientific notation
 tokenize :: T.Text -> Either String [Token]
 tokenize (T.uncons -> Just (' ', xs)) = tokenize xs
 tokenize (T.uncons -> Just ('+', xs)) = (OpToken Plus :) <$> tokenize xs
@@ -69,7 +70,7 @@ tokenize xs@(T.uncons -> Just (x, _))
     (token :) <$> tokenize rest
   | otherwise = Left [qms|I don't know what's this `{x}`|]
   where
-    (digits, rest) = T.span isDigit xs
+    (digits, rest) = T.span (\a -> isDigit a || a == '.') xs
 tokenize (T.uncons -> Nothing) = return []
 tokenize _ = Left "Error 😡"
 
