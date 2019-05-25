@@ -89,12 +89,6 @@ clientId = <client-id-token>
 | `channel`   | The id of the channel the bot listens to                                                                                  |
 | `clientId`  | Client ID for Twitch API calls.                                                                                           |
 
-#### Debug Bot
-
-TBD
-
-<!-- TODO(#478): Debug mode is not documented -->
-
 ## Docker-Compose
 With secrets existing in volume defined in `docker-compose.yaml`,
 ```console

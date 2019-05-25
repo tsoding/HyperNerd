@@ -14,7 +14,6 @@ import Data.Maybe
 import System.Clock
 import System.Environment
 import Text.InterpolatedString.QM
-import Transport.Debug
 import Transport.Discord
 import Transport.Twitch
 
@@ -69,14 +68,7 @@ entry configPath databasePath markovPath =
              discordTransportEntry
                (csIncoming channelState)
                (csOutcoming channelState)
-               discordConfig
-           DebugConfig debugConfig ->
-             void $
-             forkIO $
-             debugTransportEntry
-               (csIncoming channelState)
-               (csOutcoming channelState)
-               debugConfig) $
+               discordConfig) $
       bsTransports botState
     block
 

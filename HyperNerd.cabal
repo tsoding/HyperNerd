@@ -97,7 +97,6 @@ executable HyperNerd
                      , Sqlite.EntityPersistence
                      , Sqlite.Migration
                      , Transport
-                     , Transport.Debug
                      , Transport.Discord
                      , Transport.Twitch
                      , Regexp
