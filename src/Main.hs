@@ -47,8 +47,6 @@ block = do
   threadDelay 10000 -- to prevent busy looping
   block
 
--- TODO(#476): Bot spawns only single transport thread
---   It should use configsFromFile file to read several channel configuration from a single config file and spawn the transports accordingly
 entry :: String -> String -> Maybe String -> IO ()
 entry configPath databasePath markovPath =
   withBotState markovPath configPath databasePath $ \botState -> do
