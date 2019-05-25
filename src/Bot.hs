@@ -65,8 +65,6 @@ tsodingTwitchedDiscordRole = DiscordRole 542590649103286273
 tsodingTrustedDiscordRole :: Role
 tsodingTrustedDiscordRole = DiscordRole 543864981171470346
 
--- TODO(#549): Authorization errors are not consistent
---   Sometimes they say "Only for mods", sometimes — "Only for roles: <role vector>". It should always be the later.
 builtinCommands :: CommandTable
 builtinCommands =
   M.fromList
