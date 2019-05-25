@@ -58,7 +58,6 @@ fromBot = userIsBot . messageAuthor
 fromChannel :: ChannelId -> D.Message -> Bool
 fromChannel channel message = messageChannel message == channel
 
--- TODO(#527): Discord transport doesn't set up DiscordGuildOwner role properly
 rolesOfMessage :: (RestChan, Gateway, z) -> D.Message -> D.UserId -> IO [Role]
 rolesOfMessage dis msg ownerId =
   case D.messageGuild msg of
