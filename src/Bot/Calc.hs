@@ -52,7 +52,6 @@ tokenize (T.uncons -> Just ('/', xs)) = (OpToken Division :) <$> tokenize xs
 --   somehow short-circuits the supavisah
 tokenize (T.uncons -> Just ('%', _)) = Left "Mod operation is disable for now."
 tokenize (T.uncons -> Just ('^', xs)) = (OpToken Exp :) <$> tokenize xs
--- TODO(#574): !calc does not support fractional numbers
 tokenize (T.uncons -> Just ('.', _)) =
   Left "https://github.com/tsoding/HyperNerd/issues/574"
 -- TODO(#571): Parenthesis are not supported by !calc
