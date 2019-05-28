@@ -93,7 +93,6 @@ channelsOfState channelState =
     TwitchConfig param -> return $ TwitchChannel $ tpChannel param
     DiscordConfig param ->
       map (DiscordChannel . fromIntegral) $ dpChannels param
-    DebugConfig _ -> return $ TwitchChannel "#tsoding"
 
 stateOfChannel :: BotState -> Channel -> Maybe TransportState
 stateOfChannel botState channel =
@@ -163,7 +162,6 @@ applyEffect (botState, Free (TwitchApiRequest channel request s)) =
             case csConfig channelState of
               (TwitchConfig params) -> tpTwitchClientId params
               (DiscordConfig params) -> dpTwitchClientId params
-              (DebugConfig params) -> dbgTwitchClientId params
       response <- httpLBS (addRequestHeader "Client-ID" clientId request)
       return (botState, s response)
     Nothing -> do
