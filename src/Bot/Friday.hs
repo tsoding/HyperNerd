@@ -8,6 +8,7 @@ module Bot.Friday
   , setVideoDateCommand
   , videoCountCommand
   , containsYtLink
+  , videoQueueCommand
   ) where
 
 import Bot.Replies
@@ -25,7 +26,8 @@ import Property
 import Reaction
 import Regexp
 import Text.InterpolatedString.QM
-import Transport (Message(..), Sender(..))
+import Transport (Message(..), Sender(..), authorityRoles)
+import Data.Functor.Compose
 
 data FridayVideo = FridayVideo
   { fridayVideoName :: T.Text
@@ -55,6 +57,17 @@ instance IsEntity LastVideoTime where
   toProperties vt = M.fromList [("time", PropertyUTCTime $ lastVideoTime vt)]
   fromProperties properties =
     LastVideoTime <$> extractProperty "time" properties
+
+newtype VideoQueueGist = VideoQueueGist
+  { videoQueueGistId :: T.Text
+  } deriving (Show, Eq)
+
+instance IsEntity VideoQueueGist where
+  nameOfEntity _ = "VideoQueueGist"
+  toProperties vqg =
+    M.fromList [("gistid", PropertyText $ videoQueueGistId vqg)]
+  fromProperties properties =
+    VideoQueueGist <$> extractProperty "gistid" properties
 
 containsYtLink :: T.Text -> Bool
 containsYtLink =
@@ -108,6 +121,15 @@ currentLastVideoTime = do
     Nothing -> createEntity Proxy $ LastVideoTime begginingOfTime
       where begginingOfTime = UTCTime (fromGregorian 1970 1 1) 0
 
+currentVideoQueueGist :: Effect (Entity VideoQueueGist)
+currentVideoQueueGist = do
+  vqg <- listToMaybe <$> selectEntities Proxy All
+  maybe (createEntity Proxy $ VideoQueueGist "") return vqg
+
+gistUrl :: T.Text -> T.Text
+gistUrl gistId =
+  [qms|https://gist.github.com/{gistId}|]
+
 setVideoDateCommand :: Reaction Message UTCTime
 setVideoDateCommand =
   liftR
@@ -120,3 +142,43 @@ videoCountCommand :: Reaction Message ()
 videoCountCommand =
   liftR (const videoQueue) $
   cmapR (T.pack . show . length) $ Reaction replyMessage
+
+subcommandDispatcher ::
+     M.Map T.Text (Reaction Message T.Text) -> Reaction Message T.Text
+subcommandDispatcher subcommandTable =
+  cmapR (regexParseArgs "([a-zA-Z0-9]*) *(.*)") $
+  replyLeft $
+  Reaction $ \msg -> do
+    case messageContent msg of
+      [subcommand, args] ->
+        case M.lookup subcommand subcommandTable of
+          Just reaction -> runReaction reaction (const args <$> msg)
+          Nothing ->
+            replyToSender
+              (messageSender msg)
+              [qms|No such subcommand {subcommand}|]
+      _ -> logMsg [qms|Could not pattern match {messageContent msg}|]
+
+videoQueueLinkCommand :: Reaction Message a
+videoQueueLinkCommand =
+  liftR (const currentVideoQueueGist) $
+  cmapR (maybePredicate (not . T.null) . videoQueueGistId . entityPayload) $
+  replyOnNothing "Gist video queue previewing is not setup" $
+  cmapR gistUrl $ sayMessage
+
+setVideoQueueGistCommand :: Reaction Message T.Text
+setVideoQueueGistCommand =
+  cmapR VideoQueueGist $
+  liftR
+    (\vqg ->
+       getCompose (vqg <$ Compose currentVideoQueueGist)) $
+  liftR updateEntityById $
+  cmapR (const "Updated current Gist for Video Queue") $ Reaction replyMessage
+
+videoQueueCommand :: Reaction Message T.Text
+videoQueueCommand =
+  subcommandDispatcher $
+  M.fromList
+    [ ("", videoQueueLinkCommand)
+    , ("gist", onlyForRoles authorityRoles setVideoQueueGistCommand)
+    ]
