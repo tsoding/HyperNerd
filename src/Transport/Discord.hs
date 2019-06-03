@@ -94,7 +94,7 @@ receiveLoop botUser ownerId channels incoming dis = do
     Left er -> putStrLn ("Event error: " <> show er)
     Right (MessageCreate m) ->
       when (not (fromBot m) && any (`fromChannel` m) channels) $ do
-        print m
+        -- print m
         let name = T.pack $ userName $ messageAuthor m
         -- TODO(#522): requesting Discord roles on each message is dangerous for rate limits
         roles <- rolesOfMessage dis m ownerId

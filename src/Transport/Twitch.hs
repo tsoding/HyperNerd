@@ -80,7 +80,7 @@ receiveLoop conf incoming ircConn = do
     let cookedMsg = cookIrcMsg msg
     -- TODO(#483): Logs from different channels clash together
     --   Let's introduce logging to files. A file per channel.
-    print cookedMsg
+    -- print cookedMsg
     case cookedMsg of
       (Ping xs) -> sendMsg ircConn (ircPong xs)
       (Privmsg userInfo target msgText)

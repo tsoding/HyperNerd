@@ -27,6 +27,7 @@ module Effect
   , randomMarkov
   , reloadMarkov
   , callFun
+  , githubApiRequest
   ) where
 
 import Control.Monad.Catch
@@ -164,6 +165,9 @@ httpRequest request = liftF $ HttpRequest request id
 
 twitchApiRequest :: Channel -> Request -> Effect (Response B8.ByteString)
 twitchApiRequest channel request = liftF $ TwitchApiRequest channel request id
+
+githubApiRequest :: Request -> Effect (Response B8.ByteString)
+githubApiRequest request = liftF $ GitHubApiRequest request id
 
 timeout :: Integer -> Effect () -> Effect ()
 timeout t e = liftF $ Timeout t e ()

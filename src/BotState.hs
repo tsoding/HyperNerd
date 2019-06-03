@@ -49,6 +49,7 @@ data BotState = BotState
   -- Shared
   , bsTimeouts :: [(Integer, Effect ())]
   , bsSqliteConn :: SQLite.Connection
+  , bsConfig :: Config
   , bsMarkovPath :: Maybe FilePath
   , bsMarkov :: Maybe Markov
   }
@@ -86,6 +87,7 @@ newBotState markovPath conf sqliteConn = do
       , bsMarkovPath = markovPath
       , bsMarkov = markov
       , bsTransports = transports
+      , bsConfig = conf
       }
 
 withBotState' ::
@@ -187,8 +189,21 @@ applyEffect (botState, Free (TwitchApiRequest channel request s)) =
     Nothing -> do
       hPutStrLn stderr [qms|[ERROR] Channel does not exist {channel} |]
       return (botState, Pure ())
-applyEffect (botState, Free (GitHubApiRequest _ s)) =
-  return (botState, s undefined)
+applyEffect (botState, Free (GitHubApiRequest request s)) = do
+  let githubConfig = configGithub $ bsConfig botState
+  case githubConfig of
+    Just (GithubConfig {githubApiKey = apiKey}) -> do
+      response <-
+        httpLBS
+          (addRequestHeader "User-Agent" "HyperNerd" $
+           addRequestHeader "Authorization" [qms|token {apiKey}|] request)
+      return (botState, s response)
+    Nothing -> do
+      hPutStrLn
+        stderr
+        [qms|[ERROR] Bot tried to do GitHub API request.
+             But GitHub API key is not setup.|]
+      return (botState, Pure ())
 applyEffect (botState, Free (Timeout ms e s)) =
   return ((botState {bsTimeouts = (ms, e) : bsTimeouts botState}), s)
 applyEffect (botState, Free (Listen effect s)) = do

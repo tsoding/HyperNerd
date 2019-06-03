@@ -28,6 +28,7 @@ import Regexp
 import Text.InterpolatedString.QM
 import Transport (Message(..), Sender(..), authorityRoles)
 import Data.Functor.Compose
+import Network.HTTP.Simple (parseRequest, setRequestBodyLBS)
 
 data FridayVideo = FridayVideo
   { fridayVideoName :: T.Text
@@ -75,6 +76,7 @@ containsYtLink =
   regexParseArgs
     [qn|https?:\/\/(www\.)?youtu(be\.com\/watch\?v=|\.be\/)[a-zA-Z0-9\-\_]+|]
 
+-- TODO: fridayCommand does not update the video queue gist
 fridayCommand :: Reaction Message T.Text
 fridayCommand =
   cmapR (\message -> toMaybe message $ containsYtLink message) $
@@ -175,10 +177,25 @@ setVideoQueueGistCommand =
   liftR updateEntityById $
   cmapR (const "Updated current Gist for Video Queue") $ Reaction replyMessage
 
+testGistUpdate :: Reaction Message a
+testGistUpdate =
+  liftR
+    (\_ -> do
+       let body =
+             "{\"files\": {\"Queue.txt\": {\"content\": \"IF YOU READ THIS I VON ZULUL\"}}}"
+       request <-
+         setRequestBodyLBS body <$>
+         parseRequest
+           "PATCH https://api.github.com/gists/62b5f871b5d57f6f776ce9a87c255b35"
+       _ <- githubApiRequest request
+       return "OK") $
+  Reaction replyMessage
+
 videoQueueCommand :: Reaction Message T.Text
 videoQueueCommand =
   subcommandDispatcher $
   M.fromList
     [ ("", videoQueueLinkCommand)
     , ("gist", onlyForRoles authorityRoles setVideoQueueGistCommand)
+    , ("test", onlyForRoles authorityRoles testGistUpdate)
     ]

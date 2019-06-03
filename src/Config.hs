@@ -5,6 +5,7 @@ module Config
   ( Config(..)
   , TwitchConfig(..)
   , DiscordConfig(..)
+  , GithubConfig(..)
   , configFromFile
   ) where
 
@@ -20,7 +21,12 @@ import Safe
 data Config = Config
   { configTwitch :: Maybe TwitchConfig
   , configDiscord :: Maybe DiscordConfig
-  } deriving (Show)
+  , configGithub :: Maybe GithubConfig
+  }
+
+newtype GithubConfig = GithubConfig
+  { githubApiKey :: T.Text
+  }
 
 data TwitchConfig = TwitchConfig
   { tcNick :: T.Text
@@ -28,14 +34,14 @@ data TwitchConfig = TwitchConfig
   , tcChannel :: T.Text
   , tcTwitchClientId :: T.Text
   , tcOwner :: T.Text
-  } deriving (Show)
+  }
 
 data DiscordConfig = DiscordConfig
   { dcAuthToken :: T.Text
   , dcChannels :: [ChannelId]
   , dcGuildId :: GuildId
   , dcTwitchClientId :: T.Text
-  } deriving (Show)
+  }
 
 hmLookupValue :: T.Text -> HM.HashMap T.Text T.Text -> Either String T.Text
 hmLookupValue field ini =
@@ -61,13 +67,17 @@ discordConfigFromHm ini =
      hmLookupValue "guildId" ini) <*>
   hmLookupValue "clientId" ini
 
+githubConfigFromHm :: HM.HashMap T.Text T.Text -> Either String GithubConfig
+githubConfigFromHm ini = GithubConfig <$> hmLookupValue "apiKey" ini
+
 configFromFile :: FilePath -> IO Config
 configFromFile filePath = do
   ini <- readIniFile filePath
   either (ioError . userError) return $
     mapLeft ([qms|In file '{filePath}':\ |] <>) $ do
       secs <- unIni <$> ini
-      liftM2
+      liftM3
         Config
         (sequence (twitchConfigFromHm <$> HM.lookup "twitch" secs))
         (sequence (discordConfigFromHm <$> HM.lookup "discord" secs))
+        (sequence (githubConfigFromHm <$> HM.lookup "github" secs))
