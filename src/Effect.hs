@@ -95,6 +95,8 @@ data EffectF s
   | TwitchApiRequest Channel
                      Request
                      (Response B8.ByteString -> s)
+  | GitHubApiRequest Request
+                     (Response B8.ByteString -> s)
   | Timeout Integer
             (Effect ())
             s

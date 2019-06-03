@@ -167,6 +167,8 @@ applyEffect (botState, Free (TwitchApiRequest channel request s)) =
     Nothing -> do
       hPutStrLn stderr [qms|[ERROR] Channel does not exist {channel} |]
       return (botState, Pure ())
+applyEffect (botState, Free (GitHubApiRequest _ s)) =
+  return (botState, s undefined)
 applyEffect (botState, Free (Timeout ms e s)) =
   return ((botState {bsTimeouts = (ms, e) : bsTimeouts botState}), s)
 applyEffect (botState, Free (Listen effect s)) = do
