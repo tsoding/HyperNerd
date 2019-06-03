@@ -151,11 +151,11 @@ subcommandDispatcher ::
 subcommandDispatcher subcommandTable =
   cmapR (regexParseArgs "([a-zA-Z0-9]*) *(.*)") $
   replyLeft $
-  Reaction $ \msg -> do
+  Reaction $ \msg ->
     case messageContent msg of
       [subcommand, args] ->
         case M.lookup subcommand subcommandTable of
-          Just reaction -> runReaction reaction (const args <$> msg)
+          Just reaction -> runReaction reaction (args <$ msg)
           Nothing ->
             replyToSender
               (messageSender msg)
@@ -167,7 +167,7 @@ videoQueueLinkCommand =
   liftR (const currentVideoQueueGist) $
   cmapR (maybePredicate (not . T.null) . videoQueueGistId . entityPayload) $
   replyOnNothing "Gist video queue previewing is not setup" $
-  cmapR gistUrl $ sayMessage
+  cmapR gistUrl sayMessage
 
 setVideoQueueGistCommand :: Reaction Message T.Text
 setVideoQueueGistCommand =

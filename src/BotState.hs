@@ -74,7 +74,7 @@ newDiscordTransportState config = do
 newBotState :: Maybe FilePath -> Config -> SQLite.Connection -> IO BotState
 newBotState markovPath conf sqliteConn = do
   transports <-
-    concatMap maybeToList <$>
+    catMaybes <$>
     sequence
       [ sequence (newTwitchTransportState <$> configTwitch conf)
       , sequence (newDiscordTransportState <$> configDiscord conf)
@@ -192,7 +192,7 @@ applyEffect (botState, Free (TwitchApiRequest channel request s)) =
 applyEffect (botState, Free (GitHubApiRequest request s)) = do
   let githubConfig = configGithub $ bsConfig botState
   case githubConfig of
-    Just (GithubConfig {githubApiKey = apiKey}) -> do
+    Just GithubConfig {githubApiKey = apiKey} -> do
       response <-
         httpLBS
           (addRequestHeader "User-Agent" "HyperNerd" $
