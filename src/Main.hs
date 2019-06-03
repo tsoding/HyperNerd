@@ -5,7 +5,6 @@ module Main where
 
 import Bot
 import BotState
-import Config
 import Control.Concurrent
 import Control.Concurrent.STM
 import Control.Monad
@@ -24,7 +23,7 @@ eventLoop b prevCPUTime botState = do
   let deltaTime = toNanoSecs (currCPUTime - prevCPUTime) `div` 1000000
   messages <-
     fmap (join . map maybeToList) $
-    atomically $ mapM (tryReadTQueue . csIncoming) $ bsTransports botState
+    atomically $ mapM (tryReadTQueue . tsIncoming) $ bsTransports botState
   foldrM (handleInEvent b) botState messages >>= advanceTimeouts deltaTime >>=
     eventLoop b currCPUTime
 
@@ -54,20 +53,20 @@ entry configPath databasePath markovPath =
     supavisah $ logicEntry botState
     mapM_
       (\channelState ->
-         case csConfig channelState of
-           TwitchConfig twitchConfig ->
+         case channelState of
+           TwitchTransportState {tsTwitchConfig = twitchConfig} ->
              void $
              forkIO $
              twitchTransportEntry
-               (csIncoming channelState)
-               (csOutcoming channelState)
+               (tsIncoming channelState)
+               (tsOutcoming channelState)
                twitchConfig
-           DiscordConfig discordConfig ->
+           DiscordTransportState {tsDiscordConfig = discordConfig} ->
              void $
              forkIO $
              discordTransportEntry
-               (csIncoming channelState)
-               (csOutcoming channelState)
+               (tsIncoming channelState)
+               (tsOutcoming channelState)
                discordConfig) $
       bsTransports botState
     block

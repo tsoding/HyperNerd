@@ -3,9 +3,9 @@
 
 module Config
   ( Config(..)
-  , TwitchParams(..)
-  , DiscordParams(..)
-  , configsFromFile
+  , TwitchConfig(..)
+  , DiscordConfig(..)
+  , configFromFile
   ) where
 
 import Data.Either.Extra
@@ -13,67 +13,61 @@ import qualified Data.HashMap.Strict as HM
 import Data.Ini
 import qualified Data.Text as T
 import Discord
-import Safe
 import Text.InterpolatedString.QM
+import Control.Monad
+import Safe
 
-data Config
-  = TwitchConfig TwitchParams
-  | DiscordConfig DiscordParams
-  deriving (Show)
-
-data TwitchParams = TwitchParams
-  { tpNick :: T.Text
-  , tpPass :: T.Text
-  , tpChannel :: T.Text
-  , tpTwitchClientId :: T.Text
-  , tpOwner :: T.Text
+data Config = Config
+  { configTwitch :: Maybe TwitchConfig
+  , configDiscord :: Maybe DiscordConfig
   } deriving (Show)
 
-data DiscordParams = DiscordParams
-  { dpAuthToken :: T.Text
-  , dpChannels :: [ChannelId]
-  , dpGuildId :: GuildId
-  , dpTwitchClientId :: T.Text
+data TwitchConfig = TwitchConfig
+  { tcNick :: T.Text
+  , tcPass :: T.Text
+  , tcChannel :: T.Text
+  , tcTwitchClientId :: T.Text
+  , tcOwner :: T.Text
   } deriving (Show)
 
-twitchParamsFromIni :: T.Text -> Ini -> Either String TwitchParams
-twitchParamsFromIni section ini =
-  TwitchParams <$> lookupValue section "nick" ini <*>
-  lookupValue section "password" ini <*>
-  (T.cons '#' <$> lookupValue section "channel" ini) <*>
-  lookupValue section "clientId" ini <*>
-  lookupValue section "owner" ini
+data DiscordConfig = DiscordConfig
+  { dcAuthToken :: T.Text
+  , dcChannels :: [ChannelId]
+  , dcGuildId :: GuildId
+  , dcTwitchClientId :: T.Text
+  } deriving (Show)
 
-discordParamsFromIni :: T.Text -> Ini -> Either String DiscordParams
-discordParamsFromIni section ini =
-  DiscordParams <$> lookupValue section "authToken" ini <*>
+hmLookupValue :: T.Text -> HM.HashMap T.Text T.Text -> Either String T.Text
+hmLookupValue field ini =
+  maybeToEither [qms|Cannot find field {field}|] $ HM.lookup field ini
+
+twitchConfigFromHm :: HM.HashMap T.Text T.Text -> Either String TwitchConfig
+twitchConfigFromHm ini =
+  TwitchConfig <$> hmLookupValue "nick" ini <*> hmLookupValue "password" ini <*>
+  (T.cons '#' <$> hmLookupValue "channel" ini) <*>
+  hmLookupValue "clientId" ini <*>
+  hmLookupValue "owner" ini
+
+discordConfigFromHm :: HM.HashMap T.Text T.Text -> Either String DiscordConfig
+discordConfigFromHm ini =
+  DiscordConfig <$> hmLookupValue "authToken" ini <*>
   fmap
     (map Snowflake)
     ((maybeToEither "channel is not a number" . readMay . T.unpack) =<<
-     lookupValue section "channel" ini) <*>
+     hmLookupValue "channel" ini) <*>
   fmap
     Snowflake
     ((maybeToEither "Guild ID is not a number" . readMay . T.unpack) =<<
-     lookupValue section "guildId" ini) <*>
-  lookupValue section "clientId" ini
+     hmLookupValue "guildId" ini) <*>
+  hmLookupValue "clientId" ini
 
-configFromIniSection :: T.Text -> Ini -> Either String Config
-configFromIniSection sectionName ini = do
-  configType <- lookupValue sectionName "type" ini
-  case configType of
-    "twitch" -> TwitchConfig <$> twitchParamsFromIni sectionName ini
-    "discord" -> DiscordConfig <$> discordParamsFromIni sectionName ini
-    _ -> Left [qms|"Unrecognized config type: {configType}"|]
-
-configsFromFile :: FilePath -> IO [Config]
-configsFromFile filePath = do
+configFromFile :: FilePath -> IO Config
+configFromFile filePath = do
   ini <- readIniFile filePath
   either (ioError . userError) return $
     mapLeft ([qms|In file '{filePath}':\ |] <>) $ do
-      bots <- filter (T.isPrefixOf "bot:") . HM.keys . unIni <$> ini
-      ini >>= \ini' ->
-        mapM
-          (\section ->
-             mapLeft ([qms|In section '{section}':\ |] <>) $
-             configFromIniSection section ini')
-          bots
+      secs <- unIni <$> ini
+      liftM2
+        Config
+        (sequence (twitchConfigFromHm <$> HM.lookup "twitch" secs))
+        (sequence (discordConfigFromHm <$> HM.lookup "discord" secs))
