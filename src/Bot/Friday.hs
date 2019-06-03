@@ -49,6 +49,7 @@ instance IsEntity FridayVideo where
     extractProperty "author" properties <*>
     extractProperty "date" properties
 
+-- TODO: LastVideoTime and VideoQueueGist should be merged into a single metadata structure
 newtype LastVideoTime = LastVideoTime
   { lastVideoTime :: UTCTime
   } deriving (Show, Eq)
