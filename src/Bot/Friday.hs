@@ -49,27 +49,26 @@ instance IsEntity FridayVideo where
     extractProperty "author" properties <*>
     extractProperty "date" properties
 
--- TODO: LastVideoTime and VideoQueueGist should be merged into a single metadata structure
-newtype LastVideoTime = LastVideoTime
-  { lastVideoTime :: UTCTime
+data FridayState = FridayState
+  { fridayStateTime :: UTCTime
+  , fridayStateGist :: Maybe T.Text
   } deriving (Show, Eq)
 
-instance IsEntity LastVideoTime where
+updateFridayStateTime :: UTCTime -> FridayState -> FridayState
+updateFridayStateTime time state = state {fridayStateTime = time}
+
+updateFridayStateGist :: T.Text -> FridayState -> FridayState
+updateFridayStateGist gist state = state {fridayStateGist = Just gist}
+
+instance IsEntity FridayState where
   nameOfEntity _ = "LastVideoTime"
-  toProperties vt = M.fromList [("time", PropertyUTCTime $ lastVideoTime vt)]
+  toProperties vt =
+    M.fromList
+      ([("time", PropertyUTCTime $ fridayStateTime vt)] ++
+       maybeToList (((,) "gistId") . PropertyText <$> fridayStateGist vt))
   fromProperties properties =
-    LastVideoTime <$> extractProperty "time" properties
-
-newtype VideoQueueGist = VideoQueueGist
-  { videoQueueGistId :: T.Text
-  } deriving (Show, Eq)
-
-instance IsEntity VideoQueueGist where
-  nameOfEntity _ = "VideoQueueGist"
-  toProperties vqg =
-    M.fromList [("gistid", PropertyText $ videoQueueGistId vqg)]
-  fromProperties properties =
-    VideoQueueGist <$> extractProperty "gistid" properties
+    FridayState <$> extractProperty "time" properties <*>
+    return (extractProperty "gistId" properties)
 
 containsYtLink :: T.Text -> Bool
 containsYtLink =
@@ -92,7 +91,7 @@ fridayCommand =
 
 videoQueue :: Effect [Entity FridayVideo]
 videoQueue = do
-  vt <- lastVideoTime . entityPayload <$> currentLastVideoTime
+  vt <- fridayStateTime . entityPayload <$> currentFridayState
   selectEntities Proxy $
     SortBy "date" Asc $ Filter (PropertyGreater "date" $ PropertyUTCTime vt) All
 
@@ -116,18 +115,13 @@ videoCommand =
        [qms|[{fridayVideoDate fv}] <{fridayVideoAuthor fv}> {fridayVideoName fv}|]) $
   Reaction replyMessage
 
-currentLastVideoTime :: Effect (Entity LastVideoTime)
-currentLastVideoTime = do
+currentFridayState :: Effect (Entity FridayState)
+currentFridayState = do
   vt <- listToMaybe <$> selectEntities Proxy All
   case vt of
     Just vt' -> return vt'
-    Nothing -> createEntity Proxy $ LastVideoTime begginingOfTime
+    Nothing -> createEntity Proxy $ FridayState begginingOfTime Nothing
       where begginingOfTime = UTCTime (fromGregorian 1970 1 1) 0
-
-currentVideoQueueGist :: Effect (Entity VideoQueueGist)
-currentVideoQueueGist = do
-  vqg <- listToMaybe <$> selectEntities Proxy All
-  maybe (createEntity Proxy $ VideoQueueGist "") return vqg
 
 gistUrl :: T.Text -> T.Text
 gistUrl gistId =
@@ -137,8 +131,8 @@ setVideoDateCommand :: Reaction Message UTCTime
 setVideoDateCommand =
   liftR
     (\newDate -> do
-       vt <- currentLastVideoTime
-       updateEntityById (LastVideoTime newDate <$ vt)) $
+       vt <- currentFridayState
+       updateEntityById (updateFridayStateTime newDate <$> vt)) $
   cmapR (const "Updated last video time") $ Reaction replyMessage
 
 videoCountCommand :: Reaction Message ()
@@ -164,18 +158,17 @@ subcommandDispatcher subcommandTable =
 
 videoQueueLinkCommand :: Reaction Message a
 videoQueueLinkCommand =
-  liftR (const currentVideoQueueGist) $
-  cmapR (maybePredicate (not . T.null) . videoQueueGistId . entityPayload) $
+  liftR (const currentFridayState) $
+  cmapR (fridayStateGist . entityPayload) $
   replyOnNothing "Gist video queue previewing is not setup" $
   cmapR gistUrl sayMessage
 
 setVideoQueueGistCommand :: Reaction Message T.Text
 setVideoQueueGistCommand =
-  cmapR VideoQueueGist $
   liftR
-    (\vqg ->
-       getCompose (vqg <$ Compose currentVideoQueueGist)) $
-  liftR updateEntityById $
+    (\gist ->
+       updateEntityById <$>
+       getCompose (updateFridayStateGist gist <$> Compose currentFridayState)) $
   cmapR (const "Updated current Gist for Video Queue") $ Reaction replyMessage
 
 testGistUpdate :: Reaction Message a
