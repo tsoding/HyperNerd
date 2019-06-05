@@ -93,8 +93,7 @@ data EffectF s
   | Now (UTCTime -> s)
   | HttpRequest Request
                 (Response B8.ByteString -> s)
-  | TwitchApiRequest Channel
-                     Request
+  | TwitchApiRequest Request
                      (Response B8.ByteString -> s)
   | GitHubApiRequest Request
                      (Response B8.ByteString -> s)
@@ -163,8 +162,8 @@ now = liftF $ Now id
 httpRequest :: Request -> Effect (Response B8.ByteString)
 httpRequest request = liftF $ HttpRequest request id
 
-twitchApiRequest :: Channel -> Request -> Effect (Response B8.ByteString)
-twitchApiRequest channel request = liftF $ TwitchApiRequest channel request id
+twitchApiRequest :: Request -> Effect (Response B8.ByteString)
+twitchApiRequest request = liftF $ TwitchApiRequest request id
 
 githubApiRequest :: Request -> Effect (Response B8.ByteString)
 githubApiRequest request = liftF $ GitHubApiRequest request id

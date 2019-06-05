@@ -24,6 +24,7 @@ import Data.List
 import Data.Maybe
 import Data.String
 import qualified Data.Text as T
+import qualified Data.Text.Encoding as TE
 import Data.Time
 import qualified Database.SQLite.Simple as SQLite
 import Effect
@@ -172,21 +173,17 @@ applyEffect (botState, Free (HttpRequest request s)) = do
   case response of
     Just response' -> return (botState, s response')
     Nothing -> return (botState, Pure ())
-applyEffect (botState, Free (TwitchApiRequest channel request s)) =
-  case stateOfChannel botState channel of
-    Just channelState -> do
-      let clientId =
-            fromString $
-            T.unpack $
-            case channelState of
-              TwitchTransportState {tsTwitchConfig = params} ->
-                tcTwitchClientId params
-              DiscordTransportState {tsDiscordConfig = params} ->
-                dcTwitchClientId params
-      response <- httpLBS (addRequestHeader "Client-ID" clientId request)
+applyEffect (botState, Free (TwitchApiRequest request s)) =
+  case configTwitch $ bsConfig botState of
+    Just TwitchConfig {tcTwitchClientId = clientId} -> do
+      response <-
+        httpLBS (addRequestHeader "Client-ID" (TE.encodeUtf8 clientId) request)
       return (botState, s response)
     Nothing -> do
-      hPutStrLn stderr [qms|[ERROR] Channel does not exist {channel} |]
+      hPutStrLn
+        stderr
+        [qms|[ERROR] Bot tried to perform Twitch API request.
+             But Twitch clientId is not setup.|]
       return (botState, Pure ())
 applyEffect (botState, Free (GitHubApiRequest request s)) = do
   let githubConfig = configGithub $ bsConfig botState

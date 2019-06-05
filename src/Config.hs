@@ -40,7 +40,6 @@ data DiscordConfig = DiscordConfig
   { dcAuthToken :: T.Text
   , dcChannels :: [ChannelId]
   , dcGuildId :: GuildId
-  , dcTwitchClientId :: T.Text
   }
 
 hmLookupValue :: T.Text -> HM.HashMap T.Text T.Text -> Either String T.Text
@@ -64,8 +63,7 @@ discordConfigFromHm ini =
   fmap
     Snowflake
     ((maybeToEither "Guild ID is not a number" . readMay . T.unpack) =<<
-     hmLookupValue "guildId" ini) <*>
-  hmLookupValue "clientId" ini
+     hmLookupValue "guildId" ini)
 
 githubConfigFromHm :: HM.HashMap T.Text T.Text -> Either String GithubConfig
 githubConfigFromHm ini = GithubConfig <$> hmLookupValue "apiKey" ini
