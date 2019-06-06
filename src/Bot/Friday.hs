@@ -168,7 +168,7 @@ refreshGist gistId = do
     Right request' -> do
       response <- githubApiRequest request'
       when (statusCode (getResponseStatus response) >= 400) $
-      -- TODO: the GitHub API error is not logged anywhere
+      -- TODO(#634): the GitHub API error is not logged anywhere
         logMsg [qms|[ERROR] Something went wrong with GitHub API query|]
     Left e -> logMsg [qms|[ERROR] {e}|]
 
