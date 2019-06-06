@@ -222,7 +222,7 @@ setVideoQueueGistCommand =
 videoQueueCommand :: Reaction Message T.Text
 videoQueueCommand =
   subcommandDispatcher $
-  -- TODO: no command to force refresh the video queue gist
+  -- TODO(#635): no command to force refresh the video queue gist
   M.fromList
     [ ("", videoQueueLinkCommand)
     , ("gist", onlyForRoles authorityRoles setVideoQueueGistCommand)
