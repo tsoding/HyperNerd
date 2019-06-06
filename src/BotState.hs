@@ -22,7 +22,6 @@ import Data.Foldable
 import Data.Function
 import Data.List
 import Data.Maybe
-import Data.String
 import qualified Data.Text as T
 import qualified Data.Text.Encoding as TE
 import Data.Time
