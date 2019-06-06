@@ -75,7 +75,7 @@ instance IsEntity FridayState where
       ([ ("time", PropertyUTCTime $ fridayStateTime state)
        , ("gistFresh", PropertyInt $ boolAsInt $ fridayStateGistFresh state)
        ] ++
-       maybeToList (((,) "gistId") . PropertyText <$> fridayStateGistId state))
+       maybeToList ((,) "gistId" . PropertyText <$> fridayStateGistId state))
   fromProperties properties =
     FridayState <$> extractProperty "time" properties <*>
     return (extractProperty "gistId" properties) <*>
@@ -182,7 +182,7 @@ startUpdateGistTimer =
     state <- currentFridayState
     case fridayStateGistId $ entityPayload state of
       Just gistId
-        | (not $ fridayStateGistFresh $ entityPayload state) -> do
+        | not $ fridayStateGistFresh $ entityPayload state -> do
           logMsg "[INFO] Gist is not Fresh. Updating..."
           refreshGist gistId
           void $ updateEntityById (updateFridayStateGistFresh True <$> state)
