@@ -9,6 +9,7 @@ module Bot.Friday
   , videoCountCommand
   , containsYtLink
   , videoQueueCommand
+  , startUpdateGistTimer
   ) where
 
 import Bot.Replies
@@ -27,7 +28,11 @@ import Reaction
 import Regexp
 import Text.InterpolatedString.QM
 import Transport (Message(..), Sender(..), authorityRoles)
-import Data.Functor.Compose
+import Data.Bool.Extra
+import Network.HTTP.Simple (getResponseStatus, parseRequest, setRequestBodyJSON)
+import Network.HTTP.Types.Status (Status(..))
+import Data.Aeson
+import Control.Monad
 
 data FridayVideo = FridayVideo
   { fridayVideoName :: T.Text
@@ -50,24 +55,31 @@ instance IsEntity FridayVideo where
 
 data FridayState = FridayState
   { fridayStateTime :: UTCTime
-  , fridayStateGist :: Maybe T.Text
+  , fridayStateGistId :: Maybe T.Text
+  , fridayStateGistFresh :: Bool
   } deriving (Show, Eq)
 
 updateFridayStateTime :: UTCTime -> FridayState -> FridayState
 updateFridayStateTime time state = state {fridayStateTime = time}
 
 updateFridayStateGist :: T.Text -> FridayState -> FridayState
-updateFridayStateGist gist state = state {fridayStateGist = Just gist}
+updateFridayStateGist gist state = state {fridayStateGistId = Just gist}
+
+updateFridayStateGistFresh :: Bool -> FridayState -> FridayState
+updateFridayStateGistFresh fresh state = state {fridayStateGistFresh = fresh}
 
 instance IsEntity FridayState where
   nameOfEntity _ = "LastVideoTime"
-  toProperties vt =
+  toProperties state =
     M.fromList
-      ([("time", PropertyUTCTime $ fridayStateTime vt)] ++
-       maybeToList (((,) "gistId") . PropertyText <$> fridayStateGist vt))
+      ([ ("time", PropertyUTCTime $ fridayStateTime state)
+       , ("gistFresh", PropertyInt $ boolAsInt $ fridayStateGistFresh state)
+       ] ++
+       maybeToList (((,) "gistId") . PropertyText <$> fridayStateGistId state))
   fromProperties properties =
     FridayState <$> extractProperty "time" properties <*>
-    return (extractProperty "gistId" properties)
+    return (extractProperty "gistId" properties) <*>
+    return (intAsBool $ fromMaybe 0 $ extractProperty "gistFresh" properties)
 
 containsYtLink :: T.Text -> Bool
 containsYtLink =
@@ -75,17 +87,18 @@ containsYtLink =
   regexParseArgs
     [qn|https?:\/\/(www\.)?youtu(be\.com\/watch\?v=|\.be\/)[a-zA-Z0-9\-\_]+|]
 
--- TODO: fridayCommand does not update the video queue gist
 fridayCommand :: Reaction Message T.Text
 fridayCommand =
   cmapR (\message -> toMaybe message $ containsYtLink message) $
   replyOnNothing "You must submit a youtube link" $
   transR duplicate $
   liftR
-    (\msg ->
+    (\msg -> do
+       state <- currentFridayState
+       void $ updateEntityById $ updateFridayStateGistFresh False <$> state
        createEntity Proxy .
-       FridayVideo (messageContent msg) (senderName $ messageSender msg) =<<
-       now) $
+         FridayVideo (messageContent msg) (senderName $ messageSender msg) =<<
+         now) $
   cmapR (const "Added to the suggestions") $ Reaction replyMessage
 
 videoQueue :: Effect [Entity FridayVideo]
@@ -108,18 +121,14 @@ videoCommand =
   liftR (const videoQueue) $
   cmapR listToMaybe $
   replyOnNothing "No videos in the queue" $
-  cmapR entityPayload $
-  cmapR
-    (\fv ->
-       [qms|[{fridayVideoDate fv}] <{fridayVideoAuthor fv}> {fridayVideoName fv}|]) $
-  Reaction replyMessage
+  cmapR entityPayload $ cmapR renderFridayVideo $ Reaction replyMessage
 
 currentFridayState :: Effect (Entity FridayState)
 currentFridayState = do
   vt <- listToMaybe <$> selectEntities Proxy All
   case vt of
     Just vt' -> return vt'
-    Nothing -> createEntity Proxy $ FridayState begginingOfTime Nothing
+    Nothing -> createEntity Proxy $ FridayState begginingOfTime Nothing False
       where begginingOfTime = UTCTime (fromGregorian 1970 1 1) 0
 
 gistUrl :: T.Text -> T.Text
@@ -138,6 +147,49 @@ videoCountCommand :: Reaction Message ()
 videoCountCommand =
   liftR (const videoQueue) $
   cmapR (T.pack . show . length) $ Reaction replyMessage
+
+renderFridayVideo :: FridayVideo -> T.Text
+renderFridayVideo fv =
+  [qms||{fridayVideoDate fv}|{fridayVideoAuthor fv}|{fridayVideoName fv}||]
+
+renderQueue :: [FridayVideo] -> T.Text
+renderQueue =
+  T.unlines . map renderFridayVideo
+
+refreshGist :: T.Text -> Effect ()
+refreshGist gistId = do
+  gistText <- renderQueue . map entityPayload <$> videoQueue
+  let payload =
+        object
+          ["files" .= object ["Queue.org" .= object ["content" .= gistText]]]
+  logMsg (T.pack $ show $ encode payload)
+  let request =
+        setRequestBodyJSON payload <$>
+        parseRequest [qms|PATCH https://api.github.com/gists/{gistId}|]
+  case request of
+    Right request' -> do
+      response <- githubApiRequest request'
+      when (statusCode (getResponseStatus response) >= 400) $
+      -- TODO: the GitHub API error is not logged anywhere
+        logMsg
+          [qms|[ERROR] Something went wrong with GitHub API query|]
+    Left e -> logMsg [qms|[ERROR] {e}|]
+
+startUpdateGistTimer :: Effect ()
+startUpdateGistTimer =
+  periodicEffect period $ do
+    logMsg "[INFO] Checking if needed to update Friday Gist"
+    state <- currentFridayState
+    case fridayStateGistId $ entityPayload state of
+      Just gistId
+        | (not $ fridayStateGistFresh $ entityPayload state) -> do
+          logMsg "[INFO] Gist is not Fresh. Updating..."
+          refreshGist gistId
+          void $ updateEntityById (updateFridayStateGistFresh True <$> state)
+      Nothing -> logMsg "[INFO] Gist is not setup :rage:"
+      _ -> logMsg "[INFO] Gist is fresh AF 👌"
+  where
+    period = 60 * 1000
 
 subcommandDispatcher ::
      M.Map T.Text (Reaction Message T.Text) -> Reaction Message T.Text
@@ -158,21 +210,22 @@ subcommandDispatcher subcommandTable =
 videoQueueLinkCommand :: Reaction Message a
 videoQueueLinkCommand =
   liftR (const currentFridayState) $
-  cmapR (fridayStateGist . entityPayload) $
+  cmapR (fridayStateGistId . entityPayload) $
   replyOnNothing "Gist video queue previewing is not setup" $
   cmapR gistUrl sayMessage
 
 setVideoQueueGistCommand :: Reaction Message T.Text
 setVideoQueueGistCommand =
   liftR
-    (\gist ->
-       updateEntityById <$>
-       getCompose (updateFridayStateGist gist <$> Compose currentFridayState)) $
+    (\gist -> do
+       state <- currentFridayState
+       updateEntityById (updateFridayStateGist gist <$> state)) $
   cmapR (const "Updated current Gist for Video Queue") $ Reaction replyMessage
 
 videoQueueCommand :: Reaction Message T.Text
 videoQueueCommand =
   subcommandDispatcher $
+  -- TODO: no command to force refresh the video queue gist
   M.fromList
     [ ("", videoQueueLinkCommand)
     , ("gist", onlyForRoles authorityRoles setVideoQueueGistCommand)

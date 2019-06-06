@@ -554,6 +554,7 @@ mention =
   ignoreNothing markov
 
 bot :: Bot
+bot Started = startUpdateGistTimer
 bot (Joined channel@(TwitchChannel _)) = do
   startPeriodicCommands channel dispatchCommand
   periodicEffect (60 * 1000) (announceRunningPoll channel)

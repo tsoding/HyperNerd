@@ -15,6 +15,7 @@ import System.Environment
 import Text.InterpolatedString.QM
 import Transport.Discord
 import Transport.Twitch
+import Transport (InEvent(..))
 
 eventLoop :: Bot -> TimeSpec -> BotState -> IO ()
 eventLoop b prevCPUTime botState = do
@@ -30,7 +31,7 @@ eventLoop b prevCPUTime botState = do
 logicEntry :: BotState -> IO ()
 logicEntry botState = do
   currCPUTime <- getTime Monotonic
-  eventLoop bot currCPUTime botState
+  handleInEvent bot Started botState >>= eventLoop bot currCPUTime
 
 -- TODO(#399): supervisor is vulnerable to errors that happen at the start of the action
 supavisah :: Show a => IO a -> IO ()
