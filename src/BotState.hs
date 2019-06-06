@@ -21,6 +21,7 @@ import Control.Monad.Trans.Maybe
 import Data.Foldable
 import Data.Function
 import Data.List
+import Data.Maybe
 import Data.String
 import qualified Data.Text as T
 import Data.Time
@@ -34,7 +35,6 @@ import System.IO
 import Text.InterpolatedString.QM
 import Text.Printf
 import Transport
-import Data.Maybe
 
 data TransportState
   = TwitchTransportState { tsTwitchConfig :: TwitchConfig
@@ -69,7 +69,6 @@ newDiscordTransportState config = do
   return
     DiscordTransportState
       {tsIncoming = incoming, tsOutcoming = outcoming, tsDiscordConfig = config}
-
 
 newBotState :: Maybe FilePath -> Config -> SQLite.Connection -> IO BotState
 newBotState markovPath conf sqliteConn = do

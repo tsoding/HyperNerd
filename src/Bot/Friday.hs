@@ -14,6 +14,9 @@ module Bot.Friday
 
 import Bot.Replies
 import Control.Comonad
+import Control.Monad
+import Data.Aeson
+import Data.Bool.Extra
 import Data.Either
 import qualified Data.Map as M
 import Data.Maybe
@@ -23,16 +26,13 @@ import qualified Data.Text as T
 import Data.Time
 import Effect
 import Entity
+import Network.HTTP.Simple (getResponseStatus, parseRequest, setRequestBodyJSON)
+import Network.HTTP.Types.Status (Status(..))
 import Property
 import Reaction
 import Regexp
 import Text.InterpolatedString.QM
 import Transport (Message(..), Sender(..), authorityRoles)
-import Data.Bool.Extra
-import Network.HTTP.Simple (getResponseStatus, parseRequest, setRequestBodyJSON)
-import Network.HTTP.Types.Status (Status(..))
-import Data.Aeson
-import Control.Monad
 
 data FridayVideo = FridayVideo
   { fridayVideoName :: T.Text
@@ -132,8 +132,7 @@ currentFridayState = do
       where begginingOfTime = UTCTime (fromGregorian 1970 1 1) 0
 
 gistUrl :: T.Text -> T.Text
-gistUrl gistId =
-  [qms|https://gist.github.com/{gistId}|]
+gistUrl gistId = [qms|https://gist.github.com/{gistId}|]
 
 setVideoDateCommand :: Reaction Message UTCTime
 setVideoDateCommand =
@@ -153,8 +152,7 @@ renderFridayVideo fv =
   [qms||{fridayVideoDate fv}|{fridayVideoAuthor fv}|{fridayVideoName fv}||]
 
 renderQueue :: [FridayVideo] -> T.Text
-renderQueue =
-  T.unlines . map renderFridayVideo
+renderQueue = T.unlines . map renderFridayVideo
 
 refreshGist :: T.Text -> Effect ()
 refreshGist gistId = do
@@ -171,8 +169,7 @@ refreshGist gistId = do
       response <- githubApiRequest request'
       when (statusCode (getResponseStatus response) >= 400) $
       -- TODO: the GitHub API error is not logged anywhere
-        logMsg
-          [qms|[ERROR] Something went wrong with GitHub API query|]
+        logMsg [qms|[ERROR] Something went wrong with GitHub API query|]
     Left e -> logMsg [qms|[ERROR] {e}|]
 
 startUpdateGistTimer :: Effect ()

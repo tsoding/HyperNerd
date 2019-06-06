@@ -13,9 +13,9 @@ import Data.Maybe
 import System.Clock
 import System.Environment
 import Text.InterpolatedString.QM
+import Transport (InEvent(..))
 import Transport.Discord
 import Transport.Twitch
-import Transport (InEvent(..))
 
 eventLoop :: Bot -> TimeSpec -> BotState -> IO ()
 eventLoop b prevCPUTime botState = do

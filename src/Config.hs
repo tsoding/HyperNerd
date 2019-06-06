@@ -9,14 +9,14 @@ module Config
   , configFromFile
   ) where
 
+import Control.Monad
 import Data.Either.Extra
 import qualified Data.HashMap.Strict as HM
 import Data.Ini
 import qualified Data.Text as T
 import Discord
-import Text.InterpolatedString.QM
-import Control.Monad
 import Safe
+import Text.InterpolatedString.QM
 
 data Config = Config
   { configTwitch :: Maybe TwitchConfig

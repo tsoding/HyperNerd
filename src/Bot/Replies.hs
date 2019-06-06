@@ -3,12 +3,12 @@
 
 module Bot.Replies where
 
+import Control.Comonad
 import qualified Data.Text as T
 import Effect
 import Reaction
 import Text.InterpolatedString.QM
 import Transport
-import Control.Comonad
 
 sayMessage :: Reaction Message T.Text
 sayMessage =
