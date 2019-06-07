@@ -5,7 +5,6 @@ module Main where
 
 import Bot
 import BotState
-import Config
 import Control.Concurrent
 import Control.Concurrent.STM
 import Control.Monad
@@ -14,6 +13,7 @@ import Data.Maybe
 import System.Clock
 import System.Environment
 import Text.InterpolatedString.QM
+import Transport (InEvent(..))
 import Transport.Discord
 import Transport.Twitch
 
@@ -24,14 +24,14 @@ eventLoop b prevCPUTime botState = do
   let deltaTime = toNanoSecs (currCPUTime - prevCPUTime) `div` 1000000
   messages <-
     fmap (join . map maybeToList) $
-    atomically $ mapM (tryReadTQueue . csIncoming) $ bsTransports botState
+    atomically $ mapM (tryReadTQueue . tsIncoming) $ bsTransports botState
   foldrM (handleInEvent b) botState messages >>= advanceTimeouts deltaTime >>=
     eventLoop b currCPUTime
 
 logicEntry :: BotState -> IO ()
 logicEntry botState = do
   currCPUTime <- getTime Monotonic
-  eventLoop bot currCPUTime botState
+  handleInEvent bot Started botState >>= eventLoop bot currCPUTime
 
 -- TODO(#399): supervisor is vulnerable to errors that happen at the start of the action
 supavisah :: Show a => IO a -> IO ()
@@ -54,20 +54,20 @@ entry configPath databasePath markovPath =
     supavisah $ logicEntry botState
     mapM_
       (\channelState ->
-         case csConfig channelState of
-           TwitchConfig twitchConfig ->
+         case channelState of
+           TwitchTransportState {tsTwitchConfig = twitchConfig} ->
              void $
              forkIO $
              twitchTransportEntry
-               (csIncoming channelState)
-               (csOutcoming channelState)
+               (tsIncoming channelState)
+               (tsOutcoming channelState)
                twitchConfig
-           DiscordConfig discordConfig ->
+           DiscordTransportState {tsDiscordConfig = discordConfig} ->
              void $
              forkIO $
              discordTransportEntry
-               (csIncoming channelState)
-               (csOutcoming channelState)
+               (tsIncoming channelState)
+               (tsOutcoming channelState)
                discordConfig) $
       bsTransports botState
     block

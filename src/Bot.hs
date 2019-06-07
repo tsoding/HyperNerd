@@ -379,6 +379,11 @@ builtinCommands =
           , onlyForRoles
               [InternalRole "Trusted", tsodingTrustedDiscordRole]
               fridayCommand))
+    , ( "videoq"
+      , mkBuiltinCommand
+          ( "Get the link to the current Friday Queue"
+          , $githubLinkLocationStr
+          , videoQueueCommand))
     , ( "twitch"
       , mkBuiltinCommand
           ( "Send message to Tsoding Twitch channel"
@@ -511,14 +516,6 @@ mockMessage =
          else Data.Char.toLower)
     True
 
-onlyForRoles :: [Role] -> Reaction Message a -> Reaction Message a
-onlyForRoles roles reaction =
-  transR duplicate $
-  ifR
-    (any (`elem` roles) . senderRoles . messageSender)
-    (cmapR extract reaction)
-    (cmapR (const [qms|Only for roles: {roles}|]) $ Reaction replyMessage)
-
 authorizeSender ::
      (Sender -> Bool) -> Reaction Message (Maybe a) -> Reaction Message a
 authorizeSender p =
@@ -557,6 +554,7 @@ mention =
   ignoreNothing markov
 
 bot :: Bot
+bot Started = startUpdateGistTimer
 bot (Joined channel@(TwitchChannel _)) = do
   startPeriodicCommands channel dispatchCommand
   periodicEffect (60 * 1000) (announceRunningPoll channel)

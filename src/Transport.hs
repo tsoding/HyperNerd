@@ -57,7 +57,8 @@ senderAuthority :: Sender -> Bool
 senderAuthority sender = any (`elem` senderRoles sender) authorityRoles
 
 data InEvent
-  = Joined Channel
+  = Started
+  | Joined Channel
   | InMsg (Message T.Text)
 
 data OutEvent =

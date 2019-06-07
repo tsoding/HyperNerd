@@ -93,8 +93,9 @@ receiveLoop botUser ownerId channels incoming dis = do
   case e of
     Left er -> putStrLn ("Event error: " <> show er)
     Right (MessageCreate m) ->
-      when (not (fromBot m) && any (`fromChannel` m) channels) $ do
-        print m
+      when (not (fromBot m) && any (`fromChannel` m) channels) $
+        -- print m
+       do
         let name = T.pack $ userName $ messageAuthor m
         -- TODO(#522): requesting Discord roles on each message is dangerous for rate limits
         roles <- rolesOfMessage dis m ownerId
@@ -116,16 +117,16 @@ receiveLoop botUser ownerId channels incoming dis = do
 
 -- TODO(#465): Discord transport does not handle authorization failure
 discordTransportEntry ::
-     IncomingQueue -> OutcomingQueue -> DiscordParams -> IO ()
+     IncomingQueue -> OutcomingQueue -> DiscordConfig -> IO ()
 discordTransportEntry incoming outcoming conf =
-  bracket (loginRestGateway $ Auth $ dpAuthToken conf) stopDiscord $ \dis -> do
+  bracket (loginRestGateway $ Auth $ dcAuthToken conf) stopDiscord $ \dis -> do
     respCurrentUser <- restCall dis GetCurrentUser
     -- TODO(#466): restCall errors are not handled properly
     -- TODO(#523): Discord transport never checks if the bot actually sitting in the dpChannels
     case respCurrentUser of
       Left _ -> error "Getting current user call failed"
       Right user -> do
-        respGuild <- restCall dis $ D.GetGuild $ dpGuildId conf
+        respGuild <- restCall dis $ D.GetGuild $ dcGuildId conf
         case respGuild of
           Left _ -> error "Getting guild id call failed"
           Right guild -> do
@@ -134,13 +135,13 @@ discordTransportEntry incoming outcoming conf =
                  atomically $
                  writeTQueue incoming $
                  Joined (DiscordChannel $ fromIntegral chanId)) $
-              dpChannels conf
+              dcChannels conf
             withAsync (sendLoop outcoming dis) $ \sender ->
               withAsync
                 (receiveLoop
                    user
                    (D.guildOwnerId guild)
-                   (dpChannels conf)
+                   (dcChannels conf)
                    incoming
                    dis) $ \receive -> do
                 res <- waitEitherCatch sender receive

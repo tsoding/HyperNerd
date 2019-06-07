@@ -52,11 +52,11 @@ twitchConnectionParams =
 sendMsg :: Connection -> RawIrcMsg -> IO ()
 sendMsg conn msg = send conn (renderRawIrcMsg msg)
 
-authorize :: TwitchParams -> Connection -> IO ()
+authorize :: TwitchConfig -> Connection -> IO ()
 authorize conf conn = do
-  sendMsg conn (ircPass $ tpPass conf)
-  sendMsg conn (ircNick $ tpNick conf)
-  sendMsg conn (ircJoin (tpChannel conf) Nothing)
+  sendMsg conn (ircPass $ tcPass conf)
+  sendMsg conn (ircNick $ tcNick conf)
+  sendMsg conn (ircJoin (tcChannel conf) Nothing)
   sendMsg conn (ircCapReq ["twitch.tv/tags"])
 
 withConnection :: ConnectionParams -> (Connection -> IO a) -> IO a
@@ -73,18 +73,18 @@ readIrcLine conn = do
 valueOfTag :: TagEntry -> T.Text
 valueOfTag (TagEntry _ value) = value
 
-receiveLoop :: TwitchParams -> IncomingQueue -> Connection -> IO ()
+receiveLoop :: TwitchConfig -> IncomingQueue -> Connection -> IO ()
 receiveLoop conf incoming ircConn = do
   mb <- readIrcLine ircConn
   for_ mb $ \msg -> do
     let cookedMsg = cookIrcMsg msg
     -- TODO(#483): Logs from different channels clash together
     --   Let's introduce logging to files. A file per channel.
-    print cookedMsg
+    -- print cookedMsg
     case cookedMsg of
       (Ping xs) -> sendMsg ircConn (ircPong xs)
       (Privmsg userInfo target msgText)
-        | T.toLower (tpNick conf) /= T.toLower (idText $ userNick userInfo) ->
+        | T.toLower (tcNick conf) /= T.toLower (idText $ userNick userInfo) ->
           atomically $
           writeTQueue incoming $
           InMsg $
@@ -100,12 +100,12 @@ receiveLoop conf incoming ircConn = do
                     , TwitchVip <$ find (T.isPrefixOf "vip") badges
                     , TwitchBroadcaster <$
                       find (T.isPrefixOf "broadcaster") badges
-                    , toMaybe TwitchBotOwner (name == tpOwner conf)
+                    , toMaybe TwitchBotOwner (name == tcOwner conf)
                     ]
             -- TODO(#468): Twitch does not provide the id of the user
               , senderId = ""
               }
-            (T.toLower (tpNick conf) `T.isInfixOf` T.toLower msgText)
+            (T.toLower (tcNick conf) `T.isInfixOf` T.toLower msgText)
             msgText
         where name = idText $ userNick userInfo
               displayName =
@@ -119,7 +119,7 @@ receiveLoop conf incoming ircConn = do
                 find (\(TagEntry ident _) -> ident == "badges") $ _msgTags msg
       Join {} ->
         atomically $
-        writeTQueue incoming $ Joined (TwitchChannel $ tpChannel conf)
+        writeTQueue incoming $ Joined (TwitchChannel $ tcChannel conf)
       _ -> return ()
   receiveLoop conf incoming ircConn
 
@@ -136,11 +136,11 @@ sendLoop channel outcoming ircConn = do
   sendLoop channel outcoming ircConn
 
 -- TODO(#17): check unsuccessful authorization
-twitchTransportEntry :: IncomingQueue -> OutcomingQueue -> TwitchParams -> IO ()
+twitchTransportEntry :: IncomingQueue -> OutcomingQueue -> TwitchConfig -> IO ()
 twitchTransportEntry incoming outcoming conf = do
   withConnection twitchConnectionParams $ \ircConn -> do
     authorize conf ircConn
-    withAsync (sendLoop (tpChannel conf) outcoming ircConn) $ \sender ->
+    withAsync (sendLoop (tcChannel conf) outcoming ircConn) $ \sender ->
       withAsync (receiveLoop conf incoming ircConn) $ \receive -> do
         res <- waitEitherCatch sender receive
         case res of

@@ -21,8 +21,9 @@ import Control.Monad.Trans.Maybe
 import Data.Foldable
 import Data.Function
 import Data.List
-import Data.String
+import Data.Maybe
 import qualified Data.Text as T
+import qualified Data.Text.Encoding as TE
 import Data.Time
 import qualified Database.SQLite.Simple as SQLite
 import Effect
@@ -35,32 +36,48 @@ import Text.InterpolatedString.QM
 import Text.Printf
 import Transport
 
-data TransportState = TransportState
-  { csConfig :: Config
-  , csIncoming :: IncomingQueue
-  , csOutcoming :: OutcomingQueue
-  }
+data TransportState
+  = TwitchTransportState { tsTwitchConfig :: TwitchConfig
+                         , tsIncoming :: IncomingQueue
+                         , tsOutcoming :: OutcomingQueue }
+  | DiscordTransportState { tsDiscordConfig :: DiscordConfig
+                          , tsIncoming :: IncomingQueue
+                          , tsOutcoming :: OutcomingQueue }
 
 data BotState = BotState
   { bsTransports :: [TransportState]
   -- Shared
   , bsTimeouts :: [(Integer, Effect ())]
   , bsSqliteConn :: SQLite.Connection
+  , bsConfig :: Config
   , bsMarkovPath :: Maybe FilePath
   , bsMarkov :: Maybe Markov
   }
 
-newTransportState :: Config -> IO TransportState
-newTransportState config = do
+newTwitchTransportState :: TwitchConfig -> IO TransportState
+newTwitchTransportState config = do
   incoming <- atomically newTQueue
   outcoming <- atomically newTQueue
   return
-    TransportState
-      {csIncoming = incoming, csOutcoming = outcoming, csConfig = config}
+    TwitchTransportState
+      {tsIncoming = incoming, tsOutcoming = outcoming, tsTwitchConfig = config}
 
-newBotState :: Maybe FilePath -> [Config] -> SQLite.Connection -> IO BotState
-newBotState markovPath confs sqliteConn = do
-  transports <- mapM newTransportState confs
+newDiscordTransportState :: DiscordConfig -> IO TransportState
+newDiscordTransportState config = do
+  incoming <- atomically newTQueue
+  outcoming <- atomically newTQueue
+  return
+    DiscordTransportState
+      {tsIncoming = incoming, tsOutcoming = outcoming, tsDiscordConfig = config}
+
+newBotState :: Maybe FilePath -> Config -> SQLite.Connection -> IO BotState
+newBotState markovPath conf sqliteConn = do
+  transports <-
+    catMaybes <$>
+    sequence
+      [ sequence (newTwitchTransportState <$> configTwitch conf)
+      , sequence (newDiscordTransportState <$> configDiscord conf)
+      ]
   markov <- runMaybeT (MaybeT (return markovPath) >>= lift . loadMarkov)
   return
     BotState
@@ -69,30 +86,32 @@ newBotState markovPath confs sqliteConn = do
       , bsMarkovPath = markovPath
       , bsMarkov = markov
       , bsTransports = transports
+      , bsConfig = conf
       }
 
 withBotState' ::
-     Maybe FilePath -> [Config] -> FilePath -> (BotState -> IO ()) -> IO ()
-withBotState' markovPath confs databasePath block =
+     Maybe FilePath -> Config -> FilePath -> (BotState -> IO ()) -> IO ()
+withBotState' markovPath conf databasePath block =
   SQLite.withConnection databasePath $ \sqliteConn -> do
     SEP.prepareSchema sqliteConn
-    newBotState markovPath confs sqliteConn >>= block
+    newBotState markovPath conf sqliteConn >>= block
 
 withBotState ::
      Maybe FilePath -> FilePath -> FilePath -> (BotState -> IO ()) -> IO ()
 withBotState markovPath tcPath databasePath block = do
-  confs <- configsFromFile tcPath
-  withBotState' markovPath confs databasePath block
+  conf <- configFromFile tcPath
+  withBotState' markovPath conf databasePath block
 
 twitchCmdEscape :: T.Text -> T.Text
 twitchCmdEscape = T.dropWhile (`elem` ['/', '.']) . T.strip
 
 channelsOfState :: TransportState -> [Channel]
 channelsOfState channelState =
-  case csConfig channelState of
-    TwitchConfig param -> return $ TwitchChannel $ tpChannel param
-    DiscordConfig param ->
-      map (DiscordChannel . fromIntegral) $ dpChannels param
+  case channelState of
+    TwitchTransportState {tsTwitchConfig = param} ->
+      return $ TwitchChannel $ tcChannel param
+    DiscordTransportState {tsDiscordConfig = param} ->
+      map (DiscordChannel . fromIntegral) $ dcChannels param
 
 stateOfChannel :: BotState -> Channel -> Maybe TransportState
 stateOfChannel botState channel =
@@ -103,14 +122,14 @@ applyEffect self@(_, Pure _) = return self
 applyEffect (botState, Free (Say channel text s)) = do
   case stateOfChannel botState channel of
     Just channelState ->
-      case csConfig channelState of
-        TwitchConfig _ ->
+      case channelState of
+        TwitchTransportState {} ->
           atomically $
-          writeTQueue (csOutcoming channelState) $
+          writeTQueue (tsOutcoming channelState) $
           OutMsg channel (twitchCmdEscape text)
         _ ->
           atomically $
-          writeTQueue (csOutcoming channelState) $ OutMsg channel text
+          writeTQueue (tsOutcoming channelState) $ OutMsg channel text
     Nothing -> hPutStrLn stderr [qms|[ERROR] Channel does not exist {channel} |]
   return (botState, s)
 applyEffect (botState, Free (LogMsg msg s)) = do
@@ -153,19 +172,32 @@ applyEffect (botState, Free (HttpRequest request s)) = do
   case response of
     Just response' -> return (botState, s response')
     Nothing -> return (botState, Pure ())
-applyEffect (botState, Free (TwitchApiRequest channel request s)) =
-  case stateOfChannel botState channel of
-    Just channelState -> do
-      let clientId =
-            fromString $
-            T.unpack $
-            case csConfig channelState of
-              (TwitchConfig params) -> tpTwitchClientId params
-              (DiscordConfig params) -> dpTwitchClientId params
-      response <- httpLBS (addRequestHeader "Client-ID" clientId request)
+applyEffect (botState, Free (TwitchApiRequest request s)) =
+  case configTwitch $ bsConfig botState of
+    Just TwitchConfig {tcTwitchClientId = clientId} -> do
+      response <-
+        httpLBS (addRequestHeader "Client-ID" (TE.encodeUtf8 clientId) request)
       return (botState, s response)
     Nothing -> do
-      hPutStrLn stderr [qms|[ERROR] Channel does not exist {channel} |]
+      hPutStrLn
+        stderr
+        [qms|[ERROR] Bot tried to perform Twitch API request.
+             But Twitch clientId is not setup.|]
+      return (botState, Pure ())
+applyEffect (botState, Free (GitHubApiRequest request s)) = do
+  let githubConfig = configGithub $ bsConfig botState
+  case githubConfig of
+    Just GithubConfig {githubApiKey = apiKey} -> do
+      response <-
+        httpLBS
+          (addRequestHeader "User-Agent" "HyperNerd" $
+           addRequestHeader "Authorization" [qms|token {apiKey}|] request)
+      return (botState, s response)
+    Nothing -> do
+      hPutStrLn
+        stderr
+        [qms|[ERROR] Bot tried to do GitHub API request.
+             But GitHub API key is not setup.|]
       return (botState, Pure ())
 applyEffect (botState, Free (Timeout ms e s)) =
   return ((botState {bsTimeouts = (ms, e) : bsTimeouts botState}), s)
@@ -176,7 +208,7 @@ applyEffect (botState, Free (TwitchCommand channel name args s)) =
   case stateOfChannel botState channel of
     Just channelState -> do
       atomically $
-        writeTQueue (csOutcoming channelState) $
+        writeTQueue (tsOutcoming channelState) $
         OutMsg channel [qms|/{name} {T.concat $ intersperse " " args}|]
       return (botState, s)
     Nothing -> do

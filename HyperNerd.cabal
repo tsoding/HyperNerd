@@ -137,6 +137,7 @@ executable HyperNerd
                      , cassava
                      , discord-haskell == 0.7.1
                      , template-haskell
+                     , http-types
 
   -- Directories containing source files.
   hs-source-dirs:      src
