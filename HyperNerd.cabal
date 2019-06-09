@@ -116,7 +116,7 @@ executable HyperNerd
                      , file-embed
                      , free
                      , hookup
-                     , http-conduit == 2.3.2
+                     , http-conduit >= 2.3.2
                      , ini
                      , irc-core
                      , network>=2.3 && <2.9
