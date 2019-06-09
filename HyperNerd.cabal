@@ -206,7 +206,7 @@ test-suite HyperNerdTest
                      , stm
                      , regex-base
                      , regex-tdfa
-                     , discord-haskell == 0.7.1
+                     , discord-haskell >= 0.8.3
                      , array
 
   other-modules:       Bot.BttvFfz
