@@ -190,7 +190,7 @@ test-suite HyperNerdTest
                      , exceptions
                      , file-embed
                      , free
-                     , http-conduit == 2.3.2
+                     , http-conduit >= 2.3.2
                      , qm-interpolated-string
                      , raw-strings-qq
                      , regex-tdfa
