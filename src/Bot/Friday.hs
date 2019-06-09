@@ -121,7 +121,13 @@ videoCommand =
   liftR (const videoQueue) $
   cmapR listToMaybe $
   replyOnNothing "No videos in the queue" $
-  cmapR entityPayload $ cmapR renderFridayVideo $ Reaction replyMessage
+  cmapR entityPayload $
+  cmapR
+    (\video ->
+       [qms|{fridayVideoDate video}
+            <{fridayVideoAuthor video}>
+            {fridayVideoName video}|]) $
+  Reaction replyMessage
 
 currentFridayState :: Effect (Entity FridayState)
 currentFridayState = do
@@ -147,12 +153,16 @@ videoCountCommand =
   liftR (const videoQueue) $
   cmapR (T.pack . show . length) $ Reaction replyMessage
 
-renderFridayVideo :: FridayVideo -> T.Text
-renderFridayVideo fv =
-  [qms||{fridayVideoDate fv}|{fridayVideoAuthor fv}|{fridayVideoName fv}||]
-
 renderQueue :: [FridayVideo] -> T.Text
-renderQueue = T.unlines . map renderFridayVideo
+renderQueue queue =
+  T.unlines $
+  ([qms|Video Count {length queue}|] :) $
+  map
+    (\video ->
+       [qms||{fridayVideoDate video}
+            |{fridayVideoAuthor video}
+            |{fridayVideoName video}||])
+    queue
 
 refreshGist :: T.Text -> Effect ()
 refreshGist gistId = do
