@@ -145,7 +145,9 @@ setVideoDateCommand =
   liftR
     (\newDate -> do
        vt <- currentFridayState
-       updateEntityById (updateFridayStateTime newDate <$> vt)) $
+       updateEntityById
+         (updateFridayStateGistFresh False . updateFridayStateTime newDate <$>
+          vt)) $
   cmapR (const "Updated last video time") $ Reaction replyMessage
 
 videoCountCommand :: Reaction Message ()
