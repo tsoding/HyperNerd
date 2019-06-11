@@ -214,7 +214,7 @@ subcommandDispatcher subcommandTable =
             replyToSender
               (messageSender msg)
               [qms|No such subcommand {subcommand}|]
-      _ -> logMsg [qms|Could not pattern match {messageContent msg}|]
+      _ -> logMsg [qms|[ERROR] Could not pattern match {messageContent msg}|]
 
 videoQueueLinkCommand :: Reaction Message a
 videoQueueLinkCommand =
@@ -234,8 +234,13 @@ setVideoQueueGistCommand =
 videoQueueCommand :: Reaction Message T.Text
 videoQueueCommand =
   subcommandDispatcher $
-  -- TODO(#635): no command to force refresh the video queue gist
   M.fromList
     [ ("", videoQueueLinkCommand)
     , ("gist", onlyForRoles authorityRoles setVideoQueueGistCommand)
+    , ( "refresh"
+      , onlyForRoles authorityRoles $
+        liftR (const currentFridayState) $
+        cmapR (updateFridayStateGistFresh False <$>) $
+        liftR updateEntityById $
+        cmapR (const "Freshness invalidated 👌") $ Reaction replyMessage)
     ]
