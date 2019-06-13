@@ -80,6 +80,7 @@ executable HyperNerd
                      , Bot.Calc
                      , Bot.Expr
                      , Bot.DocLoc
+                     , Bot.GitHub
                      , BotState
                      , Command
                      , Config

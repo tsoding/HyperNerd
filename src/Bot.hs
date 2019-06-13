@@ -452,6 +452,16 @@ builtinCommands =
           , onlyForRoles authorityRoles $
             liftR (const reloadMarkov) $
             replyOnNothing "Nothing to reload" $ Reaction replyMessage))
+    , ( "config"
+      , mkBuiltinCommand
+          ( "Bot configuration command"
+          , $githubLinkLocationStr
+          , onlyForRoles authorityRoles $
+            subcommand
+              [ ( "help"
+                , subcommand
+                    [("setgist", setHelpGistId), ("refresh", refreshHelpGistId)])
+              ]))
     ]
 
 signText :: T.Text -> Either String Int
@@ -554,7 +564,9 @@ mention =
   ignoreNothing markov
 
 bot :: Bot
-bot Started = startUpdateGistTimer
+bot Started = do
+  startRefreshFridayGistTimer
+  startRefreshHelpGistTimer builtinCommands
 bot (Joined channel@(TwitchChannel _)) = do
   startPeriodicCommands channel dispatchCommand
   periodicEffect (60 * 1000) (announceRunningPoll channel)

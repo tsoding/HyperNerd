@@ -9,13 +9,12 @@ module Bot.Friday
   , videoCountCommand
   , containsYtLink
   , videoQueueCommand
-  , startUpdateGistTimer
+  , startRefreshFridayGistTimer
   ) where
 
 import Bot.Replies
 import Control.Comonad
 import Control.Monad
-import Data.Aeson
 import Data.Bool.Extra
 import Data.Either
 import qualified Data.Map as M
@@ -26,13 +25,13 @@ import qualified Data.Text as T
 import Data.Time
 import Effect
 import Entity
-import Network.HTTP.Simple (getResponseStatus, parseRequest, setRequestBodyJSON)
-import Network.HTTP.Types.Status (Status(..))
 import Property
 import Reaction
 import Regexp
 import Text.InterpolatedString.QM
 import Transport (Message(..), Sender(..), authorityRoles)
+import Data.Char
+import Bot.GitHub
 
 data FridayVideo = FridayVideo
   { fridayVideoName :: T.Text
@@ -55,14 +54,14 @@ instance IsEntity FridayVideo where
 
 data FridayState = FridayState
   { fridayStateTime :: UTCTime
-  , fridayStateGistId :: Maybe T.Text
+  , fridayStateGistId :: Maybe GistId
   , fridayStateGistFresh :: Bool
-  } deriving (Show, Eq)
+  }
 
 updateFridayStateTime :: UTCTime -> FridayState -> FridayState
 updateFridayStateTime time state = state {fridayStateTime = time}
 
-updateFridayStateGist :: T.Text -> FridayState -> FridayState
+updateFridayStateGist :: GistId -> FridayState -> FridayState
 updateFridayStateGist gist state = state {fridayStateGistId = Just gist}
 
 updateFridayStateGistFresh :: Bool -> FridayState -> FridayState
@@ -75,10 +74,11 @@ instance IsEntity FridayState where
       ([ ("time", PropertyUTCTime $ fridayStateTime state)
        , ("gistFresh", PropertyInt $ boolAsInt $ fridayStateGistFresh state)
        ] ++
-       maybeToList ((,) "gistId" . PropertyText <$> fridayStateGistId state))
+       maybeToList
+         ((,) "gistId" . PropertyText . gistIdAsText <$> fridayStateGistId state))
   fromProperties properties =
     FridayState <$> extractProperty "time" properties <*>
-    return (extractProperty "gistId" properties) <*>
+    return (GistId <$> extractProperty "gistId" properties) <*>
     return (intAsBool $ fromMaybe 0 $ extractProperty "gistFresh" properties)
 
 containsYtLink :: T.Text -> Bool
@@ -137,8 +137,9 @@ currentFridayState = do
     Nothing -> createEntity Proxy $ FridayState begginingOfTime Nothing False
       where begginingOfTime = UTCTime (fromGregorian 1970 1 1) 0
 
-gistUrl :: T.Text -> T.Text
-gistUrl gistId = [qms|https://gist.github.com/{gistId}|]
+gistUrl :: GistId -> T.Text
+gistUrl (GistId gistId) =
+  [qms|https://gist.github.com/{gistId}#file-{anchor fridayGistFileName}|]
 
 setVideoDateCommand :: Reaction Message UTCTime
 setVideoDateCommand =
@@ -166,55 +167,40 @@ renderQueue queue =
             |{fridayVideoName video}||])
     queue
 
-refreshGist :: T.Text -> Effect ()
+fridayGistFileName :: T.Text
+fridayGistFileName = "Queue.org"
+
+anchor :: T.Text -> T.Text
+anchor =
+  T.map
+    (\x ->
+       if isAlphaNum x
+         then x
+         else '-') .
+  T.toLower
+
+refreshGist :: GistId -> Effect ()
 refreshGist gistId = do
   gistText <- renderQueue . map entityPayload <$> videoQueue
-  let payload =
-        object
-          ["files" .= object ["Queue.org" .= object ["content" .= gistText]]]
-  logMsg (T.pack $ show $ encode payload)
-  let request =
-        setRequestBodyJSON payload <$>
-        parseRequest [qms|PATCH https://api.github.com/gists/{gistId}|]
-  case request of
-    Right request' -> do
-      response <- githubApiRequest request'
-      when (statusCode (getResponseStatus response) >= 400) $
-      -- TODO(#634): the GitHub API error is not logged anywhere
-        logMsg [qms|[ERROR] Something went wrong with GitHub API query|]
-    Left e -> logMsg [qms|[ERROR] {e}|]
+  updateGistFile
+    (FileName fridayGistFileName)
+    (FileContent gistText)
+    gistId
 
-startUpdateGistTimer :: Effect ()
-startUpdateGistTimer =
+startRefreshFridayGistTimer :: Effect ()
+startRefreshFridayGistTimer =
   periodicEffect period $ do
-    logMsg "[INFO] Checking if needed to update Friday Gist"
     state <- currentFridayState
     case fridayStateGistId $ entityPayload state of
       Just gistId
         | not $ fridayStateGistFresh $ entityPayload state -> do
-          logMsg "[INFO] Gist is not Fresh. Updating..."
+          logMsg "[INFO] Friday Gist is not Fresh. Updating..."
           refreshGist gistId
           void $ updateEntityById (updateFridayStateGistFresh True <$> state)
-      Nothing -> logMsg "[INFO] Gist is not setup :rage:"
-      _ -> logMsg "[INFO] Gist is fresh AF 👌"
+      Nothing -> logMsg "[INFO] Gist ID is not setup for Friday Page :rage:"
+      _ -> logMsg "[INFO] Friday Gist is fresh AF 👌"
   where
     period = 60 * 1000
-
-subcommandDispatcher ::
-     M.Map T.Text (Reaction Message T.Text) -> Reaction Message T.Text
-subcommandDispatcher subcommandTable =
-  cmapR (regexParseArgs "([a-zA-Z0-9]*) *(.*)") $
-  replyLeft $
-  Reaction $ \msg ->
-    case messageContent msg of
-      [subcommand, args] ->
-        case M.lookup subcommand subcommandTable of
-          Just reaction -> runReaction reaction (args <$ msg)
-          Nothing ->
-            replyToSender
-              (messageSender msg)
-              [qms|No such subcommand {subcommand}|]
-      _ -> logMsg [qms|[ERROR] Could not pattern match {messageContent msg}|]
 
 videoQueueLinkCommand :: Reaction Message a
 videoQueueLinkCommand =
@@ -228,13 +214,13 @@ setVideoQueueGistCommand =
   liftR
     (\gist -> do
        state <- currentFridayState
-       updateEntityById (updateFridayStateGist gist <$> state)) $
+       updateEntityById (updateFridayStateGist (GistId gist) <$> state)) $
   cmapR (const "Updated current Gist for Video Queue") $ Reaction replyMessage
 
+-- TODO: Move configuration subcommands of !videoq to !config
 videoQueueCommand :: Reaction Message T.Text
 videoQueueCommand =
-  subcommandDispatcher $
-  M.fromList
+  subcommand
     [ ("", videoQueueLinkCommand)
     , ("gist", onlyForRoles authorityRoles setVideoQueueGistCommand)
     , ( "refresh"
