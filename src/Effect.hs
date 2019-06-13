@@ -127,7 +127,6 @@ say channel msg = liftF $ Say channel msg ()
 logMsg :: T.Text -> Effect ()
 logMsg msg = liftF $ LogMsg msg ()
 
--- TODO(#235): the result of createEntity effect is always ignored
 createEntity :: IsEntity e => Proxy e -> e -> Effect (Entity e)
 createEntity proxy entity =
   liftF (CreateEntity (nameOfEntity proxy) (toProperties entity) id) >>=
