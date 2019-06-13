@@ -4,13 +4,13 @@
 module Bot.Replies where
 
 import Control.Comonad
+import qualified Data.Map as M
 import qualified Data.Text as T
 import Effect
 import Reaction
+import Regexp
 import Text.InterpolatedString.QM
 import Transport
-import qualified Data.Map as M
-import Regexp
 
 sayMessage :: Reaction Message T.Text
 sayMessage =
@@ -83,9 +83,7 @@ subcommand subcommandList =
         case M.lookup name subcommandTable of
           Just reaction -> runReaction reaction (args <$ msg)
           Nothing ->
-            replyToSender
-              (messageSender msg)
-              [qms|No such subcommand {name}|]
+            replyToSender (messageSender msg) [qms|No such subcommand {name}|]
       _ -> logMsg [qms|[ERROR] Could not pattern match {messageContent msg}|]
   where
     subcommandTable = M.fromList subcommandList

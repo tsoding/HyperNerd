@@ -12,6 +12,7 @@ module Bot.Friday
   , startRefreshFridayGistTimer
   ) where
 
+import Bot.GitHub
 import Bot.Replies
 import Control.Comonad
 import Control.Monad
@@ -30,8 +31,6 @@ import Reaction
 import Regexp
 import Text.InterpolatedString.QM
 import Transport (Message(..), Sender(..), authorityRoles)
-import Data.Char
-import Bot.GitHub
 
 data FridayVideo = FridayVideo
   { fridayVideoName :: T.Text
@@ -139,7 +138,7 @@ currentFridayState = do
 
 gistUrl :: GistId -> T.Text
 gistUrl (GistId gistId) =
-  [qms|https://gist.github.com/{gistId}#file-{anchor fridayGistFileName}|]
+  [qms|https://gist.github.com/{gistId}#file-{gistFileAnchor fridayGistFileName}|]
 
 setVideoDateCommand :: Reaction Message UTCTime
 setVideoDateCommand =
@@ -167,25 +166,13 @@ renderQueue queue =
             |{fridayVideoName video}||])
     queue
 
-fridayGistFileName :: T.Text
-fridayGistFileName = "Queue.org"
-
-anchor :: T.Text -> T.Text
-anchor =
-  T.map
-    (\x ->
-       if isAlphaNum x
-         then x
-         else '-') .
-  T.toLower
+fridayGistFileName :: FileName
+fridayGistFileName = FileName "Queue.org"
 
 refreshGist :: GistId -> Effect ()
 refreshGist gistId = do
   gistText <- renderQueue . map entityPayload <$> videoQueue
-  updateGistFile
-    (FileName fridayGistFileName)
-    (FileContent gistText)
-    gistId
+  updateGistFile fridayGistFileName (FileContent gistText) gistId
 
 startRefreshFridayGistTimer :: Effect ()
 startRefreshFridayGistTimer =

@@ -8,22 +8,21 @@ module Bot.Help
   , startRefreshHelpGistTimer
   ) where
 
+import Bot.GitHub
 import Bot.Replies
 import Command
-import Data.List
+import Data.Bool.Extra
+import Data.Functor
 import qualified Data.Map as M
+import Data.Maybe
+import Data.Proxy
 import qualified Data.Text as T
+import Effect
+import Entity
+import Property
 import Reaction
 import Text.InterpolatedString.QM
 import Transport
-import Entity
-import Property
-import Data.Bool.Extra
-import Effect
-import Data.Maybe
-import Data.Proxy
-import Data.Functor
-import Bot.GitHub
 
 data HelpState = HelpState
   { helpStateGistId :: Maybe GistId
@@ -79,10 +78,11 @@ gistRenderBuiltinCommand (name, command) =
 gistRenderCommandTable :: CommandTable -> T.Text
 gistRenderCommandTable = T.unlines . map gistRenderBuiltinCommand . M.toList
 
+-- TODO: Help Gist Page does not include CustomCommands
 refreshHelpGist :: CommandTable -> GistId -> Effect ()
 refreshHelpGist commandTable gistId = do
   let gistText = gistRenderCommandTable commandTable
-  updateGistFile (FileName "Help.org") (FileContent gistText) gistId
+  updateGistFile helpGistFileName (FileContent gistText) gistId
 
 startRefreshHelpGistTimer :: CommandTable -> Effect ()
 startRefreshHelpGistTimer commandTable =
@@ -99,7 +99,6 @@ startRefreshHelpGistTimer commandTable =
   where
     period = 60 * 1000
 
--- TODO: !help should return the link to gist page
 helpCommand :: CommandTable -> Reaction Message T.Text
 helpCommand commandTable =
   ifR
@@ -114,14 +113,16 @@ replyHelpForCommand commandTable =
   cmapR (\bc -> [qms|{bcDescription bc} | Located in {bcGitHubLocation bc}|]) $
   Reaction replyMessage
 
-replyAvaliableCommands :: CommandTable -> Reaction Message T.Text
-replyAvaliableCommands commandTable =
-  cmapR (const $ availableCommandsReply commandTable) $ Reaction replyMessage
+helpGistFileName :: FileName
+helpGistFileName = FileName "Help.org"
 
-availableCommandsReply :: CommandTable -> T.Text
-availableCommandsReply commandTable =
-  let commandList =
-        T.concat $
-        intersperse (T.pack ", ") $
-        map (\x -> T.concat [T.pack "!", x]) $ M.keys commandTable
-   in [qm|Available commands: {commandList}|]
+helpGistUrl :: GistId -> T.Text
+helpGistUrl (GistId gistId) =
+  [qms|https://gist.github.com/{gistId}#file-{gistFileAnchor helpGistFileName}|]
+
+replyAvaliableCommands :: CommandTable -> Reaction Message T.Text
+replyAvaliableCommands _ =
+  liftR (const currentHelpState) $
+  cmapR (helpStateGistId . entityPayload) $
+  replyOnNothing "Admin did not setup Gist Page for Help" $
+  cmapR helpGistUrl $ Reaction replyMessage
