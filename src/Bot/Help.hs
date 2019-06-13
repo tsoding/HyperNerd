@@ -78,7 +78,7 @@ gistRenderBuiltinCommand (name, command) =
 gistRenderCommandTable :: CommandTable -> T.Text
 gistRenderCommandTable = T.unlines . map gistRenderBuiltinCommand . M.toList
 
--- TODO: Help Gist Page does not include CustomCommands
+-- TODO(#649): Help Gist Page does not include CustomCommands
 refreshHelpGist :: CommandTable -> GistId -> Effect ()
 refreshHelpGist commandTable gistId = do
   let gistText = gistRenderCommandTable commandTable
