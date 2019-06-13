@@ -204,7 +204,7 @@ setVideoQueueGistCommand =
        updateEntityById (updateFridayStateGist (GistId gist) <$> state)) $
   cmapR (const "Updated current Gist for Video Queue") $ Reaction replyMessage
 
--- TODO: Move configuration subcommands of !videoq to !config
+-- TODO(#648): Move configuration subcommands of !videoq to !config
 videoQueueCommand :: Reaction Message T.Text
 videoQueueCommand =
   subcommand
