@@ -80,6 +80,7 @@ executable HyperNerd
                      , Bot.Calc
                      , Bot.Expr
                      , Bot.DocLoc
+                     , Bot.GitHub
                      , BotState
                      , Command
                      , Config
@@ -221,6 +222,7 @@ test-suite HyperNerdTest
                      , Bot.Banwords
                      , Bot.Friday
                      , Bot.FridayTest
+                     , Bot.GitHub
                      , Data.Maybe.Extra
                      , Regexp
                      , Command

@@ -4,9 +4,11 @@
 module Bot.Replies where
 
 import Control.Comonad
+import qualified Data.Map as M
 import qualified Data.Text as T
 import Effect
 import Reaction
+import Regexp
 import Text.InterpolatedString.QM
 import Transport
 
@@ -70,3 +72,18 @@ onlyForRoles roles reaction =
     (any (`elem` roles) . senderRoles . messageSender)
     (cmapR extract reaction)
     (cmapR (const [qms|Only for roles: {roles}|]) $ Reaction replyMessage)
+
+subcommand :: [(T.Text, Reaction Message T.Text)] -> Reaction Message T.Text
+subcommand subcommandList =
+  cmapR (regexParseArgs "([a-zA-Z0-9]*) *(.*)") $
+  replyLeft $
+  Reaction $ \msg ->
+    case messageContent msg of
+      [name, args] ->
+        case M.lookup name subcommandTable of
+          Just reaction -> runReaction reaction (args <$ msg)
+          Nothing ->
+            replyToSender (messageSender msg) [qms|No such subcommand {name}|]
+      _ -> logMsg [qms|[ERROR] Could not pattern match {messageContent msg}|]
+  where
+    subcommandTable = M.fromList subcommandList
