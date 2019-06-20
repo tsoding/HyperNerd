@@ -20,6 +20,7 @@ import Transport
 data Op
   = Plus
   | Minus
+  | UnaryMinus
   | Multiply
   | Division
   | Exp
@@ -33,6 +34,7 @@ data Token
 opName :: Op -> T.Text
 opName Plus = "+"
 opName Minus = "-"
+opName UnaryMinus = "-"
 opName Multiply = "*"
 opName Division = "/"
 opName Exp = "^"
@@ -70,7 +72,15 @@ tokenize xs@(T.uncons -> Just (x, _))
   where
     (digits, rest) = T.span (\a -> isDigit a || a == '.') xs
 tokenize (T.uncons -> Nothing) = return []
-tokenize _ = Left "Error 😡"
+tokenize _ = Left "Tokenizer Error 😡"
+
+urinateMinus :: [Token] -> [Token]
+urinateMinus (NumberToken x:OpToken Minus:restTokens) =
+  NumberToken x : OpToken Minus : urinateMinus restTokens
+urinateMinus (OpToken Minus:restTokens) =
+  OpToken UnaryMinus : urinateMinus restTokens
+urinateMinus (token:restTokens) = token : urinateMinus restTokens
+urinateMinus [] = []
 
 precedence :: Op -> Int
 precedence Plus = 0
@@ -78,13 +88,14 @@ precedence Minus = 0
 precedence Multiply = 1
 precedence Division = 1
 precedence Exp = 2
+precedence UnaryMinus = 3
 
 infixToRpn :: [Op] -> [Token] -> Either String [Token]
 infixToRpn opStack (NumberToken x:restTokens) =
   (NumberToken x :) <$> infixToRpn opStack restTokens
 infixToRpn [] (OpToken op:rest) = infixToRpn [op] rest
 infixToRpn opStack@(op0:_) (OpToken op1:rest)
-  | precedence op0 < precedence op1 = infixToRpn (op1 : opStack) rest
+  | precedence op0 <= precedence op1 = infixToRpn (op1 : opStack) rest
   | otherwise =
     (map OpToken outputOps ++) <$> infixToRpn (op1 : restOpStack) rest
   where
@@ -94,28 +105,26 @@ infixToRpn opStack [] = return $ map OpToken opStack
 
 type RpnState = [Double]
 
-interpretOp :: Op -> Double -> Double -> Either String Double
-interpretOp Plus a b = return (a + b)
-interpretOp Minus a b = return (a - b)
-interpretOp Multiply a b = return (a * b)
-interpretOp Division a b = return (a / b)
-interpretOp Exp a b = return (a ** b)
-
 interpretToken :: RpnState -> Token -> Either String RpnState
 interpretToken s (NumberToken x) = return (x : s)
-interpretToken (x1:x2:xs) (OpToken op) = (: xs) <$> interpretOp op x2 x1
-interpretToken _ _ = Left "Error 😡"
+interpretToken (x:xs) (OpToken UnaryMinus) = return ((-x) : xs)
+interpretToken (x1:x2:xs) (OpToken Plus) = return ((x2 + x1) : xs)
+interpretToken (x1:x2:xs) (OpToken Minus) = return ((x2 - x1) : xs)
+interpretToken (x1:x2:xs) (OpToken Multiply) = return ((x2 * x1) : xs)
+interpretToken (x1:x2:xs) (OpToken Division) = return ((x2 / x1) : xs)
+interpretToken (x1:x2:xs) (OpToken Exp) = return ((x2 ** x1) : xs)
+interpretToken _ _ = Left "Interpreter Error"
 
 interpretRpn :: [Token] -> Either String Double
 interpretRpn tokens = do
   result <- foldlM interpretToken [] tokens
   case result of
     [x] -> return x
-    _ -> Left "Error 😡"
+    _ -> Left "Final Stack Size is not equal to 1 😡"
 
 calc :: T.Text -> Either String Double
 calc text = do
-  tokens <- tokenize text
+  tokens <- urinateMinus <$> tokenize text
   rpn <- infixToRpn [] tokens
   interpretRpn rpn
 
