@@ -570,10 +570,10 @@ bot Started = do
 -- TODO: Restarted Twitch transport thread can duplicate timers
 bot (Joined channel@(TwitchChannel _)) = do
   startPeriodicCommands channel dispatchCommand
-  periodicEffect (60 * 1000) (announceRunningPoll channel)
+  periodicEffect (60 * 1000) (Just channel) (announceRunningPoll channel)
 -- TODO(#550): Periodic commands don't work in Discord channels
 bot (Joined channel@(DiscordChannel _)) =
-  periodicEffect (60 * 1000) (announceRunningPoll channel)
+  periodicEffect (60 * 1000) (Just channel) (announceRunningPoll channel)
 bot (InMsg msg) =
   runReaction (dupLiftExtractR internalMessageRoles messageReaction) msg
 

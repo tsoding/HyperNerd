@@ -86,7 +86,7 @@ refreshHelpGist commandTable gistId = do
 
 startRefreshHelpGistTimer :: CommandTable -> Effect ()
 startRefreshHelpGistTimer commandTable =
-  periodicEffect period $ do
+  periodicEffect period Nothing $ do
     state <- currentHelpState
     case helpStateGistId $ entityPayload state of
       Just gistId

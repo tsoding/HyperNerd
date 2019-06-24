@@ -7,6 +7,7 @@ module BotState
   , withBotState
   , withBotState'
   , newBotState
+  , destroyTimeoutsOfChannel
   , BotState(..)
   , TransportState(..)
   ) where
@@ -45,6 +46,7 @@ data TransportState
                           , tsOutcoming :: OutcomingQueue }
 
 data Timeout = Timeout { timeoutDuration :: Integer
+                       , timeoutChannel :: Maybe Channel
                        , timeoutEffect :: Effect ()
                        }
 
@@ -57,6 +59,11 @@ data BotState = BotState
   , bsMarkovPath :: Maybe FilePath
   , bsMarkov :: Maybe Markov
   }
+
+destroyTimeoutsOfChannel :: BotState -> Maybe Channel -> BotState
+destroyTimeoutsOfChannel botState channel =
+  botState
+    {bsTimeouts = filter ((/= channel) . timeoutChannel) $ bsTimeouts botState}
 
 newTwitchTransportState :: TwitchConfig -> IO TransportState
 newTwitchTransportState config = do
@@ -203,8 +210,8 @@ applyEffect (botState, Free (GitHubApiRequest request s)) = do
         [qms|[ERROR] Bot tried to do GitHub API request.
              But GitHub API key is not setup.|]
       return (botState, Pure ())
-applyEffect (botState, Free (TimeoutEff ms e s)) =
-  return ((botState {bsTimeouts = Timeout ms e : bsTimeouts botState}), s)
+applyEffect (botState, Free (TimeoutEff ms e c s)) =
+  return ((botState {bsTimeouts = Timeout ms e c : bsTimeouts botState}), s)
 applyEffect (botState, Free (Listen effect s)) = do
   (botState', sayLog) <- listenEffectIO applyEffect (botState, effect)
   return (botState', s sayLog)
@@ -248,6 +255,9 @@ runEffectTransIO botState effect =
   SQLite.withTransaction (bsSqliteConn botState) $
   runEffectIO applyEffect (botState, effect)
 
+advanceTimeout :: Integer -> Timeout -> Timeout
+advanceTimeout dt (Timeout t c e) = Timeout (t - dt) c e
+
 advanceTimeouts :: Integer -> BotState -> IO BotState
 advanceTimeouts dt botState =
   foldlM runEffectTransIO (botState {bsTimeouts = unripe}) $
@@ -256,7 +266,7 @@ advanceTimeouts dt botState =
     (ripe, unripe) =
       span ((<= 0) . timeoutDuration) $
       sortBy (compare `on` timeoutDuration) $
-      map (\(Timeout t e) -> Timeout (t - dt) e) $ bsTimeouts botState
+      map (advanceTimeout dt) $ bsTimeouts botState
 
 handleInEvent :: Bot -> InEvent -> BotState -> IO BotState
 handleInEvent b event botState = runEffectTransIO botState $ b event

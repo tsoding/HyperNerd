@@ -137,7 +137,10 @@ pollCommand =
                  You have {durationSecs} seconds:|]
             traverse_ (\(i, op) -> say (senderChannel sender) [qms|[{i}] {op}|]) $
               zip [0 :: Int ..] options
-            timeout (fromIntegral durationMs) $ announcePollResults pollId
+            timeout
+              (fromIntegral durationMs)
+              (Just $ senderChannel sender)
+              (announcePollResults pollId)
           else do
             let offset = fromInteger $ toInteger $ negate durationSecs
           -- TODO(#361): Polls with negative durations are not stored in the database
