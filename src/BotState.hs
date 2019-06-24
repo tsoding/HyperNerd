@@ -45,10 +45,11 @@ data TransportState
                           , tsIncoming :: IncomingQueue
                           , tsOutcoming :: OutcomingQueue }
 
-data Timeout = Timeout { timeoutDuration :: Integer
-                       , timeoutChannel :: Maybe Channel
-                       , timeoutEffect :: Effect ()
-                       }
+data Timeout = Timeout
+  { timeoutDuration :: Integer
+  , timeoutChannel :: Maybe Channel
+  , timeoutEffect :: Effect ()
+  }
 
 data BotState = BotState
   { bsTransports :: [TransportState]
