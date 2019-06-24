@@ -97,9 +97,9 @@ data EffectF s
                      (Response B8.ByteString -> s)
   | GitHubApiRequest Request
                      (Response B8.ByteString -> s)
-  | Timeout Integer
-            (Effect ())
-            s
+  | TimeoutEff Integer
+               (Effect ())
+               s
   | Listen (Effect ())
            ([T.Text] -> s)
   | TwitchCommand Channel
@@ -168,7 +168,7 @@ githubApiRequest :: Request -> Effect (Response B8.ByteString)
 githubApiRequest request = liftF $ GitHubApiRequest request id
 
 timeout :: Integer -> Effect () -> Effect ()
-timeout t e = liftF $ Timeout t e ()
+timeout t e = liftF $ TimeoutEff t e ()
 
 errorEff :: T.Text -> Effect a
 errorEff t = liftF $ ErrorEff t

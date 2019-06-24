@@ -44,10 +44,14 @@ data TransportState
                           , tsIncoming :: IncomingQueue
                           , tsOutcoming :: OutcomingQueue }
 
+data Timeout = Timeout { timeoutDuration :: Integer
+                       , timeoutEffect :: Effect ()
+                       }
+
 data BotState = BotState
   { bsTransports :: [TransportState]
   -- Shared
-  , bsTimeouts :: [(Integer, Effect ())]
+  , bsTimeouts :: [Timeout]
   , bsSqliteConn :: SQLite.Connection
   , bsConfig :: Config
   , bsMarkovPath :: Maybe FilePath
@@ -199,8 +203,8 @@ applyEffect (botState, Free (GitHubApiRequest request s)) = do
         [qms|[ERROR] Bot tried to do GitHub API request.
              But GitHub API key is not setup.|]
       return (botState, Pure ())
-applyEffect (botState, Free (Timeout ms e s)) =
-  return ((botState {bsTimeouts = (ms, e) : bsTimeouts botState}), s)
+applyEffect (botState, Free (TimeoutEff ms e s)) =
+  return ((botState {bsTimeouts = Timeout ms e : bsTimeouts botState}), s)
 applyEffect (botState, Free (Listen effect s)) = do
   (botState', sayLog) <- listenEffectIO applyEffect (botState, effect)
   return (botState', s sayLog)
@@ -246,12 +250,13 @@ runEffectTransIO botState effect =
 
 advanceTimeouts :: Integer -> BotState -> IO BotState
 advanceTimeouts dt botState =
-  foldlM runEffectTransIO (botState {bsTimeouts = unripe}) $ map snd ripe
+  foldlM runEffectTransIO (botState {bsTimeouts = unripe}) $
+  map timeoutEffect ripe
   where
     (ripe, unripe) =
-      span ((<= 0) . fst) $
-      sortBy (compare `on` fst) $
-      map (\(t, e) -> (t - dt, e)) $ bsTimeouts botState
+      span ((<= 0) . timeoutDuration) $
+      sortBy (compare `on` timeoutDuration) $
+      map (\(Timeout t e) -> Timeout (t - dt) e) $ bsTimeouts botState
 
 handleInEvent :: Bot -> InEvent -> BotState -> IO BotState
 handleInEvent b event botState = runEffectTransIO botState $ b event
