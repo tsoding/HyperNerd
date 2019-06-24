@@ -38,7 +38,7 @@ supavisah :: Show a => IO a -> IO ()
 supavisah x =
   void $
   forkFinally x $ \reason -> do
-    putStrLn [qms|Thread died because of {reason}. Restarting...|]
+    putStrLn [qms|[WARN] Thread died because of {reason}. Restarting...|]
     supavisah x
 
 block :: IO ()
@@ -56,15 +56,13 @@ entry configPath databasePath markovPath =
       (\channelState ->
          case channelState of
            TwitchTransportState {tsTwitchConfig = twitchConfig} ->
-             void $
-             forkIO $
+             supavisah $
              twitchTransportEntry
                (tsIncoming channelState)
                (tsOutcoming channelState)
                twitchConfig
            DiscordTransportState {tsDiscordConfig = discordConfig} ->
-             void $
-             forkIO $
+             supavisah $
              discordTransportEntry
                (tsIncoming channelState)
                (tsOutcoming channelState)
