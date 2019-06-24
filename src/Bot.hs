@@ -567,6 +567,7 @@ bot :: Bot
 bot Started = do
   startRefreshFridayGistTimer
   startRefreshHelpGistTimer builtinCommands
+-- TODO: Restarted Twitch transport thread can duplicate timers
 bot (Joined channel@(TwitchChannel _)) = do
   startPeriodicCommands channel dispatchCommand
   periodicEffect (60 * 1000) (announceRunningPoll channel)
