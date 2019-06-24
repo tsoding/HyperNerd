@@ -176,7 +176,7 @@ refreshGist gistId = do
 
 startRefreshFridayGistTimer :: Effect ()
 startRefreshFridayGistTimer =
-  periodicEffect period $ do
+  periodicEffect period Nothing $ do
     state <- currentFridayState
     case fridayStateGistId $ entityPayload state of
       Just gistId

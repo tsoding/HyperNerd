@@ -88,7 +88,10 @@ startPeriodicCommands channel dispatchCommand = do
        Message (mrbotka {senderChannel = channel}) False .
        periodicCommand . entityPayload)
       maybePc
-  timeout (10 * 60 * 1000) $ startPeriodicCommands channel dispatchCommand
+  timeout
+    (10 * 60 * 1000)
+    (Just channel)
+    (startPeriodicCommands channel dispatchCommand)
 
 addPeriodicCommand :: Reaction Message (Command T.Text)
 addPeriodicCommand =

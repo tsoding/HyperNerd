@@ -97,9 +97,10 @@ data EffectF s
                      (Response B8.ByteString -> s)
   | GitHubApiRequest Request
                      (Response B8.ByteString -> s)
-  | Timeout Integer
-            (Effect ())
-            s
+  | TimeoutEff Integer
+               (Maybe Channel)
+               (Effect ())
+               s
   | Listen (Effect ())
            ([T.Text] -> s)
   | TwitchCommand Channel
@@ -167,8 +168,8 @@ twitchApiRequest request = liftF $ TwitchApiRequest request id
 githubApiRequest :: Request -> Effect (Response B8.ByteString)
 githubApiRequest request = liftF $ GitHubApiRequest request id
 
-timeout :: Integer -> Effect () -> Effect ()
-timeout t e = liftF $ Timeout t e ()
+timeout :: Integer -> Maybe Channel -> Effect () -> Effect ()
+timeout t c e = liftF $ TimeoutEff t c e ()
 
 errorEff :: T.Text -> Effect a
 errorEff t = liftF $ ErrorEff t
@@ -176,10 +177,10 @@ errorEff t = liftF $ ErrorEff t
 listen :: Effect () -> Effect [T.Text]
 listen effect = liftF $ Listen effect id
 
-periodicEffect :: Integer -> Effect () -> Effect ()
-periodicEffect period effect = do
+periodicEffect :: Integer -> Maybe Channel -> Effect () -> Effect ()
+periodicEffect period channel effect = do
   effect
-  timeout period $ periodicEffect period effect
+  timeout period channel $ periodicEffect period channel effect
 
 twitchCommand :: Channel -> T.Text -> [T.Text] -> Effect ()
 twitchCommand channel name args = liftF $ TwitchCommand channel name args ()

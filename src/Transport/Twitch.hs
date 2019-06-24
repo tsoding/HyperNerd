@@ -1,4 +1,5 @@
 {-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE QuasiQuotes #-}
 
 module Transport.Twitch
   ( twitchTransportEntry
@@ -26,6 +27,7 @@ import Irc.RawIrcMsg
   )
 import Irc.UserInfo (userNick)
 import Network.Socket (Family(..))
+import Text.InterpolatedString.QM
 import Transport
 
 maxIrcMessage :: Int
@@ -80,7 +82,7 @@ receiveLoop conf incoming ircConn = do
     let cookedMsg = cookIrcMsg msg
     -- TODO(#483): Logs from different channels clash together
     --   Let's introduce logging to files. A file per channel.
-    -- print cookedMsg
+    putStrLn [qms|[TWITCH] {cookedMsg}|]
     case cookedMsg of
       (Ping xs) -> sendMsg ircConn (ircPong xs)
       (Privmsg userInfo target msgText)
@@ -143,6 +145,7 @@ twitchTransportEntry incoming outcoming conf = do
     withAsync (sendLoop (tcChannel conf) outcoming ircConn) $ \sender ->
       withAsync (receiveLoop conf incoming ircConn) $ \receive -> do
         res <- waitEitherCatch sender receive
+        -- TODO(#657): Twitch transport may crash with LineTooLong exception
         case res of
           Left Right {} -> fail "PANIC: sendLoop returned"
           Right Right {} -> return ()
