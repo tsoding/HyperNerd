@@ -9,20 +9,19 @@ module BotState
   , newBotState
   , destroyTimeoutsOfChannel
   , BotState(..)
-  , TransportState(..)
   ) where
 
 import Bot
 import Config
 import Control.Concurrent.STM
 import Control.Exception
+import Control.Monad
 import Control.Monad.Free
 import Control.Monad.Trans.Class
 import Control.Monad.Trans.Maybe
 import Data.Foldable
 import Data.Function
 import Data.List
-import Data.Maybe
 import qualified Data.Text as T
 import qualified Data.Text.Encoding as TE
 import Data.Time
@@ -37,14 +36,6 @@ import Text.InterpolatedString.QM
 import Text.Printf
 import Transport
 
-data TransportState
-  = TwitchTransportState { tsTwitchConfig :: TwitchConfig
-                         , tsIncoming :: IncomingQueue
-                         , tsOutcoming :: OutcomingQueue }
-  | DiscordTransportState { tsDiscordConfig :: DiscordConfig
-                          , tsIncoming :: IncomingQueue
-                          , tsOutcoming :: OutcomingQueue }
-
 data Timeout = Timeout
   { timeoutDuration :: Integer
   , timeoutChannel :: Maybe Channel
@@ -52,7 +43,8 @@ data Timeout = Timeout
   }
 
 data BotState = BotState
-  { bsTransports :: [TransportState]
+  { bsTwitchTransport :: Transport
+  , bsDiscordTransport :: Transport
   -- Shared
   , bsTimeouts :: [Timeout]
   , bsSqliteConn :: SQLite.Connection
@@ -66,38 +58,22 @@ destroyTimeoutsOfChannel botState channel =
   botState
     {bsTimeouts = filter ((/= channel) . timeoutChannel) $ bsTimeouts botState}
 
-newTwitchTransportState :: TwitchConfig -> IO TransportState
-newTwitchTransportState config = do
-  incoming <- atomically newTQueue
-  outcoming <- atomically newTQueue
-  return
-    TwitchTransportState
-      {tsIncoming = incoming, tsOutcoming = outcoming, tsTwitchConfig = config}
-
-newDiscordTransportState :: DiscordConfig -> IO TransportState
-newDiscordTransportState config = do
-  incoming <- atomically newTQueue
-  outcoming <- atomically newTQueue
-  return
-    DiscordTransportState
-      {tsIncoming = incoming, tsOutcoming = outcoming, tsDiscordConfig = config}
+newTransport :: IO Transport
+newTransport = liftM2 Transport (atomically newTQueue) (atomically newTQueue)
 
 newBotState :: Maybe FilePath -> Config -> SQLite.Connection -> IO BotState
 newBotState markovPath conf sqliteConn = do
-  transports <-
-    catMaybes <$>
-    sequence
-      [ sequence (newTwitchTransportState <$> configTwitch conf)
-      , sequence (newDiscordTransportState <$> configDiscord conf)
-      ]
   markov <- runMaybeT (MaybeT (return markovPath) >>= lift . loadMarkov)
+  twitchTransport <- newTransport
+  discordTransport <- newTransport
   return
     BotState
       { bsSqliteConn = sqliteConn
+      , bsTwitchTransport = twitchTransport
+      , bsDiscordTransport = discordTransport
       , bsTimeouts = []
       , bsMarkovPath = markovPath
       , bsMarkov = markov
-      , bsTransports = transports
       , bsConfig = conf
       }
 
@@ -117,32 +93,18 @@ withBotState markovPath tcPath databasePath block = do
 twitchCmdEscape :: T.Text -> T.Text
 twitchCmdEscape = T.dropWhile (`elem` ['/', '.']) . T.strip
 
-channelsOfState :: TransportState -> [Channel]
-channelsOfState channelState =
-  case channelState of
-    TwitchTransportState {tsTwitchConfig = param} ->
-      return $ TwitchChannel $ tcChannel param
-    DiscordTransportState {tsDiscordConfig = param} ->
-      map (DiscordChannel . fromIntegral) $ dcChannels param
-
-stateOfChannel :: BotState -> Channel -> Maybe TransportState
-stateOfChannel botState channel =
-  find (elem channel . channelsOfState) $ bsTransports botState
-
 applyEffect :: (BotState, Effect ()) -> IO (BotState, Effect ())
 applyEffect self@(_, Pure _) = return self
 applyEffect (botState, Free (Say channel text s)) = do
-  case stateOfChannel botState channel of
-    Just channelState ->
-      case channelState of
-        TwitchTransportState {} ->
-          atomically $
-          writeTQueue (tsOutcoming channelState) $
-          OutMsg channel (twitchCmdEscape text)
-        _ ->
-          atomically $
-          writeTQueue (tsOutcoming channelState) $ OutMsg channel text
-    Nothing -> hPutStrLn stderr [qms|[ERROR] Channel does not exist {channel} |]
+  case channel of
+    TwitchChannel _ ->
+      atomically $
+      writeTQueue (trOutcoming $ bsTwitchTransport botState) $
+      OutMsg channel (twitchCmdEscape text)
+    DiscordChannel _ ->
+      atomically $
+      writeTQueue (trOutcoming $ bsDiscordTransport botState) $
+      OutMsg channel text
   return (botState, s)
 applyEffect (botState, Free (LogMsg msg s)) = do
   putStrLn $ T.unpack msg
@@ -217,14 +179,14 @@ applyEffect (botState, Free (Listen effect s)) = do
   (botState', sayLog) <- listenEffectIO applyEffect (botState, effect)
   return (botState', s sayLog)
 applyEffect (botState, Free (TwitchCommand channel name args s)) =
-  case stateOfChannel botState channel of
-    Just channelState -> do
+  case channel of
+    TwitchChannel _ -> do
       atomically $
-        writeTQueue (tsOutcoming channelState) $
+        writeTQueue (trOutcoming $ bsTwitchTransport botState) $
         OutMsg channel [qms|/{name} {T.concat $ intersperse " " args}|]
       return (botState, s)
-    Nothing -> do
-      hPutStrLn stderr [qms|[ERROR] Channel does not exist {channel} |]
+    DiscordChannel _ -> do
+      hPutStrLn stderr [qms|[ERROR] Discord does not support twitch commands |]
       return (botState, Pure ())
 applyEffect (botState, Free (RandomMarkov s)) = do
   let markov = MaybeT $ return $ bsMarkov botState

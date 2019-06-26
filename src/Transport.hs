@@ -13,6 +13,11 @@ type IncomingQueue = TQueue InEvent
 
 type OutcomingQueue = TQueue OutEvent
 
+data Transport = Transport
+  { trIncoming :: IncomingQueue
+  , trOutcoming :: OutcomingQueue
+  }
+
 data Channel
   = DiscordChannel Word64
   | TwitchChannel T.Text

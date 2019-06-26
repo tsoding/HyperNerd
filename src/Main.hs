@@ -5,6 +5,7 @@ module Main where
 
 import Bot
 import BotState
+import Config
 import Control.Concurrent
 import Control.Concurrent.STM
 import Control.Monad
@@ -13,7 +14,7 @@ import Data.Maybe
 import System.Clock
 import System.Environment
 import Text.InterpolatedString.QM
-import Transport (InEvent(..))
+import Transport
 import Transport.Discord
 import Transport.Twitch
 
@@ -22,9 +23,10 @@ eventLoop b prevCPUTime botState = do
   threadDelay 10000 -- to prevent busy looping
   currCPUTime <- getTime Monotonic
   let deltaTime = toNanoSecs (currCPUTime - prevCPUTime) `div` 1000000
+  let transports = [bsTwitchTransport botState, bsDiscordTransport botState]
   messages <-
     fmap (join . map maybeToList) $
-    atomically $ mapM (tryReadTQueue . tsIncoming) $ bsTransports botState
+    atomically $ mapM (tryReadTQueue . trIncoming) transports
   foldrM (handleInEvent b) botState messages >>= advanceTimeouts deltaTime >>=
     eventLoop b currCPUTime
 
@@ -49,25 +51,17 @@ block = do
 entry :: String -> String -> Maybe String -> IO ()
 entry configPath databasePath markovPath =
   withBotState markovPath configPath databasePath $ \botState -> do
-    when (null $ bsTransports botState) $
-      ioError $ userError "Could not find a single 'bot:' section"
     supavisah $ logicEntry botState
-    mapM_
-      (\channelState ->
-         case channelState of
-           TwitchTransportState {tsTwitchConfig = twitchConfig} ->
-             supavisah $
-             twitchTransportEntry
-               (tsIncoming channelState)
-               (tsOutcoming channelState)
-               twitchConfig
-           DiscordTransportState {tsDiscordConfig = discordConfig} ->
-             supavisah $
-             discordTransportEntry
-               (tsIncoming channelState)
-               (tsOutcoming channelState)
-               discordConfig) $
-      bsTransports botState
+    case configTwitch $ bsConfig botState of
+      Just twitchConfig ->
+        supavisah $
+        twitchTransportEntry (bsTwitchTransport botState) twitchConfig
+      Nothing -> return ()
+    case configDiscord $ bsConfig botState of
+      Just discordConfig ->
+        supavisah $
+        discordTransportEntry (bsDiscordTransport botState) discordConfig
+      Nothing -> return ()
     block
 
 mainWithArgs :: [String] -> IO ()
