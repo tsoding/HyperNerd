@@ -138,12 +138,12 @@ sendLoop channel outcoming ircConn = do
   sendLoop channel outcoming ircConn
 
 -- TODO(#17): check unsuccessful authorization
-twitchTransportEntry :: IncomingQueue -> OutcomingQueue -> TwitchConfig -> IO ()
-twitchTransportEntry incoming outcoming conf = do
+twitchTransportEntry :: Transport -> TwitchConfig -> IO ()
+twitchTransportEntry transport conf = do
   withConnection twitchConnectionParams $ \ircConn -> do
     authorize conf ircConn
-    withAsync (sendLoop (tcChannel conf) outcoming ircConn) $ \sender ->
-      withAsync (receiveLoop conf incoming ircConn) $ \receive -> do
+    withAsync (sendLoop (tcChannel conf) (trOutcoming transport) ircConn) $ \sender ->
+      withAsync (receiveLoop conf (trIncoming transport) ircConn) $ \receive -> do
         res <- waitEitherCatch sender receive
         -- TODO(#657): Twitch transport may crash with LineTooLong exception
         case res of

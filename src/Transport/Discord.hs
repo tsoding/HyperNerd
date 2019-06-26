@@ -115,9 +115,8 @@ receiveLoop botUser ownerId channels incoming dis = do
   receiveLoop botUser ownerId channels incoming dis
 
 -- TODO(#465): Discord transport does not handle authorization failure
-discordTransportEntry ::
-     IncomingQueue -> OutcomingQueue -> DiscordConfig -> IO ()
-discordTransportEntry incoming outcoming conf =
+discordTransportEntry :: Transport -> DiscordConfig -> IO ()
+discordTransportEntry transport conf =
   bracket (loginRestGateway $ Auth $ dcAuthToken conf) stopDiscord $ \dis -> do
     respCurrentUser <- restCall dis GetCurrentUser
     -- TODO(#466): restCall errors are not handled properly
@@ -132,16 +131,16 @@ discordTransportEntry incoming outcoming conf =
             mapM_
               (\chanId ->
                  atomically $
-                 writeTQueue incoming $
+                 writeTQueue (trIncoming transport) $
                  Joined (DiscordChannel $ fromIntegral chanId)) $
               dcChannels conf
-            withAsync (sendLoop outcoming dis) $ \sender ->
+            withAsync (sendLoop (trOutcoming transport) dis) $ \sender ->
               withAsync
                 (receiveLoop
                    user
                    (D.guildOwnerId guild)
                    (dcChannels conf)
-                   incoming
+                   (trIncoming transport)
                    dis) $ \receive -> do
                 res <- waitEitherCatch sender receive
                 case res of
