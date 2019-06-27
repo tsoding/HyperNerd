@@ -17,6 +17,7 @@ import Control.Monad
 import Data.Bool.Extra
 import Data.Foldable
 import Data.Function
+import Data.Functor.Compose
 import Data.List
 import qualified Data.Map as M
 import Data.Maybe
@@ -31,7 +32,6 @@ import Safe
 import Text.InterpolatedString.QM
 import Text.Read
 import Transport
-import Data.Functor.Compose
 
 data PollOption = PollOption
   { poPollId :: Int
@@ -263,7 +263,6 @@ announcePollResults pollId = do
       zip
         options
         (sum <$> getCompose (votePoints . entityPayload <$> Compose votes))
-
 
 powerOfSender :: Sender -> Int
 powerOfSender Sender {senderRoles = roles}
