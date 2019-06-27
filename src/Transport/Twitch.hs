@@ -1,5 +1,6 @@
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE QuasiQuotes #-}
+{-# LANGUAGE LambdaCase #-}
 
 module Transport.Twitch
   ( twitchTransportEntry
@@ -27,11 +28,12 @@ import Irc.RawIrcMsg
   )
 import Irc.UserInfo (userNick)
 import Network.Socket (Family(..))
+import System.IO
 import Text.InterpolatedString.QM
 import Transport
 
 maxIrcMessage :: Int
-maxIrcMessage = 1000
+maxIrcMessage = 500 * 4
 
 twitchConnectionParams :: ConnectionParams
 twitchConnectionParams =
@@ -66,7 +68,14 @@ withConnection params = bracket (connect params) close
 
 readIrcLine :: Connection -> IO (Maybe RawIrcMsg)
 readIrcLine conn = do
-  mb <- recvLine conn maxIrcMessage
+  mb <-
+    catch
+      (recvLine conn maxIrcMessage)
+      (\case
+         LineTooLong -> do
+           hPutStrLn stderr "[WARN] Received LineTooLong. Ignoring it..."
+           return Nothing
+         e -> throwIO e)
   for mb $ \xs ->
     case parseRawIrcMsg (asUtf8 xs) of
       Just msg -> return $! msg
