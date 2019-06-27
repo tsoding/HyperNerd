@@ -94,7 +94,7 @@ instance IsEntity Vote where
   fromProperties properties =
     Vote <$> extractProperty "user" properties <*>
     extractProperty "optionId" properties <*>
-    (pure $ fromMaybe 1 $ extractProperty "points" properties)
+    pure (fromMaybe 1 $ extractProperty "points" properties)
 
 cancelPollCommand :: Reaction Message ()
 cancelPollCommand =
@@ -260,8 +260,9 @@ announcePollResults pollId = do
            (say <$> (pollChannel =<< entityPayload <$> poll) <*>
             return [qms|{poName $ entityPayload $ option} : {points}|])) $
       sortBy (flip compare `on` snd) $
-      zip options $
-      fmap sum $ getCompose $ fmap (votePoints . entityPayload) $ Compose votes
+      zip
+        options
+        (sum <$> getCompose (votePoints . entityPayload <$> Compose votes))
 
 
 powerOfSender :: Sender -> Int
