@@ -1,7 +1,15 @@
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE QuasiQuotes #-}
 
-module Bot.Poll where
+module Bot.Poll
+  ( cancelPollCommand
+  , rank
+  , showRanks
+  , pollCommand
+  , voteMessage
+  , currentPollCommand
+  , announceRunningPoll
+  ) where
 
 import Bot.Log (LogRecord(..), Seconds, getRecentLogs)
 import Bot.Replies
@@ -9,6 +17,7 @@ import Control.Monad
 import Data.Bool.Extra
 import Data.Foldable
 import Data.Function
+import Data.Functor.Compose
 import Data.List
 import qualified Data.Map as M
 import Data.Maybe
@@ -41,6 +50,7 @@ data Poll = Poll
 data Vote = Vote
   { voteUser :: T.Text
   , voteOptionId :: Int
+  , votePoints :: Int
   }
 
 instance IsEntity Poll where
@@ -79,10 +89,12 @@ instance IsEntity Vote where
     M.fromList
       [ ("user", PropertyText $ voteUser vote)
       , ("optionId", PropertyInt $ voteOptionId vote)
+      , ("points", PropertyInt $ votePoints vote)
       ]
   fromProperties properties =
     Vote <$> extractProperty "user" properties <*>
-    extractProperty "optionId" properties
+    extractProperty "optionId" properties <*>
+    pure (fromMaybe 1 $ extractProperty "points" properties)
 
 cancelPollCommand :: Reaction Message ()
 cancelPollCommand =
@@ -242,12 +254,20 @@ announcePollResults pollId = do
       (say <$> (pollChannel =<< entityPayload <$> poll) <*>
        return [qms|TwitchVotes Poll has finished:|])
     traverse_
-      (\(option, count) ->
+      (\(option, points) ->
          fromMaybe
            (return ())
            (say <$> (pollChannel =<< entityPayload <$> poll) <*>
-            return [qms|{poName $ entityPayload $ option} : {count}|])) $
-      sortBy (flip compare `on` snd) $ zip options $ map length votes
+            return [qms|{poName $ entityPayload $ option} : {points}|])) $
+      sortBy (flip compare `on` snd) $
+      zip
+        options
+        (sum <$> getCompose (votePoints . entityPayload <$> Compose votes))
+
+powerOfSender :: Sender -> Int
+powerOfSender Sender {senderRoles = roles}
+  | TwitchSub `elem` roles = 2
+  | otherwise = 1
 
 registerOptionVote :: Entity PollOption -> Sender -> Effect ()
 registerOptionVote option sender = do
@@ -262,7 +282,11 @@ registerOptionVote option sender = do
     else void $
          createEntity
            Proxy
-           Vote {voteUser = senderName sender, voteOptionId = entityId option}
+           Vote
+             { voteUser = senderName sender
+             , voteOptionId = entityId option
+             , votePoints = powerOfSender sender
+             }
 
 -- TODO(#488): poll votes are registered across the channels
 registerPollVote :: Message Int -> Effect ()
