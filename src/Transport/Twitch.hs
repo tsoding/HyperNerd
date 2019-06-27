@@ -28,9 +28,9 @@ import Irc.RawIrcMsg
   )
 import Irc.UserInfo (userNick)
 import Network.Socket (Family(..))
+import System.IO
 import Text.InterpolatedString.QM
 import Transport
-import System.IO
 
 maxIrcMessage :: Int
 maxIrcMessage = 500 * 4
