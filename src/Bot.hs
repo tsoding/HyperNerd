@@ -582,17 +582,21 @@ bot (InMsg msg) =
 longMessageFilter :: Reaction Message T.Text -> Reaction Message T.Text
 longMessageFilter reaction =
   Reaction
-    (\msg@Message { messageContent = message
-                  , messageSender = sender@Sender {senderRoles = roles}
-                  } ->
-       if null roles && T.length message > messageLimit
-         then do
-           timeoutSender (T.length message - messageLimit) sender
-           replyMessage
-             ([qms|Message limit is {messageLimit} characters
-                   for untrusted users, sorry.|] <$
-              msg)
-         else runReaction reaction msg)
+    (\case
+       msg@Message { messageContent = message
+                   , messageSender = sender@Sender { senderRoles = roles
+                                                   , senderChannel = TwitchChannel _
+                                                   }
+                   } ->
+         if null roles && T.length message > messageLimit
+           then do
+             timeoutSender (T.length message - messageLimit) sender
+             replyMessage
+               ([qms|Message limit is {messageLimit} characters
+                     for untrusted users, sorry.|] <$
+                msg)
+           else runReaction reaction msg
+       msg -> runReaction reaction msg)
   where
     messageLimit = 100
 
