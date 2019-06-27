@@ -31,7 +31,7 @@ import Text.InterpolatedString.QM
 import Transport
 
 maxIrcMessage :: Int
-maxIrcMessage = 1000
+maxIrcMessage = 500 * 4
 
 twitchConnectionParams :: ConnectionParams
 twitchConnectionParams =
