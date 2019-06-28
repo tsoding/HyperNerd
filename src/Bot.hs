@@ -598,7 +598,7 @@ longMessageFilter reaction =
            else runReaction reaction msg
        msg -> runReaction reaction msg)
   where
-    messageLimit = 100
+    messageLimit = 200
 
 messageReaction :: Reaction Message T.Text
 messageReaction =
