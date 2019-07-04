@@ -579,7 +579,6 @@ bot (InMsg msg) =
      longMessageFilter $ linkFilter messageReaction)
     msg
 
-
 longMessageFilter :: Reaction Message T.Text -> Reaction Message T.Text
 longMessageFilter reaction =
   Reaction
