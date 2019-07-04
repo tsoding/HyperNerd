@@ -9,6 +9,7 @@ module Bot.Links
   , istrustedCommand
   , internalMessageRoles
   , linkFilter
+  , textContainsLink
   ) where
 
 import Bot.Replies
