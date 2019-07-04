@@ -87,17 +87,10 @@ forbidLinksForPlebs Message { messageSender = sender@Sender {senderChannel = Twi
       Nothing
         | not (senderSubscriber sender) && not (senderAuthority sender) -> do
           timeoutSender 1 sender
-          whisperToSender
+          replyToSender
             sender
-            [qms|You have been timed out because
-                 I thought you sent a link. Only
-                 trusted users are allowed
-                 to send links. Sometimes I get
-                 things wrong. In that case feel
-                 free to file an issue at
-                 https://github.com/tsoding/HyperNerd/issues .
-                 Ask Tsoding to make you a trusted user.|]
-          replyToSender sender "check your whispers."
+            [qms|Links are not allowed
+                 for untrusted users|]
           return True
       _ -> return False
   | otherwise = return False
