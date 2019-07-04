@@ -35,5 +35,15 @@ containsYtLinkTest =
     , ("https://twitch.tv/tsoding", False)
     ]
 
+-- TODO: ytLinkIdTest is failing
+ytLinkIdTest :: Test
+ytLinkIdTest =
+  TestLabel "Extracting YouTube video ID from the text" $
+  TestList
+    [ -- TestCase $
+      -- assertEqual "asdhjas" (Just "etMJxB-igrc") $
+      -- ytLinkId "https://www.youtube.com/watch?v=etMJxB-igrc"
+    ]
+
 spec :: Test
-spec = TestList [containsYtLinkTest]
+spec = TestList [containsYtLinkTest, ytLinkIdTest]

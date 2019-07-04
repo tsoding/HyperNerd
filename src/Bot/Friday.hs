@@ -1,5 +1,6 @@
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE QuasiQuotes #-}
+{-# LANGUAGE LambdaCase #-}
 
 module Bot.Friday
   ( fridayCommand
@@ -10,6 +11,7 @@ module Bot.Friday
   , containsYtLink
   , videoQueueCommand
   , startRefreshFridayGistTimer
+  , ytLinkId
   ) where
 
 import Bot.GitHub
@@ -17,7 +19,6 @@ import Bot.Replies
 import Control.Comonad
 import Control.Monad
 import Data.Bool.Extra
-import Data.Either
 import qualified Data.Map as M
 import Data.Maybe
 import Data.Maybe.Extra
@@ -31,6 +32,7 @@ import Reaction
 import Regexp
 import Text.InterpolatedString.QM
 import Transport (Message(..), Sender(..), authorityRoles)
+import Data.Either.Extra
 
 data FridayVideo = FridayVideo
   { fridayVideoName :: T.Text
@@ -81,10 +83,17 @@ instance IsEntity FridayState where
     return (intAsBool $ fromMaybe 0 $ extractProperty "gistFresh" properties)
 
 containsYtLink :: T.Text -> Bool
-containsYtLink =
-  isRight .
-  regexParseArgs
-    [qn|https?:\/\/(www\.)?youtu(be\.com\/watch\?v=|\.be\/)[a-zA-Z0-9\-\_]+|]
+containsYtLink = isJust . ytLinkId
+
+ytLinkId :: T.Text -> Maybe T.Text
+ytLinkId text =
+  (\case
+     [_, _, ytId] -> return ytId
+     _ -> Nothing) =<<
+  rightToMaybe
+    (regexParseArgs
+       "https?:\\/\\/(www\\.)?youtu(be\\.com\\/watch\\?v=|\\.be\\/)([a-zA-Z0-9\\-\\_]+)"
+       text)
 
 fridayCommand :: Reaction Message T.Text
 fridayCommand =
@@ -161,9 +170,11 @@ renderQueue queue =
   ([qms|Video Count {length queue}|] :) $
   map
     (\video ->
-       [qms||{fridayVideoDate video}
-            |{fridayVideoAuthor video}
-            |{fridayVideoName video}||])
+       let ytId = fromMaybe "dQw4w9WgXcQ" $ ytLinkId $ fridayVideoName video
+        in [qms||{fridayVideoDate video}
+                |{fridayVideoAuthor video}
+                |{fridayVideoName video}
+                |[[https://img.youtube.com/vi/{ytId}/default.jpg]]||])
     queue
 
 fridayGistFileName :: FileName

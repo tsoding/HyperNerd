@@ -238,5 +238,6 @@ test-suite HyperNerdTest
                      , Bot.Twitch
                      , Transport
                      , Data.Bool.Extra
+                     , Data.Either.Extra
 
   default-language:    Haskell2010
