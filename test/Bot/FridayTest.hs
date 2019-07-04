@@ -35,7 +35,7 @@ containsYtLinkTest =
     , ("https://twitch.tv/tsoding", False)
     ]
 
--- TODO: ytLinkIdTest is failing
+-- TODO(#669): ytLinkIdTest is failing
 ytLinkIdTest :: Test
 ytLinkIdTest =
   TestLabel "Extracting YouTube video ID from the text" $
