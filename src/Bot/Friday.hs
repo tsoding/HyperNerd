@@ -19,6 +19,7 @@ import Bot.Replies
 import Control.Comonad
 import Control.Monad
 import Data.Bool.Extra
+import Data.Either.Extra
 import qualified Data.Map as M
 import Data.Maybe
 import Data.Maybe.Extra
@@ -32,7 +33,6 @@ import Reaction
 import Regexp
 import Text.InterpolatedString.QM
 import Transport (Message(..), Sender(..), authorityRoles)
-import Data.Either.Extra
 
 data FridayVideo = FridayVideo
   { fridayVideoName :: T.Text
