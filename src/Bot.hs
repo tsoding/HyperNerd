@@ -10,7 +10,6 @@ module Bot
   ) where
 
 import Bot.Alias
-import Bot.Banwords
 import Bot.BttvFfz
 import Bot.Calc
 import Bot.CustomCommand
@@ -576,7 +575,8 @@ bot (Joined channel@(DiscordChannel _)) =
   periodicEffect (60 * 1000) (Just channel) (announceRunningPoll channel)
 bot (InMsg msg) =
   runReaction
-    (dupLiftExtractR internalMessageRoles $ longMessageFilter messageReaction)
+    (dupLiftExtractR internalMessageRoles $
+     longMessageFilter $ linkFilter messageReaction)
     msg
 
 longMessageFilter :: Reaction Message T.Text -> Reaction Message T.Text
@@ -584,18 +584,16 @@ longMessageFilter reaction =
   Reaction
     (\case
        msg@Message { messageContent = message
-                   , messageSender = sender@Sender { senderRoles = roles
+                   , messageSender = sender@Sender { senderRoles = []
                                                    , senderChannel = TwitchChannel _
                                                    }
-                   } ->
-         if null roles && T.length message > messageLimit
-           then do
-             timeoutSender (T.length message - messageLimit) sender
-             replyMessage
-               ([qms|Message limit is {messageLimit} characters
-                     for untrusted users, sorry.|] <$
-                msg)
-           else runReaction reaction msg
+                   }
+         | T.length message > messageLimit -> do
+           timeoutSender (T.length message - messageLimit) sender
+           replyMessage
+             ([qms|Message limit is {messageLimit} characters
+                   for untrusted users, sorry.|] <$
+              msg)
        msg -> runReaction reaction msg)
   where
     messageLimit = 200
@@ -607,14 +605,11 @@ messageReaction =
                           , messageMentioned = mentioned
                           } -> do
     recordUserMsg msg
-    linkForbidden <- forbidLinksForPlebs msg
-    banwordsForbidden <- forbidBanwords msg
-    unless (linkForbidden || banwordsForbidden) $ do
-      runReaction voteMessage msg
-      case textAsPipe text of
-        [] -> runReaction mention msg
-        pipe ->
-          mapM redirectAlias pipe >>= dispatchPipe . Message sender mentioned
+    runReaction voteMessage msg
+    case textAsPipe text of
+      [] -> runReaction mention msg
+      pipe ->
+        mapM redirectAlias pipe >>= dispatchPipe . Message sender mentioned
 
 dispatchRedirect :: Effect () -> Message (Command T.Text) -> Effect ()
 dispatchRedirect effect cmd = do

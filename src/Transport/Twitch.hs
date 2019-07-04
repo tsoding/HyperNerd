@@ -154,7 +154,6 @@ twitchTransportEntry transport conf = do
     withAsync (sendLoop (tcChannel conf) (trOutcoming transport) ircConn) $ \sender ->
       withAsync (receiveLoop conf (trIncoming transport) ircConn) $ \receive -> do
         res <- waitEitherCatch sender receive
-        -- TODO(#657): Twitch transport may crash with LineTooLong exception
         case res of
           Left Right {} -> fail "PANIC: sendLoop returned"
           Right Right {} -> return ()
