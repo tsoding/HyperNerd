@@ -1,15 +1,14 @@
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE QuasiQuotes #-}
+{-# LANGUAGE LambdaCase #-}
 
 module Bot.Links
-  ( forbidLinksForPlebs
-  , textContainsLink
-  , trustCommand
+  ( trustCommand
   , untrustCommand
   , amitrustedCommand
   , istrustedCommand
-  , findTrustedSender
   , internalMessageRoles
+  , linkFilter
   ) where
 
 import Bot.Replies
@@ -75,27 +74,6 @@ textContainsLink t =
       Just x -> Right x
       Nothing -> Left "No match found"
 
--- TODO(#535): forbidLinksForPlebs works only in Twitch
-forbidLinksForPlebs :: Message T.Text -> Effect Bool
-forbidLinksForPlebs Message { messageSender = sender@Sender {senderChannel = TwitchChannel _}
-                            , messageContent = text
-                            }
-  | textContainsLink text = do
-    trustedUser <-
-      runMaybeT (findTrustedSender sender <|> autoTrustSender sender)
-    case trustedUser of
-      Nothing
-        | not (senderSubscriber sender) && not (senderAuthority sender) -> do
-          timeoutSender 1 sender
-          replyToSender
-            sender
-            [qms|Links are not allowed
-                 for untrusted users|]
-          return True
-      _ -> return False
-  | otherwise = return False
-forbidLinksForPlebs _ = return False
-
 trustCommand :: Reaction Message T.Text
 trustCommand =
   Reaction $ \Message {messageSender = sender, messageContent = inputUser} -> do
@@ -145,9 +123,25 @@ internalSenderRoles sender = do
       return $
       sender {senderRoles = senderRoles sender ++ [InternalRole "Trusted"]}
 
--- TODO(#536): all of the mechanisms that work with Trusted users should look into `InternalRole` "Trusted" instead of queries the database
 -- TODO(#537): there is no way to add more internal roles
 internalMessageRoles :: Message T.Text -> Effect (Message T.Text)
 internalMessageRoles msg = do
   messageSender' <- internalSenderRoles $ messageSender msg
   return $ msg {messageSender = messageSender'}
+
+linkFilter :: Reaction Message T.Text -> Reaction Message T.Text
+linkFilter reaction =
+  Reaction
+    (\case
+       Message { messageContent = message
+               , messageSender = sender@Sender { senderRoles = []
+                                               , senderChannel = TwitchChannel _
+                                               }
+               }
+         | textContainsLink message -> do
+           timeoutSender 1 sender
+           replyToSender
+             sender
+             [qms|Links are not allowed
+                 for untrusted users|]
+       msg -> runReaction reaction msg)
