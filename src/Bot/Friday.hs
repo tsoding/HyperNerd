@@ -170,11 +170,9 @@ renderQueue queue =
   ([qms|Video Count {length queue}|] :) $
   map
     (\video ->
-       let ytId = fromMaybe "dQw4w9WgXcQ" $ ytLinkId $ fridayVideoName video
-        in [qms||{fridayVideoDate video}
-                |{fridayVideoAuthor video}
-                |{fridayVideoName video}
-                |[[https://img.youtube.com/vi/{ytId}/default.jpg]]||])
+       [qms||{fridayVideoDate video}
+            |{fridayVideoAuthor video}
+            |{fridayVideoName video}||])
     queue
 
 fridayGistFileName :: FileName

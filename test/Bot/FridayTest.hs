@@ -5,7 +5,7 @@ module Bot.FridayTest
   ( spec
   ) where
 
-import Bot.Friday (containsYtLink)
+import Bot.Friday (containsYtLink, ytLinkId)
 import Test.HUnit
 import Text.InterpolatedString.QM
 
@@ -35,15 +35,19 @@ containsYtLinkTest =
     , ("https://twitch.tv/tsoding", False)
     ]
 
--- TODO(#669): ytLinkIdTest is failing
 ytLinkIdTest :: Test
 ytLinkIdTest =
   TestLabel "Extracting YouTube video ID from the text" $
-  TestList
-      -- TestCase $
-      -- assertEqual "asdhjas" (Just "etMJxB-igrc") $
-      -- ytLinkId "https://www.youtube.com/watch?v=etMJxB-igrc"
-    []
+  TestList $
+  map
+    (\(input, expected) ->
+       TestCase $
+       assertEqual [qms|Does `{input}` have YouTube id `{expected}`?|] expected $
+       ytLinkId input)
+    [ ("https://www.youtube.com/watch?v=etMJxBigrc", Just "etMJxBigrc")
+    -- TODO(#669): ytLinkIdTest is failing
+    -- , ("https://www.youtube.com/watch?v=etMJxB-igrc", Just "etMJxB-igrc")
+    ]
 
 spec :: Test
 spec = TestList [containsYtLinkTest, ytLinkIdTest]
