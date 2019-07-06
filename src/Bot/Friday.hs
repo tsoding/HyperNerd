@@ -1,5 +1,6 @@
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE QuasiQuotes #-}
+{-# LANGUAGE LambdaCase #-}
 
 module Bot.Friday
   ( fridayCommand
@@ -10,6 +11,7 @@ module Bot.Friday
   , containsYtLink
   , videoQueueCommand
   , startRefreshFridayGistTimer
+  , ytLinkId
   ) where
 
 import Bot.GitHub
@@ -17,7 +19,7 @@ import Bot.Replies
 import Control.Comonad
 import Control.Monad
 import Data.Bool.Extra
-import Data.Either
+import Data.Either.Extra
 import qualified Data.Map as M
 import Data.Maybe
 import Data.Maybe.Extra
@@ -81,10 +83,17 @@ instance IsEntity FridayState where
     return (intAsBool $ fromMaybe 0 $ extractProperty "gistFresh" properties)
 
 containsYtLink :: T.Text -> Bool
-containsYtLink =
-  isRight .
-  regexParseArgs
-    [qn|https?:\/\/(www\.)?youtu(be\.com\/watch\?v=|\.be\/)[a-zA-Z0-9\-\_]+|]
+containsYtLink = isJust . ytLinkId
+
+ytLinkId :: T.Text -> Maybe T.Text
+ytLinkId text =
+  (\case
+     [_, _, ytId] -> return ytId
+     _ -> Nothing) =<<
+  rightToMaybe
+    (regexParseArgs
+       "https?:\\/\\/(www\\.)?youtu(be\\.com\\/watch\\?v=|\\.be\\/)([a-zA-Z0-9\\-\\_]+)"
+       text)
 
 fridayCommand :: Reaction Message T.Text
 fridayCommand =
