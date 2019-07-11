@@ -76,7 +76,7 @@ consoleEnv console = do
   maybe (return ()) (runCommand console) $ parseCommand line
   consoleEnv console
 
--- TODO: should networkEnv return StateT instead of IO
+-- TODO(#677): should networkEnv return StateT instead of IO
 networkEnv :: String -> Console HandleChannel -> IO ()
 networkEnv port' console = do
   addr <- resolve port'
