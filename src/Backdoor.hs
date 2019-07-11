@@ -23,7 +23,7 @@ import System.IO
 -- TODO(#675): Console does not have any way to exit
 --   You can always close the connection, but in telnet for instance
 --   you have to press an extra key stroke.
--- TODO: Is ReaderT applicable for Backdoor (instead of StateT)
+-- TODO(#676): Is ReaderT applicable for Backdoor (instead of StateT)
 newtype Console s = Console
   { runCommand :: Command [T.Text] -> StateT s IO ()
   }
