@@ -100,6 +100,7 @@ executable HyperNerd
                      , Transport.Discord
                      , Transport.Twitch
                      , Regexp
+                     , Backdoor
 
   -- LANGUAGE extensions used by modules in this package.
   other-extensions:    OverloadedStrings
