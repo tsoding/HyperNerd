@@ -63,7 +63,7 @@ entry configPath databasePath markovPath =
         supavisah $
         discordTransportEntry (bsDiscordTransport botState) discordConfig
       Nothing -> return ()
-    -- TODO: backdoor port is not configurable
+    -- TODO(#678): backdoor port is not configurable
     networkEnv "3000" testConsole
 
 mainWithArgs :: [String] -> IO ()
