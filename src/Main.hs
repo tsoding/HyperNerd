@@ -3,6 +3,7 @@
 
 module Main where
 
+import Backdoor
 import Bot
 import BotState
 import Config
@@ -17,7 +18,6 @@ import Text.InterpolatedString.QM
 import Transport
 import Transport.Discord
 import Transport.Twitch
-import Backdoor
 
 eventLoop :: Bot -> TimeSpec -> BotState -> IO ()
 eventLoop b prevCPUTime botState = do

@@ -11,14 +11,14 @@ module Backdoor
   ) where
 
 import Command
+import Control.Concurrent
+import Control.Exception
+import Control.Monad
+import Control.Monad.Trans.State.Strict
 import qualified Data.Text as T
 import qualified Data.Text.IO as T (hGetLine, hPutStr)
-import Control.Monad.Trans.State.Strict
 import Network.Socket
-import Control.Exception
 import System.IO
-import Control.Monad
-import Control.Concurrent
 
 -- TODO: Console does not have any way to exit
 --   You can always close the connection, but in telnet for instance
