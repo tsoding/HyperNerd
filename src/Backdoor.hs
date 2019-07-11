@@ -20,7 +20,7 @@ import qualified Data.Text.IO as T (hGetLine, hPutStr)
 import Network.Socket
 import System.IO
 
--- TODO: Console does not have any way to exit
+-- TODO(#675): Console does not have any way to exit
 --   You can always close the connection, but in telnet for instance
 --   you have to press an extra key stroke.
 -- TODO: Is ReaderT applicable for Backdoor (instead of StateT)
