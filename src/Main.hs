@@ -17,6 +17,7 @@ import Text.InterpolatedString.QM
 import Transport
 import Transport.Discord
 import Transport.Twitch
+import Backdoor
 
 eventLoop :: Bot -> TimeSpec -> BotState -> IO ()
 eventLoop b prevCPUTime botState = do
@@ -62,7 +63,8 @@ entry configPath databasePath markovPath =
         supavisah $
         discordTransportEntry (bsDiscordTransport botState) discordConfig
       Nothing -> return ()
-    block
+    -- TODO: backdoor port is not configurable
+    networkEnv "3000" testConsole
 
 mainWithArgs :: [String] -> IO ()
 mainWithArgs [configPath, databasePath] = entry configPath databasePath Nothing

@@ -20,6 +20,10 @@ import System.IO
 import Control.Monad
 import Control.Concurrent
 
+-- TODO: Console does not have any way to exit
+--   You can always close the connection, but in telnet for instance
+--   you have to press an extra key stroke.
+-- TODO: Is ReaderT applicable for Backdoor (instead of StateT)
 newtype Console s = Console
   { runCommand :: Command [T.Text] -> StateT s IO ()
   }
@@ -33,6 +37,7 @@ testConsole =
           case commandArgs command of
             (name:_) -> putText channel ("Hello, " <> name <> "\n")
             [] -> putText channel "Name is expected for hello command\n"
+        "crash" -> error "Just crash 4HEad"
         unknown -> putText channel ("Unknown command: " <> unknown <> "\n")
       return ((), channel)
 
@@ -71,6 +76,7 @@ consoleEnv console = do
   maybe (return ()) (runCommand console) $ parseCommand line
   consoleEnv console
 
+-- TODO: should networkEnv return StateT instead of IO
 networkEnv :: String -> Console HandleChannel -> IO ()
 networkEnv port' console = do
   addr <- resolve port'
