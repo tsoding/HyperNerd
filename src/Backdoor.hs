@@ -7,13 +7,18 @@ module Backdoor
   , evalStateT
   , HandleChannel(..)
   , stdioChannel
+  , networkEnv
   ) where
 
 import Command
 import qualified Data.Text as T
 import qualified Data.Text.IO as T (hGetLine, hPutStr)
 import Control.Monad.Trans.State.Strict
+import Network.Socket
+import Control.Exception
 import System.IO
+import Control.Monad
+import Control.Concurrent
 
 newtype Console s = Console
   { runCommand :: Command [T.Text] -> StateT s IO ()
@@ -65,3 +70,29 @@ consoleEnv console = do
   line <- promptTextLine "> "
   maybe (return ()) (runCommand console) $ parseCommand line
   consoleEnv console
+
+networkEnv :: String -> Console HandleChannel -> IO ()
+networkEnv port' console = do
+  addr <- resolve port'
+  bracket (open addr) close loop
+  where
+    resolve port = do
+      let hints =
+            defaultHints {addrFlags = [AI_PASSIVE], addrSocketType = Stream}
+      addr:_ <- getAddrInfo (Just hints) Nothing (Just port)
+      return addr
+    open addr = do
+      sock <- socket (addrFamily addr) (addrSocketType addr) (addrProtocol addr)
+      setSocketOption sock ReuseAddr 1
+      bind sock (addrAddress addr)
+      setCloseOnExecIfNeeded $ fdSocket sock
+      listen sock 10
+      return sock
+    loop sock =
+      forever $ do
+        (conn, peer) <- accept sock
+        putStrLn $ "Connection from " ++ show peer
+        void $ forkFinally (talk conn) (const $ close conn)
+    talk conn = do
+      connHandle <- socketToHandle conn ReadWriteMode
+      evalStateT (consoleEnv console) $ HandleChannel connHandle connHandle
