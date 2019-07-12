@@ -64,7 +64,7 @@ entry configPath databasePath markovPath =
         discordTransportEntry (bsDiscordTransport botState) discordConfig
       Nothing -> return ()
     -- TODO(#678): backdoor port is not configurable
-    networkEnv "3000" testConsole
+    networkEnv "8080" testConsole
 
 mainWithArgs :: [String] -> IO ()
 mainWithArgs [configPath, databasePath] = entry configPath databasePath Nothing
