@@ -84,7 +84,7 @@ networkEnv port' console = do
     resolve port = do
       let hints =
             defaultHints {addrFlags = [AI_PASSIVE], addrSocketType = Stream}
-      addr:_ <- getAddrInfo (Just hints) Nothing (Just port)
+      addr:_ <- getAddrInfo (Just hints) (Just "127.0.0.1") (Just port)
       return addr
     open addr = do
       sock <- socket (addrFamily addr) (addrSocketType addr) (addrProtocol addr)
