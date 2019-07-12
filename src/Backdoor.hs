@@ -76,6 +76,7 @@ consoleEnv console = do
   consoleEnv console
 
 -- TODO(#677): should networkEnv return StateT instead of IO
+-- TODO: backdoor doesn't have any authorization for external connections
 networkEnv :: String -> Console HandleChannel -> IO ()
 networkEnv port' console = do
   addr <- resolve port'
