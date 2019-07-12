@@ -96,6 +96,7 @@ $ docker create -v /absolute/path/to/hypernerd-state/:/tmp/hypernerd/ \
                 --name hypernerd-bot hypernerd
 $ docker start -a hypernerd-bot
 $ docker stop hypernerd-bot
+$ docker exec -it hypernerd-bot sh
 ```
 
 ## Markov Chain Responses
