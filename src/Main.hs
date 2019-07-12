@@ -3,6 +3,7 @@
 
 module Main where
 
+import Backdoor
 import Bot
 import BotState
 import Config
@@ -62,7 +63,8 @@ entry configPath databasePath markovPath =
         supavisah $
         discordTransportEntry (bsDiscordTransport botState) discordConfig
       Nothing -> return ()
-    block
+    -- TODO(#678): backdoor port is not configurable
+    networkEnv "3000" testConsole
 
 mainWithArgs :: [String] -> IO ()
 mainWithArgs [configPath, databasePath] = entry configPath databasePath Nothing
