@@ -94,11 +94,11 @@ networkEnv port' console = do
       setCloseOnExecIfNeeded $ fdSocket sock
       listen sock 10
       return sock
-    loop sock =
-      forever $ do
-        (conn, peer) <- accept sock
-        putStrLn $ "Connection from " ++ show peer
-        void $ forkFinally (talk conn) (const $ close conn)
+    loop sock = do
+      (conn, peer) <- accept sock
+      putStrLn $ "Connection from " ++ show peer
+      void $ forkFinally (talk conn) (const $ close conn)
+      loop sock
     talk conn = do
       connHandle <- socketToHandle conn ReadWriteMode
       evalStateT (consoleEnv console) $ HandleChannel connHandle connHandle
