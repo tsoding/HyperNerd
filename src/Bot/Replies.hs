@@ -65,13 +65,13 @@ replyOnNothing reply =
 replyLeft :: Reaction Message a -> Reaction Message (Either String a)
 replyLeft = eitherReaction $ cmapR T.pack $ Reaction replyMessage
 
-onlyForRoles :: [Role] -> Reaction Message a -> Reaction Message a
-onlyForRoles roles reaction =
+onlyForRoles :: T.Text -> [Role] -> Reaction Message a -> Reaction Message a
+onlyForRoles reply roles reaction =
   transR duplicate $
   ifR
     (any (`elem` roles) . senderRoles . messageSender)
     (cmapR extract reaction)
-    (cmapR (const [qms|Only for roles: {roles}|]) $ Reaction replyMessage)
+    (cmapR (const reply) $ Reaction replyMessage)
 
 nonEmptyRoles :: T.Text -> Reaction Message a -> Reaction Message a
 nonEmptyRoles reply reaction =

@@ -383,7 +383,11 @@ builtinCommands =
       , mkBuiltinCommand
           ( "Send message to Tsoding Twitch channel"
           , $githubLinkLocationStr
-          , onlyForRoles [tsodingTwitchedDiscordRole] $
+          , onlyForRoles
+              [qms|Only for subs in Discord.
+                   Subscribe https://twitch.tv/tsoding/subscribe and
+                   join https://discord.gg/KehewYS to use this command.|]
+              [tsodingTwitchedDiscordRole] $
             liftR (say (TwitchChannel "#tsoding")) ignore))
     , ( "roles"
       , mkBuiltinCommand
@@ -399,7 +403,8 @@ builtinCommands =
       , mkBuiltinCommand
           ( "Get the next video for Smart Stream"
           , $githubLinkLocationStr
-          , onlyForRoles authorityRoles $ transR void nextVideoCommand))
+          , onlyForRoles "Only for mods" authorityRoles $
+            transR void nextVideoCommand))
     , ( "video"
       , mkBuiltinCommand
           ( "Print the current video"
@@ -414,7 +419,7 @@ builtinCommands =
       , mkBuiltinCommand
           ( "Set the time cursor for the video queue"
           , $githubLinkLocationStr
-          , onlyForRoles authorityRoles $
+          , onlyForRoles "Only for mods" authorityRoles $
             cmapR (readMay . T.unpack) $
             replyOnNothing "Cannot parse this as UTCTime" setVideoDateCommand))
     , ( "calc"
@@ -444,14 +449,14 @@ builtinCommands =
       , mkBuiltinCommand
           ( "Reloads Markov model file"
           , $githubLinkLocationStr
-          , onlyForRoles authorityRoles $
+          , onlyForRoles "Only for mods" authorityRoles $
             liftR (const reloadMarkov) $
             replyOnNothing "Nothing to reload" $ Reaction replyMessage))
     , ( "config"
       , mkBuiltinCommand
           ( "Bot configuration command"
           , $githubLinkLocationStr
-          , onlyForRoles authorityRoles $
+          , onlyForRoles "Only for mods" authorityRoles $
             subcommand
               [ ( "help"
                 , subcommand
