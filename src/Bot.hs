@@ -58,12 +58,6 @@ import Transport
 
 type Bot = InEvent -> Effect ()
 
-tsodingTwitchedDiscordRole :: Role
-tsodingTwitchedDiscordRole = DiscordRole 542590649103286273
-
-tsodingTrustedDiscordRole :: Role
-tsodingTrustedDiscordRole = DiscordRole 543864981171470346
-
 builtinCommands :: CommandTable
 builtinCommands =
   M.fromList
@@ -375,8 +369,10 @@ builtinCommands =
       , mkBuiltinCommand
           ( "Suggest video for the friday stream"
           , $githubLinkLocationStr
-          , onlyForRoles
-              [InternalRole "Trusted", tsodingTrustedDiscordRole]
+          , nonEmptyRoles
+              [qms|You have to be trusted to use this command.
+                   Subscribe to gain the trust instantly:
+                   https://twitch.tv/tsoding/subscribe|]
               fridayCommand))
     , ( "videoq"
       , mkBuiltinCommand

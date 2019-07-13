@@ -34,6 +34,12 @@ data Role
   | InternalRole T.Text
   deriving (Show, Eq)
 
+tsodingTwitchedDiscordRole :: Role
+tsodingTwitchedDiscordRole = DiscordRole 542590649103286273
+
+tsodingTrustedDiscordRole :: Role
+tsodingTrustedDiscordRole = DiscordRole 543864981171470346
+
 data Sender = Sender
   { senderName :: T.Text
   , senderDisplayName :: T.Text

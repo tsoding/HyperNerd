@@ -73,6 +73,14 @@ onlyForRoles roles reaction =
     (cmapR extract reaction)
     (cmapR (const [qms|Only for roles: {roles}|]) $ Reaction replyMessage)
 
+nonEmptyRoles :: T.Text -> Reaction Message a -> Reaction Message a
+nonEmptyRoles reply reaction =
+  transR duplicate $
+  ifR
+    (null . senderRoles . messageSender)
+    (cmapR (const reply) $ Reaction replyMessage)
+    (cmapR extract reaction)
+
 subcommand :: [(T.Text, Reaction Message T.Text)] -> Reaction Message T.Text
 subcommand subcommandList =
   cmapR (regexParseArgs "([a-zA-Z0-9]*) *(.*)") $
