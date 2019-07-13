@@ -143,6 +143,7 @@ linkFilter reaction =
            timeoutSender 1 sender
            replyToSender
              sender
-             [qms|Links are not allowed
-                 for untrusted users|]
+             [qms|Links are not allowed for untrusted users.
+                  Subscribe to gain the trust instantly:
+                  https://twitch.tv/tsoding/subscribe|]
        msg -> runReaction reaction msg)

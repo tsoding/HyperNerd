@@ -218,9 +218,10 @@ videoQueueCommand :: Reaction Message T.Text
 videoQueueCommand =
   subcommand
     [ ("", videoQueueLinkCommand)
-    , ("gist", onlyForRoles authorityRoles setVideoQueueGistCommand)
+    , ( "gist"
+      , onlyForRoles "Only for mods" authorityRoles setVideoQueueGistCommand)
     , ( "refresh"
-      , onlyForRoles authorityRoles $
+      , onlyForRoles "Only for mods" authorityRoles $
         liftR (const currentFridayState) $
         cmapR (updateFridayStateGistFresh False <$>) $
         liftR updateEntityById $

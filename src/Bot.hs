@@ -58,12 +58,6 @@ import Transport
 
 type Bot = InEvent -> Effect ()
 
-tsodingTwitchedDiscordRole :: Role
-tsodingTwitchedDiscordRole = DiscordRole 542590649103286273
-
-tsodingTrustedDiscordRole :: Role
-tsodingTrustedDiscordRole = DiscordRole 543864981171470346
-
 builtinCommands :: CommandTable
 builtinCommands =
   M.fromList
@@ -375,8 +369,10 @@ builtinCommands =
       , mkBuiltinCommand
           ( "Suggest video for the friday stream"
           , $githubLinkLocationStr
-          , onlyForRoles
-              [InternalRole "Trusted", tsodingTrustedDiscordRole]
+          , nonEmptyRoles
+              [qms|You have to be trusted to use this command.
+                   Subscribe to gain the trust instantly:
+                   https://twitch.tv/tsoding/subscribe|]
               fridayCommand))
     , ( "videoq"
       , mkBuiltinCommand
@@ -387,7 +383,11 @@ builtinCommands =
       , mkBuiltinCommand
           ( "Send message to Tsoding Twitch channel"
           , $githubLinkLocationStr
-          , onlyForRoles [tsodingTwitchedDiscordRole] $
+          , onlyForRoles
+              [qms|Only for subs in Discord.
+                   Subscribe https://twitch.tv/tsoding/subscribe and
+                   join https://discord.gg/KehewYS to use this command.|]
+              [tsodingTwitchedDiscordRole] $
             liftR (say (TwitchChannel "#tsoding")) ignore))
     , ( "roles"
       , mkBuiltinCommand
@@ -403,7 +403,8 @@ builtinCommands =
       , mkBuiltinCommand
           ( "Get the next video for Smart Stream"
           , $githubLinkLocationStr
-          , onlyForRoles authorityRoles $ transR void nextVideoCommand))
+          , onlyForRoles "Only for mods" authorityRoles $
+            transR void nextVideoCommand))
     , ( "video"
       , mkBuiltinCommand
           ( "Print the current video"
@@ -418,7 +419,7 @@ builtinCommands =
       , mkBuiltinCommand
           ( "Set the time cursor for the video queue"
           , $githubLinkLocationStr
-          , onlyForRoles authorityRoles $
+          , onlyForRoles "Only for mods" authorityRoles $
             cmapR (readMay . T.unpack) $
             replyOnNothing "Cannot parse this as UTCTime" setVideoDateCommand))
     , ( "calc"
@@ -448,14 +449,14 @@ builtinCommands =
       , mkBuiltinCommand
           ( "Reloads Markov model file"
           , $githubLinkLocationStr
-          , onlyForRoles authorityRoles $
+          , onlyForRoles "Only for mods" authorityRoles $
             liftR (const reloadMarkov) $
             replyOnNothing "Nothing to reload" $ Reaction replyMessage))
     , ( "config"
       , mkBuiltinCommand
           ( "Bot configuration command"
           , $githubLinkLocationStr
-          , onlyForRoles authorityRoles $
+          , onlyForRoles "Only for mods" authorityRoles $
             subcommand
               [ ( "help"
                 , subcommand
@@ -592,7 +593,8 @@ longMessageFilter reaction =
            timeoutSender (T.length message - messageLimit) sender
            replyMessage
              ([qms|Message limit is {messageLimit} characters
-                   for untrusted users, sorry.|] <$
+                   for untrusted users, sorry. Subscribe to gain
+                   trust instantly: https://twitch.tv/tsoding/subscribe|] <$
               msg)
        msg -> runReaction reaction msg)
   where
