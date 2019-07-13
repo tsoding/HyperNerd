@@ -593,7 +593,8 @@ longMessageFilter reaction =
            timeoutSender (T.length message - messageLimit) sender
            replyMessage
              ([qms|Message limit is {messageLimit} characters
-                   for untrusted users, sorry.|] <$
+                   for untrusted users, sorry. Subscribe to gain
+                   trust instantly: https://twitch.tv/tsoding/subscribe|] <$
               msg)
        msg -> runReaction reaction msg)
   where
