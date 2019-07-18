@@ -470,6 +470,26 @@ builtinCommands =
                 , subcommand
                     [("setgist", setHelpGistId), ("refresh", refreshHelpGistId)])
               ]))
+    , ( "version"
+      , mkBuiltinCommand
+          ( "Currently running version"
+          , $githubLinkLocationStr
+          , cmapR (const $gitHeadStr) sayMessage))
+    , ( "take"
+      , mkBuiltinCommand
+          ( "Take first n characters of the input string"
+          , $githubLinkLocationStr
+          , regexArgs "([0-9]+) (.*)" $
+            replyLeft $
+            pairArgs $
+            replyLeft $
+            cmapR
+              (\(n, s) -> do
+                 n' <-
+                   maybeToEither "First argument is not a number" $
+                   readMay $ T.unpack n
+                 return (n', s)) $
+            replyLeft $ cmapR (uncurry T.take) sayMessage))
     ]
 
 signText :: T.Text -> Either String Int
@@ -634,7 +654,7 @@ dispatchRedirect effect cmd = do
   effectOutput <-
     T.strip . T.concat . concatMap (\x -> [" ", x]) <$> listen effect
   dispatchCommand $
-    getCompose ((\x -> T.concat [x, effectOutput]) <$> Compose cmd)
+    getCompose ((\x -> T.concat [x, " ", effectOutput]) <$> Compose cmd)
 
 -- TODO(#414): there is not cooldown for pipes
 dispatchPipe :: Reaction Message [Command T.Text]
