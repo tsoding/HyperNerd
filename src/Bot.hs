@@ -470,6 +470,11 @@ builtinCommands =
                 , subcommand
                     [("setgist", setHelpGistId), ("refresh", refreshHelpGistId)])
               ]))
+    , ( "version"
+      , mkBuiltinCommand
+          ( "Currently running version"
+          , $githubLinkLocationStr
+          , cmapR (const $gitHeadStr) sayMessage))
     ]
 
 signText :: T.Text -> Either String Int
