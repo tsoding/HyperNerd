@@ -32,6 +32,7 @@ import Network.HTTP.Simple
 import qualified Network.URI.Encode as URI
 import qualified Sqlite.EntityPersistence as SEP
 import System.IO
+import System.Random
 import Text.InterpolatedString.QM
 import Text.Printf
 import Transport
@@ -200,6 +201,9 @@ applyEffect (botState, Free (GetVar _ s)) = return (botState, s Nothing)
 applyEffect (botState, Free (CallFun "urlencode" [text] s)) =
   return (botState, s $ Just $ T.pack $ URI.encode $ T.unpack text)
 applyEffect (botState, Free (CallFun _ _ s)) = return (botState, s Nothing)
+applyEffect (botState, Free (RandomEff range s)) = do
+  v <- randomRIO range
+  return (botState, s v)
 
 runEffectIO :: ((a, Effect ()) -> IO (a, Effect ())) -> (a, Effect ()) -> IO a
 runEffectIO _ (x, Pure _) = return x
