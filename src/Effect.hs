@@ -28,6 +28,7 @@ module Effect
   , reloadMarkov
   , callFun
   , githubApiRequest
+  , randomEff
   ) where
 
 import Control.Monad.Catch
@@ -114,6 +115,7 @@ data EffectF s
   | CallFun T.Text
             [T.Text]
             (Maybe T.Text -> s)
+  | RandomEff (Int, Int) (Int -> s)
   deriving (Functor)
 
 type Effect = Free EffectF
@@ -193,3 +195,6 @@ reloadMarkov = liftF $ ReloadMarkov id
 
 callFun :: T.Text -> [T.Text] -> Effect (Maybe T.Text)
 callFun name args = liftF $ CallFun name args id
+
+randomEff :: (Int, Int) -> Effect Int
+randomEff range = liftF $ RandomEff range id
