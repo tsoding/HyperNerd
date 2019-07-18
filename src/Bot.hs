@@ -625,7 +625,9 @@ messageReaction =
     case textAsPipe text of
       [] -> runReaction mention msg
       pipe ->
-        mapM redirectAlias pipe >>= dispatchPipe . Message sender mentioned
+        runReaction
+          (liftR (mapM redirectAlias) dispatchPipe)
+          (Message sender mentioned pipe)
 
 dispatchRedirect :: Effect () -> Message (Command T.Text) -> Effect ()
 dispatchRedirect effect cmd = do
@@ -635,29 +637,33 @@ dispatchRedirect effect cmd = do
     getCompose ((\x -> T.concat [x, effectOutput]) <$> Compose cmd)
 
 -- TODO(#414): there is not cooldown for pipes
-dispatchPipe :: Message [Command T.Text] -> Effect ()
-dispatchPipe message@Message { messageSender = Sender {senderRoles = roles}
-                             , messageContent = cmds
-                             }
-  | not (any (`elem` coolRoles) roles) && length cmds > plebPipeLimit =
-    replyMessage $
-    fmap
-      (const
-         [qms|The length of the pipe is limited to {plebPipeLimit}.
-              Subscribe to increase the limit:
-              https://www.twitch.tv/products/tsoding|])
-      message
-  | any (`elem` coolRoles) roles && length cmds > pipeLimit =
-    replyMessage $
-    fmap
-      (const [qms|The length of the pipe is limited to {pipeLimit} commands|])
-      message
-  | otherwise =
-    foldl dispatchRedirect (return ()) $ map (\x -> fmap (const x) message) cmds
+dispatchPipe :: Reaction Message [Command T.Text]
+dispatchPipe = Reaction dispatchPipe'
   where
-    pipeLimit = 10
-    plebPipeLimit = 2
-    coolRoles = [tsodingTwitchedDiscordRole, TwitchSub] ++ authorityRoles
+    dispatchPipe' message@Message { messageSender = Sender {senderRoles = roles}
+                                  , messageContent = cmds
+                                  }
+      | not (any (`elem` coolRoles) roles) && length cmds > plebPipeLimit =
+        replyMessage $
+        fmap
+          (const
+             [qms|The length of the pipe is limited to {plebPipeLimit}.
+                  Subscribe to increase the limit:
+                  https://www.twitch.tv/products/tsoding|])
+          message
+      | any (`elem` coolRoles) roles && length cmds > pipeLimit =
+        replyMessage $
+        fmap
+          (const
+             [qms|The length of the pipe is limited to {pipeLimit} commands|])
+          message
+      | otherwise =
+        foldl dispatchRedirect (return ()) $
+        map (\x -> fmap (const x) message) cmds
+      where
+        pipeLimit = 10
+        plebPipeLimit = 2
+        coolRoles = [tsodingTwitchedDiscordRole, TwitchSub] ++ authorityRoles
 
 dispatchCommand :: Message (Command T.Text) -> Effect ()
 dispatchCommand message = do
