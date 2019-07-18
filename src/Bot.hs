@@ -489,7 +489,7 @@ builtinCommands =
                    maybeToEither "First argument is not a number" $
                    readMay $ T.unpack n
                  return (n', s)) $
-            replyLeft $ cmapR (uncurry T.take) $ sayMessage))
+            replyLeft $ cmapR (uncurry T.take) sayMessage))
     ]
 
 signText :: T.Text -> Either String Int
