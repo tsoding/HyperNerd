@@ -40,6 +40,7 @@ import Data.List
 import qualified Data.Map as M
 import Data.Maybe
 import Data.Proxy
+import Data.String
 import qualified Data.Text as T
 import Data.Time
 import Effect
@@ -55,7 +56,6 @@ import Text.Read
 import Text.Regex.TDFA (defaultCompOpt, defaultExecOpt)
 import Text.Regex.TDFA.String
 import Transport
-import Data.String
 
 type Bot = InEvent -> Effect ()
 
@@ -515,7 +515,8 @@ replaceAt i rep input = T.concat [left, rep, T.tail right]
   where
     (left, right) = T.splitAt i input
 
-newtype EmoteName = EmoteName T.Text
+newtype EmoteName =
+  EmoteName T.Text
 
 instance IsString EmoteName where
   fromString = EmoteName . fromString
