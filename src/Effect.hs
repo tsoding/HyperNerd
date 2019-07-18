@@ -115,7 +115,8 @@ data EffectF s
   | CallFun T.Text
             [T.Text]
             (Maybe T.Text -> s)
-  | RandomEff (Int, Int) (Int -> s)
+  | RandomEff (Int, Int)
+              (Int -> s)
   deriving (Functor)
 
 type Effect = Free EffectF

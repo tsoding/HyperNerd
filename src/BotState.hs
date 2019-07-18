@@ -32,10 +32,10 @@ import Network.HTTP.Simple
 import qualified Network.URI.Encode as URI
 import qualified Sqlite.EntityPersistence as SEP
 import System.IO
+import System.Random
 import Text.InterpolatedString.QM
 import Text.Printf
 import Transport
-import System.Random
 
 data Timeout = Timeout
   { timeoutDuration :: Integer
