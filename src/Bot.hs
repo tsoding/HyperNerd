@@ -40,6 +40,7 @@ import Data.List
 import qualified Data.Map as M
 import Data.Maybe
 import Data.Proxy
+import Data.String
 import qualified Data.Text as T
 import Data.Time
 import Effect
@@ -430,7 +431,14 @@ builtinCommands =
           , calcCommand))
     , ( "omega"
       , mkBuiltinCommand
-          ("OMEGALUL", $githubLinkLocationStr, cmapR (omega 3) sayMessage))
+          ( "OMEGALUL"
+          , $githubLinkLocationStr
+          , cmapR (omega 3 'O' "OMEGALUL") sayMessage))
+    , ( "ayaya"
+      , mkBuiltinCommand
+          ( "AYAYA"
+          , $githubLinkLocationStr
+          , cmapR (omega 3 'A' "AYAYA") sayMessage))
     , ( "localtime"
       , mkBuiltinCommand
           ( "A simple command that show local time in a timezone"
@@ -507,13 +515,19 @@ replaceAt i rep input = T.concat [left, rep, T.tail right]
   where
     (left, right) = T.splitAt i input
 
-omega :: Int -> T.Text -> T.Text
-omega n s =
-  foldl' (\acc i -> replaceAt i " OMEGALUL " acc) s $
+newtype EmoteName =
+  EmoteName T.Text
+
+instance IsString EmoteName where
+  fromString = EmoteName . fromString
+
+omega :: Int -> Char -> EmoteName -> T.Text -> T.Text
+omega n c (EmoteName name) s =
+  foldl' (\acc i -> replaceAt i (" " <> name <> " ") acc) s $
   sortBy (flip compare) $ take n $ fst $ shuffle (xs, g)
   where
     g = mkStdGen $ sum $ map ord $ T.unpack s
-    xs = elemIndices 'O' $ T.unpack $ T.map toUpper s
+    xs = elemIndices c $ T.unpack $ T.map toUpper s
 
 mockMessage :: T.Text -> T.Text
 mockMessage =
