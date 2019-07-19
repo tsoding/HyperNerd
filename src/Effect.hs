@@ -23,6 +23,7 @@ module Effect
   , twitchApiRequest
   , listen
   , periodicEffect
+  , periodicEffect'
   , twitchCommand
   , randomMarkov
   , reloadMarkov
@@ -184,6 +185,14 @@ periodicEffect :: Integer -> Maybe Channel -> Effect () -> Effect ()
 periodicEffect period channel effect = do
   effect
   timeout period channel $ periodicEffect period channel effect
+
+periodicEffect' :: Maybe Channel -> Effect (Maybe Integer) -> Effect ()
+periodicEffect' channel effect = do
+  period' <- effect
+  maybe
+    (return ())
+    (\period -> timeout period channel $ periodicEffect' channel effect)
+    period'
 
 twitchCommand :: Channel -> T.Text -> [T.Text] -> Effect ()
 twitchCommand channel name args = liftF $ TwitchCommand channel name args ()
