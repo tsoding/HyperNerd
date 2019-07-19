@@ -164,6 +164,21 @@ entityMigrations =
        FROM EntityProperty
        WHERE entityName = 'PeriodicCommand'
        GROUP BY entityId; |]
+  , [r| INSERT INTO EntityProperty (
+            entityName,
+            entityId,
+            propertyName,
+            propertyType,
+            propertyInt
+       )
+       SELECT entityName,
+              entityId,
+              'period' AS propertyName,
+              'PropertyInt' AS propertyType,
+              (10 * 60 * 1000) AS propertyInt
+       FROM EntityProperty
+       WHERE entityName = 'PeriodicTimer'
+       GROUP BY entityId;|]
   ]
 
 prepareSchema :: Connection -> IO ()
