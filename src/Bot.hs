@@ -158,10 +158,20 @@ builtinCommands =
           , $githubLinkLocationStr
           , authorizeSender senderAuthority $
             replyOnNothing "Only for mods" $
-            cmapR textAsCommand $
-            replyOnNothing
-              "Command as an argument is expected"
-              addPeriodicCommand))
+            regexArgs "([0-9]+) (.*)" $
+            replyLeft $
+            pairArgs $
+            replyLeft $
+            cmapR
+              (\(timerId, command) -> do
+                 timerId' <-
+                   maybeToEither "First argument is not number" $
+                   readMay $ T.unpack timerId
+                 command' <-
+                   maybeToEither "Second argument is not command" $
+                   textAsCommand command
+                 return (timerId', command')) $
+            replyLeft addPeriodicCommand))
     , ( "delperiodic"
       , mkBuiltinCommand
           ( "Delete periodic command"

@@ -104,18 +104,18 @@ startPeriodicCommands channel dispatchCommand = do
            return $ Just $ fromIntegral $ periodicTimerPeriod pt)
         pt'
 
--- TODO: !addperiodic does not allow to specify the timer
-addPeriodicCommand :: Reaction Message (Command T.Text)
+-- TODO: !addperiodic does not check if the provided timer exist
+addPeriodicCommand :: Reaction Message (Int, Command T.Text)
 addPeriodicCommand =
   Reaction $ \Message { messageSender = sender
-                      , messageContent = command@Command {commandName = name}
+                      , messageContent = (timerId, command@Command {commandName = name})
                       } -> do
     maybePc <- getPeriodicCommandByName name
     case maybePc of
       Just _ ->
         replyToSender sender [qms|'{name}' is aleady called periodically|]
       Nothing -> do
-        void $ createEntity Proxy $ PeriodicCommand command 1
+        void $ createEntity Proxy $ PeriodicCommand command timerId
         replyToSender
           sender
           [qms|'{name}' has been scheduled to call periodically|]
