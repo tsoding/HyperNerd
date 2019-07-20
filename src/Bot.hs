@@ -508,21 +508,6 @@ builtinCommands =
           ( "Currently running version"
           , $githubLinkLocationStr
           , cmapR (const $gitHeadStr) sayMessage))
-    , ( "take"
-      , mkBuiltinCommand
-          ( "Take first n characters of the input string"
-          , $githubLinkLocationStr
-          , regexArgs "([0-9]+) (.*)" $
-            replyLeft $
-            pairArgs $
-            replyLeft $
-            cmapR
-              (\(n, s) -> do
-                 n' <-
-                   maybeToEither "First argument is not a number" $
-                   readMay $ T.unpack n
-                 return (n', s)) $
-            replyLeft $ cmapR (uncurry T.take) sayMessage))
     ]
 
 signText :: T.Text -> Either String Int
