@@ -53,7 +53,10 @@ data PeriodicTimer = PeriodicTimer
 instance IsEntity PeriodicTimer where
   nameOfEntity _ = "PeriodicTimer"
   toProperties pt =
-    M.fromList [("enabled", PropertyInt $ boolAsInt $ periodicTimerEnabled pt)]
+    M.fromList
+      [ ("enabled", PropertyInt $ boolAsInt $ periodicTimerEnabled pt)
+      , ("period", PropertyInt $ periodicTimerPeriod pt)
+      ]
   fromProperties properties =
     PeriodicTimer <$> (intAsBool <$> extractProperty "enabled" properties) <*>
     extractProperty "period" properties
