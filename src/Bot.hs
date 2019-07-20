@@ -188,7 +188,8 @@ builtinCommands =
             cmapR headMay $
             replyOnNothing "Not enough arguments" $
             cmapR (readMay . T.unpack) $
-            replyOnNothing "Argument is not a number" addPeriodicTimerCommand))
+            replyOnNothing "Argument is not a number" $
+            addPeriodicTimerCommand dispatchCommand))
     , ( "deltimer"
       , mkBuiltinCommand
           ( "Remove Periodic Timer"

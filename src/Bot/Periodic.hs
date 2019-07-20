@@ -83,30 +83,34 @@ getPeriodicCommandByName name =
   selectEntities Proxy $
   Take 1 $ Filter (PropertyEquals "name" (PropertyText name)) All
 
+startPeriodicTimer ::
+     (Message (Command T.Text) -> Effect ()) -> Channel -> Int -> Effect ()
+startPeriodicTimer dispatchCommand channel eid =
+  periodicEffect' (Just channel) $ do
+    pt' <- getEntityById Proxy eid
+    maybe
+      (return Nothing)
+      (\Entity {entityPayload = pt} -> do
+         pc' <-
+           fmap listToMaybe $
+           selectEntities Proxy $
+           Take 1 $
+           Shuffle $ Filter (PropertyEquals "timer" $ PropertyInt eid) All
+         when (periodicTimerEnabled pt) $
+           maybe
+             (return ())
+             (dispatchCommand .
+              Message (mrbotka {senderChannel = channel}) False .
+              periodicCommand . entityPayload)
+             pc'
+         return $ Just $ fromIntegral $ periodicTimerPeriod pt)
+      pt'
+
 startPeriodicCommands ::
      Channel -> (Message (Command T.Text) -> Effect ()) -> Effect ()
 startPeriodicCommands channel dispatchCommand = do
   eids <- (entityId <$>) <$> selectEntities (Proxy :: Proxy PeriodicTimer) All
-  for_ eids $ \eid ->
-    periodicEffect' (Just channel) $ do
-      pt' <- getEntityById Proxy eid
-      maybe
-        (return Nothing)
-        (\Entity {entityPayload = pt} -> do
-           pc' <-
-             fmap listToMaybe $
-             selectEntities Proxy $
-             Take 1 $
-             Shuffle $ Filter (PropertyEquals "timer" $ PropertyInt eid) All
-           when (periodicTimerEnabled pt) $
-             maybe
-               (return ())
-               (dispatchCommand .
-                Message (mrbotka {senderChannel = channel}) False .
-                periodicCommand . entityPayload)
-               pc'
-           return $ Just $ fromIntegral $ periodicTimerPeriod pt)
-        pt'
+  for_ eids (startPeriodicTimer dispatchCommand channel)
 
 -- TODO: !addperiodic does not check if the provided timer exist
 addPeriodicCommand :: Reaction Message (Int, Command T.Text)
@@ -164,11 +168,20 @@ statusPeriodicTimerCommand =
   cmapR (T.pack . show . map (periodicTimerEnabled . entityPayload)) $
   Reaction replyMessage
 
-addPeriodicTimerCommand :: Reaction Message Int
-addPeriodicTimerCommand =
+addPeriodicTimerCommand ::
+     (Message (Command T.Text) -> Effect ()) -> Reaction Message Int
+addPeriodicTimerCommand dispatchCommand =
   cmapR (PeriodicTimer False) $
   liftR (createEntity Proxy) $
-  cmapR (("Created Periodic Timer with id " <>) . T.pack . show . entityId) $
+  dupLiftR
+    (\msg -> do
+       let eid = entityId $ messageContent msg
+       startPeriodicTimer
+         dispatchCommand
+         (senderChannel $ messageSender msg)
+         (entityId $ messageContent msg)
+       return eid) $
+  cmapR (("Created Periodic Timer with id " <>) . T.pack . show) $
   Reaction replyMessage
 
 removePeriodicTimerCommand :: Reaction Message Int
