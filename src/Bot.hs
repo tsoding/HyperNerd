@@ -667,7 +667,7 @@ messageReaction =
           (liftR (mapM redirectAlias) dispatchPipe)
           (Message sender mentioned pipe)
 
--- TODO: dispatchRedirect should add put a space between input and arguments
+-- TODO(#700): dispatchRedirect should add put a space between input and arguments
 --   At the moment it may break a lot of commands that do not T.strip
 --   their input. In the scope of this issue we need to try to
 --   identify how many commands will be affected.q
