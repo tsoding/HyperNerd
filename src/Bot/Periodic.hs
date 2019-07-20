@@ -165,7 +165,9 @@ disablePeriodicTimerCommand =
 statusPeriodicTimerCommand :: Reaction Message a
 statusPeriodicTimerCommand =
   liftR (const $ selectEntities (Proxy :: Proxy PeriodicTimer) All) $
-  cmapR (T.pack . show . map (periodicTimerEnabled . entityPayload)) $
+  cmapR
+    (T.pack .
+     show . map (\e -> (entityId e, periodicTimerEnabled $ entityPayload e))) $
   Reaction replyMessage
 
 addPeriodicTimerCommand ::
