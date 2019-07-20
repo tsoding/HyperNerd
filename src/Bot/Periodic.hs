@@ -8,12 +8,15 @@ module Bot.Periodic
   , enablePeriodicTimerCommand
   , disablePeriodicTimerCommand
   , statusPeriodicTimerCommand
+  , addPeriodicTimerCommand
+  , removePeriodicTimerCommand
   ) where
 
 import Bot.Replies
 import Command
 import Control.Monad
 import Data.Bool.Extra
+import Data.Foldable
 import qualified Data.Map as M
 import Data.Maybe
 import Data.Proxy
@@ -36,39 +39,43 @@ mrbotka =
     }
 
 -- TODO(#485): Periodic commands have no channel to send them to
-newtype PeriodicCommand = PeriodicCommand
+data PeriodicCommand = PeriodicCommand
   { periodicCommand :: Command T.Text
+  , periodicTimer :: Int
   }
 
-newtype PeriodicTimer = PeriodicTimer
+-- TODO(#701): There is no way to modify timers period
+data PeriodicTimer = PeriodicTimer
   { periodicTimerEnabled :: Bool
+  , periodicTimerPeriod :: Int
   }
-
-periodicTimerEntity :: Effect (Entity PeriodicTimer)
-periodicTimerEntity = do
-  entity <- listToMaybe <$> selectEntities Proxy All
-  maybe (createEntity Proxy $ PeriodicTimer True) return entity
 
 instance IsEntity PeriodicTimer where
   nameOfEntity _ = "PeriodicTimer"
   toProperties pt =
-    M.fromList [("enabled", PropertyInt $ boolAsInt $ periodicTimerEnabled pt)]
+    M.fromList
+      [ ("enabled", PropertyInt $ boolAsInt $ periodicTimerEnabled pt)
+      , ("period", PropertyInt $ periodicTimerPeriod pt)
+      ]
   fromProperties properties =
-    PeriodicTimer <$> (intAsBool <$> extractProperty "enabled" properties)
+    PeriodicTimer <$> (intAsBool <$> extractProperty "enabled" properties) <*>
+    extractProperty "period" properties
 
 instance IsEntity PeriodicCommand where
   nameOfEntity _ = "PeriodicCommand"
-  toProperties pc =
+  toProperties PeriodicCommand { periodicCommand = Command name args
+                               , periodicTimer = timer
+                               } =
     M.fromList
-      [ ("name", PropertyText $ commandName command)
-      , ("args", PropertyText $ commandArgs command)
+      [ ("name", PropertyText name)
+      , ("args", PropertyText args)
+      , ("timer", PropertyInt timer)
       ]
-    where
-      command = periodicCommand pc
   fromProperties properties =
     PeriodicCommand <$>
     (Command <$> extractProperty "name" properties <*>
-     extractProperty "args" properties)
+     extractProperty "args" properties) <*>
+    extractProperty "timer" properties
 
 getPeriodicCommandByName :: T.Text -> Effect (Maybe (Entity PeriodicCommand))
 getPeriodicCommandByName name =
@@ -76,38 +83,52 @@ getPeriodicCommandByName name =
   selectEntities Proxy $
   Take 1 $ Filter (PropertyEquals "name" (PropertyText name)) All
 
+startPeriodicTimer ::
+     (Message (Command T.Text) -> Effect ()) -> Channel -> Int -> Effect ()
+startPeriodicTimer dispatchCommand channel eid =
+  periodicEffect' (Just channel) $ do
+    pt' <- getEntityById Proxy eid
+    maybe
+      (return Nothing)
+      (\Entity {entityPayload = pt} -> do
+         pc' <-
+           fmap listToMaybe $
+           selectEntities Proxy $
+           Take 1 $
+           Shuffle $ Filter (PropertyEquals "timer" $ PropertyInt eid) All
+         when (periodicTimerEnabled pt) $
+           maybe
+             (return ())
+             (dispatchCommand .
+              Message (mrbotka {senderChannel = channel}) False .
+              periodicCommand . entityPayload)
+             pc'
+         return $ Just $ fromIntegral $ periodicTimerPeriod pt)
+      pt'
+
 startPeriodicCommands ::
      Channel -> (Message (Command T.Text) -> Effect ()) -> Effect ()
 startPeriodicCommands channel dispatchCommand = do
-  maybePc <- fmap listToMaybe $ selectEntities Proxy $ Take 1 $ Shuffle All
-  periodicTimer <- entityPayload <$> periodicTimerEntity
-  when (periodicTimerEnabled periodicTimer) $
-    maybe
-      (return ())
-      (dispatchCommand .
-       Message (mrbotka {senderChannel = channel}) False .
-       periodicCommand . entityPayload)
-      maybePc
-  timeout
-    (10 * 60 * 1000)
-    (Just channel)
-    (startPeriodicCommands channel dispatchCommand)
+  eids <- (entityId <$>) <$> selectEntities (Proxy :: Proxy PeriodicTimer) All
+  for_ eids (startPeriodicTimer dispatchCommand channel)
 
-addPeriodicCommand :: Reaction Message (Command T.Text)
+-- TODO(#702): !addperiodic does not check if the provided timer exist
+addPeriodicCommand :: Reaction Message (Int, Command T.Text)
 addPeriodicCommand =
   Reaction $ \Message { messageSender = sender
-                      , messageContent = command@Command {commandName = name}
+                      , messageContent = (timerId, command@Command {commandName = name})
                       } -> do
     maybePc <- getPeriodicCommandByName name
     case maybePc of
       Just _ ->
         replyToSender sender [qms|'{name}' is aleady called periodically|]
       Nothing -> do
-        void $ createEntity Proxy $ PeriodicCommand command
+        void $ createEntity Proxy $ PeriodicCommand command timerId
         replyToSender
           sender
           [qms|'{name}' has been scheduled to call periodically|]
 
+-- TODO(#703): !delperiodic does not allow to specify the timer
 removePeriodicCommand :: Reaction Message T.Text
 removePeriodicCommand =
   Reaction $ \Message {messageSender = sender, messageContent = name} -> do
@@ -129,20 +150,50 @@ disablePeriodicTimer pt = pt {periodicTimerEnabled = False}
 
 enablePeriodicTimerCommand :: Reaction Message a
 enablePeriodicTimerCommand =
-  liftR (const periodicTimerEntity) $
-  cmapR (fmap enablePeriodicTimer) $
-  liftR updateEntityById $
-  cmapR (const "Periodic timer has been enabled") $ Reaction replyMessage
+  liftR (const $ selectEntities Proxy All) $
+  cmapR ((enablePeriodicTimer <$>) <$>) $
+  liftR (mapM_ updateEntityById) $
+  cmapR (const "Periodic timers have been enabled") $ Reaction replyMessage
 
 disablePeriodicTimerCommand :: Reaction Message a
 disablePeriodicTimerCommand =
-  liftR (const periodicTimerEntity) $
-  cmapR (fmap disablePeriodicTimer) $
-  liftR updateEntityById $
+  liftR (const $ selectEntities Proxy All) $
+  cmapR ((disablePeriodicTimer <$>) <$>) $
+  liftR (mapM_ updateEntityById) $
   cmapR (const "Periodic timer has been disabled") $ Reaction replyMessage
 
 statusPeriodicTimerCommand :: Reaction Message a
 statusPeriodicTimerCommand =
-  liftR (const periodicTimerEntity) $
-  cmapR (T.pack . show . periodicTimerEnabled . entityPayload) $
+  liftR (const $ selectEntities (Proxy :: Proxy PeriodicTimer) All) $
+  cmapR
+    (T.pack .
+     show . map (\e -> (entityId e, periodicTimerEnabled $ entityPayload e))) $
+  Reaction replyMessage
+
+addPeriodicTimerCommand ::
+     (Message (Command T.Text) -> Effect ()) -> Reaction Message Int
+addPeriodicTimerCommand dispatchCommand =
+  cmapR (PeriodicTimer False) $
+  liftR (createEntity Proxy) $
+  dupLiftR
+    (\msg -> do
+       let eid = entityId $ messageContent msg
+       startPeriodicTimer
+         dispatchCommand
+         (senderChannel $ messageSender msg)
+         (entityId $ messageContent msg)
+       return [qms|"Created Periodic Timer with id {eid}"|]) $
+  Reaction replyMessage
+
+removePeriodicTimerCommand :: Reaction Message Int
+removePeriodicTimerCommand =
+  deleteEntityByIdCommand (Proxy :: Proxy PeriodicTimer)
+
+-- TODO(#704): deleting timer does not unschedule its commands
+deleteEntityByIdCommand :: IsEntity e => Proxy e -> Reaction Message Int
+deleteEntityByIdCommand proxy =
+  liftR (getEntityById proxy) $
+  replyOnNothing [qms|No {nameOfEntity proxy} with such id|] $
+  liftR (deleteEntityById proxy . entityId) $
+  cmapR (const [qms|{nameOfEntity proxy} has been removed|]) $
   Reaction replyMessage

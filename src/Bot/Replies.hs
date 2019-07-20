@@ -73,6 +73,9 @@ onlyForRoles reply roles reaction =
     (cmapR extract reaction)
     (cmapR (const reply) $ Reaction replyMessage)
 
+onlyForMods :: Reaction Message a -> Reaction Message a
+onlyForMods = onlyForRoles "Only for mods" authorityRoles
+
 nonEmptyRoles :: T.Text -> Reaction Message a -> Reaction Message a
 nonEmptyRoles reply reaction =
   transR duplicate $

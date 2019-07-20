@@ -158,16 +158,49 @@ builtinCommands =
           , $githubLinkLocationStr
           , authorizeSender senderAuthority $
             replyOnNothing "Only for mods" $
-            cmapR textAsCommand $
-            replyOnNothing
-              "Command as an argument is expected"
-              addPeriodicCommand))
+            regexArgs "([0-9]+) (.*)" $
+            replyLeft $
+            pairArgs $
+            replyLeft $
+            cmapR
+              (\(timerId, command) -> do
+                 timerId' <-
+                   maybeToEither "First argument is not number" $
+                   readMay $ T.unpack timerId
+                 command' <-
+                   maybeToEither "Second argument is not command" $
+                   textAsCommand command
+                 return (timerId', command')) $
+            replyLeft addPeriodicCommand))
     , ( "delperiodic"
       , mkBuiltinCommand
           ( "Delete periodic command"
           , $githubLinkLocationStr
           , authorizeSender senderAuthority $
             replyOnNothing "Only for mods" removePeriodicCommand))
+    , ( "addtimer"
+      , mkBuiltinCommand
+          ( "Add Periodic Timer"
+          , $githubLinkLocationStr
+          , onlyForMods $
+            regexArgs "([0-9]+)" $
+            replyLeft $
+            cmapR headMay $
+            replyOnNothing "Not enough arguments" $
+            cmapR (readMay . T.unpack) $
+            replyOnNothing "Argument is not a number" $
+            addPeriodicTimerCommand dispatchCommand))
+    , ( "deltimer"
+      , mkBuiltinCommand
+          ( "Remove Periodic Timer"
+          , $githubLinkLocationStr
+          , onlyForMods $
+            regexArgs "([0-9]+)" $
+            replyLeft $
+            cmapR headMay $
+            replyOnNothing "Not enough arguments" $
+            cmapR (readMay . T.unpack) $
+            replyOnNothing "Argument is not a number" removePeriodicTimerCommand))
     , ( "periodicon"
       , mkBuiltinCommand
           ( "Enable periodic timer"
@@ -475,21 +508,6 @@ builtinCommands =
           ( "Currently running version"
           , $githubLinkLocationStr
           , cmapR (const $gitHeadStr) sayMessage))
-    , ( "take"
-      , mkBuiltinCommand
-          ( "Take first n characters of the input string"
-          , $githubLinkLocationStr
-          , regexArgs "([0-9]+) (.*)" $
-            replyLeft $
-            pairArgs $
-            replyLeft $
-            cmapR
-              (\(n, s) -> do
-                 n' <-
-                   maybeToEither "First argument is not a number" $
-                   readMay $ T.unpack n
-                 return (n', s)) $
-            replyLeft $ cmapR (uncurry T.take) sayMessage))
     ]
 
 signText :: T.Text -> Either String Int
@@ -649,12 +667,16 @@ messageReaction =
           (liftR (mapM redirectAlias) dispatchPipe)
           (Message sender mentioned pipe)
 
+-- TODO(#700): dispatchRedirect should add put a space between input and arguments
+--   At the moment it may break a lot of commands that do not T.strip
+--   their input. In the scope of this issue we need to try to
+--   identify how many commands will be affected.q
 dispatchRedirect :: Effect () -> Message (Command T.Text) -> Effect ()
 dispatchRedirect effect cmd = do
   effectOutput <-
     T.strip . T.concat . concatMap (\x -> [" ", x]) <$> listen effect
   dispatchCommand $
-    getCompose ((\x -> T.concat [x, " ", effectOutput]) <$> Compose cmd)
+    getCompose ((\x -> T.concat [x, effectOutput]) <$> Compose cmd)
 
 -- TODO(#414): there is not cooldown for pipes
 dispatchPipe :: Reaction Message [Command T.Text]
