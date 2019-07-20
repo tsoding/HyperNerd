@@ -112,7 +112,7 @@ startPeriodicCommands channel dispatchCommand = do
   eids <- (entityId <$>) <$> selectEntities (Proxy :: Proxy PeriodicTimer) All
   for_ eids (startPeriodicTimer dispatchCommand channel)
 
--- TODO: !addperiodic does not check if the provided timer exist
+-- TODO(#702): !addperiodic does not check if the provided timer exist
 addPeriodicCommand :: Reaction Message (Int, Command T.Text)
 addPeriodicCommand =
   Reaction $ \Message { messageSender = sender
