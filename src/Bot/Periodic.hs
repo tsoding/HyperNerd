@@ -180,8 +180,7 @@ addPeriodicTimerCommand dispatchCommand =
          dispatchCommand
          (senderChannel $ messageSender msg)
          (entityId $ messageContent msg)
-       return eid) $
-  cmapR (("Created Periodic Timer with id " <>) . T.pack . show) $
+       return [qms|"Created Periodic Timer with id {eid}"|]) $
   Reaction replyMessage
 
 removePeriodicTimerCommand :: Reaction Message Int
