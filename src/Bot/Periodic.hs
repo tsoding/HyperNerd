@@ -128,7 +128,7 @@ addPeriodicCommand =
           sender
           [qms|'{name}' has been scheduled to call periodically|]
 
--- TODO: !delperiodic does not allow to specify the timer
+-- TODO(#703): !delperiodic does not allow to specify the timer
 removePeriodicCommand :: Reaction Message T.Text
 removePeriodicCommand =
   Reaction $ \Message {messageSender = sender, messageContent = name} -> do
