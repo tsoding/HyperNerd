@@ -189,7 +189,7 @@ removePeriodicTimerCommand :: Reaction Message Int
 removePeriodicTimerCommand =
   deleteEntityByIdCommand (Proxy :: Proxy PeriodicTimer)
 
--- TODO: deleting timer does not unschedule its commands
+-- TODO(#704): deleting timer does not unschedule its commands
 deleteEntityByIdCommand :: IsEntity e => Proxy e -> Reaction Message Int
 deleteEntityByIdCommand proxy =
   liftR (getEntityById proxy) $
