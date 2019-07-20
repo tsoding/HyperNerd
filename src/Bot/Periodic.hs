@@ -16,6 +16,7 @@ import Bot.Replies
 import Command
 import Control.Monad
 import Data.Bool.Extra
+import Data.Foldable
 import qualified Data.Map as M
 import Data.Maybe
 import Data.Proxy
@@ -26,7 +27,6 @@ import Property
 import Reaction
 import Text.InterpolatedString.QM
 import Transport
-import Data.Foldable
 
 mrbotka :: Sender
 mrbotka =
