@@ -682,12 +682,16 @@ messageReaction =
           (liftR (mapM redirectAlias) dispatchPipe)
           (Message sender mentioned pipe)
 
+-- TODO: dispatchRedirect should add put a space between input and arguments
+--   At the moment it may break a lot of commands that do not T.strip
+--   their input. In the scope of this issue we need to try to
+--   identify how many commands will be affected.q
 dispatchRedirect :: Effect () -> Message (Command T.Text) -> Effect ()
 dispatchRedirect effect cmd = do
   effectOutput <-
     T.strip . T.concat . concatMap (\x -> [" ", x]) <$> listen effect
   dispatchCommand $
-    getCompose ((\x -> T.concat [x, " ", effectOutput]) <$> Compose cmd)
+    getCompose ((\x -> T.concat [x, effectOutput]) <$> Compose cmd)
 
 -- TODO(#414): there is not cooldown for pipes
 dispatchPipe :: Reaction Message [Command T.Text]
