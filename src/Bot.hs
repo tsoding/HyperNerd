@@ -178,6 +178,28 @@ builtinCommands =
           , $githubLinkLocationStr
           , authorizeSender senderAuthority $
             replyOnNothing "Only for mods" removePeriodicCommand))
+    , ( "addtimer"
+      , mkBuiltinCommand
+          ( "Add Periodic Timer"
+          , $githubLinkLocationStr
+          , onlyForMods $
+            regexArgs "([0-9]+)" $
+            replyLeft $
+            cmapR headMay $
+            replyOnNothing "Not enough arguments" $
+            cmapR (readMay . T.unpack) $
+            replyOnNothing "Argument is not a number" addPeriodicTimerCommand))
+    , ( "deltimer"
+      , mkBuiltinCommand
+          ( "Remove Periodic Timer"
+          , $githubLinkLocationStr
+          , onlyForMods $
+            regexArgs "([0-9]+)" $
+            replyLeft $
+            cmapR headMay $
+            replyOnNothing "Not enough arguments" $
+            cmapR (readMay . T.unpack) $
+            replyOnNothing "Argument is not a number" removePeriodicTimerCommand))
     , ( "periodicon"
       , mkBuiltinCommand
           ( "Enable periodic timer"

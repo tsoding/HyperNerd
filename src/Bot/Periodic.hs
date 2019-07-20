@@ -8,6 +8,8 @@ module Bot.Periodic
   , enablePeriodicTimerCommand
   , disablePeriodicTimerCommand
   , statusPeriodicTimerCommand
+  , addPeriodicTimerCommand
+  , removePeriodicTimerCommand
   ) where
 
 import Bot.Replies
@@ -42,7 +44,6 @@ data PeriodicCommand = PeriodicCommand
   , periodicTimer :: Int
   }
 
--- TODO: There is no way to add/remove timers
 -- TODO: There is no way to modify timers period
 data PeriodicTimer = PeriodicTimer
   { periodicTimerEnabled :: Bool
@@ -159,3 +160,21 @@ statusPeriodicTimerCommand =
   liftR (const $ selectEntities (Proxy :: Proxy PeriodicTimer) All) $
   cmapR (T.pack . show . map (periodicTimerEnabled . entityPayload)) $
   Reaction replyMessage
+
+addPeriodicTimerCommand :: Reaction Message Int
+addPeriodicTimerCommand =
+  cmapR (PeriodicTimer False) $
+  liftR (createEntity Proxy) $
+  cmapR (("Created Periodic Timer with id " <>) . T.pack . show . entityId) $
+  Reaction replyMessage
+
+removePeriodicTimerCommand :: Reaction Message Int
+removePeriodicTimerCommand =
+  deleteEntityByIdCommand (Proxy :: Proxy PeriodicTimer)
+
+deleteEntityByIdCommand :: IsEntity e => Proxy e -> Reaction Message Int
+deleteEntityByIdCommand proxy =
+  liftR (getEntityById proxy) $
+  replyOnNothing [qms|No {nameOfEntity proxy} with such id|] $
+  liftR (deleteEntityById proxy . entityId) $
+  cmapR (const "{nameOfEntity proxy} has been removed") $ Reaction replyMessage
