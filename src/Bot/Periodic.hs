@@ -44,7 +44,7 @@ data PeriodicCommand = PeriodicCommand
   , periodicTimer :: Int
   }
 
--- TODO: There is no way to modify timers period
+-- TODO(#701): There is no way to modify timers period
 data PeriodicTimer = PeriodicTimer
   { periodicTimerEnabled :: Bool
   , periodicTimerPeriod :: Int
