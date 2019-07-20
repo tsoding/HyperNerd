@@ -192,4 +192,5 @@ deleteEntityByIdCommand proxy =
   liftR (getEntityById proxy) $
   replyOnNothing [qms|No {nameOfEntity proxy} with such id|] $
   liftR (deleteEntityById proxy . entityId) $
-  cmapR (const "{nameOfEntity proxy} has been removed") $ Reaction replyMessage
+  cmapR (const [qms|{nameOfEntity proxy} has been removed|]) $
+  Reaction replyMessage
