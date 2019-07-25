@@ -101,6 +101,7 @@ executable HyperNerd
                      , Transport.Twitch
                      , Regexp
                      , Backdoor
+                     , Schedule
 
   -- LANGUAGE extensions used by modules in this package.
   other-extensions:    OverloadedStrings
