@@ -60,9 +60,9 @@ demazarusha =
     , ("ч", "ch")
     , ("ш", "sh")
     , ("щ", "sch")
-    , ("ъ", "")    -- hard sign
+    , ("ъ", "") -- hard sign
     , ("ы", "y")
-    , ("ь", "")    -- soft sign
+    , ("ь", "") -- soft sign
     , ("э", "eh")
     , ("ю", "yu")
     , ("я", "ya")
@@ -93,9 +93,9 @@ demazarusha =
     , ("Ч", "Ch")
     , ("Ш", "Sh")
     , ("Щ", "Sch")
-    , ("Ъ", "")    -- Hard sign
+    , ("Ъ", "") -- Hard sign
     , ("Ы", "Y")
-    , ("Ь", "")    -- Soft sign
+    , ("Ь", "") -- Soft sign
     , ("Э", "Eh")
     , ("Ю", "Yu")
     , ("Я", "Ya")
