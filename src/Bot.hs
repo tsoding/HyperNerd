@@ -508,6 +508,9 @@ builtinCommands =
           ( "Currently running version"
           , $githubLinkLocationStr
           , cmapR (const $gitHeadStr) sayMessage))
+    , ( "derussify"
+      , mkBuiltinCommand
+          ("Derussify russian cypher", $githubLinkLocationStr, derussifyCommand))
     ]
 
 signText :: T.Text -> Either String Int
