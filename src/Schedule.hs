@@ -1,3 +1,4 @@
+{-# LANGUAGE OverloadedStrings #-}
 module Schedule (closestEvent, eventSummary) where
 
 import Data.Aeson
@@ -6,6 +7,9 @@ import Data.Time
 import qualified Data.Text as T
 import Data.Time.LocalTime (TimeZone)
 import qualified Data.Map as M
+import Safe
+import Control.Monad
+import Data.Maybe.Extra
 
 data DayOfWeek
   = Monday
@@ -15,7 +19,7 @@ data DayOfWeek
   | Friday
   | Saturday
   | Sunday
-  deriving (Enum, Show)
+  deriving (Enum, Show, Bounded)
 
 newtype ScheduleTimeZone =
   ScheduleTimeZone TimeZone
@@ -114,7 +118,8 @@ instance FromJSON EventPatch where
   parseJSON invalid = typeMismatch "EventPatch" invalid
 
 instance FromJSON DayOfWeek where
-  parseJSON = fmap (toEnum . (\x -> x - 1)) . parseJSON
+  parseJSON =
+    maybeFail "Unknown day of week" . toEnumMay . (\x -> x - 1) <=< parseJSON
 
 parseDiffTime :: T.Text -> Parser DiffTime
 parseDiffTime s =
