@@ -4,9 +4,11 @@
 module Bot.Replies where
 
 import Control.Comonad
+import Data.Aeson
 import qualified Data.Map as M
 import qualified Data.Text as T
 import Effect
+import Network.HTTP.Simple (getResponseBody, parseRequest)
 import Reaction
 import Regexp
 import Text.InterpolatedString.QM
@@ -98,3 +100,13 @@ subcommand subcommandList =
       _ -> logMsg [qms|[ERROR] Could not pattern match {messageContent msg}|]
   where
     subcommandTable = M.fromList subcommandList
+
+jsonHttpRequestReaction ::
+     FromJSON a => Reaction Message a -> Reaction Message String
+jsonHttpRequestReaction =
+  cmapR parseRequest .
+  ignoreLeft .
+  liftR httpRequest .
+  cmapR (eitherDecode . getResponseBody) .
+  -- TODO(#349): we probably don't wanna silence JSON parsing errors
+  ignoreLeft
