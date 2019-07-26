@@ -21,7 +21,6 @@ import Data.Proxy
 import qualified Data.Text as T
 import Effect
 import Entity
-import Network.HTTP.Simple (getResponseBody, parseRequest)
 import qualified Network.URI.Encode as URI
 import Property
 import Reaction
@@ -93,22 +92,13 @@ bttvCommand =
   liftR (const $ selectEntities Proxy All) $
   cmapR (T.concat . intersperse " " . map (bttvName . entityPayload)) sayMessage
 
-jsonHttpRequest :: FromJSON a => Reaction Message a -> Reaction Message String
-jsonHttpRequest =
-  cmapR parseRequest .
-  ignoreLeft .
-  liftR httpRequest .
-  cmapR (eitherDecode . getResponseBody) .
-  -- TODO(#349): we probably don't wanna silence JSON parsing errors
-  ignoreLeft
-
 updateFfzEmotesCommand :: Reaction Message ()
 updateFfzEmotesCommand =
   transR duplicate $
   cmapR (twitchChannelName . senderChannel . messageSender) $
   replyOnNothing "Only works in Twitch channels" $
   cmapR ffzUrl $
-  jsonHttpRequest $
+  jsonHttpRequestReaction $
   cmapR ffzResEmotes $
   liftR
     (\emotes -> do
@@ -122,7 +112,7 @@ updateBttvEmotesCommand =
   cmapR (twitchChannelName . senderChannel . messageSender) $
   replyOnNothing "Only works in Twitch channels" $
   cmapR bttvUrl $
-  jsonHttpRequest $
+  jsonHttpRequestReaction $
   cmapR bttvResEmotes $
   liftR
     (\emotes -> do

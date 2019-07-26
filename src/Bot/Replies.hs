@@ -11,6 +11,8 @@ import Reaction
 import Regexp
 import Text.InterpolatedString.QM
 import Transport
+import Data.Aeson
+import Network.HTTP.Simple (getResponseBody, parseRequest)
 
 sayMessage :: Reaction Message T.Text
 sayMessage =
@@ -98,3 +100,13 @@ subcommand subcommandList =
       _ -> logMsg [qms|[ERROR] Could not pattern match {messageContent msg}|]
   where
     subcommandTable = M.fromList subcommandList
+
+jsonHttpRequestReaction ::
+     FromJSON a => Reaction Message a -> Reaction Message String
+jsonHttpRequestReaction =
+  cmapR parseRequest .
+  ignoreLeft .
+  liftR httpRequest .
+  cmapR (eitherDecode . getResponseBody) .
+  -- TODO(#349): we probably don't wanna silence JSON parsing errors
+  ignoreLeft

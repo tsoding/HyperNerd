@@ -1,4 +1,4 @@
-module Schedule where
+module Schedule (closestEvent, eventSummary) where
 
 import Data.Aeson
 import Data.Aeson.Types
@@ -43,6 +43,10 @@ data Event = Event { eventDate :: Day
                    , eventUrl :: T.Text
                    , eventChannel :: T.Text
                    } deriving Show
+
+-- TODO: Schedule.eventSummary is not implemented
+eventSummary :: Event -> T.Text
+eventSummary _ = "Not implemented yet"
 
 newtype EventId =
   EventId Int
@@ -119,3 +123,7 @@ parseDiffTime s =
 instance FromJSON ScheduleDiffTime where
   parseJSON (String s) = ScheduleDiffTime <$> parseDiffTime s
   parseJSON invalid = typeMismatch "ScheduleDiffTime" invalid
+
+-- TODO: Schedule.closestEvent
+closestEvent :: Schedule -> UTCTime -> Either String Event
+closestEvent _ _ = Left "Not implemented yet"

@@ -56,6 +56,7 @@ import Text.Read
 import Text.Regex.TDFA (defaultCompOpt, defaultExecOpt)
 import Text.Regex.TDFA.String
 import Transport
+import Schedule (eventSummary, closestEvent)
 
 type Bot = InEvent -> Effect ()
 
@@ -511,7 +512,17 @@ builtinCommands =
     , ( "derussify"
       , mkBuiltinCommand
           ("Derussify russian cypher", $githubLinkLocationStr, derussifyCommand))
+    , ( "nextstream"
+      , mkBuiltinCommand
+          ("What's the next stream", $githubLinkLocationStr, nextStreamCommand))
     ]
+
+nextStreamCommand :: Reaction Message a
+nextStreamCommand =
+  cmapR (const "https://tsoding.github.io/schedule/schedule.json") $
+  jsonHttpRequestReaction $
+  liftR (\schedule -> closestEvent schedule <$> now) $
+  replyLeft $ cmapR eventSummary $ Reaction replyMessage
 
 signText :: T.Text -> Either String Int
 signText "-" = Right (-1)
