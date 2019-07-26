@@ -134,6 +134,6 @@ instance FromJSON ScheduleDiffTime where
   parseJSON (String s) = ScheduleDiffTime <$> parseDiffTime s
   parseJSON invalid = typeMismatch "ScheduleDiffTime" invalid
 
--- TODO: Schedule.closestEvent
+-- TODO(#713): Schedule.closestEvent
 closestEvent :: Schedule -> UTCTime -> Either String Event
 closestEvent _ _ = Left "Not implemented yet"
