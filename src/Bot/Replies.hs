@@ -4,15 +4,15 @@
 module Bot.Replies where
 
 import Control.Comonad
+import Data.Aeson
 import qualified Data.Map as M
 import qualified Data.Text as T
 import Effect
+import Network.HTTP.Simple (getResponseBody, parseRequest)
 import Reaction
 import Regexp
 import Text.InterpolatedString.QM
 import Transport
-import Data.Aeson
-import Network.HTTP.Simple (getResponseBody, parseRequest)
 
 sayMessage :: Reaction Message T.Text
 sayMessage =

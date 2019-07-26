@@ -50,13 +50,13 @@ import qualified Network.URI.Encode as URI
 import Reaction
 import Regexp
 import Safe
+import Schedule (closestEvent, eventSummary)
 import System.Random
 import Text.InterpolatedString.QM
 import Text.Read
 import Text.Regex.TDFA (defaultCompOpt, defaultExecOpt)
 import Text.Regex.TDFA.String
 import Transport
-import Schedule (eventSummary, closestEvent)
 
 type Bot = InEvent -> Effect ()
 

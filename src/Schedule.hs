@@ -1,15 +1,19 @@
 {-# LANGUAGE OverloadedStrings #-}
-module Schedule (closestEvent, eventSummary) where
 
+module Schedule
+  ( closestEvent
+  , eventSummary
+  ) where
+
+import Control.Monad
 import Data.Aeson
 import Data.Aeson.Types
-import Data.Time
-import qualified Data.Text as T
-import Data.Time.LocalTime (TimeZone)
 import qualified Data.Map as M
-import Safe
-import Control.Monad
 import Data.Maybe.Extra
+import qualified Data.Text as T
+import Data.Time
+import Data.Time.LocalTime (TimeZone)
+import Safe
 
 data DayOfWeek
   = Monday
@@ -40,13 +44,14 @@ data Project = Project
   , projectEnds :: Maybe Day
   } deriving (Show)
 
-data Event = Event { eventDate :: Day
-                   , eventTime :: ScheduleDiffTime
-                   , eventTitle :: T.Text
-                   , eventDescription :: T.Text
-                   , eventUrl :: T.Text
-                   , eventChannel :: T.Text
-                   } deriving Show
+data Event = Event
+  { eventDate :: Day
+  , eventTime :: ScheduleDiffTime
+  , eventTitle :: T.Text
+  , eventDescription :: T.Text
+  , eventUrl :: T.Text
+  , eventChannel :: T.Text
+  } deriving (Show)
 
 -- TODO: Schedule.eventSummary is not implemented
 eventSummary :: Event -> T.Text
@@ -61,7 +66,7 @@ data EventPatch = EventPatch
   , eventPatchDescription :: Maybe T.Text
   , eventPatchUrl :: Maybe T.Text
   , eventPatchChannel :: Maybe T.Text
-  } deriving Show
+  } deriving (Show)
 
 data Schedule = Schedule
   { scheduleProject :: [Project]
@@ -69,7 +74,7 @@ data Schedule = Schedule
   , scheduleCancelledEvents :: [EventId]
   , scheduleTimezone :: ScheduleTimeZone
   , schedulePatches :: M.Map EventId EventPatch
-  } deriving Show
+  } deriving (Show)
 
 instance FromJSON Schedule where
   parseJSON (Object v) =
