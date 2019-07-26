@@ -53,7 +53,7 @@ data Event = Event
   , eventChannel :: T.Text
   } deriving (Show)
 
--- TODO: Schedule.eventSummary is not implemented
+-- TODO(#712): Schedule.eventSummary is not implemented
 eventSummary :: Event -> T.Text
 eventSummary _ = "Not implemented yet"
 
