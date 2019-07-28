@@ -12,6 +12,7 @@ module Bot
 import Bot.Alias
 import Bot.BttvFfz
 import Bot.Calc
+import Bot.CopyPasta
 import Bot.CustomCommand
 import Bot.DocLoc
 import Bot.Dubtrack
@@ -57,7 +58,6 @@ import Text.Read
 import Text.Regex.TDFA (defaultCompOpt, defaultExecOpt)
 import Text.Regex.TDFA.String
 import Transport
-import Bot.CopyPasta
 
 type Bot = InEvent -> Effect ()
 

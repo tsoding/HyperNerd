@@ -1,14 +1,15 @@
 {-# LANGUAGE LambdaCase #-}
 {-# LANGUAGE QuasiQuotes #-}
+
 module Bot.CopyPasta where
 
-import Data.Monoid
-import Data.Char
-import Reaction
-import Transport
-import qualified Data.Text as T
-import Text.InterpolatedString.QM
 import Bot.Replies
+import Data.Char
+import Data.Monoid
+import qualified Data.Text as T
+import Reaction
+import Text.InterpolatedString.QM
+import Transport
 
 copyPastaFilter :: Reaction Message T.Text -> Reaction Message T.Text
 copyPastaFilter reaction =
