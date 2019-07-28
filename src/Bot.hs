@@ -57,6 +57,7 @@ import Text.Read
 import Text.Regex.TDFA (defaultCompOpt, defaultExecOpt)
 import Text.Regex.TDFA.String
 import Transport
+import Bot.CopyPasta
 
 type Bot = InEvent -> Effect ()
 
@@ -643,28 +644,8 @@ bot (Joined channel@(DiscordChannel _)) =
 bot (InMsg msg) =
   runReaction
     (dupLiftExtractR internalMessageRoles $
-     longMessageFilter $ linkFilter messageReaction)
+     copyPastaFilter $ linkFilter messageReaction)
     msg
-
-longMessageFilter :: Reaction Message T.Text -> Reaction Message T.Text
-longMessageFilter reaction =
-  Reaction
-    (\case
-       msg@Message { messageContent = message
-                   , messageSender = sender@Sender { senderRoles = []
-                                                   , senderChannel = TwitchChannel _
-                                                   }
-                   }
-         | T.length message > messageLimit -> do
-           timeoutSender (T.length message - messageLimit) sender
-           replyMessage
-             ([qms|Message limit is {messageLimit} characters
-                   for untrusted users, sorry. Subscribe to gain
-                   trust instantly: https://twitch.tv/tsoding/subscribe|] <$
-              msg)
-       msg -> runReaction reaction msg)
-  where
-    messageLimit = 200
 
 messageReaction :: Reaction Message T.Text
 messageReaction =
