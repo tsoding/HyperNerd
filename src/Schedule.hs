@@ -152,8 +152,8 @@ instance FromJSON DayOfWeek where
     maybeFail "Unknown day of week" . toEnumMay . (\x -> x - 1) <=< parseJSON
 
 cancelEvents :: ScheduleTimeZone -> [EventId] -> [Event] -> [Event]
-cancelEvents timeZone cancelledIds events =
-  filter (\e -> not (eventId timeZone e `elem` cancelledIds)) events
+cancelEvents timeZone cancelledIds =
+  filter (\e -> eventId timeZone e `notElem` cancelledIds)
 
 makeEvent :: Day -> Project -> Event
 makeEvent day project =
@@ -171,8 +171,8 @@ between day project =
   getAll $
   fromMaybe (All True) $
   mappend
-    (All . (<= day) <$> (projectStarts project))
-    (All . (day <=) <$> (projectEnds project))
+    (All . (<= day) <$> projectStarts project)
+    (All . (day <=) <$> projectEnds project)
 
 projectsOfDay :: Day -> [Project] -> [Event]
 projectsOfDay day projects =
