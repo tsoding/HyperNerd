@@ -51,7 +51,7 @@ import qualified Network.URI.Encode as URI
 import Reaction
 import Regexp
 import Safe
-import Schedule (closestEvent, eventSummary)
+import Schedule (nextEvent, eventSummary)
 import System.Random
 import Text.InterpolatedString.QM
 import Text.Read
@@ -522,7 +522,7 @@ nextStreamCommand :: Reaction Message a
 nextStreamCommand =
   cmapR (const "https://tsoding.github.io/schedule/schedule.json") $
   jsonHttpRequestReaction $
-  liftR (\schedule -> closestEvent schedule <$> now) $
+  liftR (\schedule -> nextEvent schedule <$> now) $
   replyLeft $ cmapR eventSummary $ Reaction replyMessage
 
 signText :: T.Text -> Either String Int
