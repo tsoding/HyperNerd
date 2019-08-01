@@ -51,7 +51,7 @@ import qualified Network.URI.Encode as URI
 import Reaction
 import Regexp
 import Safe
-import Schedule (nextEvent, eventSummary)
+import Schedule (eventSummary, nextEvent)
 import System.Random
 import Text.InterpolatedString.QM
 import Text.Read

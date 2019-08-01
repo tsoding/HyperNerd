@@ -10,20 +10,20 @@ module Schedule
 import Control.Monad
 import Data.Aeson
 import Data.Aeson.Types
+import Data.Either.Extra
+import Data.Function
+import Data.List
 import qualified Data.Map as M
+import Data.Maybe
 import Data.Maybe.Extra
+import Data.Monoid
 import qualified Data.Text as T
 import Data.Time
+import Data.Time.Calendar.WeekDate
+import Data.Time.Clock.POSIX
 import Data.Time.LocalTime (TimeZone)
 import Safe
-import Data.Maybe
-import Data.Either.Extra
-import Data.List
-import Data.Function
-import Data.Time.Clock.POSIX
-import Data.Time.Calendar.WeekDate
 import Text.InterpolatedString.QM
-import Data.Monoid
 
 data DayOfWeek
   = Monday
@@ -73,7 +73,9 @@ eventId timeZone event =
   EventId $ floor $ utcTimeToPOSIXSeconds $ eventUTCTime timeZone event
 
 eventUTCTime :: ScheduleTimeZone -> Event -> UTCTime
-eventUTCTime (ScheduleTimeZone timeZone) Event {eventDate = day, eventTime = timeOfDay} =
+eventUTCTime (ScheduleTimeZone timeZone) Event { eventDate = day
+                                               , eventTime = timeOfDay
+                                               } =
   localTimeToUTC timeZone localTime
   where
     localTime = LocalTime day timeOfDay
@@ -166,7 +168,7 @@ makeEvent day project =
     , eventChannel = projectChannel project
     }
 
-between ::  Day -> Project -> Bool
+between :: Day -> Project -> Bool
 between day project =
   getAll $
   fromMaybe (All True) $
