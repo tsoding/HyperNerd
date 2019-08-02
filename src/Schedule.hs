@@ -1,19 +1,29 @@
 {-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE QuasiQuotes #-}
 
 module Schedule
-  ( closestEvent
+  ( nextEvent
   , eventSummary
+  , dayOfWeek
   ) where
 
 import Control.Monad
 import Data.Aeson
 import Data.Aeson.Types
+import Data.Either.Extra
+import Data.Function
+import Data.List
 import qualified Data.Map as M
+import Data.Maybe
 import Data.Maybe.Extra
+import Data.Monoid
 import qualified Data.Text as T
 import Data.Time
+import Data.Time.Calendar.WeekDate
+import Data.Time.Clock.POSIX
 import Data.Time.LocalTime (TimeZone)
 import Safe
+import Text.InterpolatedString.QM
 
 data DayOfWeek
   = Monday
@@ -23,14 +33,19 @@ data DayOfWeek
   | Friday
   | Saturday
   | Sunday
-  deriving (Enum, Show, Bounded)
+  deriving (Eq, Ord, Enum, Show, Bounded)
+
+dayOfWeek :: Day -> DayOfWeek
+dayOfWeek day =
+  toEnumNote
+    [qms|{s} is not a correct week number according to
+         ISO 8601 Week Date format.|]
+    (s - 1)
+  where
+    (_, _, s) = toWeekDate day
 
 newtype ScheduleTimeZone =
   ScheduleTimeZone TimeZone
-  deriving (Show)
-
-newtype ScheduleDiffTime =
-  ScheduleDiffTime DiffTime
   deriving (Show)
 
 data Project = Project
@@ -38,7 +53,7 @@ data Project = Project
   , projectDescription :: T.Text
   , projectUrl :: T.Text
   , projectDays :: [DayOfWeek]
-  , projectTime :: ScheduleDiffTime
+  , projectTime :: TimeOfDay
   , projectChannel :: T.Text
   , projectStarts :: Maybe Day
   , projectEnds :: Maybe Day
@@ -46,16 +61,28 @@ data Project = Project
 
 data Event = Event
   { eventDate :: Day
-  , eventTime :: ScheduleDiffTime
+  , eventTime :: TimeOfDay
   , eventTitle :: T.Text
   , eventDescription :: T.Text
   , eventUrl :: T.Text
   , eventChannel :: T.Text
   } deriving (Show)
 
+eventId :: ScheduleTimeZone -> Event -> EventId
+eventId timeZone event =
+  EventId $ floor $ utcTimeToPOSIXSeconds $ eventUTCTime timeZone event
+
+eventUTCTime :: ScheduleTimeZone -> Event -> UTCTime
+eventUTCTime (ScheduleTimeZone timeZone) Event { eventDate = day
+                                               , eventTime = timeOfDay
+                                               } =
+  localTimeToUTC timeZone localTime
+  where
+    localTime = LocalTime day timeOfDay
+
 -- TODO(#712): Schedule.eventSummary is not implemented
 eventSummary :: Event -> T.Text
-eventSummary _ = "Not implemented yet"
+eventSummary = eventTitle
 
 newtype EventId =
   EventId Int
@@ -126,14 +153,56 @@ instance FromJSON DayOfWeek where
   parseJSON =
     maybeFail "Unknown day of week" . toEnumMay . (\x -> x - 1) <=< parseJSON
 
-parseDiffTime :: T.Text -> Parser DiffTime
-parseDiffTime s =
-  utctDayTime <$> parseTimeM True defaultTimeLocale "%H:%M" (T.unpack s)
+cancelEvents :: ScheduleTimeZone -> [EventId] -> [Event] -> [Event]
+cancelEvents timeZone cancelledIds =
+  filter (\e -> eventId timeZone e `notElem` cancelledIds)
 
-instance FromJSON ScheduleDiffTime where
-  parseJSON (String s) = ScheduleDiffTime <$> parseDiffTime s
-  parseJSON invalid = typeMismatch "ScheduleDiffTime" invalid
+makeEvent :: Day -> Project -> Event
+makeEvent day project =
+  Event
+    { eventDate = day
+    , eventTime = projectTime project
+    , eventTitle = projectName project
+    , eventDescription = projectDescription project
+    , eventUrl = projectUrl project
+    , eventChannel = projectChannel project
+    }
 
--- TODO(#713): Schedule.closestEvent
-closestEvent :: Schedule -> UTCTime -> Either String Event
-closestEvent _ _ = Left "Not implemented yet"
+between :: Day -> Project -> Bool
+between day project =
+  getAll $
+  fromMaybe (All True) $
+  mappend
+    (All . (<= day) <$> projectStarts project)
+    (All . (day <=) <$> projectEnds project)
+
+projectsOfDay :: Day -> [Project] -> [Event]
+projectsOfDay day projects =
+  map (makeEvent day) $
+  filter (\p -> weekDay `elem` projectDays p && between day p) projects
+  where
+    weekDay = dayOfWeek day
+
+recurringEventsFrom :: Day -> [Project] -> [Event]
+recurringEventsFrom day projects =
+  projectsOfDay day projects ++ recurringEventsFrom (succ day) projects
+
+eventsFrom :: Day -> Schedule -> [Event]
+eventsFrom day schedule =
+  sortBy (compare `on` eventDate) (extraEvents <> recurringEvents)
+  where
+    cancelledIds = scheduleCancelledEvents schedule
+    recurringEvents =
+      take 100 $
+      cancelEvents (scheduleTimezone schedule) cancelledIds $
+      recurringEventsFrom day $ scheduleProject schedule
+    extraEvents =
+      cancelEvents (scheduleTimezone schedule) cancelledIds $
+      filter ((>= day) . eventDate) $ scheduleExtraEvents schedule
+
+nextEvent :: Schedule -> UTCTime -> Either String Event
+nextEvent schedule timePoint =
+  maybeToEither "No events found" $
+  listToMaybe $
+  filter ((> timePoint) . eventUTCTime (scheduleTimezone schedule)) $
+  eventsFrom (utctDay timePoint) schedule
