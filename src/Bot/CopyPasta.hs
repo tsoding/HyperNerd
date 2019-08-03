@@ -15,8 +15,7 @@ countForbidden :: T.Text -> Int
 countForbidden = T.length . T.filter (not . isAllowed)
 
 isAllowed :: Char -> Bool
-isAllowed =
-  getAny . foldMap (Any .) [isAlpha, isNumber, isSpace, isPunctuation]
+isAllowed = getAny . foldMap (Any .) [isAlpha, isNumber, isSpace, isPunctuation]
 
 copyPastaFilter :: Reaction Message T.Text -> Reaction Message T.Text
 copyPastaFilter reaction =
