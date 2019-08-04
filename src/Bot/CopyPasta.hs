@@ -1,7 +1,10 @@
 {-# LANGUAGE LambdaCase #-}
 {-# LANGUAGE QuasiQuotes #-}
 
-module Bot.CopyPasta where
+module Bot.CopyPasta
+  ( copyPastaFilter
+  , countForbiddenCommand
+  ) where
 
 import Bot.Replies
 import Data.Char
@@ -36,3 +39,6 @@ copyPastaFilter reaction =
   where
     limit = 100
     penalty = 300
+
+countForbiddenCommand :: Reaction Message T.Text
+countForbiddenCommand = cmapR (T.pack . show . countForbidden) sayMessage

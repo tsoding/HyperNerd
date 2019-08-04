@@ -516,6 +516,11 @@ builtinCommands =
     , ( "nextstream"
       , mkBuiltinCommand
           ("What's the next stream", $githubLinkLocationStr, nextStreamCommand))
+    , ( "countforbidden"
+      , mkBuiltinCommand
+          ( "Count amount of forbidden characters in the message"
+          , $githubLinkLocationStr
+          , countForbiddenCommand))
     ]
 
 nextStreamCommand :: Reaction Message a
