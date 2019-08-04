@@ -11,6 +11,12 @@ import Reaction
 import Text.InterpolatedString.QM
 import Transport
 
+countForbidden :: T.Text -> Int
+countForbidden = T.length . T.filter (not . isAllowed)
+
+isAllowed :: Char -> Bool
+isAllowed = getAny . foldMap (Any .) [isAlpha, isNumber, isSpace, isPunctuation]
+
 copyPastaFilter :: Reaction Message T.Text -> Reaction Message T.Text
 copyPastaFilter reaction =
   Reaction $ \case
@@ -19,7 +25,7 @@ copyPastaFilter reaction =
                                             , senderChannel = TwitchChannel _
                                             }
             }
-      | T.length (T.filter (not . isAllowed) content) > limit -> do
+      | countForbidden content > limit -> do
         timeoutSender penalty sender
         replyToSender
           sender
@@ -30,5 +36,3 @@ copyPastaFilter reaction =
   where
     limit = 100
     penalty = 300
-    isAllowed =
-      getAny . foldMap (Any .) [isAlphaNum, isMark, isSpace, isPunctuation]
