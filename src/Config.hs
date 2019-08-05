@@ -9,6 +9,7 @@ module Config
   , configFromFile
   ) where
 
+import Control.Applicative
 import Control.Monad
 import Data.Either.Extra
 import qualified Data.HashMap.Strict as HM
@@ -17,7 +18,6 @@ import qualified Data.Text as T
 import Discord
 import Safe
 import Text.InterpolatedString.QM
-import Control.Applicative
 
 data Config = Config
   { configTwitch :: Maybe TwitchConfig
