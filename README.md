@@ -49,7 +49,7 @@ owner = <your-name>
 [discord]
 authToken = <auth-token>
 guild = <guild-id>
-channel = <channel-id>
+channels = [<channel-id-1>, <channel-id-2>, ... ]
 
 [github]
 apiKey = <oauth-token>
@@ -67,11 +67,12 @@ apiKey = <oauth-token>
 
 #### Discord Config Section
 
-| name        | description                                                                                                               |
-|-------------|---------------------------------------------------------------------------------------------------------------------------|
-| `authToken` | Authentication Token for the bot: https://github.com/reactiflux/discord-irc/wiki/Creating-a-discord-bot-&-getting-a-token |
-| `guild`     | The id of the guild the bot listens to                                                                                    |
-| `channel`   | The id of the channel the bot listens to                                                                                  |
+| name        | description                                                                                                                                             |
+|-------------|---------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `authToken` | Authentication Token for the bot: https://github.com/reactiflux/discord-irc/wiki/Creating-a-discord-bot-&-getting-a-token                               |
+| `guild`     | The id of the guild the bot listens to                                                                                                                  |
+| `channels`  | The list of ids of channels the bot listens to (the list is parsed as a [Haskell list][haskell-lists-tuples]: `[<channel-id-1>, <channel-id-2>, ... ]`) |
+
 
 #### GitHub Config Section
 
@@ -166,5 +167,6 @@ You can support my work via
 
 [tsoder]: http://github.com/tsoding/tsoder
 [tsoding]: https://www.twitch.tv/tsoding
+[haskell-lists-tuples]: https://en.wikibooks.org/wiki/Haskell/Lists_and_tuples
 
 <!-- TODO(#427): Markov training is not automated -->

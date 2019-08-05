@@ -9,6 +9,7 @@ module Config
   , configFromFile
   ) where
 
+import Control.Applicative
 import Control.Monad
 import Data.Either.Extra
 import qualified Data.HashMap.Strict as HM
@@ -58,8 +59,8 @@ discordConfigFromHm ini =
   DiscordConfig <$> hmLookupValue "authToken" ini <*>
   fmap
     (map Snowflake)
-    ((maybeToEither "channel is not a number" . readMay . T.unpack) =<<
-     hmLookupValue "channel" ini) <*>
+    ((maybeToEither "`channels` is not a list of numbers" . readMay . T.unpack) =<<
+     (hmLookupValue "channel" ini <|> hmLookupValue "channels" ini)) <*>
   fmap
     Snowflake
     ((maybeToEither "Guild ID is not a number" . readMay . T.unpack) =<<
