@@ -23,11 +23,13 @@ data Op
   | Multiply
   | Division
   | Exp
+  | ParensOpen
   deriving (Eq, Show, Enum, Bounded)
 
 data Token
   = NumberToken Double
   | OpToken Op
+  | ParensClose
   deriving (Eq, Show)
 
 opName :: Op -> T.Text
@@ -36,6 +38,7 @@ opName Minus = "-"
 opName Multiply = "*"
 opName Division = "/"
 opName Exp = "^"
+opName ParensOpen = "("
 
 supportedOps :: [T.Text]
 supportedOps = map opName [minBound :: Op .. maxBound]
@@ -54,11 +57,11 @@ tokenize (T.uncons -> Just ('%', _)) = Left "Mod operation is disable for now."
 tokenize (T.uncons -> Just ('^', xs)) = (OpToken Exp :) <$> tokenize xs
 tokenize (T.uncons -> Just ('.', _)) =
   Left "https://github.com/tsoding/HyperNerd/issues/574"
--- TODO(#571): Parenthesis are not supported by !calc
+tokenize (T.uncons -> Just ('(', xs)) = (OpToken ParensOpen :) <$> tokenize xs
+tokenize (T.uncons -> Just (')', xs)) = (ParensClose :) <$> tokenize xs
 -- TODO(#573): !calc does not support negative numbers
 -- TODO(#567): !calc Int overflow is not reported as an error
 tokenize xs@(T.uncons -> Just (x, _))
-  | x `elem` ['(', ')'] = Left "https://github.com/tsoding/HyperNerd/issues/571"
   | isDigit x = do
     token <-
       NumberToken <$>
@@ -78,6 +81,12 @@ precedence Minus = 0
 precedence Multiply = 1
 precedence Division = 1
 precedence Exp = 2
+precedence ParensOpen = 0
+
+opPrecedes :: Op -> Op -> Bool
+opPrecedes ParensOpen _ = False
+opPrecedes _ ParensOpen = False
+opPrecedes a b = precedence a <= precedence b
 
 infixToRpn :: [Op] -> [Token] -> Either String [Token]
 infixToRpn opStack (NumberToken x:restTokens) =
@@ -88,8 +97,15 @@ infixToRpn opStack@(op0:_) (OpToken op1:rest)
   | otherwise =
     (map OpToken outputOps ++) <$> infixToRpn (op1 : restOpStack) rest
   where
-    (outputOps, restOpStack) =
-      span (\opx -> precedence opx >= precedence op1) opStack
+    (outputOps, restOpStack) = span (opPrecedes op1) opStack
+infixToRpn opStack (ParensClose:restTokens) =
+  case headMay restOps of
+    Just ParensOpen ->
+      (map OpToken outputOps ++) <$> infixToRpn (tailSafe restOps) restTokens
+    Just _ -> Left "Unexpected token while looking for '('"
+    Nothing -> Left "You forgot this '('"
+  where
+    (outputOps, restOps) = span (/= ParensOpen) opStack
 infixToRpn opStack [] = return $ map OpToken opStack
 
 type RpnState = [Double]
@@ -100,8 +116,10 @@ interpretOp Minus a b = return (a - b)
 interpretOp Multiply a b = return (a * b)
 interpretOp Division a b = return (a / b)
 interpretOp Exp a b = return (a ** b)
+interpretOp ParensOpen _ _ = Left "Error 😡"
 
 interpretToken :: RpnState -> Token -> Either String RpnState
+interpretToken _ (OpToken ParensOpen) = Left "You forgot this ')'"
 interpretToken s (NumberToken x) = return (x : s)
 interpretToken (x1:x2:xs) (OpToken op) = (: xs) <$> interpretOp op x2 x1
 interpretToken _ _ = Left "Error 😡"
