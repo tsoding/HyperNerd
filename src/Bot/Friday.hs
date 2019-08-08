@@ -1,12 +1,12 @@
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE QuasiQuotes #-}
 {-# LANGUAGE LambdaCase #-}
+{-# LANGUAGE TupleSections #-}
 
 module Bot.Friday
   ( fridayCommand
   , nextVideoCommand
   , videoCommand
-  , setVideoDateCommand
   , videoCountCommand
   , containsYtLink
   , videoQueueCommand
@@ -33,34 +33,41 @@ import Reaction
 import Regexp
 import Text.InterpolatedString.QM
 import Transport (Message(..), Sender(..), authorityRoles)
+import Data.List
+import Data.Function
 
 data FridayVideo = FridayVideo
   { fridayVideoName :: T.Text
   , fridayVideoAuthor :: T.Text
+  , fridayVideoWatchedAt :: Maybe UTCTime
   , fridayVideoDate :: UTCTime
   } deriving (Show, Eq)
+
+updateFridayVideoWatchedAt :: Maybe UTCTime -> FridayVideo -> FridayVideo
+updateFridayVideoWatchedAt watchedAt video =
+  video {fridayVideoWatchedAt = watchedAt}
 
 instance IsEntity FridayVideo where
   nameOfEntity _ = "FridayVideo"
   toProperties fridayVideo =
-    M.fromList
-      [ ("name", PropertyText $ fridayVideoName fridayVideo)
-      , ("author", PropertyText $ fridayVideoAuthor fridayVideo)
-      , ("date", PropertyUTCTime $ fridayVideoDate fridayVideo)
+    M.fromList $
+    catMaybes
+      [ return ("name", PropertyText $ fridayVideoName fridayVideo)
+      , return ("author", PropertyText $ fridayVideoAuthor fridayVideo)
+      , return ("date", PropertyUTCTime $ fridayVideoDate fridayVideo)
+      , ("watchedAt", ) . PropertyUTCTime <$> fridayVideoWatchedAt fridayVideo
       ]
   fromProperties properties =
     FridayVideo <$> extractProperty "name" properties <*>
     extractProperty "author" properties <*>
+    pure (extractProperty "watchedAt" properties) <*>
     extractProperty "date" properties
 
 data FridayState = FridayState
-  { fridayStateTime :: UTCTime
-  , fridayStateGistId :: Maybe GistId
+  { fridayStateGistId :: Maybe GistId
   , fridayStateGistFresh :: Bool
+  , fridayStateCurrentUser :: Int
   }
-
-updateFridayStateTime :: UTCTime -> FridayState -> FridayState
-updateFridayStateTime time state = state {fridayStateTime = time}
 
 updateFridayStateGist :: GistId -> FridayState -> FridayState
 updateFridayStateGist gist state = state {fridayStateGistId = Just gist}
@@ -72,14 +79,11 @@ instance IsEntity FridayState where
   nameOfEntity _ = "LastVideoTime"
   toProperties state =
     M.fromList
-      ([ ("time", PropertyUTCTime $ fridayStateTime state)
-       , ("gistFresh", PropertyInt $ boolAsInt $ fridayStateGistFresh state)
-       ] ++
+      ([("gistFresh", PropertyInt $ boolAsInt $ fridayStateGistFresh state)] ++
        maybeToList
          ((,) "gistId" . PropertyText . gistIdAsText <$> fridayStateGistId state))
   fromProperties properties =
-    FridayState <$> extractProperty "time" properties <*>
-    return (GistId <$> extractProperty "gistId" properties) <*>
+    FridayState <$> return (GistId <$> extractProperty "gistId" properties) <*>
     return (intAsBool $ fromMaybe 0 $ extractProperty "gistFresh" properties)
 
 containsYtLink :: T.Text -> Bool
@@ -105,29 +109,48 @@ fridayCommand =
        state <- currentFridayState
        void $ updateEntityById $ updateFridayStateGistFresh False <$> state
        createEntity Proxy .
-         FridayVideo (messageContent msg) (senderName $ messageSender msg) =<<
+         FridayVideo
+           (messageContent msg)
+           (senderName $ messageSender msg)
+           Nothing =<<
          now) $
   cmapR (const "Added to the suggestions") $ Reaction replyMessage
 
-videoQueue :: Effect [Entity FridayVideo]
-videoQueue = do
-  vt <- fridayStateTime . entityPayload <$> currentFridayState
+sortVideos :: [Entity FridayVideo] -> [Entity FridayVideo]
+sortVideos videos =
+  concat $
+  transpose $ groupBy (byAuthor (==)) $ sortBy (byAuthor compare) videos
+  where
+    byAuthor = (`on` (fridayVideoAuthor . entityPayload))
+
+currentVideo :: [Entity FridayVideo] -> Maybe (Entity FridayVideo)
+currentVideo = listToMaybe . sortVideos
+
+unwatchedVideos :: Effect [Entity FridayVideo]
+unwatchedVideos = do
   selectEntities Proxy $
-    SortBy "date" Asc $ Filter (PropertyGreater "date" $ PropertyUTCTime vt) All
+    SortBy "date" Asc $ Filter (PropertyMissing "watchedAt") All
+
+watchVideo :: Entity FridayVideo -> Effect ()
+watchVideo v = do
+  vt <- currentFridayState
+  void $ updateEntityById (updateFridayStateGistFresh False <$> vt)
+  watchedAt <- now
+  void $ updateEntityById $ updateFridayVideoWatchedAt (return watchedAt) <$> v
 
 nextVideoCommand :: Reaction Message ()
 nextVideoCommand = advanceVideoQueue <> videoCommand
   where
     advanceVideoQueue =
-      liftR (const videoQueue) $
-      cmapR listToMaybe $
+      liftR (const unwatchedVideos) $
+      cmapR currentVideo $
       ignoreNothing $
-      cmapR (fridayVideoDate . entityPayload) setVideoDateCommand
+      liftR watchVideo ignore
 
 videoCommand :: Reaction Message ()
 videoCommand =
-  liftR (const videoQueue) $
-  cmapR listToMaybe $
+  liftR (const unwatchedVideos) $
+  cmapR currentVideo $
   replyOnNothing "No videos in the queue" $
   cmapR entityPayload $
   cmapR
@@ -142,27 +165,17 @@ currentFridayState = do
   vt <- listToMaybe <$> selectEntities Proxy All
   case vt of
     Just vt' -> return vt'
-    Nothing -> createEntity Proxy $ FridayState begginingOfTime Nothing False
-      where begginingOfTime = UTCTime (fromGregorian 1970 1 1) 0
+    Nothing -> createEntity Proxy $ FridayState Nothing False
 
 gistUrl :: GistId -> T.Text
 gistUrl (GistId gistId) =
   [qms|https://gist.github.com/{gistId}#file-{gistFileAnchor fridayGistFileName}|]
 
-setVideoDateCommand :: Reaction Message UTCTime
-setVideoDateCommand =
-  liftR
-    (\newDate -> do
-       vt <- currentFridayState
-       updateEntityById
-         (updateFridayStateGistFresh False . updateFridayStateTime newDate <$>
-          vt)) $
-  cmapR (const "Updated last video time") $ Reaction replyMessage
-
 videoCountCommand :: Reaction Message ()
 videoCountCommand =
-  liftR (const videoQueue) $
-  cmapR (T.pack . show . length) $ Reaction replyMessage
+  liftR (const unwatchedVideos) $
+  cmapR (T.pack . show . length) $
+  Reaction replyMessage
 
 renderQueue :: [FridayVideo] -> T.Text
 renderQueue queue =
@@ -180,7 +193,7 @@ fridayGistFileName = FileName "Queue.org"
 
 refreshGist :: GistId -> Effect ()
 refreshGist gistId = do
-  gistText <- renderQueue . map entityPayload <$> videoQueue
+  gistText <- renderQueue . map entityPayload . sortVideos <$> unwatchedVideos
   updateGistFile fridayGistFileName (FileContent gistText) gistId
 
 startRefreshFridayGistTimer :: Effect ()

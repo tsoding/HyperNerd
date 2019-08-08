@@ -451,13 +451,6 @@ builtinCommands =
           ( "Print amount of videos in the queue"
           , $githubLinkLocationStr
           , transR void videoCountCommand))
-    , ( "setvideotime"
-      , mkBuiltinCommand
-          ( "Set the time cursor for the video queue"
-          , $githubLinkLocationStr
-          , onlyForRoles "Only for mods" authorityRoles $
-            cmapR (readMay . T.unpack) $
-            replyOnNothing "Cannot parse this as UTCTime" setVideoDateCommand))
     , ( "calc"
       , mkBuiltinCommand
           ( [qms|Calculator. Supported operation:

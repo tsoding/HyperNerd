@@ -48,6 +48,7 @@ data Condition
                    Property
   | PropertyGreater T.Text
                     Property
+  | PropertyMissing T.Text
   | ConditionAnd [Condition]
   deriving (Show)
 
