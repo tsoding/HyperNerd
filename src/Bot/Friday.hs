@@ -66,7 +66,6 @@ instance IsEntity FridayVideo where
 data FridayState = FridayState
   { fridayStateGistId :: Maybe GistId
   , fridayStateGistFresh :: Bool
-  , fridayStateCurrentUser :: Int
   }
 
 updateFridayStateGist :: GistId -> FridayState -> FridayState
