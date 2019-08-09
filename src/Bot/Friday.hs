@@ -16,10 +16,13 @@ module Bot.Friday
 
 import Bot.GitHub
 import Bot.Replies
+import Control.Applicative
 import Control.Comonad
 import Control.Monad
 import Data.Bool.Extra
 import Data.Either.Extra
+import Data.Function
+import Data.List
 import qualified Data.Map as M
 import Data.Maybe
 import Data.Maybe.Extra
@@ -31,12 +34,9 @@ import Entity
 import Property
 import Reaction
 import Regexp
+import Safe
 import Text.InterpolatedString.QM
 import Transport (Message(..), Sender(..), authorityRoles)
-import Data.List
-import Data.Function
-import Control.Applicative
-import Safe
 
 data FridayVideo = FridayVideo
   { fridayVideoName :: T.Text
@@ -218,8 +218,7 @@ gistUrl (GistId gistId) =
 videoCountCommand :: Reaction Message ()
 videoCountCommand =
   liftR (const unwatchedVideos) $
-  cmapR (T.pack . show . length) $
-  Reaction replyMessage
+  cmapR (T.pack . show . length) $ Reaction replyMessage
 
 renderQueue :: [FridayVideo] -> T.Text
 renderQueue queue@(FridayVideo {fridayVideoAuthor = user}:_) =
