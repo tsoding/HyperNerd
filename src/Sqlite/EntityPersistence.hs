@@ -179,6 +179,27 @@ entityMigrations =
        FROM EntityProperty
        WHERE entityName = 'PeriodicTimer'
        GROUP BY entityId;|]
+  , [r|insert into EntityProperty(
+          entityName,
+          entityId,
+          propertyName,
+          propertyType,
+          propertyUTCTime
+       )
+       select entityName,
+              entityId,
+              'watchedAt' AS propertyName,
+              'PropertyUTCTime',
+              current_timestamp
+       from EntityProperty
+       where entityName = 'FridayVideo'
+         and propertyName = 'date'
+         and propertyUTCTime <= (select propertyUTCTime
+                                 from EntityProperty
+                                 where entityName = 'LastVideoTime'
+                                 and propertyName = 'time'
+                                 limit 1);
+       |]
   ]
 
 prepareSchema :: Connection -> IO ()
@@ -358,6 +379,26 @@ selectEntityIds conn name (Take n (SortBy propertyName Desc All)) =
                               ORDER BY propertyUTCTime DESC
                               LIMIT :n |]
     [":entityName" := name, ":propertyName" := propertyName, ":n" := n]
+selectEntityIds conn name (SortBy sortPropertyName Asc (Filter (PropertyMissing missingPropertyName) All)) =
+  map fromOnly <$>
+  queryNamed
+    conn
+    [r|select ep1.entityId
+       from EntityProperty ep1
+       where ep1.entityName = :entityName
+         and ep1.propertyName = :sortPropertyName
+         and (select count(*)
+              from EntityProperty ep2
+              where ep2.entityName = :entityName
+                and ep2.entityId = ep1.entityId
+                and ep2.propertyName = :missingPropertyName
+              limit 1) = 0
+       order by ep1.propertyUTCTime;
+      |]
+    [ ":entityName" := name
+    , ":sortPropertyName" := sortPropertyName
+    , ":missingPropertyName" := missingPropertyName
+    ]
 selectEntityIds conn name (SortBy propertyName1 Asc (Filter (PropertyGreater propertyName2 (PropertyUTCTime propertyUTCTime)) All))
   | propertyName1 == propertyName2 =
     map fromOnly <$>
