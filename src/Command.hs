@@ -34,7 +34,7 @@ renameCommand :: Command a -> T.Text -> Command a
 renameCommand command name = command {commandName = name}
 
 textAsCommand :: T.Text -> Maybe (Command T.Text)
-textAsCommand (T.uncons -> Just ('$', restText)) =
+textAsCommand (T.uncons -> Just ('!', restText)) =
   Just
     Command
       { commandName = T.takeWhile isAlphaNum restText
