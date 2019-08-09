@@ -36,6 +36,7 @@ import Transport (Message(..), Sender(..), authorityRoles)
 import Data.List
 import Data.Function
 import Control.Applicative
+import Safe
 
 data FridayVideo = FridayVideo
   { fridayVideoName :: T.Text
@@ -124,16 +125,16 @@ fridayCommand =
   cmapR (const "Added to the suggestions") $ Reaction replyMessage
 
 unwatchedVideos :: Effect [Entity FridayVideo]
-unwatchedVideos = do
+unwatchedVideos =
   selectEntities Proxy $
-    SortBy "date" Asc $ Filter (PropertyMissing "watchedAt") All
+  SortBy "date" Asc $ Filter (PropertyMissing "watchedAt") All
 
 type VideoQueues = M.Map T.Text [Entity FridayVideo]
 
 queueOfVideos :: [Entity FridayVideo] -> VideoQueues
 queueOfVideos =
   M.fromList .
-  map (\q -> (fridayVideoAuthor $ entityPayload $ head q, q)) .
+  mapMaybe (\q -> (, q) . fridayVideoAuthor . entityPayload <$> headMay q) .
   groupBy (byAuthor (==)) . sortBy (byAuthor compare)
   where
     byAuthor = (`on` (fridayVideoAuthor . entityPayload))
@@ -144,15 +145,15 @@ nextUser queues user
   | otherwise = do
     let n = M.size queues
     let indexOfUser = (`mod` n) . (+ 1) <$> ((`M.lookupIndex` queues) =<< user)
-    index <- indexOfUser <|> return 0
-    return $ fst $ M.elemAt index queues
+    idx <- indexOfUser <|> return 0
+    return $ fst $ M.elemAt idx queues
 
 currentVideoByUser :: VideoQueues -> Maybe T.Text -> Maybe (Entity FridayVideo)
 currentVideoByUser queues user
   | M.null queues = Nothing
   | otherwise = do
     user' <- user <|> return (fst $ M.elemAt 0 queues)
-    head <$> M.lookup user' queues
+    headMay =<< M.lookup user' queues
 
 currentVideo :: Effect (Maybe (Entity FridayVideo))
 currentVideo = do
@@ -185,7 +186,7 @@ switchToNextUser = do
 nextVideoCommand :: Reaction Message ()
 nextVideoCommand =
   watchCurrentVideo <> Reaction (const markGistUnfresh) <>
-  (Reaction (const switchToNextUser)) <>
+  Reaction (const switchToNextUser) <>
   videoCommand
   where
     watchCurrentVideo =
@@ -221,23 +222,20 @@ videoCountCommand =
   Reaction replyMessage
 
 renderQueue :: [FridayVideo] -> T.Text
-renderQueue queue
-  | null queue = ""
-  | otherwise =
-    T.unlines $
-    ([qmb|** {user}
+renderQueue queue@(FridayVideo {fridayVideoAuthor = user}:_) =
+  T.unlines $
+  ([qmb|** {user}
 
-          Video Count {length queue}
+        Video Count {length queue}
 
-          |] :) $
-    map
-      (\video ->
-         [qms||{fridayVideoDate video}
-             |{fridayVideoAuthor video}
-             |{fridayVideoName video}||])
-      queue
-  where
-    user = fridayVideoAuthor $ head $ queue
+        |] :) $
+  map
+    (\video ->
+       [qms||{fridayVideoDate video}
+            |{fridayVideoAuthor video}
+            |{fridayVideoName video}||])
+    queue
+renderQueue [] = ""
 
 renderQueues :: Maybe T.Text -> VideoQueues -> T.Text
 renderQueues currentUser queues =
