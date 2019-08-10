@@ -164,33 +164,32 @@ currentVideo = do
 videoQueues :: Effect (M.Map T.Text [Entity FridayVideo])
 videoQueues = queueOfVideos <$> unwatchedVideos
 
-watchVideo :: Entity FridayVideo -> Effect ()
-watchVideo v = do
-  watchedAt <- now
-  void $ updateEntityById $ updateFridayVideoWatchedAt (return watchedAt) <$> v
-
 markGistUnfresh :: Effect ()
 markGistUnfresh = do
   vt <- currentFridayState
   void $ updateEntityById (updateFridayStateGistFresh False <$> vt)
 
-switchToNextUser :: Effect ()
-switchToNextUser = do
-  state <- currentFridayState
-  let user = fridayStateCurrentUser $ entityPayload state
-  queues <- videoQueues
-  void $
-    updateEntityById
-      (updateFridayStateCurrentUser (nextUser queues user) <$> state)
-
 nextVideoCommand :: Reaction Message ()
-nextVideoCommand =
-  watchCurrentVideo <> Reaction (const markGistUnfresh) <>
-  Reaction (const switchToNextUser) <>
-  videoCommand
+nextVideoCommand = Reaction (const advanceQueue) <> videoCommand
   where
-    watchCurrentVideo =
-      liftR (const currentVideo) $ ignoreNothing $ liftR watchVideo ignore
+    advanceQueue :: Effect ()
+    advanceQueue = do
+      state <- currentFridayState
+      queues <- queueOfVideos <$> unwatchedVideos
+      let user = fridayStateCurrentUser $ entityPayload state
+      maybe
+        (return ())
+        (\video -> do
+           watchedAt <- now
+           void $
+             updateEntityById $
+             updateFridayVideoWatchedAt (return watchedAt) <$> video
+           void $
+             updateEntityById $
+             updateFridayStateGistFresh False .
+             updateFridayStateCurrentUser (nextUser queues user) <$>
+             state) $
+        currentVideoByUser queues user
 
 videoCommand :: Reaction Message ()
 videoCommand =
