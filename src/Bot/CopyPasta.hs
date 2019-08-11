@@ -24,21 +24,17 @@ copyPastaFilter :: Reaction Message T.Text -> Reaction Message T.Text
 copyPastaFilter reaction =
   Reaction $ \case
     Message { messageContent = content
-            , messageSender = sender@Sender { senderRoles = []
+            , messageSender = sender@Sender { senderRoles = roles
                                             , senderChannel = TwitchChannel _
                                             }
             }
-      | countForbidden content > limit -> do
+      | all (`notElem` authorityRoles) roles && countForbidden content > limit -> do
         timeoutSender penalty sender
-        replyToSender
-          sender
-          [qms|Spam is allowed only to trusted users.
-               Subscribe to gain trust instantly:
-               https://www.twitch.tv/products/tsoding|]
+        replyToSender sender [qms|No ascii spamii|]
     msg -> runReaction reaction msg
   where
     limit = 100
-    penalty = 300
+    penalty = 30
 
 countForbiddenCommand :: Reaction Message T.Text
 countForbiddenCommand = cmapR (T.pack . show . countForbidden) sayMessage
