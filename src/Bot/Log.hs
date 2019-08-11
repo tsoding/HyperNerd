@@ -102,16 +102,11 @@ randomLogRecord =
   cmapR listToMaybe $
   ignoreNothing $ cmapR (lrMsg . entityPayload) $ Reaction replyMessage
 
-randomLogRecordCommand :: Reaction Message T.Text
+randomLogRecordCommand :: Reaction Message a
 randomLogRecordCommand =
-  cmapR (T.toLower . T.strip) $
-  dupCmapR extractUser $
+  dupCmapR (senderName . messageSender) $
   dupLiftR (selectEntities Proxy . randomUserQuoteSelector) $
   cmapR listToMaybe $ ignoreNothing $ cmapR (lrAsMsg . entityPayload) sayMessage
   where
-    extractUser :: Message T.Text -> T.Text
-    extractUser msg
-      | T.null $ messageContent msg = senderName $ messageSender msg
-      | otherwise = messageContent msg
     lrAsMsg :: LogRecord -> T.Text
     lrAsMsg lr = [qms|<{lrUser lr}> {lrMsg lr}|]
