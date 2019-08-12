@@ -30,8 +30,10 @@ copyPastaFilter reaction =
             }
       | all (`notElem` permittedRoles) roles && countForbidden content > limit -> do
         timeoutSender penalty sender
-        replyToSender sender [qms|ASCII spam is only for subs:
-                                  https://twitch.tv/tsoding/subscribe|]
+        replyToSender
+          sender
+          [qms|ASCII spam is only for subs:
+               https://twitch.tv/tsoding/subscribe|]
     msg -> runReaction reaction msg
   where
     limit = 100
