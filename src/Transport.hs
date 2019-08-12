@@ -64,6 +64,9 @@ authorityRoles :: [Role]
 authorityRoles =
   [TwitchMod, TwitchBroadcaster, TwitchBotOwner, DiscordGuildOwner]
 
+paidRoles :: [Role]
+paidRoles = [tsodingTwitchedDiscordRole, TwitchSub]
+
 senderAuthority :: Sender -> Bool
 senderAuthority sender = any (`elem` senderRoles sender) authorityRoles
 

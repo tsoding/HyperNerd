@@ -28,13 +28,15 @@ copyPastaFilter reaction =
                                             , senderChannel = TwitchChannel _
                                             }
             }
-      | all (`notElem` authorityRoles) roles && countForbidden content > limit -> do
+      | all (`notElem` permittedRoles) roles && countForbidden content > limit -> do
         timeoutSender penalty sender
-        replyToSender sender [qms|No ascii spamii|]
+        replyToSender sender [qms|ASCII spam is only for subs:
+                                  https://twitch.tv/tsoding/subscribe|]
     msg -> runReaction reaction msg
   where
     limit = 100
-    penalty = 30
+    penalty = 300
+    permittedRoles = authorityRoles ++ paidRoles
 
 countForbiddenCommand :: Reaction Message T.Text
 countForbiddenCommand = cmapR (T.pack . show . countForbidden) sayMessage
