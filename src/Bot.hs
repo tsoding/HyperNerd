@@ -81,8 +81,7 @@ builtinCommands =
       , mkBuiltinCommand
           ( "Delete quote from quote database"
           , $githubLinkLocationStr
-          , authorizeSender senderAuthority $
-            replyOnNothing "Only for mods" $
+          , onlyForRoles "Only for mods" authorityRoles $
             cmapR (readMaybe . T.unpack) $
             replyOnNothing "Expected integer as an argument" deleteQuoteCommand))
     , ( "quote"
