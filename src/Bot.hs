@@ -71,17 +71,17 @@ builtinCommands =
       , mkBuiltinCommand
           ( "Add quote to quote database"
           , $githubLinkLocationStr
-          , authorizeSender
-              (\sender -> senderMod sender || senderSubscriber sender) $
-            replyOnNothing
-              "Only subs and mods can add quotes, sorry."
+          , onlyForRoles
+              [qms|Adding quotes is only for subs.
+                   Subscribe to gain the access:
+                   https://twitch.tv/tsoding/subscribe|]
+              (authorityRoles ++ paidRoles)
               addQuoteCommand))
     , ( "delquote"
       , mkBuiltinCommand
           ( "Delete quote from quote database"
           , $githubLinkLocationStr
-          , authorizeSender senderAuthority $
-            replyOnNothing "Only for mods" $
+          , onlyForRoles "Only for mods" authorityRoles $
             cmapR (readMaybe . T.unpack) $
             replyOnNothing "Expected integer as an argument" deleteQuoteCommand))
     , ( "quote"
