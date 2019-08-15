@@ -226,6 +226,7 @@ test-suite HyperNerdTest
                      , Bot.FridayTest
                      , Bot.GitHub
                      , Data.Maybe.Extra
+                     , Data.Time.Extra
                      , Regexp
                      , Command
                      , CommandTest
