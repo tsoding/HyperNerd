@@ -87,6 +87,7 @@ executable HyperNerd
                      , Data.Either.Extra
                      , Data.Maybe.Extra
                      , Data.Bool.Extra
+                     , Data.Time.Extra
                      , Effect
                      , Entity
                      , HyperNerd.Comonad

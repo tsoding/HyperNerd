@@ -1,10 +1,12 @@
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE QuasiQuotes #-}
+{-# LANGUAGE DeriveFunctor #-}
 
 module Schedule
   ( nextEvent
   , eventSummary
   , dayOfWeek
+  , Schedule (..)
   ) where
 
 import Control.Monad
@@ -24,6 +26,7 @@ import Data.Time.Clock.POSIX
 import Data.Time.LocalTime (TimeZone)
 import Safe
 import Text.InterpolatedString.QM
+import Data.Time.Extra
 
 data DayOfWeek
   = Monday
@@ -80,9 +83,17 @@ eventUTCTime (ScheduleTimeZone timeZone) Event { eventDate = day
   where
     localTime = LocalTime day timeOfDay
 
--- TODO(#712): Schedule.eventSummary is not implemented
-eventSummary :: Event -> T.Text
-eventSummary = eventTitle
+eventSummary :: ScheduleTimeZone -> UTCTime -> Event -> T.Text
+eventSummary timezone now event = do
+  let t = eventUTCTime timezone event
+  -- TODO: Diff time for past events in eventSummary should be `finished - (started + DURATION)`
+  if t >= now
+    then let d = diffUTCTime t now
+          in [qms|{eventTitle event}
+                  starts in {humanReadableDiffTime d}|]
+    else let d = diffUTCTime now t
+          in [qms|{eventTitle event}
+                  finished {humanReadableDiffTime d} ago|]
 
 newtype EventId =
   EventId Int
