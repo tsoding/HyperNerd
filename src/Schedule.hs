@@ -85,7 +85,7 @@ eventUTCTime (ScheduleTimeZone timeZone) Event { eventDate = day
 eventSummary :: ScheduleTimeZone -> UTCTime -> Event -> T.Text
 eventSummary timezone now event = do
   let t = eventUTCTime timezone event
-  -- TODO: Diff time for past events in eventSummary should be `finished - (started + DURATION)`
+  -- TODO(#755): Diff time for past events in eventSummary should be `finished - (started + DURATION)`
   if t >= now
     then let d = diffUTCTime t now
           in [qms|{eventTitle event}
