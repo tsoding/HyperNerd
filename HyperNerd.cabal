@@ -87,6 +87,7 @@ executable HyperNerd
                      , Data.Either.Extra
                      , Data.Maybe.Extra
                      , Data.Bool.Extra
+                     , Data.Time.Extra
                      , Effect
                      , Entity
                      , HyperNerd.Comonad
@@ -225,6 +226,7 @@ test-suite HyperNerdTest
                      , Bot.FridayTest
                      , Bot.GitHub
                      , Data.Maybe.Extra
+                     , Data.Time.Extra
                      , Regexp
                      , Command
                      , CommandTest

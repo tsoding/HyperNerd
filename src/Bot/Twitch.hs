@@ -1,5 +1,4 @@
 {-# LANGUAGE OverloadedStrings #-}
-{-# LANGUAGE QuasiQuotes #-}
 
 module Bot.Twitch where
 
@@ -10,11 +9,11 @@ import Data.Aeson.Types
 import Data.Maybe
 import qualified Data.Text as T
 import Data.Time
+import Data.Time.Extra
 import Effect
 import Network.HTTP.Simple
 import qualified Network.URI.Encode as URI
 import Reaction
-import Text.InterpolatedString.QM
 import Text.Printf
 import Transport
 
@@ -47,28 +46,6 @@ twitchStreamByLogin login = do
     (errorEff . T.pack)
     (return . listToMaybe . trData)
     (eitherDecode $ getResponseBody response)
-
-humanReadableDiffTime :: NominalDiffTime -> T.Text
-humanReadableDiffTime t =
-  T.pack $
-  unwords $
-  map (\(name, amount) -> [qms|{amount} {name}|]) $
-  filter ((> 0) . snd) components
-  where
-    s :: Int
-    s = round t
-    components :: [(T.Text, Int)]
-    components =
-      [ ("days" :: T.Text, s `div` secondsInDay)
-      , ("hours", (s `mod` secondsInDay) `div` secondsInHour)
-      , ( "minutes"
-        , ((s `mod` secondsInDay) `mod` secondsInHour) `div` secondsInMinute)
-      , ( "seconds"
-        , ((s `mod` secondsInDay) `mod` secondsInHour) `mod` secondsInMinute)
-      ]
-    secondsInDay = 24 * secondsInHour
-    secondsInHour = 60 * secondsInMinute
-    secondsInMinute = 60
 
 streamUptime :: TwitchStream -> Effect NominalDiffTime
 streamUptime twitchStream = do
