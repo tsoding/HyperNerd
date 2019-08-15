@@ -43,7 +43,7 @@ compileCondition cteId (E.PropertyEquals propertyName property) =
 compileCondition _ (E.ConditionAnd _) = undefined
 -- TODO(#563): E.PropertyGreater is not interpreted in Sqlite.Compiler.compileCondition
 compileCondition _ (E.PropertyGreater _ _) = undefined
--- TODO: E.PropertyMissing is not interpreted in Sqlite.Compiler.compileCondition
+-- TODO(#756): E.PropertyMissing is not interpreted in Sqlite.Compiler.compileCondition
 compileCondition _ (E.PropertyMissing _) = undefined
 
 -- TODO(#253): compileCteChain doesn't optimize common patterns like Sqlite.EntityPersistence.selectEntityIds
