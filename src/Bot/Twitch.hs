@@ -1,5 +1,4 @@
 {-# LANGUAGE OverloadedStrings #-}
-{-# LANGUAGE QuasiQuotes #-}
 
 module Bot.Twitch where
 
@@ -10,13 +9,13 @@ import Data.Aeson.Types
 import Data.Maybe
 import qualified Data.Text as T
 import Data.Time
+import Data.Time.Extra
 import Effect
 import Network.HTTP.Simple
 import qualified Network.URI.Encode as URI
 import Reaction
 import Text.Printf
 import Transport
-import Data.Time.Extra
 
 newtype TwitchResponse a = TwitchResponse
   { trData :: [a]

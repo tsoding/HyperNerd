@@ -3,8 +3,8 @@
 
 module Data.Time.Extra where
 
-import Data.Time
 import qualified Data.Text as T
+import Data.Time
 import Text.InterpolatedString.QM
 
 humanReadableDiffTime :: NominalDiffTime -> T.Text

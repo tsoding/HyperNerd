@@ -1,12 +1,11 @@
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE QuasiQuotes #-}
-{-# LANGUAGE DeriveFunctor #-}
 
 module Schedule
   ( nextEvent
   , eventSummary
   , dayOfWeek
-  , Schedule (..)
+  , Schedule(..)
   ) where
 
 import Control.Monad
@@ -23,10 +22,10 @@ import qualified Data.Text as T
 import Data.Time
 import Data.Time.Calendar.WeekDate
 import Data.Time.Clock.POSIX
+import Data.Time.Extra
 import Data.Time.LocalTime (TimeZone)
 import Safe
 import Text.InterpolatedString.QM
-import Data.Time.Extra
 
 data DayOfWeek
   = Monday
