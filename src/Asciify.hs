@@ -66,12 +66,12 @@ greyScaleImage = pixelMap greyScalePixel . convertRGBA8
         b' = fromIntegral b :: Float
         a' = (fromIntegral a :: Float) / 255.0
 
-
 asciifyGreyScale :: Image Pixel8 -> T.Text
 asciifyGreyScale =
   T.unlines .
   map T.pack . getCompose . fmap renderChunk . Compose . chunkifyGreyScale
 
+-- TODO: Asciify algorithm does not resize image
 asciifyDynamicImage :: DynamicImage -> T.Text
 asciifyDynamicImage = asciifyGreyScale . greyScaleImage
 
