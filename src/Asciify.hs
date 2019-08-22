@@ -10,7 +10,6 @@ import Data.Char
 import Data.Bits
 import Data.List
 import qualified Data.Vector.Storable as V
-import Debug.Trace
 
 type Chunk = Word8
 
@@ -24,13 +23,6 @@ renderChunk x = chr (bgroup * groupSize + boffset + ord '⠀')
                     in fromIntegral (b1 .|. b2)
           groupSize = 64
 
--- reference: https://www.mathworks.com/help/matlab/ref/rgb2gray.html
-greyScalePixel :: PixelRGB8 -> Pixel8
-greyScalePixel (PixelRGB8 r g b) = k
-    where k = round (r' * 0.299  + g' * 0.587 + b' * 0.114)
-          r' = fromIntegral r :: Float
-          g' = fromIntegral g :: Float
-          b' = fromIntegral b :: Float
 
 chunkifyGreyScale :: Image Pixel8 -> [[Chunk]]
 chunkifyGreyScale img =
@@ -46,8 +38,7 @@ chunkifyGreyScale img =
     squashBits = foldl' (\acc x -> shiftL acc 1 .|. x) 0
     threshold =
       let imgData = imageData img
-       in traceShowId $
-          round $
+       in round $
           (/ (fromIntegral $ V.length imgData)) $
           V.foldl' (+) (0.0 :: Float) $ V.map fromIntegral imgData
     k :: Pixel8 -> Word8
@@ -62,9 +53,19 @@ chunkifyGreyScale img =
     chunkAt (x, y) =
       squashBits $ reverse [f (i + x, j + y) | i <- [0, 1], j <- [0 .. 3]]
 
--- TODO: greyScaleImage does not handle alpha correctly (probably)
 greyScaleImage :: DynamicImage -> Image Pixel8
-greyScaleImage = pixelMap greyScalePixel . convertRGB8
+greyScaleImage = pixelMap greyScalePixel . convertRGBA8
+  -- reference: https://www.mathworks.com/help/matlab/ref/rgb2gray.html
+  where
+    greyScalePixel :: PixelRGBA8 -> Pixel8
+    greyScalePixel (PixelRGBA8 r g b a) = k
+      where
+        k = round ((r' * 0.299 + g' * 0.587 + b' * 0.114) * a')
+        r' = fromIntegral r :: Float
+        g' = fromIntegral g :: Float
+        b' = fromIntegral b :: Float
+        a' = (fromIntegral a :: Float) / 255.0
+
 
 asciifyGreyScale :: Image Pixel8 -> T.Text
 asciifyGreyScale =
