@@ -9,10 +9,8 @@ import Data.Word
 import Data.Char
 import Data.Bits
 import Data.List
-import Debug.Trace
 
 type Chunk = Word8
-
 
 renderChunk :: Chunk -> Char
 renderChunk x = chr (bgroup * groupSize + boffset + ord '⠀')
@@ -34,8 +32,8 @@ greyScalePixel (PixelRGB8 r g b) = k
 
 chunkifyGreyScale :: Image Pixel8 -> [[Chunk]]
 chunkifyGreyScale img =
-  [ [chunkAt (i * 2, j * 4) | i <- [0 .. chunksWidth]]
-  | j <- [0 .. chunksHeight]
+  [ [chunkAt (i * 2, j * 4) | i <- [0 .. chunksWidth - 1]]
+  | j <- [0 .. chunksHeight - 1]
   ]
   where
     width = imageWidth img
@@ -48,8 +46,8 @@ chunkifyGreyScale img =
     k x
       | x < threshold = 0
       | otherwise = 1
-      where
         -- TODO: monochrome threshold should be changed dynamically
+      where
         threshold = 50
     f :: (Int, Int) -> Word8
     f (x, y)
@@ -59,6 +57,7 @@ chunkifyGreyScale img =
     chunkAt (x, y) =
       squashBits $ reverse [f (i + x, j + y) | i <- [0, 1], j <- [0 .. 3]]
 
+-- TODO: greyScaleImage does not handle alpha correctly (probably)
 greyScaleImage :: DynamicImage -> Image Pixel8
 greyScaleImage = pixelMap greyScalePixel . convertRGB8
 
