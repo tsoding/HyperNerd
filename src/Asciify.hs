@@ -14,10 +14,9 @@ import Debug.Trace
 type Chunk = Word8
 
 
--- TODO: Individual square are upsidedown
 renderChunk :: Chunk -> Char
 renderChunk x = chr (bgroup * groupSize + boffset + ord '⠀')
-    where bgroup = let b1 = x .&. 0b00001000 `shiftR` 3
+    where bgroup = let b1 = (x .&. 0b00001000) `shiftR` 3
                        b2 = (x .&. 0b10000000) `shiftR` 6
                    in fromIntegral (b1 .|. b2)
           boffset = let b1 = (x .&. 0b00000111)
@@ -41,8 +40,8 @@ chunkifyGreyScale img =
   where
     width = imageWidth img
     height = imageHeight img
-    chunksWidth = traceShowId (width `div` 2)
-    chunksHeight = traceShowId (height `div` 4)
+    chunksWidth = width `div` 2
+    chunksHeight = height `div` 4
     squashBits :: [Word8] -> Word8
     squashBits = foldl' (\acc x -> shiftL acc 1 .|. x) 0
     k :: Pixel8 -> Word8
@@ -50,7 +49,8 @@ chunkifyGreyScale img =
       | x < threshold = 0
       | otherwise = 1
       where
-        threshold = 140
+        -- TODO: monochrome threshold should be changed dynamically
+        threshold = 50
     f :: (Int, Int) -> Word8
     f (x, y)
       | 0 <= x && x < width && 0 <= y && y < height = k $ pixelAt img x y
