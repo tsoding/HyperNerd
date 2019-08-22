@@ -73,7 +73,7 @@ asciifyGreyScale =
   T.unlines .
   map T.pack . getCompose . fmap renderChunk . Compose . chunkifyGreyScale
 
--- TODO: Asciify algorithm does not resize image
+-- TODO(#761): Asciify algorithm does not resize image
 asciifyDynamicImage :: DynamicImage -> T.Text
 asciifyDynamicImage = asciifyGreyScale . greyScaleImage
 
