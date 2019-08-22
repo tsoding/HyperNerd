@@ -2,27 +2,29 @@
 
 module Asciify where
 
-import qualified Data.Text as T
 import Codec.Picture
-import Data.Functor.Compose
-import Data.Word
-import Data.Char
 import Data.Bits
+import Data.Char
+import Data.Functor.Compose
 import Data.List
+import qualified Data.Text as T
 import qualified Data.Vector.Storable as V
+import Data.Word
 
 type Chunk = Word8
 
 renderChunk :: Chunk -> Char
 renderChunk x = chr (bgroup * groupSize + boffset + ord '⠀')
-    where bgroup = let b1 = (x .&. 0b00001000) `shiftR` 3
-                       b2 = (x .&. 0b10000000) `shiftR` 6
-                   in fromIntegral (b1 .|. b2)
-          boffset = let b1 = (x .&. 0b00000111)
-                        b2 = (x .&. 0b01110000) `shiftR` 1
-                    in fromIntegral (b1 .|. b2)
-          groupSize = 64
-
+  where
+    bgroup =
+      let b1 = (x .&. 0b00001000) `shiftR` 3
+          b2 = (x .&. 0b10000000) `shiftR` 6
+       in fromIntegral (b1 .|. b2)
+    boffset =
+      let b1 = (x .&. 0b00000111)
+          b2 = (x .&. 0b01110000) `shiftR` 1
+       in fromIntegral (b1 .|. b2)
+    groupSize = 64
 
 chunkifyGreyScale :: Image Pixel8 -> [[Chunk]]
 chunkifyGreyScale img =
