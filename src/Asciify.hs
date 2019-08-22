@@ -9,6 +9,8 @@ import Data.Word
 import Data.Char
 import Data.Bits
 import Data.List
+import qualified Data.Vector.Storable as V
+import Debug.Trace
 
 type Chunk = Word8
 
@@ -42,13 +44,16 @@ chunkifyGreyScale img =
     chunksHeight = height `div` 4
     squashBits :: [Word8] -> Word8
     squashBits = foldl' (\acc x -> shiftL acc 1 .|. x) 0
+    threshold =
+      let imgData = imageData img
+       in traceShowId $
+          round $
+          (/ (fromIntegral $ V.length imgData)) $
+          V.foldl' (+) (0.0 :: Float) $ V.map fromIntegral imgData
     k :: Pixel8 -> Word8
     k x
       | x < threshold = 0
       | otherwise = 1
-        -- TODO: monochrome threshold should be changed dynamically
-      where
-        threshold = 50
     f :: (Int, Int) -> Word8
     f (x, y)
       | 0 <= x && x < width && 0 <= y && y < height = k $ pixelAt img x y
