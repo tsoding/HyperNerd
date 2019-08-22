@@ -25,9 +25,10 @@ renderChunk x = chr (bgroup * groupSize + boffset + ord '⠀')
                     in fromIntegral (b1 .|. b2)
           groupSize = 64
 
+-- reference: https://www.mathworks.com/help/matlab/ref/rgb2gray.html
 greyScalePixel :: PixelRGB8 -> Pixel8
 greyScalePixel (PixelRGB8 r g b) = k
-    where k = round ((r' + g' + b') / 3.0)
+    where k = round (r' * 0.299  + g' * 0.587 + b' * 0.114)
           r' = fromIntegral r :: Float
           g' = fromIntegral g :: Float
           b' = fromIntegral b :: Float
