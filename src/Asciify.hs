@@ -81,18 +81,17 @@ resizeImageWidth width' image
     let ratio :: Float
         ratio = fromIntegral width' / fromIntegral width
         height' = floor (fromIntegral height * ratio)
-
         y_interval :: Float
         y_interval = fromIntegral height / fromIntegral height'
         x_interval :: Float
         x_interval = fromIntegral width / fromIntegral width'
         resizedData =
-          [ imgData V.! index
+          [ imgData V.! idx
           | y <- [0 .. (height' - 1)]
           , x <- [0 .. (width' - 1)]
-          , let index =
-                  ((floor (fromIntegral y * y_interval)) * width +
-                   (floor (fromIntegral x * x_interval)))
+          , let idx =
+                  floor (fromIntegral y * y_interval) * width +
+                  floor (fromIntegral x * x_interval)
           ]
      in Image width' height' $
         V.fromList $
