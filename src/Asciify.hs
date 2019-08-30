@@ -10,6 +10,8 @@ import Data.List
 import qualified Data.Text as T
 import qualified Data.Vector.Storable as V
 import Data.Word
+import Debug.Trace
+import Text.Printf
 
 type Chunk = Word8
 
@@ -73,9 +75,40 @@ asciifyGreyScale =
   T.unlines .
   map T.pack . getCompose . fmap renderChunk . Compose . chunkifyGreyScale
 
--- TODO(#761): Asciify algorithm does not resize image
+resizeImageWidth :: Pixel a => Int -> Image a -> Image a
+resizeImageWidth width' image
+  | width /= width' =
+    let ratio :: Float
+        ratio = fromIntegral width' / fromIntegral width
+        height' = floor (fromIntegral height * ratio)
+        y_interval :: Float
+        y_interval = fromIntegral height / fromIntegral height'
+        x_interval :: Float
+        x_interval = fromIntegral width / fromIntegral width'
+        resizedData =
+          [ imgData V.! idx
+          | y <- [0 .. (height' - 1)]
+          , x <- [0 .. (width' - 1)]
+          , let idx =
+                  floor (fromIntegral y * y_interval) * width +
+                  floor (fromIntegral x * x_interval)
+          ]
+     in Image width' height' $
+        V.fromList $
+        trace
+          (printf
+             "actual: %d\nexpected: %d\n"
+             (length resizedData)
+             (width' * height'))
+          resizedData
+  | otherwise = image
+  where
+    width = imageWidth image
+    height = imageHeight image
+    imgData = imageData image
+
 asciifyDynamicImage :: DynamicImage -> T.Text
-asciifyDynamicImage = asciifyGreyScale . greyScaleImage
+asciifyDynamicImage = asciifyGreyScale . resizeImageWidth 60 . greyScaleImage
 
 asciifyFile :: FilePath -> IO T.Text
 asciifyFile filePath = do
