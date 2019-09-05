@@ -5,6 +5,7 @@ module Bot.Replies where
 
 import Control.Comonad
 import Data.Aeson
+import qualified Data.ByteString.Lazy as BS
 import qualified Data.Map as M
 import qualified Data.Text as T
 import Effect
@@ -105,8 +106,14 @@ jsonHttpRequestReaction ::
      FromJSON a => Reaction Message a -> Reaction Message String
 jsonHttpRequestReaction =
   cmapR parseRequest .
-  ignoreLeft .
+  eitherReaction (Reaction (logMsg . T.pack . show . messageContent)) .
   liftR httpRequest .
   cmapR (eitherDecode . getResponseBody) .
-  -- TODO(#349): we probably don't wanna silence JSON parsing errors
-  ignoreLeft
+  eitherReaction (Reaction (logMsg . T.pack . messageContent))
+
+byteStringHttpRequestReaction ::
+     Reaction Message BS.ByteString -> Reaction Message String
+byteStringHttpRequestReaction =
+  cmapR parseRequest .
+  eitherReaction (Reaction (logMsg . T.pack . show . messageContent)) .
+  liftR httpRequest . cmapR getResponseBody

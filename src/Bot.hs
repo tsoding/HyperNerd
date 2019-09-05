@@ -9,6 +9,7 @@ module Bot
   , bot
   ) where
 
+import Asciify
 import Bot.Alias
 import Bot.BttvFfz
 import Bot.Calc
@@ -31,6 +32,7 @@ import Bot.Variable
 import Command
 import Control.Comonad
 import Control.Monad
+import qualified Data.ByteString.Lazy as BS
 import Data.Char
 import Data.Either
 import Data.Either.Extra
@@ -514,6 +516,22 @@ builtinCommands =
           ( "Count amount of forbidden characters in the message"
           , $githubLinkLocationStr
           , countForbiddenCommand))
+    -- TODO(#766): !asciify command does not cache the asciify results
+    -- TODO(#767): !asciify does not support BTTV emotes
+    -- TODO(#768): !asciify does not support Twitch emotes
+    , ( "asciify"
+      , mkBuiltinCommand
+          ( "Asciify Twitch, BTTV or FFZ emote"
+          , $githubLinkLocationStr
+          , onlyForMods $
+            liftR ffzUrlByName $
+            replyOnNothing "Such emote does not exist" $
+            cmapR ("https:" ++) $
+            byteStringHttpRequestReaction $
+            cmapR (asciifyByteString . BS.toStrict) $
+            eitherReaction
+              (Reaction (logMsg . T.pack . messageContent))
+              sayMessage))
     ]
 
 nextStreamCommand :: Reaction Message a

@@ -1,17 +1,19 @@
 {-# LANGUAGE BinaryLiterals #-}
 
-module Asciify where
+module Asciify
+  ( asciifyByteString
+  , asciifyFile
+  ) where
 
 import Codec.Picture
 import Data.Bits
+import qualified Data.ByteString as BS
 import Data.Char
 import Data.Functor.Compose
 import Data.List
 import qualified Data.Text as T
 import qualified Data.Vector.Storable as V
 import Data.Word
-import Debug.Trace
-import Text.Printf
 
 type Chunk = Word8
 
@@ -72,7 +74,7 @@ greyScaleImage = pixelMap greyScalePixel . convertRGBA8
 
 asciifyGreyScale :: Image Pixel8 -> T.Text
 asciifyGreyScale =
-  T.unlines .
+  T.unwords .
   map T.pack . getCompose . fmap renderChunk . Compose . chunkifyGreyScale
 
 resizeImageWidth :: Pixel a => Int -> Image a -> Image a
@@ -93,14 +95,7 @@ resizeImageWidth width' image
                   floor (fromIntegral y * y_interval) * width +
                   floor (fromIntegral x * x_interval)
           ]
-     in Image width' height' $
-        V.fromList $
-        trace
-          (printf
-             "actual: %d\nexpected: %d\n"
-             (length resizedData)
-             (width' * height'))
-          resizedData
+     in Image width' height' $ V.fromList resizedData
   | otherwise = image
   where
     width = imageWidth image
@@ -112,7 +107,8 @@ asciifyDynamicImage = asciifyGreyScale . resizeImageWidth 60 . greyScaleImage
 
 asciifyFile :: FilePath -> IO T.Text
 asciifyFile filePath = do
-  img <- readImage filePath
-  case img of
-    Right img' -> return $ asciifyDynamicImage img'
-    Left msg -> error msg
+  bytes <- BS.readFile filePath
+  either error return $ asciifyByteString bytes
+
+asciifyByteString :: BS.ByteString -> Either String T.Text
+asciifyByteString bytes = asciifyDynamicImage <$> decodeImage bytes

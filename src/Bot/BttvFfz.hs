@@ -2,12 +2,15 @@
 {-# LANGUAGE UnicodeSyntax #-}
 {-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE QuasiQuotes #-}
+{-# LANGUAGE TupleSections #-}
+{-# LANGUAGE LambdaCase #-}
 
 module Bot.BttvFfz
   ( ffzCommand
   , bttvCommand
   , updateFfzEmotesCommand
   , updateBttvEmotesCommand
+  , ffzUrlByName
   ) where
 
 import Bot.Replies
@@ -15,8 +18,11 @@ import Control.Comonad
 import Control.Monad
 import Data.Aeson
 import Data.Aeson.Types
+import qualified Data.HashMap.Strict as HM
 import Data.List
 import qualified Data.Map as M
+import Data.Maybe
+import Data.Ord
 import Data.Proxy
 import qualified Data.Text as T
 import Effect
@@ -27,14 +33,22 @@ import Reaction
 import Text.InterpolatedString.QM
 import Transport
 
-newtype FfzEmote = FfzEmote
+data FfzEmote = FfzEmote
   { ffzName :: T.Text
+  , ffzLargestImageURL :: Maybe T.Text
   }
 
 instance IsEntity FfzEmote where
   nameOfEntity _ = "FfzEmote"
-  toProperties entity = M.fromList [("name", PropertyText $ ffzName entity)]
-  fromProperties properties = FfzEmote <$> extractProperty "name" properties
+  toProperties entity =
+    M.fromList $
+    catMaybes
+      [ return ("name", PropertyText $ ffzName entity)
+      , ("largestImageUrl", ) . PropertyText <$> ffzLargestImageURL entity
+      ]
+  fromProperties properties =
+    FfzEmote <$> extractProperty "name" properties <*>
+    pure (extractProperty "largestImageUrl" properties)
 
 newtype BttvEmote = BttvEmote
   { bttvName :: T.Text
@@ -62,7 +76,17 @@ newtype FfzRes = FfzRes
   }
 
 instance FromJSON FfzEmote where
-  parseJSON (Object v) = FfzEmote <$> v .: "name"
+  parseJSON (Object v) = FfzEmote <$> v .: "name" <*> (v .: "urls" >>= maxUrl)
+    where
+      maxUrl :: Value -> Parser (Maybe T.Text)
+      maxUrl (Object v') =
+        (\case
+           Nothing -> pure Nothing
+           (Just x) -> Just <$> parseJSON x) =<<
+        pure ((`HM.lookup` v') =<< idx)
+        where
+          idx = listToMaybe $ sortOn Down $ HM.keys v'
+      maxUrl invalid = typeMismatch "FfzEmote" invalid
   parseJSON invalid = typeMismatch "FfzEmote" invalid
 
 instance FromJSON FfzRes where
@@ -119,3 +143,12 @@ updateBttvEmotesCommand =
        void $ deleteEntities (Proxy :: Proxy BttvEmote) All
        traverse (createEntity Proxy) emotes) $
   cmapR (T.concat . intersperse " " . map (bttvName . entityPayload)) sayMessage
+
+ffzUrlByName :: T.Text -> Effect (Maybe String)
+ffzUrlByName name = do
+  emote <-
+    listToMaybe <$>
+    selectEntities
+      Proxy
+      (Filter (PropertyEquals "name" (PropertyText name)) All)
+  pure (T.unpack <$> (ffzLargestImageURL =<< (entityPayload <$> emote)))
