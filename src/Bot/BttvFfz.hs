@@ -10,6 +10,7 @@ module Bot.BttvFfz
   , bttvCommand
   , updateFfzEmotesCommand
   , updateBttvEmotesCommand
+  , ffzUrlByName
   ) where
 
 import Bot.Replies
@@ -142,3 +143,12 @@ updateBttvEmotesCommand =
        void $ deleteEntities (Proxy :: Proxy BttvEmote) All
        traverse (createEntity Proxy) emotes) $
   cmapR (T.concat . intersperse " " . map (bttvName . entityPayload)) sayMessage
+
+ffzUrlByName :: T.Text -> Effect (Maybe String)
+ffzUrlByName name = do
+  emote <-
+    listToMaybe <$>
+    selectEntities
+      Proxy
+      (Filter (PropertyEquals "name" (PropertyText name)) All)
+  pure (T.unpack <$> (ffzLargestImageURL =<< (entityPayload <$> emote)))

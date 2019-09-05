@@ -58,6 +58,8 @@ import Text.Read
 import Text.Regex.TDFA (defaultCompOpt, defaultExecOpt)
 import Text.Regex.TDFA.String
 import Transport
+import Asciify
+import qualified  Data.ByteString.Lazy as BS
 
 type Bot = InEvent -> Effect ()
 
@@ -514,6 +516,18 @@ builtinCommands =
           ( "Count amount of forbidden characters in the message"
           , $githubLinkLocationStr
           , countForbiddenCommand))
+    , ( "asciify"
+      , mkBuiltinCommand
+          ( "Asciify Twitch, BTTV or FFZ emote"
+          , $githubLinkLocationStr
+          , onlyForMods $
+            liftR ffzUrlByName $
+            replyOnNothing "Such emote does not exist" $
+            cmapR ("https:" ++) $
+            byteStringHttpRequestReaction $
+            cmapR (asciifyByteString . BS.toStrict) $
+            eitherReaction (Reaction (logMsg . T.pack . messageContent)) $
+            sayMessage))
     ]
 
 nextStreamCommand :: Reaction Message a

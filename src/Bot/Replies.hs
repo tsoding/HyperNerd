@@ -13,6 +13,7 @@ import Reaction
 import Regexp
 import Text.InterpolatedString.QM
 import Transport
+import qualified Data.ByteString.Lazy as BS
 
 sayMessage :: Reaction Message T.Text
 sayMessage =
@@ -105,7 +106,14 @@ jsonHttpRequestReaction ::
      FromJSON a => Reaction Message a -> Reaction Message String
 jsonHttpRequestReaction =
   cmapR parseRequest .
-  ignoreLeft .
+  eitherReaction (Reaction (logMsg . T.pack . show . messageContent)) .
   liftR httpRequest .
   cmapR (eitherDecode . getResponseBody) .
   eitherReaction (Reaction (logMsg . T.pack . messageContent))
+
+byteStringHttpRequestReaction ::
+     Reaction Message BS.ByteString -> Reaction Message String
+byteStringHttpRequestReaction =
+  cmapR parseRequest .
+  eitherReaction (Reaction (logMsg . T.pack . show . messageContent)) .
+  liftR httpRequest . cmapR getResponseBody
