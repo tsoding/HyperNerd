@@ -516,7 +516,7 @@ builtinCommands =
           ( "Count amount of forbidden characters in the message"
           , $githubLinkLocationStr
           , countForbiddenCommand))
-    -- TODO: !asciify command does not cache the asciify results
+    -- TODO(#766): !asciify command does not cache the asciify results
     , ( "asciify"
       , mkBuiltinCommand
           ( "Asciify Twitch, BTTV or FFZ emote"
