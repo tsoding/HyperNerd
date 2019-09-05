@@ -527,8 +527,9 @@ builtinCommands =
             cmapR ("https:" ++) $
             byteStringHttpRequestReaction $
             cmapR (asciifyByteString . BS.toStrict) $
-            eitherReaction (Reaction (logMsg . T.pack . messageContent)) $
-            sayMessage))
+            eitherReaction
+              (Reaction (logMsg . T.pack . messageContent))
+              sayMessage))
     ]
 
 nextStreamCommand :: Reaction Message a

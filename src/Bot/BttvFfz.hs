@@ -85,7 +85,7 @@ instance FromJSON FfzEmote where
            (Just x) -> Just <$> parseJSON x) =<<
         pure ((`HM.lookup` v') =<< idx)
         where
-          idx = listToMaybe $ sortBy (comparing Down) $ HM.keys v'
+          idx = listToMaybe $ sortOn Down $ HM.keys v'
       maxUrl invalid = typeMismatch "FfzEmote" invalid
   parseJSON invalid = typeMismatch "FfzEmote" invalid
 
