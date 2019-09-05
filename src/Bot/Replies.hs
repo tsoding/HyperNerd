@@ -108,5 +108,4 @@ jsonHttpRequestReaction =
   ignoreLeft .
   liftR httpRequest .
   cmapR (eitherDecode . getResponseBody) .
-  -- TODO(#349): we probably don't wanna silence JSON parsing errors
-  ignoreLeft
+  eitherReaction (Reaction (logMsg . T.pack . messageContent))
