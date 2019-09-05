@@ -5,6 +5,7 @@ module Bot.Replies where
 
 import Control.Comonad
 import Data.Aeson
+import qualified Data.ByteString.Lazy as BS
 import qualified Data.Map as M
 import qualified Data.Text as T
 import Effect
@@ -13,7 +14,6 @@ import Reaction
 import Regexp
 import Text.InterpolatedString.QM
 import Transport
-import qualified Data.ByteString.Lazy as BS
 
 sayMessage :: Reaction Message T.Text
 sayMessage =

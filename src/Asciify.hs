@@ -1,16 +1,19 @@
 {-# LANGUAGE BinaryLiterals #-}
 
-module Asciify (asciifyByteString, asciifyFile) where
+module Asciify
+  ( asciifyByteString
+  , asciifyFile
+  ) where
 
 import Codec.Picture
 import Data.Bits
+import qualified Data.ByteString as BS
 import Data.Char
 import Data.Functor.Compose
 import Data.List
 import qualified Data.Text as T
 import qualified Data.Vector.Storable as V
 import Data.Word
-import qualified Data.ByteString as BS
 
 type Chunk = Word8
 

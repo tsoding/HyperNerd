@@ -9,6 +9,7 @@ module Bot
   , bot
   ) where
 
+import Asciify
 import Bot.Alias
 import Bot.BttvFfz
 import Bot.Calc
@@ -31,6 +32,7 @@ import Bot.Variable
 import Command
 import Control.Comonad
 import Control.Monad
+import qualified Data.ByteString.Lazy as BS
 import Data.Char
 import Data.Either
 import Data.Either.Extra
@@ -58,8 +60,6 @@ import Text.Read
 import Text.Regex.TDFA (defaultCompOpt, defaultExecOpt)
 import Text.Regex.TDFA.String
 import Transport
-import Asciify
-import qualified  Data.ByteString.Lazy as BS
 
 type Bot = InEvent -> Effect ()
 

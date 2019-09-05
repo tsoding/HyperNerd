@@ -18,8 +18,11 @@ import Control.Comonad
 import Control.Monad
 import Data.Aeson
 import Data.Aeson.Types
+import qualified Data.HashMap.Strict as HM
 import Data.List
 import qualified Data.Map as M
+import Data.Maybe
+import Data.Ord
 import Data.Proxy
 import qualified Data.Text as T
 import Effect
@@ -29,9 +32,6 @@ import Property
 import Reaction
 import Text.InterpolatedString.QM
 import Transport
-import Data.Maybe
-import Data.Ord
-import qualified Data.HashMap.Strict as HM
 
 data FfzEmote = FfzEmote
   { ffzName :: T.Text
