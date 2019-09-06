@@ -1,6 +1,7 @@
 {-# LANGUAGE BinaryLiterals #-}
 {-# LANGUAGE QuasiQuotes #-}
 {-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE LambdaCase #-}
 
 module Bot.Asciify
   ( asciifyReaction
@@ -89,9 +90,8 @@ greyScaleImage = pixelMap greyScalePixel . convertRGBA8
         b' = fromIntegral b :: Float
         a' = (fromIntegral a :: Float) / 255.0
 
-asciifyGreyScale :: Image Pixel8 -> T.Text
+asciifyGreyScale :: Image Pixel8 -> [T.Text]
 asciifyGreyScale =
-  T.unwords .
   map T.pack . getCompose . fmap renderChunk . Compose . chunkifyGreyScale
 
 resizeImageWidth :: Pixel a => Int -> Image a -> Image a
@@ -119,15 +119,15 @@ resizeImageWidth width' image
     height = imageHeight image
     imgData = imageData image
 
-asciifyDynamicImage :: DynamicImage -> T.Text
+asciifyDynamicImage :: DynamicImage -> [T.Text]
 asciifyDynamicImage = asciifyGreyScale . resizeImageWidth 60 . greyScaleImage
 
-asciifyFile :: FilePath -> IO T.Text
+asciifyFile :: FilePath -> IO [T.Text]
 asciifyFile filePath = do
   bytes <- BS.readFile filePath
   either error return $ asciifyByteString bytes
 
-asciifyByteString :: BS.ByteString -> Either String T.Text
+asciifyByteString :: BS.ByteString -> Either String [T.Text]
 asciifyByteString bytes = asciifyDynamicImage <$> decodeImage bytes
 
 newtype AsciifyState = AsciifyState
@@ -173,4 +173,12 @@ asciifyReaction =
   cmapR ("https:" ++) $
   byteStringHttpRequestReaction $
   cmapR (asciifyByteString . BSL.toStrict) $
-  eitherReaction (Reaction (logMsg . T.pack . messageContent)) sayMessage
+  eitherReaction (Reaction (logMsg . T.pack . messageContent)) $
+  dupCmapR
+    (\Message { messageSender = Sender {senderChannel = channel}
+              , messageContent = msg
+              } ->
+       case channel of
+         TwitchChannel _ -> T.unwords msg
+         DiscordChannel _ -> T.unlines msg) $
+  sayMessage
