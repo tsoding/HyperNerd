@@ -72,12 +72,7 @@ builtinCommands =
       , mkBuiltinCommand
           ( "Add quote to quote database"
           , $githubLinkLocationStr
-          , onlyForRoles
-              [qms|Adding quotes is only for subs.
-                   Subscribe to gain the access:
-                   https://twitch.tv/tsoding/subscribe|]
-              (authorityRoles ++ paidRoles)
-              addQuoteCommand))
+          , onlyForMods addQuoteCommand))
     , ( "delquote"
       , mkBuiltinCommand
           ( "Delete quote from quote database"
