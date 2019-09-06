@@ -1,7 +1,6 @@
 {-# LANGUAGE BinaryLiterals #-}
 {-# LANGUAGE QuasiQuotes #-}
 {-# LANGUAGE OverloadedStrings #-}
-{-# LANGUAGE LambdaCase #-}
 
 module Bot.Asciify
   ( asciifyReaction
@@ -180,5 +179,5 @@ asciifyReaction =
               } ->
        case channel of
          TwitchChannel _ -> T.unwords msg
-         DiscordChannel _ -> T.unlines msg) $
-  sayMessage
+         DiscordChannel _ -> T.unlines msg)
+    sayMessage
