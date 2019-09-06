@@ -1,4 +1,5 @@
 {-# LANGUAGE BinaryLiterals #-}
+{-# LANGUAGE QuasiQuotes #-}
 
 module Bot.Asciify
   ( asciifyReaction
@@ -20,6 +21,15 @@ import qualified Data.ByteString.Lazy as BSL
 import Bot.BttvFfz
 import Bot.Replies
 import Effect
+import Entity
+import qualified Data.Map as M
+import Data.Time
+import Property
+import Data.Proxy
+import Data.Maybe
+import Data.Functor
+import Text.InterpolatedString.QM
+import Data.Time.Extra
 
 type Chunk = Word8
 
@@ -119,10 +129,45 @@ asciifyFile filePath = do
 asciifyByteString :: BS.ByteString -> Either String T.Text
 asciifyByteString bytes = asciifyDynamicImage <$> decodeImage bytes
 
+newtype AsciifyState = AsciifyState
+  { asciifyStateLastUsed :: UTCTime
+  }
+
+instance IsEntity AsciifyState where
+  nameOfEntity Proxy = "AsciifyState"
+  toProperties entity =
+    M.fromList [("lastUsed", PropertyUTCTime $ asciifyStateLastUsed entity)]
+  fromProperties properties =
+    AsciifyState <$> extractProperty "lasUsed" properties
+
+currentAsciifyState :: Effect (Entity AsciifyState)
+currentAsciifyState = do
+  maybeState <- listToMaybe <$> selectEntities Proxy All
+  case maybeState of
+    Just state -> return state
+    Nothing -> createEntity Proxy =<< AsciifyState <$> now
+
+asciifyCooldown :: Reaction Message a -> Reaction Message a
+asciifyCooldown next =
+  Reaction $ \msg -> do
+    state <- currentAsciifyState
+    currentTime <- now
+    let diff =
+          diffUTCTime currentTime $ asciifyStateLastUsed $ entityPayload state
+    if diff > 60
+      then do
+        void $ updateEntityById $ AsciifyState currentTime <$ state
+        runReaction next msg
+      else replyToSender
+             (messageSender msg)
+             [qms|Command has not cooled down yet.
+                  {humanReadableDiffTime (60 - diff)} left.}|]
+
 asciifyReaction :: Reaction Message T.Text
 asciifyReaction =
   liftR ffzUrlByName $
   replyOnNothing "Such emote does not exist" $
+  asciifyCooldown $
   cmapR ("https:" ++) $
   byteStringHttpRequestReaction $
   cmapR (asciifyByteString . BSL.toStrict) $
