@@ -1,7 +1,7 @@
 {-# LANGUAGE BinaryLiterals #-}
 
-module Asciify
-  ( asciifyByteString
+module Bot.Asciify
+  ( asciifyReaction
   , asciifyFile
   ) where
 
@@ -14,6 +14,12 @@ import Data.List
 import qualified Data.Text as T
 import qualified Data.Vector.Storable as V
 import Data.Word
+import Reaction
+import Transport
+import qualified Data.ByteString.Lazy as BSL
+import Bot.BttvFfz
+import Bot.Replies
+import Effect
 
 type Chunk = Word8
 
@@ -112,3 +118,12 @@ asciifyFile filePath = do
 
 asciifyByteString :: BS.ByteString -> Either String T.Text
 asciifyByteString bytes = asciifyDynamicImage <$> decodeImage bytes
+
+asciifyReaction :: Reaction Message T.Text
+asciifyReaction =
+  liftR ffzUrlByName $
+  replyOnNothing "Such emote does not exist" $
+  cmapR ("https:" ++) $
+  byteStringHttpRequestReaction $
+  cmapR (asciifyByteString . BSL.toStrict) $
+  eitherReaction (Reaction (logMsg . T.pack . messageContent)) sayMessage

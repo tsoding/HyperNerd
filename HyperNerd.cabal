@@ -104,7 +104,7 @@ executable HyperNerd
                      , Regexp
                      , Backdoor
                      , Schedule
-                     , Asciify
+                     , Bot.Asciify
 
   -- LANGUAGE extensions used by modules in this package.
   other-extensions:    OverloadedStrings

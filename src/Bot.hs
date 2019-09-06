@@ -9,7 +9,7 @@ module Bot
   , bot
   ) where
 
-import Asciify
+import Bot.Asciify
 import Bot.Alias
 import Bot.BttvFfz
 import Bot.Calc
@@ -32,7 +32,6 @@ import Bot.Variable
 import Command
 import Control.Comonad
 import Control.Monad
-import qualified Data.ByteString.Lazy as BS
 import Data.Char
 import Data.Either
 import Data.Either.Extra
@@ -523,15 +522,7 @@ builtinCommands =
       , mkBuiltinCommand
           ( "Asciify Twitch, BTTV or FFZ emote"
           , $githubLinkLocationStr
-          , onlyForMods $
-            liftR ffzUrlByName $
-            replyOnNothing "Such emote does not exist" $
-            cmapR ("https:" ++) $
-            byteStringHttpRequestReaction $
-            cmapR (asciifyByteString . BS.toStrict) $
-            eitherReaction
-              (Reaction (logMsg . T.pack . messageContent))
-              sayMessage))
+          , onlyForMods asciifyReaction))
     ]
 
 nextStreamCommand :: Reaction Message a
