@@ -1,19 +1,36 @@
 {-# LANGUAGE BinaryLiterals #-}
+{-# LANGUAGE QuasiQuotes #-}
+{-# LANGUAGE OverloadedStrings #-}
 
-module Asciify
-  ( asciifyByteString
+module Bot.Asciify
+  ( asciifyReaction
   , asciifyFile
   ) where
 
+import Bot.BttvFfz
+import Bot.Replies
 import Codec.Picture
 import Data.Bits
 import qualified Data.ByteString as BS
+import qualified Data.ByteString.Lazy as BSL
 import Data.Char
+import Data.Functor
 import Data.Functor.Compose
 import Data.List
+import qualified Data.Map as M
+import Data.Maybe
+import Data.Proxy
 import qualified Data.Text as T
+import Data.Time
+import Data.Time.Extra
 import qualified Data.Vector.Storable as V
 import Data.Word
+import Effect
+import Entity
+import Property
+import Reaction
+import Text.InterpolatedString.QM
+import Transport
 
 type Chunk = Word8
 
@@ -112,3 +129,48 @@ asciifyFile filePath = do
 
 asciifyByteString :: BS.ByteString -> Either String T.Text
 asciifyByteString bytes = asciifyDynamicImage <$> decodeImage bytes
+
+newtype AsciifyState = AsciifyState
+  { asciifyStateLastUsed :: UTCTime
+  }
+
+instance IsEntity AsciifyState where
+  nameOfEntity Proxy = "AsciifyState"
+  toProperties entity =
+    M.fromList [("lastUsed", PropertyUTCTime $ asciifyStateLastUsed entity)]
+  fromProperties properties =
+    AsciifyState <$> extractProperty "lastUsed" properties
+
+currentAsciifyState :: Effect (Entity AsciifyState)
+currentAsciifyState = do
+  maybeState <- listToMaybe <$> selectEntities Proxy All
+  case maybeState of
+    Just state -> return state
+    Nothing -> createEntity Proxy =<< AsciifyState <$> now
+
+asciifyCooldown :: Reaction Message a -> Reaction Message a
+asciifyCooldown next =
+  Reaction $ \msg -> do
+    state <- currentAsciifyState
+    currentTime <- now
+    let diff =
+          diffUTCTime currentTime $ asciifyStateLastUsed $ entityPayload state
+    let cooldown = 2 * 60
+    if diff > cooldown
+      then do
+        void $ updateEntityById $ AsciifyState currentTime <$ state
+        runReaction next msg
+      else replyToSender
+             (messageSender msg)
+             [qms|Command has not cooled down yet:
+                  {humanReadableDiffTime (cooldown - diff)} left.|]
+
+asciifyReaction :: Reaction Message T.Text
+asciifyReaction =
+  liftR ffzUrlByName $
+  replyOnNothing "Such emote does not exist" $
+  asciifyCooldown $
+  cmapR ("https:" ++) $
+  byteStringHttpRequestReaction $
+  cmapR (asciifyByteString . BSL.toStrict) $
+  eitherReaction (Reaction (logMsg . T.pack . messageContent)) sayMessage

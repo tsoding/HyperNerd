@@ -32,13 +32,13 @@ copyPastaFilter reaction =
         timeoutSender penalty sender
         replyToSender
           sender
-          [qms|ASCII spam is only for subs:
-               https://twitch.tv/tsoding/subscribe|]
+          [qms|ASCII spam is not allowed anymore.
+               Use !asciify command.|]
     msg -> runReaction reaction msg
   where
     limit = 100
-    penalty = 300
-    permittedRoles = authorityRoles ++ paidRoles
+    penalty = 30
+    permittedRoles = authorityRoles
 
 countForbiddenCommand :: Reaction Message T.Text
 countForbiddenCommand = cmapR (T.pack . show . countForbidden) sayMessage

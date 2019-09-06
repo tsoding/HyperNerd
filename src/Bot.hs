@@ -9,8 +9,8 @@ module Bot
   , bot
   ) where
 
-import Asciify
 import Bot.Alias
+import Bot.Asciify
 import Bot.BttvFfz
 import Bot.Calc
 import Bot.CopyPasta
@@ -32,7 +32,6 @@ import Bot.Variable
 import Command
 import Control.Comonad
 import Control.Monad
-import qualified Data.ByteString.Lazy as BS
 import Data.Char
 import Data.Either
 import Data.Either.Extra
@@ -73,12 +72,7 @@ builtinCommands =
       , mkBuiltinCommand
           ( "Add quote to quote database"
           , $githubLinkLocationStr
-          , onlyForRoles
-              [qms|Adding quotes is only for subs.
-                   Subscribe to gain the access:
-                   https://twitch.tv/tsoding/subscribe|]
-              (authorityRoles ++ paidRoles)
-              addQuoteCommand))
+          , onlyForMods addQuoteCommand))
     , ( "delquote"
       , mkBuiltinCommand
           ( "Delete quote from quote database"
@@ -417,16 +411,6 @@ builtinCommands =
           ( "Get the link to the current Friday Queue"
           , $githubLinkLocationStr
           , videoQueueCommand))
-    , ( "twitch"
-      , mkBuiltinCommand
-          ( "Send message to Tsoding Twitch channel"
-          , $githubLinkLocationStr
-          , onlyForRoles
-              [qms|Only for subs in Discord.
-                   Subscribe https://twitch.tv/tsoding/subscribe and
-                   join https://discord.gg/KehewYS to use this command.|]
-              [tsodingTwitchedDiscordRole] $
-            liftR (say (TwitchChannel "#tsoding")) ignore))
     , ( "roles"
       , mkBuiltinCommand
           ( "Show your roles"
@@ -523,15 +507,12 @@ builtinCommands =
       , mkBuiltinCommand
           ( "Asciify Twitch, BTTV or FFZ emote"
           , $githubLinkLocationStr
-          , onlyForMods $
-            liftR ffzUrlByName $
-            replyOnNothing "Such emote does not exist" $
-            cmapR ("https:" ++) $
-            byteStringHttpRequestReaction $
-            cmapR (asciifyByteString . BS.toStrict) $
-            eitherReaction
-              (Reaction (logMsg . T.pack . messageContent))
-              sayMessage))
+          , onlyForRoles
+              [qms|ASCII spam is only for subs.
+                   Subscribe here:
+                   https://twitch.tv/tsoding/subscribe|]
+              (authorityRoles ++ paidRoles)
+              asciifyReaction))
     ]
 
 nextStreamCommand :: Reaction Message a
