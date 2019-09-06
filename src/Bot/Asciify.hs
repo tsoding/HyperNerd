@@ -1,5 +1,6 @@
 {-# LANGUAGE BinaryLiterals #-}
 {-# LANGUAGE QuasiQuotes #-}
+{-# LANGUAGE OverloadedStrings #-}
 
 module Bot.Asciify
   ( asciifyReaction
@@ -138,7 +139,7 @@ instance IsEntity AsciifyState where
   toProperties entity =
     M.fromList [("lastUsed", PropertyUTCTime $ asciifyStateLastUsed entity)]
   fromProperties properties =
-    AsciifyState <$> extractProperty "lasUsed" properties
+    AsciifyState <$> extractProperty "lastUsed" properties
 
 currentAsciifyState :: Effect (Entity AsciifyState)
 currentAsciifyState = do
@@ -154,14 +155,15 @@ asciifyCooldown next =
     currentTime <- now
     let diff =
           diffUTCTime currentTime $ asciifyStateLastUsed $ entityPayload state
-    if diff > 60
+    let cooldown = 2 * 60
+    if diff > cooldown
       then do
         void $ updateEntityById $ AsciifyState currentTime <$ state
         runReaction next msg
       else replyToSender
              (messageSender msg)
-             [qms|Command has not cooled down yet.
-                  {humanReadableDiffTime (60 - diff)} left.}|]
+             [qms|Command has not cooled down yet:
+                  {humanReadableDiffTime (cooldown - diff)} left.|]
 
 asciifyReaction :: Reaction Message T.Text
 asciifyReaction =
