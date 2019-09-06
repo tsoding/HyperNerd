@@ -411,16 +411,6 @@ builtinCommands =
           ( "Get the link to the current Friday Queue"
           , $githubLinkLocationStr
           , videoQueueCommand))
-    , ( "twitch"
-      , mkBuiltinCommand
-          ( "Send message to Tsoding Twitch channel"
-          , $githubLinkLocationStr
-          , onlyForRoles
-              [qms|Only for subs in Discord.
-                   Subscribe https://twitch.tv/tsoding/subscribe and
-                   join https://discord.gg/KehewYS to use this command.|]
-              [tsodingTwitchedDiscordRole] $
-            liftR (say (TwitchChannel "#tsoding")) ignore))
     , ( "roles"
       , mkBuiltinCommand
           ( "Show your roles"
