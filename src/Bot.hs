@@ -522,7 +522,12 @@ builtinCommands =
       , mkBuiltinCommand
           ( "Asciify Twitch, BTTV or FFZ emote"
           , $githubLinkLocationStr
-          , onlyForMods asciifyReaction))
+          , onlyForRoles
+              [qms|You have to be trusted to use this command.
+                   Subscribe to gain the trust instantly:
+                   https://twitch.tv/tsoding/subscribe|]
+              (authorityRoles ++ paidRoles)
+              asciifyReaction))
     ]
 
 nextStreamCommand :: Reaction Message a
