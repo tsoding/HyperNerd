@@ -7,30 +7,30 @@ module Bot.Asciify
   , asciifyFile
   ) where
 
+import Bot.BttvFfz
+import Bot.Replies
 import Codec.Picture
 import Data.Bits
 import qualified Data.ByteString as BS
+import qualified Data.ByteString.Lazy as BSL
 import Data.Char
+import Data.Functor
 import Data.Functor.Compose
 import Data.List
+import qualified Data.Map as M
+import Data.Maybe
+import Data.Proxy
 import qualified Data.Text as T
+import Data.Time
+import Data.Time.Extra
 import qualified Data.Vector.Storable as V
 import Data.Word
-import Reaction
-import Transport
-import qualified Data.ByteString.Lazy as BSL
-import Bot.BttvFfz
-import Bot.Replies
 import Effect
 import Entity
-import qualified Data.Map as M
-import Data.Time
 import Property
-import Data.Proxy
-import Data.Maybe
-import Data.Functor
+import Reaction
 import Text.InterpolatedString.QM
-import Data.Time.Extra
+import Transport
 
 type Chunk = Word8
 

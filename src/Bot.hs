@@ -9,8 +9,8 @@ module Bot
   , bot
   ) where
 
-import Bot.Asciify
 import Bot.Alias
+import Bot.Asciify
 import Bot.BttvFfz
 import Bot.Calc
 import Bot.CopyPasta
