@@ -507,11 +507,10 @@ builtinCommands =
       , mkBuiltinCommand
           ( "Asciify Twitch, BTTV or FFZ emote"
           , $githubLinkLocationStr
-          , onlyForRoles
-              [qms|ASCII spam is only for subs.
-                   Subscribe here:
+          , nonEmptyRoles
+              [qms|You have to be trusted to use this command.
+                   Subscribe to gain the trust instantly:
                    https://twitch.tv/tsoding/subscribe|]
-              (authorityRoles ++ paidRoles)
               asciifyReaction))
     ]
 
