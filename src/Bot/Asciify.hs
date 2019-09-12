@@ -10,6 +10,7 @@ module Bot.Asciify
 import Bot.BttvFfz
 import Bot.Replies
 import Codec.Picture
+import Control.Applicative
 import Data.Bits
 import qualified Data.ByteString as BS
 import qualified Data.ByteString.Lazy as BSL
@@ -31,7 +32,6 @@ import Property
 import Reaction
 import Text.InterpolatedString.QM
 import Transport
-import Control.Applicative
 
 type Chunk = Word8
 
