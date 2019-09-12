@@ -52,7 +52,6 @@ cabal-version:       >=1.10
 executable HyperNerd
   ghc-options: -threaded
                -Wall
-               -Werror
                -fwarn-incomplete-patterns
                -fwarn-incomplete-uni-patterns
   -- .hs or .lhs file containing the Main module.
@@ -155,7 +154,6 @@ executable HyperNerd
 executable Markov
   ghc-options:         -threaded
                        -Wall
-                       -Werror
                        -fwarn-incomplete-patterns
                        -fwarn-incomplete-uni-patterns
 
@@ -182,7 +180,6 @@ test-suite HyperNerdTest
   type:                exitcode-stdio-1.0
   ghc-options:         -threaded
                        -Wall
-                       -Werror
                        -fwarn-incomplete-patterns
                        -fwarn-incomplete-uni-patterns
   main-is:             Test.hs
