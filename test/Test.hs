@@ -16,6 +16,7 @@ import qualified Bot.PollTest
 import qualified Bot.TwitchTest
 import qualified CommandTest
 import qualified Sqlite.EntityPersistenceTest
+import qualified Data.Time.ExtraTest
 import System.Exit
 import Test.HUnit
 
@@ -31,6 +32,7 @@ main = do
       , Bot.FridayTest.spec
       , CommandTest.spec
       , Sqlite.EntityPersistenceTest.spec
+      , Data.Time.ExtraTest.spec
       ]
   if errors results + failures results == 0
     then exitSuccess
