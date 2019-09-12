@@ -15,8 +15,8 @@ import qualified Bot.LogTest
 import qualified Bot.PollTest
 import qualified Bot.TwitchTest
 import qualified CommandTest
-import qualified Sqlite.EntityPersistenceTest
 import qualified Data.Time.ExtraTest
+import qualified Sqlite.EntityPersistenceTest
 import System.Exit
 import Test.HUnit
 

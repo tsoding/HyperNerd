@@ -1,12 +1,13 @@
 {-# LANGUAGE QuasiQuotes #-}
 {-# LANGUAGE OverloadedStrings #-}
+
 module Data.Time.ExtraTest where
 
-import Test.HUnit
+import qualified Data.Text as T
 import Data.Time
 import Data.Time.Extra
+import Test.HUnit
 import Text.InterpolatedString.QM
-import qualified Data.Text as T
 
 spec :: Test
 spec =
