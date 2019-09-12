@@ -10,6 +10,7 @@ module Bot.Asciify
 import Bot.BttvFfz
 import Bot.Replies
 import Codec.Picture
+import Control.Applicative
 import Data.Bits
 import qualified Data.ByteString as BS
 import qualified Data.ByteString.Lazy as BSL
@@ -166,10 +167,13 @@ asciifyCooldown next =
 
 asciifyReaction :: Reaction Message T.Text
 asciifyReaction =
-  liftR ffzUrlByName $
+  liftR
+    (\name -> do
+       ffz <- ffzUrlByName name
+       bttv <- bttvUrlByName name
+       return (ffz <|> bttv)) $
   replyOnNothing "Such emote does not exist" $
   asciifyCooldown $
-  cmapR ("https:" ++) $
   byteStringHttpRequestReaction $
   cmapR (asciifyByteString . BSL.toStrict) $
   eitherReaction (Reaction (logMsg . T.pack . messageContent)) $
