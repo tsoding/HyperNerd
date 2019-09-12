@@ -227,6 +227,7 @@ test-suite HyperNerdTest
                      , Bot.GitHub
                      , Data.Maybe.Extra
                      , Data.Time.Extra
+                     , Data.Time.ExtraTest
                      , Regexp
                      , Command
                      , CommandTest
@@ -244,5 +245,7 @@ test-suite HyperNerdTest
                      , Transport
                      , Data.Bool.Extra
                      , Data.Either.Extra
+
+  other-extensions:    OverloadedStrings
 
   default-language:    Haskell2010

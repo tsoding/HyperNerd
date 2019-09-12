@@ -8,11 +8,13 @@ import Data.Time
 import Text.InterpolatedString.QM
 
 humanReadableDiffTime :: NominalDiffTime -> T.Text
-humanReadableDiffTime t =
-  T.pack $
-  unwords $
-  map (\(name, amount) -> [qms|{amount} {name}|]) $
-  filter ((> 0) . snd) components
+humanReadableDiffTime t
+  | t < 1.0 = "< 1 second"
+  | otherwise =
+    T.pack $
+    unwords $
+    map (\(name, amount) -> [qms|{amount} {name}|]) $
+    filter ((> 0) . snd) components
   where
     s :: Int
     s = round t
