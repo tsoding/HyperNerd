@@ -11,6 +11,7 @@ module Bot.BttvFfz
   , updateFfzEmotesCommand
   , updateBttvEmotesCommand
   , ffzUrlByName
+  , bttvUrlByName
   ) where
 
 import Bot.Replies
@@ -95,7 +96,7 @@ instance FromJSON FfzEmote where
       maxUrl (Object v') =
         (\case
            Nothing -> pure Nothing
-           (Just x) -> Just <$> parseJSON x) =<<
+           (Just x) -> Just . ("https:" <>) <$> parseJSON x) =<<
         pure ((`HM.lookup` v') =<< idx)
         where
           idx = listToMaybe $ sortOn Down $ HM.keys v'
@@ -165,3 +166,12 @@ ffzUrlByName name = do
       Proxy
       (Filter (PropertyEquals "name" (PropertyText name)) All)
   pure (T.unpack <$> (ffzLargestImageURL =<< (entityPayload <$> emote)))
+
+bttvUrlByName :: T.Text -> Effect (Maybe String)
+bttvUrlByName name = do
+  emote <-
+    listToMaybe <$>
+    selectEntities
+      Proxy
+      (Filter (PropertyEquals "name" (PropertyText name)) All)
+  pure (T.unpack <$> (bttvLargestImageURL =<< (entityPayload <$> emote)))

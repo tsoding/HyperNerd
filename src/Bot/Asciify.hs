@@ -31,6 +31,7 @@ import Property
 import Reaction
 import Text.InterpolatedString.QM
 import Transport
+import Control.Applicative
 
 type Chunk = Word8
 
@@ -166,10 +167,13 @@ asciifyCooldown next =
 
 asciifyReaction :: Reaction Message T.Text
 asciifyReaction =
-  liftR ffzUrlByName $
+  liftR
+    (\name -> do
+       ffz <- ffzUrlByName name
+       bttv <- bttvUrlByName name
+       return (ffz <|> bttv)) $
   replyOnNothing "Such emote does not exist" $
   asciifyCooldown $
-  cmapR ("https:" ++) $
   byteStringHttpRequestReaction $
   cmapR (asciifyByteString . BSL.toStrict) $
   eitherReaction (Reaction (logMsg . T.pack . messageContent)) $

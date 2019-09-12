@@ -501,7 +501,6 @@ builtinCommands =
           , $githubLinkLocationStr
           , countForbiddenCommand))
     -- TODO(#766): !asciify command does not cache the asciify results
-    -- TODO(#767): !asciify does not support BTTV emotes
     -- TODO(#768): !asciify does not support Twitch emotes
     , ( "asciify"
       , mkBuiltinCommand
