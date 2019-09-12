@@ -50,14 +50,22 @@ instance IsEntity FfzEmote where
     FfzEmote <$> extractProperty "name" properties <*>
     pure (extractProperty "largestImageUrl" properties)
 
-newtype BttvEmote = BttvEmote
+data BttvEmote = BttvEmote
   { bttvName :: T.Text
+  , bttvLargestImageURL :: Maybe T.Text
   }
 
 instance IsEntity BttvEmote where
   nameOfEntity _ = "BttvEmote"
-  toProperties entity = M.fromList [("name", PropertyText $ bttvName entity)]
-  fromProperties properties = BttvEmote <$> extractProperty "name" properties
+  toProperties entity =
+    M.fromList $
+    catMaybes
+      [ return ("name", PropertyText $ bttvName entity)
+      , ("largestImageUrl", ) . PropertyText <$> bttvLargestImageURL entity
+      ]
+  fromProperties properties =
+    BttvEmote <$> extractProperty "name" properties <*>
+    pure (extractProperty "largestImageUrl" properties)
 
 newtype BttvRes = BttvRes
   { bttvResEmotes :: [BttvEmote]
@@ -68,7 +76,12 @@ instance FromJSON BttvRes where
   parseJSON invalid = typeMismatch "BttvRes" invalid
 
 instance FromJSON BttvEmote where
-  parseJSON (Object v) = BttvEmote <$> v .: "code"
+  parseJSON (Object v) = BttvEmote <$> code <*> url
+    where
+      code = v .: "code"
+      url =
+        ((\id' -> "https://cdn.betterttv.net/emote/" <> id' <> "/3x") <$>) <$>
+        (v .: "id")
   parseJSON invalid = typeMismatch "BttvEmote" invalid
 
 newtype FfzRes = FfzRes
