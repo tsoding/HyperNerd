@@ -16,7 +16,6 @@ import Config
 import Control.Concurrent.STM
 import Control.Exception
 import Control.Monad
-import Control.Monad.Free
 import Control.Monad.Trans.Class
 import Control.Monad.Trans.Maybe
 import Data.Foldable
@@ -27,6 +26,7 @@ import qualified Data.Text.Encoding as TE
 import Data.Time
 import qualified Database.SQLite.Simple as SQLite
 import Effect
+import Free
 import Markov
 import Network.HTTP.Simple
 import qualified Network.URI.Encode as URI
