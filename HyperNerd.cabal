@@ -104,6 +104,7 @@ executable HyperNerd
                      , Backdoor
                      , Schedule
                      , Bot.Asciify
+                     , Free
 
   -- LANGUAGE extensions used by modules in this package.
   other-extensions:    OverloadedStrings
@@ -118,7 +119,6 @@ executable HyperNerd
                      , containers
                      , exceptions
                      , file-embed
-                     , free
                      , hookup
                      , http-conduit >= 2.3.2
                      , ini
@@ -193,7 +193,6 @@ test-suite HyperNerdTest
                      , containers
                      , exceptions
                      , file-embed
-                     , free
                      , http-conduit >= 2.3.2
                      , qm-interpolated-string
                      , raw-strings-qq
@@ -245,6 +244,7 @@ test-suite HyperNerdTest
                      , Transport
                      , Data.Bool.Extra
                      , Data.Either.Extra
+                     , Free
 
   other-extensions:    OverloadedStrings
 
