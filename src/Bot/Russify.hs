@@ -46,7 +46,6 @@ mazarusha =
     , ("Y", "У")
     ]
 
-
 demazarusha :: M.Map T.Text T.Text
 demazarusha =
   M.fromList

@@ -6,8 +6,8 @@ import Control.Concurrent.STM
 import Data.Maybe
 import qualified Data.Text as T
 import Data.Word
-import Safe
 import HyperNerd.Comonad
+import Safe
 
 type IncomingQueue = TQueue InEvent
 

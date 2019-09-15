@@ -17,6 +17,7 @@ import Control.Applicative
 import Control.Monad
 import Control.Monad.Trans.Maybe
 import Data.Either
+import Data.Functor.Compose
 import qualified Data.Map as M
 import Data.Maybe
 import Data.Proxy
@@ -30,7 +31,6 @@ import Text.InterpolatedString.QM
 import Text.Regex.TDFA (defaultCompOpt, defaultExecOpt)
 import Text.Regex.TDFA.String
 import Transport
-import Data.Functor.Compose
 
 -- TODO(#264): trusted users system doesn't handle name changes
 newtype TrustedUser = TrustedUser

@@ -2,9 +2,11 @@ module HyperNerd.Comonad where
 
 import Data.Functor.Compose
 
-class Functor w => Comonad w where
-    duplicate :: w a -> w (w a)
-    extract :: w a -> a
+class Functor w =>
+      Comonad w
+  where
+  duplicate :: w a -> w (w a)
+  extract :: w a -> a
 
 instance (Comonad f, Comonad g) => Comonad (Compose f g) where
   extract = extract . extract . getCompose

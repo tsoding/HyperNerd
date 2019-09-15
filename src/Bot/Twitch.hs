@@ -3,7 +3,6 @@
 module Bot.Twitch where
 
 import Bot.Replies
-import HyperNerd.Comonad
 import Data.Aeson
 import Data.Aeson.Types
 import Data.Maybe
@@ -11,6 +10,7 @@ import qualified Data.Text as T
 import Data.Time
 import Data.Time.Extra
 import Effect
+import HyperNerd.Comonad
 import Network.HTTP.Simple
 import qualified Network.URI.Encode as URI
 import Reaction

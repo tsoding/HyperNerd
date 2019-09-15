@@ -30,7 +30,6 @@ import Bot.Russify
 import Bot.Twitch
 import Bot.Variable
 import Command
-import HyperNerd.Comonad
 import Control.Monad
 import Data.Char
 import Data.Either
@@ -47,6 +46,7 @@ import qualified Data.Text as T
 import Data.Time
 import Effect
 import Entity
+import HyperNerd.Comonad
 import Network.HTTP.Simple (parseRequest)
 import qualified Network.URI.Encode as URI
 import Reaction
