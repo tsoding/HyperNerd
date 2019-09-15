@@ -30,7 +30,7 @@ import Bot.Russify
 import Bot.Twitch
 import Bot.Variable
 import Command
-import Control.Comonad
+import HyperNerd.Comonad
 import Control.Monad
 import Data.Char
 import Data.Either

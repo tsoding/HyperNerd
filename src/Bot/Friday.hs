@@ -17,7 +17,7 @@ module Bot.Friday
 import Bot.GitHub
 import Bot.Replies
 import Control.Applicative
-import Control.Comonad
+import HyperNerd.Comonad
 import Control.Monad
 import Data.Bool.Extra
 import Data.Either.Extra

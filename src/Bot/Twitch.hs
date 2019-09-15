@@ -3,7 +3,7 @@
 module Bot.Twitch where
 
 import Bot.Replies
-import Control.Comonad
+import HyperNerd.Comonad
 import Data.Aeson
 import Data.Aeson.Types
 import Data.Maybe

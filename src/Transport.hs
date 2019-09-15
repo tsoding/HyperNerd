@@ -2,12 +2,12 @@
 
 module Transport where
 
-import Control.Comonad
 import Control.Concurrent.STM
 import Data.Maybe
 import qualified Data.Text as T
 import Data.Word
 import Safe
+import HyperNerd.Comonad
 
 type IncomingQueue = TQueue InEvent
 

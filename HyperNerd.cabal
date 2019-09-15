@@ -136,7 +136,6 @@ executable HyperNerd
                      , transformers
                      , unordered-containers
                      , uri-encode
-                     , comonad
                      , random
                      , cassava
                      , discord-haskell >= 0.8.3
@@ -205,7 +204,6 @@ test-suite HyperNerdTest
                      , transformers
                      , unordered-containers
                      , uri-encode
-                     , comonad
                      , stm
                      , regex-base
                      , regex-tdfa

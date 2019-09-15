@@ -3,7 +3,7 @@
 
 module Bot.Replies where
 
-import Control.Comonad
+import HyperNerd.Comonad
 import Data.Aeson
 import qualified Data.ByteString.Lazy as BS
 import qualified Data.Map as M

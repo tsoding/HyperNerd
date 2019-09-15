@@ -1,6 +1,6 @@
 module Reaction where
 
-import Control.Comonad
+import HyperNerd.Comonad
 import Data.Functor
 import Effect
 

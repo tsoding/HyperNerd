@@ -15,7 +15,7 @@ module Bot.BttvFfz
   ) where
 
 import Bot.Replies
-import Control.Comonad
+import HyperNerd.Comonad
 import Control.Monad
 import Data.Aeson
 import Data.Aeson.Types
