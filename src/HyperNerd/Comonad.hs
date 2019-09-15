@@ -1,5 +1,3 @@
-{-# LANGUAGE DeriveFunctor #-}
-
 module HyperNerd.Comonad where
 
 import Data.Functor.Compose
