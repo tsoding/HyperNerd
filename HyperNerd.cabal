@@ -118,7 +118,6 @@ executable HyperNerd
                      , clock
                      , containers
                      , exceptions
-                     , file-embed
                      , hookup
                      , http-conduit >= 2.3.2
                      , ini
@@ -191,7 +190,6 @@ test-suite HyperNerdTest
                      , bytestring
                      , containers
                      , exceptions
-                     , file-embed
                      , http-conduit >= 2.3.2
                      , qm-interpolated-string
                      , raw-strings-qq
