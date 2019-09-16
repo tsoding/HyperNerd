@@ -197,7 +197,6 @@ recurringEventsFrom :: Day -> [Project] -> [Event]
 recurringEventsFrom day projects =
   projectsOfDay day projects ++ recurringEventsFrom (succ day) projects
 
-
 eventsFrom :: Day -> Schedule -> [Event]
 eventsFrom day schedule@Schedule { scheduleTimezone = timezone
                                  , scheduleCancelledEvents = cancelledIds
@@ -227,7 +226,6 @@ eventsFrom day schedule@Schedule { scheduleTimezone = timezone
     patchEvent :: Event -> Event
     patchEvent event =
       maybe event (applyPatch event) $ M.lookup (eventId timezone event) patches
-
 
 nextEvent :: Schedule -> UTCTime -> Either String Event
 nextEvent schedule timePoint =
