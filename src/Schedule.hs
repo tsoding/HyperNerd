@@ -197,18 +197,37 @@ recurringEventsFrom :: Day -> [Project] -> [Event]
 recurringEventsFrom day projects =
   projectsOfDay day projects ++ recurringEventsFrom (succ day) projects
 
+
 eventsFrom :: Day -> Schedule -> [Event]
-eventsFrom day schedule =
-  sortBy (compare `on` eventDate) (extraEvents <> recurringEvents)
+eventsFrom day schedule@Schedule { scheduleTimezone = timezone
+                                 , scheduleCancelledEvents = cancelledIds
+                                 , schedulePatches = patches
+                                 } =
+  sortBy
+    (compare `on` eventDate)
+    (map patchEvent (extraEvents <> recurringEvents))
   where
-    cancelledIds = scheduleCancelledEvents schedule
     recurringEvents =
       take 100 $
-      cancelEvents (scheduleTimezone schedule) cancelledIds $
+      cancelEvents timezone cancelledIds $
       recurringEventsFrom day $ scheduleProject schedule
     extraEvents =
-      cancelEvents (scheduleTimezone schedule) cancelledIds $
+      cancelEvents timezone cancelledIds $
       filter ((>= day) . eventDate) $ scheduleExtraEvents schedule
+    applyPatch :: Event -> EventPatch -> Event
+    applyPatch event patch =
+      event
+        { eventTitle = fromMaybe (eventTitle event) (eventPatchTitle patch)
+        , eventDescription =
+            fromMaybe (eventDescription event) (eventPatchDescription patch)
+        , eventUrl = fromMaybe (eventUrl event) (eventPatchUrl patch)
+        , eventChannel =
+            fromMaybe (eventChannel event) (eventPatchChannel patch)
+        }
+    patchEvent :: Event -> Event
+    patchEvent event =
+      maybe event (applyPatch event) $ M.lookup (eventId timezone event) patches
+
 
 nextEvent :: Schedule -> UTCTime -> Either String Event
 nextEvent schedule timePoint =
