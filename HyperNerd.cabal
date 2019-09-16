@@ -118,7 +118,6 @@ executable HyperNerd
                      , clock
                      , containers
                      , exceptions
-                     , file-embed
                      , hookup
                      , http-conduit >= 2.3.2
                      , ini
@@ -136,7 +135,6 @@ executable HyperNerd
                      , transformers
                      , unordered-containers
                      , uri-encode
-                     , comonad
                      , random
                      , cassava
                      , discord-haskell >= 0.8.3
@@ -192,7 +190,6 @@ test-suite HyperNerdTest
                      , bytestring
                      , containers
                      , exceptions
-                     , file-embed
                      , http-conduit >= 2.3.2
                      , qm-interpolated-string
                      , raw-strings-qq
@@ -205,7 +202,6 @@ test-suite HyperNerdTest
                      , transformers
                      , unordered-containers
                      , uri-encode
-                     , comonad
                      , stm
                      , regex-base
                      , regex-tdfa

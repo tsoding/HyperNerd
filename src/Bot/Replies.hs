@@ -3,12 +3,12 @@
 
 module Bot.Replies where
 
-import Control.Comonad
 import Data.Aeson
 import qualified Data.ByteString.Lazy as BS
 import qualified Data.Map as M
 import qualified Data.Text as T
 import Effect
+import HyperNerd.Comonad
 import Network.HTTP.Simple (getResponseBody, parseRequest)
 import Reaction
 import Regexp

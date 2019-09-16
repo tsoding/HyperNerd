@@ -17,7 +17,6 @@ module Bot.Friday
 import Bot.GitHub
 import Bot.Replies
 import Control.Applicative
-import Control.Comonad
 import Control.Monad
 import Data.Bool.Extra
 import Data.Either.Extra
@@ -31,6 +30,7 @@ import qualified Data.Text as T
 import Data.Time
 import Effect
 import Entity
+import HyperNerd.Comonad
 import Property
 import Reaction
 import Regexp

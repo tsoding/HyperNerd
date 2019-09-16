@@ -1,8 +1,8 @@
 module Reaction where
 
-import Control.Comonad
 import Data.Functor
 import Effect
+import HyperNerd.Comonad
 
 newtype Reaction w a = Reaction
   { runReaction :: w a -> Effect ()

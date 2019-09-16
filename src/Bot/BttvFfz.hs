@@ -15,7 +15,6 @@ module Bot.BttvFfz
   ) where
 
 import Bot.Replies
-import Control.Comonad
 import Control.Monad
 import Data.Aeson
 import Data.Aeson.Types
@@ -28,6 +27,7 @@ import Data.Proxy
 import qualified Data.Text as T
 import Effect
 import Entity
+import HyperNerd.Comonad
 import qualified Network.URI.Encode as URI
 import Property
 import Reaction

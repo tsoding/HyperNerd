@@ -17,13 +17,13 @@ import Control.Applicative
 import Control.Monad
 import Control.Monad.Trans.Maybe
 import Data.Either
+import Data.Functor.Compose
 import qualified Data.Map as M
 import Data.Maybe
 import Data.Proxy
 import qualified Data.Text as T
 import Effect
 import Entity
-import HyperNerd.Comonad
 import HyperNerd.Functor
 import Property
 import Reaction
@@ -110,10 +110,10 @@ istrustedCommand :: Reaction Message T.Text
 istrustedCommand =
   cmapR (T.strip . T.toLower) $
   cmapR (join (,)) $
-  transR ComposeCC $
+  transR Compose $
   liftR (runMaybeT . findTrustedUser) $
   cmapR (maybe " is not trusted PepeHands" (const " is trusted Pog")) $
-  transR getComposeCC $ cmapR (uncurry T.append) $ Reaction replyMessage
+  transR getCompose $ cmapR (uncurry T.append) $ Reaction replyMessage
 
 internalSenderRoles :: Sender -> Effect Sender
 internalSenderRoles sender = do
