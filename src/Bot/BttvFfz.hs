@@ -169,8 +169,7 @@ updateFfzGlobalEmotes =
   jsonHttpRequestReaction $
   cmapR
     (\res ->
-       concat $
-       map ffzSetEmotes $
+       concatMap ffzSetEmotes $
        mapMaybe ((`M.lookup` ffzGlobalResSets res) . T.pack . show) $
        ffzGlobalResDefaultSets res) $
   liftR (traverse $ createEntity Proxy) ignore
