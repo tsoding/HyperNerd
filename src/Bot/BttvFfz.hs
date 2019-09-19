@@ -106,7 +106,6 @@ newtype FfzRes = FfzRes
   { ffzResEmotes :: [FfzEmote]
   }
 
-
 instance FromJSON FfzEmote where
   parseJSON (Object v) = FfzEmote <$> v .: "name" <*> (v .: "urls" >>= maxUrl)
     where
@@ -147,7 +146,6 @@ bttvCommand :: Reaction Message ()
 bttvCommand =
   liftR (const $ selectEntities Proxy All) $
   cmapR (T.concat . intersperse " " . map (bttvName . entityPayload)) sayMessage
-
 
 updateBttvEmotesCommand :: Reaction Message ()
 updateBttvEmotesCommand =
