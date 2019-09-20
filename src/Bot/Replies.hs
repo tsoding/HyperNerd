@@ -87,6 +87,13 @@ nonEmptyRoles reply reaction =
     (cmapR (const reply) $ Reaction replyMessage)
     (cmapR extract reaction)
 
+onlyForTwitch :: Reaction Message a -> Reaction Message a
+onlyForTwitch reaction =
+  Reaction $ \msg ->
+    case senderChannel $ messageSender msg of
+      TwitchChannel _ -> runReaction reaction msg
+      _ -> replyMessage ("Works only in Twitch channels" <$ msg)
+
 subcommand :: [(T.Text, Reaction Message T.Text)] -> Reaction Message T.Text
 subcommand subcommandList =
   cmapR (regexParseArgs "([a-zA-Z0-9]*) *(.*)") $

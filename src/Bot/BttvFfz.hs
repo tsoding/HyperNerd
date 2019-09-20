@@ -85,6 +85,23 @@ instance FromJSON BttvEmote where
         (v .: "id")
   parseJSON invalid = typeMismatch "BttvEmote" invalid
 
+newtype FfzSet = FfzSet
+  { ffzSetEmotes :: [FfzEmote]
+  }
+
+instance FromJSON FfzSet where
+  parseJSON (Object v) = FfzSet <$> (v .: "emoticons")
+  parseJSON invalid = typeMismatch "FfzSet" invalid
+
+data FfzGlobalRes = FfzGlobalRes
+  { ffzGlobalResDefaultSets :: [Int]
+  , ffzGlobalResSets :: M.Map T.Text FfzSet
+  }
+
+instance FromJSON FfzGlobalRes where
+  parseJSON (Object v) = FfzGlobalRes <$> v .: "default_sets" <*> v .: "sets"
+  parseJSON invalid = typeMismatch "FfzGlobalRes" invalid
+
 newtype FfzRes = FfzRes
   { ffzResEmotes :: [FfzEmote]
   }
@@ -130,20 +147,6 @@ bttvCommand =
   liftR (const $ selectEntities Proxy All) $
   cmapR (T.concat . intersperse " " . map (bttvName . entityPayload)) sayMessage
 
-updateFfzEmotesCommand :: Reaction Message ()
-updateFfzEmotesCommand =
-  transR duplicate $
-  cmapR (twitchChannelName . senderChannel . messageSender) $
-  replyOnNothing "Only works in Twitch channels" $
-  cmapR ffzUrl $
-  jsonHttpRequestReaction $
-  cmapR ffzResEmotes $
-  liftR
-    (\emotes -> do
-       void $ deleteEntities (Proxy :: Proxy FfzEmote) All
-       traverse (createEntity Proxy) emotes) $
-  cmapR (T.concat . intersperse " " . map (ffzName . entityPayload)) sayMessage
-
 updateBttvEmotesCommand :: Reaction Message ()
 updateBttvEmotesCommand =
   transR duplicate $
@@ -157,6 +160,37 @@ updateBttvEmotesCommand =
        void $ deleteEntities (Proxy :: Proxy BttvEmote) All
        traverse (createEntity Proxy) emotes) $
   cmapR (T.concat . intersperse " " . map (bttvName . entityPayload)) sayMessage
+
+updateFfzGlobalEmotes :: Reaction Message a
+updateFfzGlobalEmotes =
+  cmapR (const "https://api.frankerfacez.com/v1/set/global") $
+  jsonHttpRequestReaction $
+  cmapR
+    (\res ->
+       concatMap ffzSetEmotes $
+       mapMaybe ((`M.lookup` ffzGlobalResSets res) . T.pack . show) $
+       ffzGlobalResDefaultSets res) $
+  liftR (traverse $ createEntity Proxy) ignore
+
+cleanFfzCache :: Reaction Message a
+cleanFfzCache =
+  Reaction $ \_ -> void $ deleteEntities (Proxy :: Proxy FfzEmote) All
+
+updateFfzLocalEmotes :: Reaction Message a
+updateFfzLocalEmotes =
+  transR duplicate $
+  cmapR (twitchChannelName . senderChannel . messageSender) $
+  replyOnNothing "Works only in Twitch channels" $
+  cmapR ffzUrl $
+  jsonHttpRequestReaction $
+  cmapR ffzResEmotes $ liftR (traverse $ createEntity Proxy) ignore
+
+updateFfzEmotesCommand :: Reaction Message a
+updateFfzEmotesCommand = onlyForTwitch f
+  where
+    f =
+      cleanFfzCache <> updateFfzGlobalEmotes <> updateFfzLocalEmotes <>
+      Reaction (\msg -> replyMessage ("FFZ cache has been updated" <$ msg))
 
 ffzUrlByName :: T.Text -> Effect (Maybe String)
 ffzUrlByName name = do
