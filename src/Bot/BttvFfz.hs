@@ -180,15 +180,17 @@ updateFfzLocalEmotes :: Reaction Message a
 updateFfzLocalEmotes =
   transR duplicate $
   cmapR (twitchChannelName . senderChannel . messageSender) $
-  replyOnNothing "Only works in Twitch channels" $
+  replyOnNothing "Works only in Twitch channels" $
   cmapR ffzUrl $
   jsonHttpRequestReaction $
   cmapR ffzResEmotes $ liftR (traverse $ createEntity Proxy) ignore
 
 updateFfzEmotesCommand :: Reaction Message a
-updateFfzEmotesCommand =
-  cleanFfzCache <> updateFfzGlobalEmotes <> updateFfzLocalEmotes <>
-  Reaction (\msg -> replyMessage ("FFZ cache has been updated" <$ msg))
+updateFfzEmotesCommand = onlyForTwitch f
+  where
+    f =
+      cleanFfzCache <> updateFfzGlobalEmotes <> updateFfzLocalEmotes <>
+      Reaction (\msg -> replyMessage ("FFZ cache has been updated" <$ msg))
 
 ffzUrlByName :: T.Text -> Effect (Maybe String)
 ffzUrlByName name = do
