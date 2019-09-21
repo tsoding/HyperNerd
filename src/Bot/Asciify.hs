@@ -19,11 +19,11 @@ import Data.Time
 import Data.Time.Extra
 import Effect
 import Entity
+import Louis
 import Property
 import Reaction
 import Text.InterpolatedString.QM
 import Transport
-import Louis
 
 newtype AsciifyState = AsciifyState
   { asciifyStateLastUsed :: UTCTime
