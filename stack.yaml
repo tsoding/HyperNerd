@@ -43,6 +43,7 @@ extra-deps:
 - hookup-0.2.2
 - irc-core-2.5.0
 - discord-haskell-0.8.3
+- louis-0.1.0.2
 
 # Override default flag values for local packages and extra-deps
 

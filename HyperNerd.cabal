@@ -137,11 +137,12 @@ executable HyperNerd
                      , uri-encode
                      , random
                      , cassava
-                     , discord-haskell >= 0.8.3
+                     , discord-haskell <= 0.8.3
                      , template-haskell
                      , http-types
                      , JuicyPixels
                      , vector
+                     , louis == 0.1.0.2
 
   -- Directories containing source files.
   hs-source-dirs:      src
@@ -205,7 +206,7 @@ test-suite HyperNerdTest
                      , stm
                      , regex-base
                      , regex-tdfa
-                     , discord-haskell >= 0.8.3
+                     , discord-haskell <= 0.8.3
                      , array
                      , http-types
 
