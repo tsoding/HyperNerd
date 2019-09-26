@@ -46,7 +46,7 @@ ytLinkIdTest =
        ytLinkId input)
     [ ("https://www.youtube.com/watch?v=etMJxBigrc", Just "etMJxBigrc")
     -- TODO(#669): ytLinkIdTest is failing
-    -- , ("https://www.youtube.com/watch?v=etMJxB-igrc", Just "etMJxB-igrc")
+    , ("https://www.youtube.com/watch?v=etMJxB-igrc", Just "etMJxB-igrc")
     ]
 
 spec :: Test

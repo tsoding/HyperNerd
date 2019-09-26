@@ -105,7 +105,7 @@ ytLinkId text =
      _ -> Nothing) =<<
   rightToMaybe
     (regexParseArgs
-       "https?:\\/\\/(www\\.)?youtu(be\\.com\\/watch\\?v=|\\.be\\/)([a-zA-Z0-9\\-\\_]+)"
+       "https?:\\/\\/(www\\.)?youtu(be\\.com\\/watch\\?v=|\\.be\\/)([a-zA-Z0-9_-]+)"
        text)
 
 fridayCommand :: Reaction Message T.Text
