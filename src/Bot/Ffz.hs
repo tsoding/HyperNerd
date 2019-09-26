@@ -5,26 +5,30 @@
 {-# LANGUAGE TupleSections #-}
 {-# LANGUAGE LambdaCase #-}
 
-module Bot.Ffz (ffzUrlByName, ffzCommand, updateFfzEmotesCommand) where
+module Bot.Ffz
+  ( ffzUrlByName
+  , ffzCommand
+  , updateFfzEmotesCommand
+  ) where
 
-import Entity
-import Data.Aeson.Types
-import qualified Data.Text as T
-import qualified Data.Map as M
-import qualified Data.HashMap.Strict as HM
-import Text.InterpolatedString.QM
-import qualified Network.URI.Encode as URI
-import Reaction
-import Transport
-import Effect
-import Data.Proxy
-import Data.Maybe
-import Property
-import Data.List
-import Data.Ord
 import Bot.Replies
+import Data.Aeson.Types
 import Data.Functor
+import qualified Data.HashMap.Strict as HM
+import Data.List
+import qualified Data.Map as M
+import Data.Maybe
+import Data.Ord
+import Data.Proxy
+import qualified Data.Text as T
+import Effect
+import Entity
 import HyperNerd.Comonad
+import qualified Network.URI.Encode as URI
+import Property
+import Reaction
+import Text.InterpolatedString.QM
+import Transport
 
 data FfzEmote = FfzEmote
   { ffzName :: T.Text
@@ -125,7 +129,6 @@ updateFfzEmotesCommand = onlyForTwitch f
     f =
       cleanFfzCache <> updateFfzGlobalEmotes <> updateFfzLocalEmotes <>
       Reaction (\msg -> replyMessage ("FFZ cache has been updated" <$ msg))
-
 
 ffzUrlByName :: T.Text -> Effect (Maybe String)
 ffzUrlByName name = do

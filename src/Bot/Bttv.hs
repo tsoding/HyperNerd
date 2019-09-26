@@ -72,8 +72,6 @@ bttvCommand =
   liftR (const $ selectEntities Proxy All) $
   cmapR (T.concat . intersperse " " . map (bttvName . entityPayload)) sayMessage
 
-
-
 bttvUrlByName :: T.Text -> Effect (Maybe String)
 bttvUrlByName name = do
   emote <-
