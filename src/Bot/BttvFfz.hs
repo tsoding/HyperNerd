@@ -147,19 +147,6 @@ bttvCommand =
   liftR (const $ selectEntities Proxy All) $
   cmapR (T.concat . intersperse " " . map (bttvName . entityPayload)) sayMessage
 
-updateBttvEmotesCommand :: Reaction Message ()
-updateBttvEmotesCommand =
-  transR duplicate $
-  cmapR (twitchChannelName . senderChannel . messageSender) $
-  replyOnNothing "Only works in Twitch channels" $
-  cmapR bttvUrl $
-  jsonHttpRequestReaction $
-  cmapR bttvResEmotes $
-  liftR
-    (\emotes -> do
-       void $ deleteEntities (Proxy :: Proxy BttvEmote) All
-       traverse (createEntity Proxy) emotes) $
-  cmapR (T.concat . intersperse " " . map (bttvName . entityPayload)) sayMessage
 
 updateFfzGlobalEmotes :: Reaction Message a
 updateFfzGlobalEmotes =
@@ -209,3 +196,29 @@ bttvUrlByName name = do
       Proxy
       (Filter (PropertyEquals "name" (PropertyText name)) All)
   pure (T.unpack <$> (bttvLargestImageURL =<< (entityPayload <$> emote)))
+
+cleanBttvCache :: Reaction Message a
+cleanBttvCache =
+  Reaction $ \_ -> void $ deleteEntities (Proxy :: Proxy BttvEmote) All
+
+updateBttvGlobalEmotes :: Reaction Message a
+updateBttvGlobalEmotes =
+  cmapR (const "https://api.betterttv.net/2/emotes") $
+  jsonHttpRequestReaction $
+  liftR (traverse (createEntity Proxy) . bttvResEmotes) ignore
+
+updateBttvLocalEmotes :: Reaction Message a
+updateBttvLocalEmotes =
+  transR duplicate $
+  cmapR (twitchChannelName . senderChannel . messageSender) $
+  replyOnNothing "Only works in Twitch channels" $
+  cmapR bttvUrl $
+  jsonHttpRequestReaction $
+  cmapR bttvResEmotes $ liftR (traverse $ createEntity Proxy) ignore
+
+updateBttvEmotesCommand :: Reaction Message a
+updateBttvEmotesCommand = onlyForTwitch f
+  where
+    f =
+      cleanBttvCache <> updateBttvGlobalEmotes <> updateBttvLocalEmotes <>
+      Reaction (\msg -> replyMessage ("BTTV cache has been updated" <$ msg))
