@@ -5,7 +5,7 @@
 {-# LANGUAGE TupleSections #-}
 {-# LANGUAGE LambdaCase #-}
 
-module Bot.BttvFfz
+module Bot.Bttv
   ( bttvCommand
   , updateBttvEmotesCommand
   , bttvUrlByName

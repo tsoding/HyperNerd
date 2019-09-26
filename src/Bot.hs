@@ -11,7 +11,7 @@ module Bot
 
 import Bot.Alias
 import Bot.Asciify
-import Bot.BttvFfz
+import Bot.Bttv
 import Bot.Ffz
 import Bot.Calc
 import Bot.CopyPasta
