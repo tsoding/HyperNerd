@@ -11,12 +11,13 @@ module Bot
 
 import Bot.Alias
 import Bot.Asciify
-import Bot.BttvFfz
+import Bot.Bttv
 import Bot.Calc
 import Bot.CopyPasta
 import Bot.CustomCommand
 import Bot.DocLoc
 import Bot.Dubtrack
+import Bot.Ffz
 import Bot.Friday
 import Bot.Help
 import Bot.Links

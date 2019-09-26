@@ -6,7 +6,8 @@ module Bot.Asciify
   ( asciifyReaction
   ) where
 
-import Bot.BttvFfz
+import Bot.Bttv
+import Bot.Ffz
 import Bot.Replies
 import Control.Applicative
 import qualified Data.ByteString.Lazy as BSL
