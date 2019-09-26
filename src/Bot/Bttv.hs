@@ -3,7 +3,6 @@
 {-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE QuasiQuotes #-}
 {-# LANGUAGE TupleSections #-}
-{-# LANGUAGE LambdaCase #-}
 
 module Bot.Bttv
   ( bttvCommand
