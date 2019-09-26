@@ -61,6 +61,7 @@ executable HyperNerd
   other-modules:       Bot
                      , Bot.Alias
                      , Bot.BttvFfz
+                     , Bot.Ffz
                      , Bot.CustomCommand
                      , Bot.Dubtrack
                      , Bot.Friday
