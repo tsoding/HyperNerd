@@ -229,9 +229,11 @@ renderQueue queue@(FridayVideo {fridayVideoAuthor = user}:_) =
         |] :) $
   map
     (\video ->
-       [qms||{fridayVideoDate video}
-            |{fridayVideoAuthor video}
-            |{fridayVideoName video}||])
+       let ytId = fromMaybe "dQw4w9WgXcQ" $ ytLinkId $ fridayVideoName video
+        in [qms||{fridayVideoDate video}
+                |{fridayVideoAuthor video}
+                |{fridayVideoName video}
+                |[[https://img.youtube.com/vi/{ytId}/default.jpg]]||])
     queue
 renderQueue [] = ""
 
