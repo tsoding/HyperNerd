@@ -12,6 +12,10 @@ Second iteration of [Tsoder][tsoder]. Chat bot for [Tsoding][tsoding] streams.
 
 ### NixOS
 
+Keep in mind that we are not using any Haskell packages from nixpkgs. All of the dependencies are supposed to be downloaded by cabal or stack during the build.
+
+#### Cabal v1-build
+
 ```console
 $ nix-shell
 $ cabal sandbox init
@@ -20,6 +24,17 @@ $ cabal install --only-dependencies --enable-tests
 $ cabal build
 $ cabal test
 $ cabal run HyperNerd secret.ini database.db
+```
+
+#### Cabal v2-build
+
+See [Nix-style Local Builds](https://www.haskell.org/cabal/users-guide/nix-local-build-overview.html) for more info
+
+```console
+$ nix-shell
+$ cabal v2-build
+$ cabal v2-test
+$ cabal v2-run exe:HyperNerd secret.ini database.db
 ```
 
 ### Stack
