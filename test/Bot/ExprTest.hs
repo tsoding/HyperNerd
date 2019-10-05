@@ -4,7 +4,7 @@ module Bot.ExprTest where
 import Test.HUnit
 import Bot.Expr
 
--- TODO: Let's fuzz Bot.Expr.exprs to make sure that it has expected behaviour
+-- TODO(#801): Let's fuzz Bot.Expr.exprs to make sure that it has expected behaviour
 exprsTest :: Test
 exprsTest =
   TestLabel "Expression parsing" $
