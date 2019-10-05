@@ -3,13 +3,13 @@
 
 module Bot.Expr where
 
-import qualified Data.Text as T
-import Effect
 import Control.Applicative
-import Data.Tuple
 import Data.Char
--- import Control.Monad
+import qualified Data.Text as T
+import Data.Tuple
+import Effect
 
+-- import Control.Monad
 data Expr
   = TextExpr T.Text
   | FunCallExpr T.Text
@@ -22,11 +22,11 @@ type NameTable = ()
 data ParserStop
   = EOF
   | SyntaxError T.Text
-    deriving (Eq, Show)
+  deriving (Eq, Show)
 
 newtype Parser a = Parser
   { runParser :: T.Text -> Either ParserStop (T.Text, a)
-  } deriving Functor
+  } deriving (Functor)
 
 instance Applicative Parser where
   pure x = Parser $ \text -> Right (text, x)
