@@ -9,7 +9,6 @@ import qualified Data.Text as T
 import Data.Tuple
 import Effect
 
--- import Control.Monad
 data Expr
   = TextExpr T.Text
   | FunCallExpr T.Text
