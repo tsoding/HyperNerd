@@ -22,7 +22,7 @@ type NameTable = ()
 data ParserStop
   = EOF
   | SyntaxError T.Text
-    deriving Show
+    deriving (Eq, Show)
 
 newtype Parser a = Parser
   { runParser :: T.Text -> Either ParserStop (T.Text, a)
@@ -68,11 +68,13 @@ sepBy element sep = do
 
 funcall :: Parser Expr
 funcall = do
-  _ <- charP '%'
+  _ <- charP '%' >> whitespaces
   name <- symbol
-  _ <- charP '('
-  args <- sepBy (funcall <|> var <|> stringLiteral) (charP ',') <|> return []
-  _ <- charP ')'
+  _ <- whitespaces >> charP '(' >> whitespaces
+  args <-
+    sepBy (funcall <|> var <|> stringLiteral) (whitespaces >> charP ',') <|>
+    return []
+  _ <- whitespaces >> charP ')'
   return $ FunCallExpr name args
 
 charP :: Char -> Parser Char
@@ -97,10 +99,11 @@ notNull message next =
        then syntaxError message
        else return value)
 
+whitespaces :: Parser T.Text
+whitespaces = takeWhileP isSpace
+
 var :: Parser Expr
-var = do
-  _ <- charP '%'
-  VarExpr <$> symbol
+var = charP '%' >> whitespaces >> (VarExpr <$> symbol)
 
 textBlock :: Parser Expr
 textBlock =
@@ -111,7 +114,7 @@ textBlock =
       _ -> return $ fmap TextExpr $ swap $ T.span (/= '%') input
 
 expr :: Parser Expr
-expr = textBlock <|> funcall <|> var
+expr = funcall <|> var <|> textBlock
 
 exprs :: Parser [Expr]
 exprs = many expr

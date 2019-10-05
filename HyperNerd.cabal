@@ -243,6 +243,8 @@ test-suite HyperNerdTest
                      , Data.Bool.Extra
                      , Data.Either.Extra
                      , Free
+                     , Bot.Expr
+                     , Bot.ExprTest
 
   other-extensions:    OverloadedStrings
 
