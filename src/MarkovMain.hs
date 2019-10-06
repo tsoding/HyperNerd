@@ -11,16 +11,20 @@ import Markov
 import Safe
 import System.Environment
 import Text.InterpolatedString.QM
+import Data.Maybe
 
 asteriskCorrectionFilter :: [T.Text] -> [T.Text]
 asteriskCorrectionFilter = filter ((/= '*') . T.last)
 
+firstIsNot :: Char -> T.Text -> Bool
+firstIsNot x = fromMaybe False . fmap ((/= x) . fst) . T.uncons
+
 mentionsFilter :: [T.Text] -> [T.Text]
 mentionsFilter =
-  filter (not . T.null) . map (T.unwords . filter ((/= '@') . T.head) . T.words)
+  filter (not . T.null) . map (T.unwords . filter (firstIsNot '@') . T.words)
 
 commandsFilter :: [T.Text] -> [T.Text]
-commandsFilter = filter ((/= '!') . T.head)
+commandsFilter = filter (firstIsNot '!')
 
 trainTextMain :: [String] -> IO ()
 trainTextMain (textPath:output:_) = file2Markov textPath >>= saveMarkov output
