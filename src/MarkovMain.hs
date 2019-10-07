@@ -11,13 +11,12 @@ import Markov
 import Safe
 import System.Environment
 import Text.InterpolatedString.QM
-import Data.Maybe
 
 asteriskCorrectionFilter :: [T.Text] -> [T.Text]
 asteriskCorrectionFilter = filter ((/= '*') . T.last)
 
 firstIsNot :: Char -> T.Text -> Bool
-firstIsNot x = fromMaybe False . fmap ((/= x) . fst) . T.uncons
+firstIsNot x = maybe False ((/= x) . fst) . T.uncons
 
 mentionsFilter :: [T.Text] -> [T.Text]
 mentionsFilter =

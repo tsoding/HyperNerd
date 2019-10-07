@@ -1,8 +1,9 @@
 {-# LANGUAGE OverloadedStrings #-}
+
 module Bot.ExprTest where
 
-import Test.HUnit
 import Bot.Expr
+import Test.HUnit
 
 -- TODO(#801): Let's fuzz Bot.Expr.exprs to make sure that it has expected behaviour
 exprsTest :: Test
@@ -50,7 +51,7 @@ exprsTest =
             , VarExpr "k"
             , TextExpr " baz ()"
             ]))
-    , ("%f(%x)", Right ("",[FunCallExpr "f" [VarExpr "x"]]))
+    , ("%f(%x)", Right ("", [FunCallExpr "f" [VarExpr "x"]]))
     , ( "\"hello %x world\""
       , Right ("", [TextExpr "\"hello ", VarExpr "x", TextExpr " world\""]))
     ]

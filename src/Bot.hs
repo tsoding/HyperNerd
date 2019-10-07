@@ -565,7 +565,7 @@ shuffle t = fromMaybe t $ headMay $ drop 100 $ iterate swapDeck t
 
 replaceAt :: Int -> T.Text -> T.Text -> T.Text
 replaceAt i rep input =
-  fromMaybe input $ fmap (T.append (T.append left rep) . snd) $ T.uncons right
+  maybe input (T.append (T.append left rep) . snd) (T.uncons right)
   where
     (left, right) = T.splitAt i input
 
