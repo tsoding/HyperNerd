@@ -564,7 +564,8 @@ shuffle :: RandomGen gen => ([a], gen) -> ([a], gen)
 shuffle t = fromMaybe t $ headMay $ drop 100 $ iterate swapDeck t
 
 replaceAt :: Int -> T.Text -> T.Text -> T.Text
-replaceAt i rep input = T.concat [left, rep, T.tail right]
+replaceAt i rep input =
+  maybe input (T.append (T.append left rep) . snd) (T.uncons right)
   where
     (left, right) = T.splitAt i input
 

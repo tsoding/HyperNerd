@@ -13,14 +13,20 @@ import System.Environment
 import Text.InterpolatedString.QM
 
 asteriskCorrectionFilter :: [T.Text] -> [T.Text]
-asteriskCorrectionFilter = filter ((/= '*') . T.last)
+asteriskCorrectionFilter = filter $ lastIsNot '*'
+
+firstIsNot :: Char -> T.Text -> Bool
+firstIsNot x = maybe False ((/= x) . fst) . T.uncons
+
+lastIsNot :: Char -> T.Text -> Bool
+lastIsNot x s = T.findIndex (== x) s /= Just (T.length s - 1)
 
 mentionsFilter :: [T.Text] -> [T.Text]
 mentionsFilter =
-  filter (not . T.null) . map (T.unwords . filter ((/= '@') . T.head) . T.words)
+  filter (not . T.null) . map (T.unwords . filter (firstIsNot '@') . T.words)
 
 commandsFilter :: [T.Text] -> [T.Text]
-commandsFilter = filter ((/= '!') . T.head)
+commandsFilter = filter (firstIsNot '!')
 
 trainTextMain :: [String] -> IO ()
 trainTextMain (textPath:output:_) = file2Markov textPath >>= saveMarkov output
