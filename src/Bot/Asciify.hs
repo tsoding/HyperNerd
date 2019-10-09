@@ -44,14 +44,13 @@ currentAsciifyState = do
     Just state -> return state
     Nothing -> createEntity Proxy =<< AsciifyState <$> now
 
-asciifyCooldown :: Reaction Message a -> Reaction Message a
-asciifyCooldown next =
+asciifyCooldown :: NominalDiffTime -> Reaction Message a -> Reaction Message a
+asciifyCooldown cooldown next =
   Reaction $ \msg -> do
     state <- currentAsciifyState
     currentTime <- now
     let diff =
           diffUTCTime currentTime $ asciifyStateLastUsed $ entityPayload state
-    let cooldown = 2 * 60
     if diff > cooldown
       then do
         void $ updateEntityById $ AsciifyState currentTime <$ state
@@ -69,7 +68,7 @@ asciifyReaction =
        bttv <- bttvUrlByName name
        return (ffz <|> bttv)) $
   replyOnNothing "Such emote does not exist" $
-  asciifyCooldown $
+  asciifyCooldown 60 $
   byteStringHttpRequestReaction $
   cmapR (braillizeByteString . BSL.toStrict) $
   eitherReaction (Reaction (logMsg . T.pack . messageContent)) $
