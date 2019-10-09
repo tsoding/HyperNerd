@@ -681,7 +681,7 @@ dispatchPipe = Reaction dispatchPipe'
     dispatchPipe' message@Message { messageSender = Sender {senderRoles = roles}
                                   , messageContent = cmds
                                   }
-      | not (any (`elem` coolRoles) roles) && length cmds > plebPipeLimit =
+      | null roles && length cmds > plebPipeLimit =
         replyMessage $
         fmap
           (const
@@ -689,7 +689,7 @@ dispatchPipe = Reaction dispatchPipe'
                   Subscribe to increase the limit:
                   https://www.twitch.tv/products/tsoding|])
           message
-      | any (`elem` coolRoles) roles && length cmds > pipeLimit =
+      | length cmds > pipeLimit =
         replyMessage $
         fmap
           (const
@@ -701,7 +701,6 @@ dispatchPipe = Reaction dispatchPipe'
       where
         pipeLimit = 10
         plebPipeLimit = 2
-        coolRoles = [tsodingTwitchedDiscordRole, TwitchSub] ++ authorityRoles
 
 dispatchCommand :: Message (Command T.Text) -> Effect ()
 dispatchCommand message = do
