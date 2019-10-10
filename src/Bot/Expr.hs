@@ -65,14 +65,16 @@ sepBy element sep = do
   args <- many (sep >> element)
   return (arg : args)
 
+funcallarg :: Parser Expr
+funcallarg = funcall <|> var <|> stringLiteral
+
 funcall :: Parser Expr
 funcall = do
   _ <- charP '%' >> whitespaces
   name <- symbol
   _ <- whitespaces >> charP '(' >> whitespaces
   args <-
-    sepBy (funcall <|> var <|> stringLiteral) (whitespaces >> charP ',') <|>
-    return []
+    sepBy funcallarg (whitespaces >> charP ',' >> whitespaces) <|> return []
   _ <- whitespaces >> charP ')'
   return $ FunCallExpr name args
 

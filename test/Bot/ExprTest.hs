@@ -52,6 +52,7 @@ exprsTest =
             , TextExpr " baz ()"
             ]))
     , ("%f(%x)", Right ("", [FunCallExpr "f" [VarExpr "x"]]))
+    , ("%f(%x, %y)", Right ("", [FunCallExpr "f" [VarExpr "x", VarExpr "y"]]))
     , ( "\"hello %x world\""
       , Right ("", [TextExpr "\"hello ", VarExpr "x", TextExpr " world\""]))
     ]
