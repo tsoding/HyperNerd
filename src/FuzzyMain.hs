@@ -98,7 +98,7 @@ randomFunCallExpr params = do
 
 randomExpr :: FuzzParams -> IO Expr
 randomExpr params = do
-  n <- (randomRIO (0, 2) :: IO Int)
+  n <- randomRIO (0, 2) :: IO Int
   case n of
     0 -> randomTextExpr params
     1 -> randomVarExpr params
@@ -119,21 +119,20 @@ fuzzIteration :: FuzzParams -> IO Bool
 fuzzIteration params = do
   es <- normalizeExprs <$> randomExprs params
   let es' = runParser exprs $ unparseExprs es
-  when ((Right ("", es)) /= es') $ do
+  when (Right ("", es)) /= es' $ do
     print es
     print es'
     error "test"
-  return ((Right ("", es)) == es')
+  return (Right ("", es)) == es'
 
 fuzz :: FuzzParams -> IO ()
 fuzz params = do
   report <- replicateM (fpFuzzCount params) (fuzzIteration params)
-  printf "Failures: %d\n" $ length $ filter (not . id) report
+  printf "Failures: %d\n" $ length $ filter not report
   printf "Successes: %d\n" $ length $ filter id report
 
 mainWithArgs :: [String] -> IO ()
-mainWithArgs (fuzzParamsPath:_) = do
-  readFuzzParams fuzzParamsPath >>= fuzz
+mainWithArgs (fuzzParamsPath:_) = readFuzzParams fuzzParamsPath >>= fuzz
 mainWithArgs _ = error "Usage: Fuzz <fuzz.json>"
 
 main :: IO ()
