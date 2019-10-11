@@ -8,7 +8,6 @@ import Data.Char
 import qualified Data.Text as T
 import Data.Tuple
 
--- import Effect
 data Expr
   = TextExpr T.Text
   | FunCallExpr T.Text
