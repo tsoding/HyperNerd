@@ -7,7 +7,7 @@ import Control.Applicative
 import Data.Char
 import qualified Data.Text as T
 import Data.Tuple
-import Effect
+-- import Effect
 
 data Expr
   = TextExpr T.Text
@@ -121,5 +121,5 @@ exprs :: Parser [Expr]
 exprs = many expr
 
 -- TODO(#600): interpretExprs is not implemented
-interpretExprs :: NameTable -> [Expr] -> Effect T.Text
-interpretExprs = undefined
+-- interpretExprs :: NameTable -> [Expr] -> Effect T.Text
+-- interpretExprs = undefined
