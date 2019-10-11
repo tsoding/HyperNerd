@@ -119,11 +119,11 @@ fuzzIteration :: FuzzParams -> IO Bool
 fuzzIteration params = do
   es <- normalizeExprs <$> randomExprs params
   let es' = runParser exprs $ unparseExprs es
-  when (Right ("", es)) /= es' $ do
+  when (Right ("", es) /= es') $ do
     print es
     print es'
     error "test"
-  return (Right ("", es)) == es'
+  return (Right ("", es) == es')
 
 fuzz :: FuzzParams -> IO ()
 fuzz params = do
