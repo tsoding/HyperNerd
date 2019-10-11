@@ -2,15 +2,15 @@
 
 module Main where
 
-import qualified Data.Text as T
 import Bot.Expr
-import System.Random
 import Control.Monad
+import Data.Aeson
+import Data.Aeson.Types
 import Data.Char
 import Data.List
-import Data.Aeson.Types
-import Data.Aeson
+import qualified Data.Text as T
 import System.Environment
+import System.Random
 import Text.Printf
 
 data FuzzParams = FuzzParams
@@ -107,7 +107,7 @@ randomExpr params = do
 normalizeExprs :: [Expr] -> [Expr]
 normalizeExprs [] = []
 normalizeExprs (TextExpr t1:TextExpr t2:rest) =
-    normalizeExprs (TextExpr (t1 <> t2):rest)
+  normalizeExprs (TextExpr (t1 <> t2) : rest)
 normalizeExprs (_:rest) = normalizeExprs rest
 
 randomExprs :: FuzzParams -> IO [Expr]
