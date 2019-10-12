@@ -63,8 +63,9 @@ import Transport
 
 type Bot = InEvent -> Effect ()
 
-builtinCommands :: CommandTable
-builtinCommands =
+
+builtinCommands :: ChannelName -> CommandTable
+builtinCommands channel =
   M.fromList
     [ ( "russify"
       , mkBuiltinCommand
@@ -112,7 +113,7 @@ builtinCommands =
             cmapR (const ()) updateBttvEmotesCommand))
     , ( "help"
       , mkBuiltinCommand
-          ("Send help", $githubLinkLocationStr, helpCommand builtinCommands))
+          ("Send help", $githubLinkLocationStr, helpCommand $ builtinCommands channel))
     , ( "poll"
       , mkBuiltinCommand
           ( "Starts a poll. !poll <duration:secs> option1; option2; ...; option3"
@@ -188,7 +189,7 @@ builtinCommands =
             replyOnNothing "Not enough arguments" $
             cmapR (readMay . T.unpack) $
             replyOnNothing "Argument is not a number" $
-            addPeriodicTimerCommand dispatchCommand))
+            addPeriodicTimerCommand $ dispatchCommand channel))
     , ( "deltimer"
       , mkBuiltinCommand
           ( "Remove Periodic Timer"
@@ -224,13 +225,13 @@ builtinCommands =
           , authorizeSender senderAuthority $
             replyOnNothing "Only for mods" $
             regexArgs "([a-zA-Z0-9]+) ?(.*)" $
-            replyLeft $ pairArgs $ replyLeft $ addCustomCommand builtinCommands))
+            replyLeft $ pairArgs $ replyLeft $ addCustomCommand $ builtinCommands channel ))
     , ( "delcmd"
       , mkBuiltinCommand
           ( "Delete custom command"
           , $githubLinkLocationStr
           , authorizeSender senderAuthority $
-            replyOnNothing "Only for mods" $ deleteCustomCommand builtinCommands))
+            replyOnNothing "Only for mods" $ deleteCustomCommand $ builtinCommands channel))
     , ( "updcmd"
       , mkBuiltinCommand
           ( "Update custom command"
@@ -239,7 +240,7 @@ builtinCommands =
             replyOnNothing "Only for mods" $
             regexArgs "([a-zA-Z0-9]+) ?(.*)" $
             replyLeft $
-            pairArgs $ replyLeft $ updateCustomCommand builtinCommands))
+            pairArgs $ replyLeft $ updateCustomCommand $ builtinCommands channel))
                -- TODO(#337): use help instead of !showcmd
     , ( "showcmd"
       , mkBuiltinCommand
@@ -249,7 +250,7 @@ builtinCommands =
             replyLeft $
             cmapR headMay $
             replyOnNothing "Not enough arguments" $
-            showCustomCommand builtinCommands))
+            showCustomCommand $ builtinCommands channel))
     , ( "timescmd"
       , mkBuiltinCommand
           ( "Show amount of times the custom commands was invoked"
@@ -258,7 +259,7 @@ builtinCommands =
             replyLeft $
             cmapR headMay $
             replyOnNothing "Not enough arguments" $
-            timesCustomCommand builtinCommands))
+            timesCustomCommand $ builtinCommands channel))
     , ( "song"
       , mkBuiltinCommand
           ( "Print currently playing song"
@@ -405,7 +406,7 @@ builtinCommands =
           , nonEmptyRoles
               [qms|You have to be trusted to use this command.
                    Subscribe to gain the trust instantly:
-                   https://twitch.tv/tsoding/subscribe|]
+                   https://twitch.tv/{channel'}/subscribe|]
               fridayCommand))
     , ( "videoq"
       , mkBuiltinCommand
@@ -510,9 +511,11 @@ builtinCommands =
           , nonEmptyRoles
               [qms|You have to be trusted to use this command.
                    Subscribe to gain the trust instantly:
-                   https://twitch.tv/tsoding/subscribe|]
+                   https://twitch.tv/{channel'}/subscribe|]
               asciifyReaction))
     ]
+    where
+      channel' = unChannel channel
 
 nextStreamCommand :: Reaction Message a
 nextStreamCommand =
@@ -630,25 +633,25 @@ mention =
          else Nothing <$ msg) $
   ignoreNothing markov
 
-bot :: Bot
-bot Started = do
+bot :: ChannelName -> Bot
+bot channel Started = do
   startRefreshFridayGistTimer
-  startRefreshHelpGistTimer builtinCommands
+  startRefreshHelpGistTimer $ builtinCommands channel
 -- TODO(#656): Restarted Twitch transport thread can duplicate timers
-bot (Joined channel@(TwitchChannel _)) = do
-  startPeriodicCommands channel dispatchCommand
+bot name (Joined channel@(TwitchChannel _)) = do
+  startPeriodicCommands channel $ dispatchCommand name 
   periodicEffect (60 * 1000) (Just channel) (announceRunningPoll channel)
 -- TODO(#550): Periodic commands don't work in Discord channels
-bot (Joined channel@(DiscordChannel _)) =
+bot _ (Joined channel@(DiscordChannel _)) =
   periodicEffect (60 * 1000) (Just channel) (announceRunningPoll channel)
-bot (InMsg msg) =
+bot name (InMsg msg) =
   runReaction
     (dupLiftExtractR internalMessageRoles $
-     copyPastaFilter $ linkFilter messageReaction)
+     copyPastaFilter $ linkFilter name $ messageReaction name)
     msg
 
-messageReaction :: Reaction Message T.Text
-messageReaction =
+messageReaction :: ChannelName -> Reaction Message T.Text
+messageReaction name =
   Reaction $ \msg@Message { messageContent = text
                           , messageSender = sender
                           , messageMentioned = mentioned
@@ -659,23 +662,23 @@ messageReaction =
       [] -> runReaction mention msg
       pipe ->
         runReaction
-          (liftR (mapM redirectAlias) dispatchPipe)
+          (liftR (mapM redirectAlias) $ dispatchPipe name)
           (Message sender mentioned pipe)
 
 -- TODO(#700): dispatchRedirect should add put a space between input and arguments
 --   At the moment it may break a lot of commands that do not T.strip
 --   their input. In the scope of this issue we need to try to
 --   identify how many commands will be affected.q
-dispatchRedirect :: Effect () -> Message (Command T.Text) -> Effect ()
-dispatchRedirect effect cmd = do
+dispatchRedirect :: ChannelName -> Effect () -> Message (Command T.Text) -> Effect ()
+dispatchRedirect name effect cmd = do
   effectOutput <-
     T.strip . T.concat . concatMap (\x -> [" ", x]) <$> listen effect
-  dispatchCommand $
+  dispatchCommand name $
     getCompose ((\x -> T.concat [x, effectOutput]) <$> Compose cmd)
 
 -- TODO(#414): there is not cooldown for pipes
-dispatchPipe :: Reaction Message [Command T.Text]
-dispatchPipe = Reaction dispatchPipe'
+dispatchPipe :: ChannelName -> Reaction Message [Command T.Text]
+dispatchPipe name = Reaction dispatchPipe'
   where
     dispatchPipe' message@Message { messageSender = Sender {senderRoles = roles}
                                   , messageContent = cmds
@@ -695,23 +698,23 @@ dispatchPipe = Reaction dispatchPipe'
              [qms|The length of the pipe is limited to {pipeLimit} commands|])
           message
       | otherwise =
-        foldl dispatchRedirect (return ()) $
+        foldl (dispatchRedirect name) (return ()) $
         map (\x -> fmap (const x) message) cmds
       where
         pipeLimit = 10
         plebPipeLimit = 2
         coolRoles = [tsodingTwitchedDiscordRole, TwitchSub] ++ authorityRoles
 
-dispatchCommand :: Message (Command T.Text) -> Effect ()
-dispatchCommand message = do
-  dispatchBuiltinCommand message
+dispatchCommand :: ChannelName -> Message (Command T.Text) -> Effect ()
+dispatchCommand channel message = do
+  dispatchBuiltinCommand channel message
   dispatchCustomCommand message
 
-dispatchBuiltinCommand :: Message (Command T.Text) -> Effect ()
-dispatchBuiltinCommand message@Message {messageContent = Command { commandName = name
+dispatchBuiltinCommand :: ChannelName -> Message (Command T.Text) -> Effect ()
+dispatchBuiltinCommand channel message@Message {messageContent = Command { commandName = name
                                                                  , commandArgs = args
                                                                  }} =
   maybe
     (return ())
     (\bc -> runReaction (bcReaction bc) $ fmap (const args) message)
-    (M.lookup name builtinCommands)
+    (M.lookup name $ builtinCommands channel)

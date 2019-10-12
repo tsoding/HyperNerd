@@ -130,8 +130,8 @@ internalMessageRoles msg = do
   messageSender' <- internalSenderRoles $ messageSender msg
   return $ msg {messageSender = messageSender'}
 
-linkFilter :: Reaction Message T.Text -> Reaction Message T.Text
-linkFilter reaction =
+linkFilter :: ChannelName -> Reaction Message T.Text -> Reaction Message T.Text
+linkFilter (ChannelName channel) reaction =
   Reaction
     (\case
        Message { messageContent = message
@@ -145,5 +145,5 @@ linkFilter reaction =
              sender
              [qms|Links are not allowed for untrusted users.
                   Subscribe to gain the trust instantly:
-                  https://twitch.tv/tsoding/subscribe|]
+                  https://twitch.tv/{channel}/subscribe|]
        msg -> runReaction reaction msg)
