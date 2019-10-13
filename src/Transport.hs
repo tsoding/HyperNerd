@@ -70,6 +70,10 @@ paidRoles = [tsodingTwitchedDiscordRole, TwitchSub]
 senderAuthority :: Sender -> Bool
 senderAuthority sender = any (`elem` senderRoles sender) authorityRoles
 
+channelToName :: Channel -> ChannelName
+channelToName (DiscordChannel x) = ChannelName $ T.pack $ show x
+channelToName (TwitchChannel x) = ChannelName x
+
 newtype ChannelName = ChannelName
   { unChannel :: T.Text
   }

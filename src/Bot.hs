@@ -190,7 +190,7 @@ builtinCommands channel =
             replyOnNothing "Not enough arguments" $
             cmapR (readMay . T.unpack) $
             replyOnNothing "Argument is not a number" $
-            addPeriodicTimerCommand $ dispatchCommand channel))
+            addPeriodicTimerCommand $ dispatchCommand))
     , ( "deltimer"
       , mkBuiltinCommand
           ( "Remove Periodic Timer"
@@ -641,20 +641,20 @@ bot channel Started = do
   startRefreshFridayGistTimer
   startRefreshHelpGistTimer $ builtinCommands channel
 -- TODO(#656): Restarted Twitch transport thread can duplicate timers
-bot name (Joined channel@(TwitchChannel _)) = do
-  startPeriodicCommands channel $ dispatchCommand name
+bot _ (Joined channel@(TwitchChannel _)) = do
+  startPeriodicCommands channel $ dispatchCommand
   periodicEffect (60 * 1000) (Just channel) (announceRunningPoll channel)
 -- TODO(#550): Periodic commands don't work in Discord channels
 bot _ (Joined channel@(DiscordChannel _)) =
   periodicEffect (60 * 1000) (Just channel) (announceRunningPoll channel)
-bot name (InMsg msg) =
+bot _ (InMsg msg) =
   runReaction
     (dupLiftExtractR internalMessageRoles $
-     copyPastaFilter $ linkFilter name $ messageReaction name)
+     copyPastaFilter $ linkFilter $ messageReaction)
     msg
 
-messageReaction :: ChannelName -> Reaction Message T.Text
-messageReaction name =
+messageReaction :: Reaction Message T.Text
+messageReaction =
   Reaction $ \msg@Message { messageContent = text
                           , messageSender = sender
                           , messageMentioned = mentioned
@@ -665,24 +665,23 @@ messageReaction name =
       [] -> runReaction mention msg
       pipe ->
         runReaction
-          (liftR (mapM redirectAlias) $ dispatchPipe name)
+          (liftR (mapM redirectAlias) $ dispatchPipe)
           (Message sender mentioned pipe)
 
 -- TODO(#700): dispatchRedirect should add put a space between input and arguments
 --   At the moment it may break a lot of commands that do not T.strip
 --   their input. In the scope of this issue we need to try to
 --   identify how many commands will be affected.q
-dispatchRedirect ::
-     ChannelName -> Effect () -> Message (Command T.Text) -> Effect ()
-dispatchRedirect name effect cmd = do
+dispatchRedirect :: Effect () -> Message (Command T.Text) -> Effect ()
+dispatchRedirect effect cmd = do
   effectOutput <-
     T.strip . T.concat . concatMap (\x -> [" ", x]) <$> listen effect
-  dispatchCommand name $
+  dispatchCommand $
     getCompose ((\x -> T.concat [x, effectOutput]) <$> Compose cmd)
 
 -- TODO(#414): there is not cooldown for pipes
-dispatchPipe :: ChannelName -> Reaction Message [Command T.Text]
-dispatchPipe name = Reaction dispatchPipe'
+dispatchPipe :: Reaction Message [Command T.Text]
+dispatchPipe = Reaction dispatchPipe'
   where
     dispatchPipe' message@Message { messageSender = Sender {senderRoles = roles}
                                   , messageContent = cmds
@@ -702,23 +701,25 @@ dispatchPipe name = Reaction dispatchPipe'
              [qms|The length of the pipe is limited to {pipeLimit} commands|])
           message
       | otherwise =
-        foldl (dispatchRedirect name) (return ()) $
+        foldl dispatchRedirect (return ()) $
         map (\x -> fmap (const x) message) cmds
       where
         pipeLimit = 10
         plebPipeLimit = 2
         coolRoles = [tsodingTwitchedDiscordRole, TwitchSub] ++ authorityRoles
 
-dispatchCommand :: ChannelName -> Message (Command T.Text) -> Effect ()
-dispatchCommand channel message = do
-  dispatchBuiltinCommand channel message
+dispatchCommand :: Message (Command T.Text) -> Effect ()
+dispatchCommand message = do
+  dispatchBuiltinCommand message
   dispatchCustomCommand message
 
-dispatchBuiltinCommand :: ChannelName -> Message (Command T.Text) -> Effect ()
-dispatchBuiltinCommand channel message@Message {messageContent = Command { commandName = name
-                                                                         , commandArgs = args
-                                                                         }} =
+dispatchBuiltinCommand :: Message (Command T.Text) -> Effect ()
+dispatchBuiltinCommand message@Message { messageSender = sender
+                                       , messageContent = Command { commandName = name
+                                                                  , commandArgs = args
+                                                                  }
+                                       } =
   maybe
     (return ())
     (\bc -> runReaction (bcReaction bc) $ fmap (const args) message)
-    (M.lookup name $ builtinCommands channel)
+    (M.lookup name $ builtinCommands $ channelToName $ senderChannel $ sender)

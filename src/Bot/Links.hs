@@ -130,13 +130,13 @@ internalMessageRoles msg = do
   messageSender' <- internalSenderRoles $ messageSender msg
   return $ msg {messageSender = messageSender'}
 
-linkFilter :: ChannelName -> Reaction Message T.Text -> Reaction Message T.Text
-linkFilter (ChannelName channel) reaction =
+linkFilter :: Reaction Message T.Text -> Reaction Message T.Text
+linkFilter reaction =
   Reaction
     (\case
        Message { messageContent = message
                , messageSender = sender@Sender { senderRoles = []
-                                               , senderChannel = TwitchChannel _
+                                               , senderChannel = TwitchChannel channel
                                                }
                }
          | textContainsLink message -> do
