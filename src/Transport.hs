@@ -70,7 +70,9 @@ paidRoles = [tsodingTwitchedDiscordRole, TwitchSub]
 senderAuthority :: Sender -> Bool
 senderAuthority sender = any (`elem` senderRoles sender) authorityRoles
 
-newtype ChannelName = ChannelName { unChannel:: T.Text }
+newtype ChannelName = ChannelName
+  { unChannel :: T.Text
+  }
 
 data InEvent
   = Started

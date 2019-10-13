@@ -63,7 +63,6 @@ import Transport
 
 type Bot = InEvent -> Effect ()
 
-
 builtinCommands :: ChannelName -> CommandTable
 builtinCommands channel =
   M.fromList
@@ -113,7 +112,9 @@ builtinCommands channel =
             cmapR (const ()) updateBttvEmotesCommand))
     , ( "help"
       , mkBuiltinCommand
-          ("Send help", $githubLinkLocationStr, helpCommand $ builtinCommands channel))
+          ( "Send help"
+          , $githubLinkLocationStr
+          , helpCommand $ builtinCommands channel))
     , ( "poll"
       , mkBuiltinCommand
           ( "Starts a poll. !poll <duration:secs> option1; option2; ...; option3"
@@ -225,13 +226,15 @@ builtinCommands channel =
           , authorizeSender senderAuthority $
             replyOnNothing "Only for mods" $
             regexArgs "([a-zA-Z0-9]+) ?(.*)" $
-            replyLeft $ pairArgs $ replyLeft $ addCustomCommand $ builtinCommands channel ))
+            replyLeft $
+            pairArgs $ replyLeft $ addCustomCommand $ builtinCommands channel))
     , ( "delcmd"
       , mkBuiltinCommand
           ( "Delete custom command"
           , $githubLinkLocationStr
           , authorizeSender senderAuthority $
-            replyOnNothing "Only for mods" $ deleteCustomCommand $ builtinCommands channel))
+            replyOnNothing "Only for mods" $
+            deleteCustomCommand $ builtinCommands channel))
     , ( "updcmd"
       , mkBuiltinCommand
           ( "Update custom command"
@@ -514,8 +517,8 @@ builtinCommands channel =
                    https://twitch.tv/{channel'}/subscribe|]
               asciifyReaction))
     ]
-    where
-      channel' = unChannel channel
+  where
+    channel' = unChannel channel
 
 nextStreamCommand :: Reaction Message a
 nextStreamCommand =
@@ -639,7 +642,7 @@ bot channel Started = do
   startRefreshHelpGistTimer $ builtinCommands channel
 -- TODO(#656): Restarted Twitch transport thread can duplicate timers
 bot name (Joined channel@(TwitchChannel _)) = do
-  startPeriodicCommands channel $ dispatchCommand name 
+  startPeriodicCommands channel $ dispatchCommand name
   periodicEffect (60 * 1000) (Just channel) (announceRunningPoll channel)
 -- TODO(#550): Periodic commands don't work in Discord channels
 bot _ (Joined channel@(DiscordChannel _)) =
@@ -669,7 +672,8 @@ messageReaction name =
 --   At the moment it may break a lot of commands that do not T.strip
 --   their input. In the scope of this issue we need to try to
 --   identify how many commands will be affected.q
-dispatchRedirect :: ChannelName -> Effect () -> Message (Command T.Text) -> Effect ()
+dispatchRedirect ::
+     ChannelName -> Effect () -> Message (Command T.Text) -> Effect ()
 dispatchRedirect name effect cmd = do
   effectOutput <-
     T.strip . T.concat . concatMap (\x -> [" ", x]) <$> listen effect
@@ -712,8 +716,8 @@ dispatchCommand channel message = do
 
 dispatchBuiltinCommand :: ChannelName -> Message (Command T.Text) -> Effect ()
 dispatchBuiltinCommand channel message@Message {messageContent = Command { commandName = name
-                                                                 , commandArgs = args
-                                                                 }} =
+                                                                         , commandArgs = args
+                                                                         }} =
   maybe
     (return ())
     (\bc -> runReaction (bcReaction bc) $ fmap (const args) message)
