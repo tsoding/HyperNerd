@@ -190,7 +190,7 @@ builtinCommands channel =
             replyOnNothing "Not enough arguments" $
             cmapR (readMay . T.unpack) $
             replyOnNothing "Argument is not a number" $
-            addPeriodicTimerCommand $ dispatchCommand))
+            addPeriodicTimerCommand dispatchCommand))
     , ( "deltimer"
       , mkBuiltinCommand
           ( "Remove Periodic Timer"
@@ -642,7 +642,7 @@ bot channel Started = do
   startRefreshHelpGistTimer $ builtinCommands channel
 -- TODO(#656): Restarted Twitch transport thread can duplicate timers
 bot _ (Joined channel@(TwitchChannel _)) = do
-  startPeriodicCommands channel $ dispatchCommand
+  startPeriodicCommands channel dispatchCommand
   periodicEffect (60 * 1000) (Just channel) (announceRunningPoll channel)
 -- TODO(#550): Periodic commands don't work in Discord channels
 bot _ (Joined channel@(DiscordChannel _)) =
@@ -650,7 +650,7 @@ bot _ (Joined channel@(DiscordChannel _)) =
 bot _ (InMsg msg) =
   runReaction
     (dupLiftExtractR internalMessageRoles $
-     copyPastaFilter $ linkFilter $ messageReaction)
+     copyPastaFilter $ linkFilter messageReaction)
     msg
 
 messageReaction :: Reaction Message T.Text
@@ -665,7 +665,7 @@ messageReaction =
       [] -> runReaction mention msg
       pipe ->
         runReaction
-          (liftR (mapM redirectAlias) $ dispatchPipe)
+          (liftR (mapM redirectAlias) dispatchPipe)
           (Message sender mentioned pipe)
 
 -- TODO(#700): dispatchRedirect should add put a space between input and arguments
@@ -722,4 +722,4 @@ dispatchBuiltinCommand message@Message { messageSender = sender
   maybe
     (return ())
     (\bc -> runReaction (bcReaction bc) $ fmap (const args) message)
-    (M.lookup name $ builtinCommands $ channelToName $ senderChannel $ sender)
+    (M.lookup name $ builtinCommands $ channelToName $ senderChannel sender)
