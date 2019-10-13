@@ -38,7 +38,7 @@ logicEntry botState = do
   currCPUTime <- getTime Monotonic
   handleInEvent bot' Started botState >>= eventLoop bot' currCPUTime
   where
-      channelName = ChannelName $ fromMaybe "tsoding" $ fmap (T.drop 1 . tcChannel) $ configTwitch $ bsConfig botState
+      channelName = ChannelName $ maybe "tsoding" (T.drop 1 . tcChannel) $ configTwitch $ bsConfig botState
       bot' = bot channelName
 
 -- TODO(#399): supervisor is vulnerable to errors that happen at the start of the action
