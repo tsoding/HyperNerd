@@ -34,7 +34,6 @@ eventLoop b prevCPUTime botState = do
 
 logicEntry :: BotState -> IO ()
 logicEntry botState = do
-  print $ fmap tcChannel $ configTwitch $ bsConfig botState
   currCPUTime <- getTime Monotonic
   handleInEvent bot' Started botState >>= eventLoop bot' currCPUTime
   where
