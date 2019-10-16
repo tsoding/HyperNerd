@@ -79,13 +79,21 @@ onlyForRoles reply roles reaction =
 onlyForMods :: Reaction Message a -> Reaction Message a
 onlyForMods = onlyForRoles "Only for mods" authorityRoles
 
-nonEmptyRoles :: T.Text -> Reaction Message a -> Reaction Message a
-nonEmptyRoles reply reaction =
+nonEmptyRoles :: Reaction Message a -> Reaction Message a
+nonEmptyRoles reaction =
   transR duplicate $
   ifR
     (null . senderRoles . messageSender)
-    (cmapR (const reply) $ Reaction replyMessage)
+    (Reaction noTrust)
     (cmapR extract reaction)
+        
+noTrust :: Message a -> Effect ()
+noTrust msg = replyToSender (messageSender msg) reply
+  where
+      reply = [qms|You have to be trusted to use this command.
+                   Subscribe to gain the trust instantly:
+                   https://twitch.tv/{channel'}/subscribe|]
+      channel' = unChannel $ channelToName $ senderChannel $ messageSender msg
 
 onlyForTwitch :: Reaction Message a -> Reaction Message a
 onlyForTwitch reaction =

@@ -63,8 +63,8 @@ import Transport
 
 type Bot = InEvent -> Effect ()
 
-builtinCommands :: ChannelName -> CommandTable
-builtinCommands channel =
+builtinCommands :: CommandTable
+builtinCommands =
   M.fromList
     [ ( "russify"
       , mkBuiltinCommand
@@ -114,7 +114,7 @@ builtinCommands channel =
       , mkBuiltinCommand
           ( "Send help"
           , $githubLinkLocationStr
-          , helpCommand $ builtinCommands channel))
+          , helpCommand builtinCommands))
     , ( "poll"
       , mkBuiltinCommand
           ( "Starts a poll. !poll <duration:secs> option1; option2; ...; option3"
@@ -227,14 +227,14 @@ builtinCommands channel =
             replyOnNothing "Only for mods" $
             regexArgs "([a-zA-Z0-9]+) ?(.*)" $
             replyLeft $
-            pairArgs $ replyLeft $ addCustomCommand $ builtinCommands channel))
+            pairArgs $ replyLeft $ addCustomCommand builtinCommands))
     , ( "delcmd"
       , mkBuiltinCommand
           ( "Delete custom command"
           , $githubLinkLocationStr
           , authorizeSender senderAuthority $
             replyOnNothing "Only for mods" $
-            deleteCustomCommand $ builtinCommands channel))
+            deleteCustomCommand builtinCommands))
     , ( "updcmd"
       , mkBuiltinCommand
           ( "Update custom command"
@@ -243,7 +243,7 @@ builtinCommands channel =
             replyOnNothing "Only for mods" $
             regexArgs "([a-zA-Z0-9]+) ?(.*)" $
             replyLeft $
-            pairArgs $ replyLeft $ updateCustomCommand $ builtinCommands channel))
+            pairArgs $ replyLeft $ updateCustomCommand builtinCommands))
                -- TODO(#337): use help instead of !showcmd
     , ( "showcmd"
       , mkBuiltinCommand
@@ -253,7 +253,7 @@ builtinCommands channel =
             replyLeft $
             cmapR headMay $
             replyOnNothing "Not enough arguments" $
-            showCustomCommand $ builtinCommands channel))
+            showCustomCommand builtinCommands))
     , ( "timescmd"
       , mkBuiltinCommand
           ( "Show amount of times the custom commands was invoked"
@@ -262,7 +262,7 @@ builtinCommands channel =
             replyLeft $
             cmapR headMay $
             replyOnNothing "Not enough arguments" $
-            timesCustomCommand $ builtinCommands channel))
+            timesCustomCommand builtinCommands))
     , ( "song"
       , mkBuiltinCommand
           ( "Print currently playing song"
@@ -407,9 +407,7 @@ builtinCommands channel =
           ( "Suggest video for the friday stream"
           , $githubLinkLocationStr
           , nonEmptyRoles
-              [qms|You have to be trusted to use this command.
-                   Subscribe to gain the trust instantly:
-                   https://twitch.tv/{channel'}/subscribe|]
+              
               fridayCommand))
     , ( "videoq"
       , mkBuiltinCommand
@@ -511,14 +509,8 @@ builtinCommands channel =
       , mkBuiltinCommand
           ( "Asciify Twitch, BTTV or FFZ emote"
           , $githubLinkLocationStr
-          , nonEmptyRoles
-              [qms|You have to be trusted to use this command.
-                   Subscribe to gain the trust instantly:
-                   https://twitch.tv/{channel'}/subscribe|]
-              asciifyReaction))
+          , nonEmptyRoles asciifyReaction))
     ]
-  where
-    channel' = unChannel channel
 
 nextStreamCommand :: Reaction Message a
 nextStreamCommand =
@@ -636,18 +628,18 @@ mention =
          else Nothing <$ msg) $
   ignoreNothing markov
 
-bot :: ChannelName -> Bot
-bot channel Started = do
+bot :: Bot
+bot Started = do
   startRefreshFridayGistTimer
-  startRefreshHelpGistTimer $ builtinCommands channel
+  startRefreshHelpGistTimer builtinCommands 
 -- TODO(#656): Restarted Twitch transport thread can duplicate timers
-bot _ (Joined channel@(TwitchChannel _)) = do
+bot (Joined channel@(TwitchChannel _)) = do
   startPeriodicCommands channel dispatchCommand
   periodicEffect (60 * 1000) (Just channel) (announceRunningPoll channel)
 -- TODO(#550): Periodic commands don't work in Discord channels
-bot _ (Joined channel@(DiscordChannel _)) =
+bot (Joined channel@(DiscordChannel _)) =
   periodicEffect (60 * 1000) (Just channel) (announceRunningPoll channel)
-bot _ (InMsg msg) =
+bot (InMsg msg) =
   runReaction
     (dupLiftExtractR internalMessageRoles $
      copyPastaFilter $ linkFilter messageReaction)
@@ -714,7 +706,7 @@ dispatchCommand message = do
   dispatchCustomCommand message
 
 dispatchBuiltinCommand :: Message (Command T.Text) -> Effect ()
-dispatchBuiltinCommand message@Message { messageSender = sender
+dispatchBuiltinCommand message@Message { messageSender = _
                                        , messageContent = Command { commandName = name
                                                                   , commandArgs = args
                                                                   }
@@ -722,4 +714,4 @@ dispatchBuiltinCommand message@Message { messageSender = sender
   maybe
     (return ())
     (\bc -> runReaction (bcReaction bc) $ fmap (const args) message)
-    (M.lookup name $ builtinCommands $ channelToName $ senderChannel sender)
+    (M.lookup name builtinCommands)

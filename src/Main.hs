@@ -12,7 +12,6 @@ import Control.Concurrent.STM
 import Control.Monad
 import Data.Foldable
 import Data.Maybe
-import qualified Data.Text as T
 import System.Clock
 import System.Environment
 import Text.InterpolatedString.QM
@@ -35,12 +34,7 @@ eventLoop b prevCPUTime botState = do
 logicEntry :: BotState -> IO ()
 logicEntry botState = do
   currCPUTime <- getTime Monotonic
-  handleInEvent bot' Started botState >>= eventLoop bot' currCPUTime
-  where
-    channelName =
-      ChannelName $
-      maybe "tsoding" (T.drop 1 . tcChannel) $ configTwitch $ bsConfig botState
-    bot' = bot channelName
+  handleInEvent bot Started botState >>= eventLoop bot currCPUTime
 
 -- TODO(#399): supervisor is vulnerable to errors that happen at the start of the action
 supavisah :: Show a => IO a -> IO ()
