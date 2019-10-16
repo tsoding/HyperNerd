@@ -112,9 +112,7 @@ builtinCommands =
             cmapR (const ()) updateBttvEmotesCommand))
     , ( "help"
       , mkBuiltinCommand
-          ( "Send help"
-          , $githubLinkLocationStr
-          , helpCommand builtinCommands))
+          ("Send help", $githubLinkLocationStr, helpCommand builtinCommands))
     , ( "poll"
       , mkBuiltinCommand
           ( "Starts a poll. !poll <duration:secs> option1; option2; ...; option3"
@@ -226,15 +224,13 @@ builtinCommands =
           , authorizeSender senderAuthority $
             replyOnNothing "Only for mods" $
             regexArgs "([a-zA-Z0-9]+) ?(.*)" $
-            replyLeft $
-            pairArgs $ replyLeft $ addCustomCommand builtinCommands))
+            replyLeft $ pairArgs $ replyLeft $ addCustomCommand builtinCommands))
     , ( "delcmd"
       , mkBuiltinCommand
           ( "Delete custom command"
           , $githubLinkLocationStr
           , authorizeSender senderAuthority $
-            replyOnNothing "Only for mods" $
-            deleteCustomCommand builtinCommands))
+            replyOnNothing "Only for mods" $ deleteCustomCommand builtinCommands))
     , ( "updcmd"
       , mkBuiltinCommand
           ( "Update custom command"
@@ -406,9 +402,7 @@ builtinCommands =
       , mkBuiltinCommand
           ( "Suggest video for the friday stream"
           , $githubLinkLocationStr
-          , nonEmptyRoles
-              
-              fridayCommand))
+          , nonEmptyRoles fridayCommand))
     , ( "videoq"
       , mkBuiltinCommand
           ( "Get the link to the current Friday Queue"
@@ -631,7 +625,7 @@ mention =
 bot :: Bot
 bot Started = do
   startRefreshFridayGistTimer
-  startRefreshHelpGistTimer builtinCommands 
+  startRefreshHelpGistTimer builtinCommands
 -- TODO(#656): Restarted Twitch transport thread can duplicate timers
 bot (Joined channel@(TwitchChannel _)) = do
   startPeriodicCommands channel dispatchCommand

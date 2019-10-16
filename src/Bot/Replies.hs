@@ -86,14 +86,15 @@ nonEmptyRoles reaction =
     (null . senderRoles . messageSender)
     (Reaction noTrust)
     (cmapR extract reaction)
-        
+
 noTrust :: Message a -> Effect ()
 noTrust msg = replyToSender (messageSender msg) reply
   where
-      reply = [qms|You have to be trusted to use this command.
+    reply =
+      [qms|You have to be trusted to use this command.
                    Subscribe to gain the trust instantly:
                    https://twitch.tv/{channel'}/subscribe|]
-      channel' = unChannel $ channelToName $ senderChannel $ messageSender msg
+    channel' = unChannel $ channelToName $ senderChannel $ messageSender msg
 
 onlyForTwitch :: Reaction Message a -> Reaction Message a
 onlyForTwitch reaction =
