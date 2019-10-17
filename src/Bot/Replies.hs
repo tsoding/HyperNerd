@@ -133,7 +133,7 @@ setNoTrustCommandReplyCommand =
 
 noTrustReply :: Effect (Entity NoTrustReply)
 noTrustReply = do
-  reply <- listToMaybe <$> selectEntities Proxy (Take 1 $ All)
+  reply <- listToMaybe <$> selectEntities Proxy (Take 1 All)
   case reply of
     Just reply' -> return reply'
     Nothing ->
