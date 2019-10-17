@@ -5,20 +5,20 @@ module Bot.Replies where
 
 import Data.Aeson
 import qualified Data.ByteString.Lazy as BS
+import Data.Functor
 import qualified Data.Map as M
+import Data.Maybe
+import Data.Proxy
 import qualified Data.Text as T
 import Effect
+import Entity
 import HyperNerd.Comonad
 import Network.HTTP.Simple (getResponseBody, parseRequest)
+import Property
 import Reaction
 import Regexp
 import Text.InterpolatedString.QM
 import Transport
-import Entity
-import Data.Proxy
-import Property
-import Data.Maybe
-import Data.Functor
 
 sayMessage :: Reaction Message T.Text
 sayMessage =
