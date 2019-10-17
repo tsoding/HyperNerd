@@ -71,15 +71,6 @@ paidRoles = [tsodingTwitchedDiscordRole, TwitchSub]
 senderAuthority :: Sender -> Bool
 senderAuthority sender = any (`elem` senderRoles sender) authorityRoles
 
-channelToName :: Channel -> ChannelName
-channelToName (DiscordChannel x) = ChannelName $ T.pack $ show x
-channelToName (TwitchChannel (T.uncons -> Just ('#', x))) = ChannelName x
-channelToName (TwitchChannel _) = ChannelName ""
-
-newtype ChannelName = ChannelName
-  { unChannel :: T.Text
-  } deriving Eq
-
 data InEvent
   = Started
   | Joined Channel

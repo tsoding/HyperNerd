@@ -14,6 +14,10 @@ import Reaction
 import Regexp
 import Text.InterpolatedString.QM
 import Transport
+import Entity
+import Data.Proxy
+import Property
+import Data.Maybe
 
 sayMessage :: Reaction Message T.Text
 sayMessage =
@@ -87,14 +91,39 @@ nonEmptyRoles reaction =
     (Reaction noTrust)
     (cmapR extract reaction)
 
+data NoTrustReply = NoTrustReply
+  { noTrustCommandReply :: T.Text
+  , noTrustLinkReply :: T.Text
+  } deriving (Eq)
+
+instance IsEntity NoTrustReply where
+  nameOfEntity Proxy = "NoTrustReply"
+  toProperties reply =
+    M.fromList
+      [ ("command", PropertyText $ noTrustCommandReply reply)
+      , ("link", PropertyText $ noTrustLinkReply reply)
+      ]
+  fromProperties properties =
+    NoTrustReply <$> extractProperty "command" properties <*>
+    extractProperty "link" properties
+
+noTrustReply :: Effect (Entity NoTrustReply)
+noTrustReply = do
+  reply <- listToMaybe <$> selectEntities Proxy (Take 1 $ All)
+  case reply of
+    Just reply' -> return reply'
+    Nothing ->
+      createEntity Proxy $
+      NoTrustReply
+        [qms|You have to be trusted to use this command.
+             Mods can change this message with !TODO|]
+        [qms|You have to be trusted to send links.
+             Mods can change this message with !TODO|]
+
 noTrust :: Message a -> Effect ()
-noTrust msg = replyToSender (messageSender msg) reply
-  where
-    reply =
-      [qms|You have to be trusted to use this command.
-                   Subscribe to gain the trust instantly:
-                   https://twitch.tv/{channel'}/subscribe|]
-    channel' = unChannel $ channelToName $ senderChannel $ messageSender msg
+noTrust Message {messageSender = sender} = do
+  reply <- entityPayload <$> noTrustReply
+  replyToSender sender $ noTrustCommandReply reply
 
 onlyForTwitch :: Reaction Message a -> Reaction Message a
 onlyForTwitch reaction =
