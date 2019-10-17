@@ -292,6 +292,16 @@ selectEntityIds conn name (Take n (Filter (PropertyEquals propertyName property)
     , ":propertyUTCTime" := (fromProperty property :: Maybe UTCTime)
     , ":n" := n
     ]
+selectEntityIds conn name (Take n All) =
+  map fromOnly <$>
+  queryNamed
+    conn
+    [r| SELECT entityId
+        FROM EntityProperty
+        WHERE entityName = :entityName
+        GROUP BY entityId
+        LIMIT :n |]
+    [":entityName" := name, ":n" := n]
 selectEntityIds conn name (Shuffle All) =
   map fromOnly <$>
   queryNamed

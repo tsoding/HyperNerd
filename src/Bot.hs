@@ -402,11 +402,7 @@ builtinCommands =
       , mkBuiltinCommand
           ( "Suggest video for the friday stream"
           , $githubLinkLocationStr
-          , nonEmptyRoles
-              [qms|You have to be trusted to use this command.
-                   Subscribe to gain the trust instantly:
-                   https://twitch.tv/tsoding/subscribe|]
-              fridayCommand))
+          , nonEmptyRoles fridayCommand))
     , ( "videoq"
       , mkBuiltinCommand
           ( "Get the link to the current Friday Queue"
@@ -484,6 +480,11 @@ builtinCommands =
               [ ( "help"
                 , subcommand
                     [("setgist", setHelpGistId), ("refresh", refreshHelpGistId)])
+              , ( "reply"
+                , subcommand
+                    [ ("link", setNoTrustLinkReplyCommand)
+                    , ("command", setNoTrustCommandReplyCommand)
+                    ])
               ]))
     , ( "version"
       , mkBuiltinCommand
@@ -507,11 +508,7 @@ builtinCommands =
       , mkBuiltinCommand
           ( "Asciify Twitch, BTTV or FFZ emote"
           , $githubLinkLocationStr
-          , nonEmptyRoles
-              [qms|You have to be trusted to use this command.
-                   Subscribe to gain the trust instantly:
-                   https://twitch.tv/tsoding/subscribe|]
-              asciifyReaction))
+          , nonEmptyRoles asciifyReaction))
     ]
 
 nextStreamCommand :: Reaction Message a
@@ -708,9 +705,11 @@ dispatchCommand message = do
   dispatchCustomCommand message
 
 dispatchBuiltinCommand :: Message (Command T.Text) -> Effect ()
-dispatchBuiltinCommand message@Message {messageContent = Command { commandName = name
-                                                                 , commandArgs = args
-                                                                 }} =
+dispatchBuiltinCommand message@Message { messageSender = _
+                                       , messageContent = Command { commandName = name
+                                                                  , commandArgs = args
+                                                                  }
+                                       } =
   maybe
     (return ())
     (\bc -> runReaction (bcReaction bc) $ fmap (const args) message)

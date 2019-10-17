@@ -5,11 +5,16 @@ module Bot.Replies where
 
 import Data.Aeson
 import qualified Data.ByteString.Lazy as BS
+import Data.Functor
 import qualified Data.Map as M
+import Data.Maybe
+import Data.Proxy
 import qualified Data.Text as T
 import Effect
+import Entity
 import HyperNerd.Comonad
 import Network.HTTP.Simple (getResponseBody, parseRequest)
+import Property
 import Reaction
 import Regexp
 import Text.InterpolatedString.QM
@@ -79,13 +84,72 @@ onlyForRoles reply roles reaction =
 onlyForMods :: Reaction Message a -> Reaction Message a
 onlyForMods = onlyForRoles "Only for mods" authorityRoles
 
-nonEmptyRoles :: T.Text -> Reaction Message a -> Reaction Message a
-nonEmptyRoles reply reaction =
+nonEmptyRoles :: Reaction Message a -> Reaction Message a
+nonEmptyRoles reaction =
   transR duplicate $
   ifR
     (null . senderRoles . messageSender)
-    (cmapR (const reply) $ Reaction replyMessage)
+    (Reaction noTrust)
     (cmapR extract reaction)
+
+data NoTrustReply = NoTrustReply
+  { noTrustCommandReply :: T.Text
+  , noTrustLinkReply :: T.Text
+  } deriving (Eq)
+
+updateNoTrustCommandReply :: T.Text -> NoTrustReply -> NoTrustReply
+updateNoTrustCommandReply value reply = reply {noTrustCommandReply = value}
+
+updateNoTrustLinkReply :: T.Text -> NoTrustReply -> NoTrustReply
+updateNoTrustLinkReply value reply = reply {noTrustLinkReply = value}
+
+instance IsEntity NoTrustReply where
+  nameOfEntity Proxy = "NoTrustReply"
+  toProperties reply =
+    M.fromList
+      [ ("command", PropertyText $ noTrustCommandReply reply)
+      , ("link", PropertyText $ noTrustLinkReply reply)
+      ]
+  fromProperties properties =
+    NoTrustReply <$> extractProperty "command" properties <*>
+    extractProperty "link" properties
+
+setNoTrustLinkReplyCommand :: Reaction Message T.Text
+setNoTrustLinkReplyCommand =
+  liftR
+    (\msg -> do
+       reply <- noTrustReply
+       void $ updateEntityById $ fmap (updateNoTrustLinkReply msg) reply) $
+  cmapR (const "Updated not trust link reply message") $ Reaction replyMessage
+
+setNoTrustCommandReplyCommand :: Reaction Message T.Text
+setNoTrustCommandReplyCommand =
+  liftR
+    (\msg -> do
+       reply <- noTrustReply
+       void $ updateEntityById $ fmap (updateNoTrustCommandReply msg) reply) $
+  cmapR (const "Updated not trust command reply message") $
+  Reaction replyMessage
+
+noTrustReply :: Effect (Entity NoTrustReply)
+noTrustReply = do
+  reply <- listToMaybe <$> selectEntities Proxy (Take 1 All)
+  case reply of
+    Just reply' -> return reply'
+    Nothing ->
+      createEntity Proxy $
+      NoTrustReply
+        [qms|You have to be trusted to use this command.
+             Mods can change this message with
+             !config reply command <message>|]
+        [qms|You have to be trusted to send links.
+             Mods can change this message with
+             !config reply link <message>|]
+
+noTrust :: Message a -> Effect ()
+noTrust Message {messageSender = sender} = do
+  reply <- entityPayload <$> noTrustReply
+  replyToSender sender $ noTrustCommandReply reply
 
 onlyForTwitch :: Reaction Message a -> Reaction Message a
 onlyForTwitch reaction =

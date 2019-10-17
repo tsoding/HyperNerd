@@ -135,15 +135,10 @@ linkFilter reaction =
   Reaction
     (\case
        Message { messageContent = message
-               , messageSender = sender@Sender { senderRoles = []
-                                               , senderChannel = TwitchChannel _
-                                               }
+               , messageSender = sender@Sender {senderRoles = []}
                }
          | textContainsLink message -> do
            timeoutSender 1 sender
-           replyToSender
-             sender
-             [qms|Links are not allowed for untrusted users.
-                  Subscribe to gain the trust instantly:
-                  https://twitch.tv/tsoding/subscribe|]
+           reply <- entityPayload <$> noTrustReply
+           replyToSender sender $ noTrustLinkReply reply
        msg -> runReaction reaction msg)
