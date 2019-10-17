@@ -480,6 +480,11 @@ builtinCommands =
               [ ( "help"
                 , subcommand
                     [("setgist", setHelpGistId), ("refresh", refreshHelpGistId)])
+              , ( "reply"
+                , subcommand
+                    [ ("link", setNoTrustLinkReplyCommand)
+                    , ("command", setNoTrustCommandReplyCommand)
+                    ])
               ]))
     , ( "version"
       , mkBuiltinCommand
