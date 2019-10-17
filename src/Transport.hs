@@ -1,5 +1,6 @@
 {-# LANGUAGE DeriveFunctor #-}
-
+{-# LANGUAGE ViewPatterns #-}
+{-# LANGUAGE OverloadedStrings #-}
 module Transport where
 
 import Control.Concurrent.STM
@@ -72,11 +73,12 @@ senderAuthority sender = any (`elem` senderRoles sender) authorityRoles
 
 channelToName :: Channel -> ChannelName
 channelToName (DiscordChannel x) = ChannelName $ T.pack $ show x
-channelToName (TwitchChannel x) = ChannelName x
+channelToName (TwitchChannel (T.uncons -> Just ('#', x))) = ChannelName x
+channelToName (TwitchChannel _) = ChannelName ""
 
 newtype ChannelName = ChannelName
   { unChannel :: T.Text
-  }
+  } deriving Eq
 
 data InEvent
   = Started

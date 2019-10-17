@@ -136,7 +136,7 @@ linkFilter reaction =
     (\case
        Message { messageContent = message
                , messageSender = sender@Sender { senderRoles = []
-                                               , senderChannel = TwitchChannel channel
+                                               , senderChannel = channel
                                                }
                }
          | textContainsLink message -> do
@@ -145,5 +145,5 @@ linkFilter reaction =
              sender
              [qms|Links are not allowed for untrusted users.
                   Subscribe to gain the trust instantly:
-                  https://twitch.tv/{channel}/subscribe|]
+                  https://twitch.tv/{unChannel $ channelToName channel}/subscribe|]
        msg -> runReaction reaction msg)
