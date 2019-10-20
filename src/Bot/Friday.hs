@@ -243,6 +243,9 @@ renderQueues currentUser queues =
   ([qmb|* Friday Queue
 
         Current User: {currentUser}
+
+        Use ~!friday~ command to put a video here (only for trusted and subs).
+        *Any video can be skipped if the streamer finds it boring.*
         |] :) $
   map (renderQueue . map entityPayload) $ M.elems queues
 
