@@ -63,6 +63,32 @@ songLink (songType -> SongTypeSoundcloud) =
   "Soundcloud links are not supported yet"
 songLink _ = error "This should never happen Kappa"
 
+newtype RoomName = RoomName { unName :: T.Text}
+instance IsEntity RoomName where
+  nameOfEntity Proxy = "RoomName"
+  toProperties = Map.fromList [
+    ("name", PropertyText $ unName reply)
+    ]
+  fromProperties = fmap RoomName . extractProperty "name"
+
+getRoom :: Effect (Entity RoomName)
+getRoom =
+  reply <- listToMaybe <$> selectEntities Proxy (Take 1 All)
+  case reply of
+    Just reply' -> return reply'
+    Nothing ->
+      createEntity Proxy $ RoomName "tsoding"
+      
+setRoomName :: Reaction Message T.Text
+setRoomName =
+  liftR
+    (\msg -> do
+       reply <- getRoom 
+       void $ updateEntityById $ (\a -> a{unName=msg}) <$> reply) $
+  cmapR (const "Updated room for dubtrack") $ Reaction replyMessage
+  
+
+
 -- TODO(#221): Dubtrack room is hardcode
 currentSongCommand :: Reaction Message ()
 currentSongCommand =
