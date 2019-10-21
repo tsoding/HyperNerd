@@ -92,8 +92,6 @@ setRoomName =
        reply <- getRoom
        void $ updateEntityById $ (\a -> a {unName = msg}) <$> reply) $
   cmapR (const "Updated room for dubtrack") $ Reaction replyMessage
-  
-
 
 -- TODO(#221): Dubtrack room is hardcode
 currentSongCommand :: Reaction Message ()
