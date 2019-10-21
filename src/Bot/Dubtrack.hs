@@ -80,7 +80,7 @@ instance IsEntity RoomName where
 
 getRoom :: Effect (Entity RoomName)
 getRoom = do
-  reply <- listToMaybe <$> selectEntities (P.Proxy @RoomName) (Take 1 All)
+  reply <- listToMaybe <$> selectEntities P.Proxy (Take 1 All)
   case reply of
     Just reply' -> return reply'
     Nothing -> createEntity P.Proxy $ RoomName "tsoding"
