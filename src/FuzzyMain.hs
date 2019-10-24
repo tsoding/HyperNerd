@@ -108,25 +108,32 @@ randomExpr params = do
     1 -> randomVarExpr params
     _ -> randomFunCallExpr params
 
-normalizeExprs :: [Expr] -> [Expr]
-normalizeExprs [] = []
-normalizeExprs (TextExpr t1:TextExpr t2:rest) =
-  normalizeExprs (TextExpr (t1 <> t2) : rest)
-normalizeExprs (_:rest) = normalizeExprs rest
-
 randomExprs :: FuzzParams -> IO [Expr]
 randomExprs params = do
-  n <- randomRIO $ fpExprsRange params
-  replicateM n (randomExpr params)
+  randomRIO (fpExprsRange params) >>= f []
+  where
+    normalizeExprs :: [Expr] -> [Expr]
+    normalizeExprs [] = []
+    normalizeExprs (TextExpr t1:TextExpr t2:rest) =
+      normalizeExprs (TextExpr (t1 <> t2) : rest)
+    normalizeExprs (x:rest) = x:normalizeExprs rest
+
+    f :: [Expr] -> Int -> IO [Expr]
+    f es n
+      | m >= n = return es
+      | otherwise = do
+         es' <- replicateM (n - m) (randomExpr params)
+         f (normalizeExprs (es ++ es')) n
+      where m = length es
 
 fuzzIteration :: FuzzParams -> IO Bool
 fuzzIteration params = do
-  es <- normalizeExprs <$> randomExprs params
+  es <- randomExprs params
   let es' = runParser exprs $ unparseExprs es
   when (Right ("", es) /= es') $ do
     print es
     print es'
-    error "test"
+    error "Failed"
   return (Right ("", es) == es')
 
 fuzz :: FuzzParams -> IO ()
@@ -140,11 +147,17 @@ mainWithArgs ("genconf":configFilePath:_) = do
   saveFuzzParams defaultFuzzParams configFilePath
   printf "Generated default configuration at %s" configFilePath
 mainWithArgs ("runconf":fuzzParamsPath:_) = readFuzzParams fuzzParamsPath >>= fuzz
+mainWithArgs ("genexpr":configFilePath:_) = do
+  putStrLn "Generating expression:"
+  params <- readFuzzParams configFilePath
+  randomExprs params >>= print
+
 mainWithArgs _ =
   error
     "Usage: \n\
     \       Fuzz genconf <fuzz.json>\n\
-    \       Fuzz runconf <fuzz.json>"
+    \       Fuzz runconf <fuzz.json>\n\
+    \       Fuzz genexpr <fuzz.json>"
 
 main :: IO ()
 main = getArgs >>= mainWithArgs
