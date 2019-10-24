@@ -92,6 +92,7 @@ executable HyperNerd
                      , Entity
                      , HyperNerd.Comonad
                      , HyperNerd.Functor
+                     , HyperNerd.Parser
                      , Markov
                      , Property
                      , Reaction
@@ -160,6 +161,7 @@ executable Fuzzy
   main-is:             FuzzyMain.hs
 
   other-modules:       Bot.Expr
+                     , HyperNerd.Parser
 
   build-depends:       base
                      , text
@@ -264,6 +266,7 @@ test-suite HyperNerdTest
                      , Data.Either.Extra
                      , Free
                      , Bot.Expr
+                     , HyperNerd.Parser
 
   other-extensions:    OverloadedStrings
 

@@ -13,6 +13,7 @@ import System.Environment
 import System.Random
 import Text.Printf
 import qualified Data.ByteString.Lazy as BS
+import HyperNerd.Parser
 
 data FuzzParams = FuzzParams
   { fpFuzzCount :: Int
