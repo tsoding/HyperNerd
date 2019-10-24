@@ -12,6 +12,7 @@ import qualified Data.Text as T
 import System.Environment
 import System.Random
 import Text.Printf
+import qualified Data.ByteString.Lazy as BS
 
 data FuzzParams = FuzzParams
   { fpFuzzCount :: Int
@@ -41,6 +42,9 @@ instance FromJSON FuzzParams where
 
 readFuzzParams :: FilePath -> IO FuzzParams
 readFuzzParams = fmap (either error id) . eitherDecodeFileStrict
+
+saveFuzzParams :: FuzzParams -> FilePath -> IO ()
+saveFuzzParams params filePath = BS.writeFile filePath $ encode params
 
 defaultFuzzParams :: FuzzParams
 defaultFuzzParams =
@@ -132,8 +136,15 @@ fuzz params = do
   printf "Successes: %d\n" $ length $ filter id report
 
 mainWithArgs :: [String] -> IO ()
-mainWithArgs (fuzzParamsPath:_) = readFuzzParams fuzzParamsPath >>= fuzz
-mainWithArgs _ = error "Usage: Fuzz <fuzz.json>"
+mainWithArgs ("genconf":configFilePath:_) = do
+  saveFuzzParams defaultFuzzParams configFilePath
+  printf "Generated default configuration at %s" configFilePath
+mainWithArgs ("runconf":fuzzParamsPath:_) = readFuzzParams fuzzParamsPath >>= fuzz
+mainWithArgs _ =
+  error
+    "Usage: \n\
+    \       Fuzz genconf <fuzz.json>\n\
+    \       Fuzz runconf <fuzz.json>"
 
 main :: IO ()
 main = getArgs >>= mainWithArgs

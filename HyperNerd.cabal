@@ -165,6 +165,7 @@ executable Fuzzy
                      , text
                      , random
                      , aeson
+                     , bytestring
 
   hs-source-dirs:      src
 
