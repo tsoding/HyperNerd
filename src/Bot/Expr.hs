@@ -69,7 +69,7 @@ funcallarg = funcall <|> var <|> stringLiteral
 
 funcall :: Parser Expr
 funcall = do
-  _ <- charP '%' >> whitespaces
+  _ <- charP '%'
   name <- symbol
   _ <- whitespaces >> charP '(' >> whitespaces
   args <-
@@ -103,7 +103,7 @@ whitespaces :: Parser T.Text
 whitespaces = takeWhileP isSpace
 
 var :: Parser Expr
-var = charP '%' >> whitespaces >> (VarExpr <$> symbol)
+var = charP '%' *> (VarExpr <$> symbol) <* charP '%'
 
 textBlock :: Parser Expr
 textBlock =

@@ -65,7 +65,7 @@ unparseFunCallArgs = T.concat . intersperse "," . map unparseFunCallArg
 
 unparseExpr :: Expr -> T.Text
 unparseExpr (TextExpr text) = text
-unparseExpr (VarExpr name) = "%" <> name
+unparseExpr (VarExpr name) = "%" <> name <> "%"
 unparseExpr (FunCallExpr name args) =
   "%" <> name <> "(" <> unparseFunCallArgs args <> ")"
 
