@@ -165,22 +165,21 @@ randomExpr params = do
     _ -> randomFunCallExpr params
 
 randomExprs :: FuzzParams -> IO [Expr]
-randomExprs params = do
-  randomRIO (fpExprsRange params) >>= f []
+randomExprs params = randomRIO (fpExprsRange params) >>= f []
   where
     normalizeExprs :: [Expr] -> [Expr]
     normalizeExprs [] = []
     normalizeExprs (TextExpr t1:TextExpr t2:rest) =
       normalizeExprs (TextExpr (t1 <> t2) : rest)
-    normalizeExprs (x:rest) = x:normalizeExprs rest
-
+    normalizeExprs (x:rest) = x : normalizeExprs rest
     f :: [Expr] -> Int -> IO [Expr]
     f es n
       | m >= n = return es
       | otherwise = do
-         es' <- replicateM (n - m) (randomExpr params)
-         f (normalizeExprs (es ++ es')) n
-      where m = length es
+        es' <- replicateM (n - m) (randomExpr params)
+        f (normalizeExprs (es ++ es')) n
+      where
+        m = length es
 
 fuzzIteration :: FuzzParams -> IO FuzzStat
 fuzzIteration params = do
