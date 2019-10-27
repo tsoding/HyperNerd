@@ -9,7 +9,6 @@ module Main where
 3. All of the `spec`-s from all of the `*Test` modules are accumulated in
    the `main` function and fed into `runTestTT`.
 -}
-import qualified Bot.ExprTest
 import qualified Bot.FridayTest
 import qualified Bot.LinksTest
 import qualified Bot.LogTest
@@ -26,8 +25,7 @@ main = do
   results <-
     runTestTT $
     TestList
-      [ Bot.ExprTest.spec
-      , Bot.LinksTest.spec
+      [ Bot.LinksTest.spec
       , Bot.LogTest.spec
       , Bot.PollTest.spec
       , Bot.TwitchTest.spec

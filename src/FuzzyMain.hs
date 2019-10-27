@@ -6,12 +6,68 @@ import Bot.Expr
 import Control.Monad
 import Data.Aeson
 import Data.Aeson.Types
+import qualified Data.ByteString.Lazy as BS
 import Data.Char
+import Data.Foldable
 import Data.List
 import qualified Data.Text as T
+import HyperNerd.Parser
 import System.Environment
 import System.Random
 import Text.Printf
+
+data FuzzStat = FuzzStat
+  { fsTextCount :: Int
+  , fsMaxTextLen :: Int
+  , fsMinTextLen :: Int
+  , fsVarCount :: Int
+  , fsFunCount :: Int
+  , fsMaxFunArgsCount :: Int
+  , fsMinFunArgsCount :: Int
+  } deriving (Show, Eq)
+
+instance Semigroup FuzzStat where
+  s1 <> s2 =
+    FuzzStat
+      { fsTextCount = fsTextCount s1 + fsTextCount s2
+      , fsMaxTextLen = fsMaxTextLen s1 `max` fsMaxTextLen s2
+      , fsMinTextLen = fsMinTextLen s1 `min` fsMinTextLen s2
+      , fsVarCount = fsVarCount s1 + fsVarCount s2
+      , fsFunCount = fsFunCount s1 + fsFunCount s2
+      , fsMaxFunArgsCount = fsMaxFunArgsCount s1 `max` fsMaxFunArgsCount s2
+      , fsMinFunArgsCount = fsMinFunArgsCount s1 `min` fsMinFunArgsCount s2
+      }
+
+instance Monoid FuzzStat where
+  mempty =
+    FuzzStat
+      { fsTextCount = 0
+      , fsMaxTextLen = minBound
+      , fsMinTextLen = maxBound
+      , fsVarCount = 0
+      , fsFunCount = 0
+      , fsMaxFunArgsCount = minBound
+      , fsMinFunArgsCount = maxBound
+      }
+
+statOfExprs :: [Expr] -> FuzzStat
+statOfExprs = foldMap statOfExpr
+
+statOfExpr :: Expr -> FuzzStat
+statOfExpr (TextExpr text) =
+  mempty
+    { fsTextCount = 1
+    , fsMinTextLen = T.length text
+    , fsMaxTextLen = T.length text
+    }
+statOfExpr (VarExpr _) = mempty {fsVarCount = 1}
+statOfExpr (FunCallExpr _ args) =
+  mempty
+    { fsFunCount = 1
+    , fsMaxFunArgsCount = length args
+    , fsMinFunArgsCount = length args
+    } <>
+  statOfExprs args
 
 data FuzzParams = FuzzParams
   { fpFuzzCount :: Int
@@ -42,6 +98,9 @@ instance FromJSON FuzzParams where
 readFuzzParams :: FilePath -> IO FuzzParams
 readFuzzParams = fmap (either error id) . eitherDecodeFileStrict
 
+saveFuzzParams :: FuzzParams -> FilePath -> IO ()
+saveFuzzParams params filePath = BS.writeFile filePath $ encode params
+
 defaultFuzzParams :: FuzzParams
 defaultFuzzParams =
   FuzzParams
@@ -61,7 +120,7 @@ unparseFunCallArgs = T.concat . intersperse "," . map unparseFunCallArg
 
 unparseExpr :: Expr -> T.Text
 unparseExpr (TextExpr text) = text
-unparseExpr (VarExpr name) = "%" <> name
+unparseExpr (VarExpr name) = "%" <> name <> "%"
 unparseExpr (FunCallExpr name args) =
   "%" <> name <> "(" <> unparseFunCallArgs args <> ")"
 
@@ -104,36 +163,54 @@ randomExpr params = do
     1 -> randomVarExpr params
     _ -> randomFunCallExpr params
 
-normalizeExprs :: [Expr] -> [Expr]
-normalizeExprs [] = []
-normalizeExprs (TextExpr t1:TextExpr t2:rest) =
-  normalizeExprs (TextExpr (t1 <> t2) : rest)
-normalizeExprs (_:rest) = normalizeExprs rest
-
 randomExprs :: FuzzParams -> IO [Expr]
-randomExprs params = do
-  n <- randomRIO $ fpExprsRange params
-  replicateM n (randomExpr params)
+randomExprs params = randomRIO (fpExprsRange params) >>= f []
+  where
+    normalizeExprs :: [Expr] -> [Expr]
+    normalizeExprs [] = []
+    normalizeExprs (TextExpr t1:TextExpr t2:rest) =
+      normalizeExprs (TextExpr (t1 <> t2) : rest)
+    normalizeExprs (x:rest) = x : normalizeExprs rest
+    f :: [Expr] -> Int -> IO [Expr]
+    f es n
+      | m >= n = return es
+      | otherwise = do
+        es' <- replicateM (n - m) (randomExpr params)
+        f (normalizeExprs (es ++ es')) n
+      where
+        m = length es
 
-fuzzIteration :: FuzzParams -> IO Bool
+fuzzIteration :: FuzzParams -> IO FuzzStat
 fuzzIteration params = do
-  es <- normalizeExprs <$> randomExprs params
+  es <- randomExprs params
   let es' = runParser exprs $ unparseExprs es
   when (Right ("", es) /= es') $ do
     print es
     print es'
-    error "test"
-  return (Right ("", es) == es')
+    error "Failed"
+  return $ statOfExprs es
 
 fuzz :: FuzzParams -> IO ()
 fuzz params = do
-  report <- replicateM (fpFuzzCount params) (fuzzIteration params)
-  printf "Failures: %d\n" $ length $ filter not report
-  printf "Successes: %d\n" $ length $ filter id report
+  stats <- replicateM (fpFuzzCount params) (fuzzIteration params)
+  print $ fold stats
 
 mainWithArgs :: [String] -> IO ()
-mainWithArgs (fuzzParamsPath:_) = readFuzzParams fuzzParamsPath >>= fuzz
-mainWithArgs _ = error "Usage: Fuzz <fuzz.json>"
+mainWithArgs ("genconf":configFilePath:_) = do
+  saveFuzzParams defaultFuzzParams configFilePath
+  printf "Generated default configuration at %s" configFilePath
+mainWithArgs ("runconf":fuzzParamsPath:_) =
+  readFuzzParams fuzzParamsPath >>= fuzz
+mainWithArgs ("genexpr":configFilePath:_) = do
+  putStrLn "Generating expression:"
+  params <- readFuzzParams configFilePath
+  randomExprs params >>= print
+mainWithArgs _ =
+  error
+    "Usage: \n\
+    \       Fuzz genconf <fuzz.json>\n\
+    \       Fuzz runconf <fuzz.json>\n\
+    \       Fuzz genexpr <fuzz.json>"
 
 main :: IO ()
 main = getArgs >>= mainWithArgs

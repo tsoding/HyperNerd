@@ -1,4 +1,3 @@
-{-# LANGUAGE DeriveFunctor #-}
 {-# LANGUAGE OverloadedStrings #-}
 
 module Bot.Expr where
@@ -8,6 +7,8 @@ import Data.Char
 import qualified Data.Text as T
 import Data.Tuple
 
+import HyperNerd.Parser
+
 data Expr
   = TextExpr T.Text
   | FunCallExpr T.Text
@@ -16,37 +17,6 @@ data Expr
   deriving (Eq, Show)
 
 type NameTable = ()
-
-data ParserStop
-  = EOF
-  | SyntaxError T.Text
-  deriving (Eq, Show)
-
-newtype Parser a = Parser
-  { runParser :: T.Text -> Either ParserStop (T.Text, a)
-  } deriving (Functor)
-
-instance Applicative Parser where
-  pure x = Parser $ \text -> Right (text, x)
-  (Parser f) <*> (Parser x) =
-    Parser $ \input1 -> do
-      (input2, f') <- f input1
-      (input3, x') <- x input2
-      return (input3, f' x')
-
-instance Monad Parser where
-  Parser a >>= f =
-    Parser $ \input1 -> do
-      (input2, b) <- a input1
-      runParser (f b) input2
-
-instance Alternative Parser where
-  empty = Parser $ const $ Left EOF
-  (Parser p1) <|> (Parser p2) =
-    Parser $ \input ->
-      case (p1 input, p2 input) of
-        (Left _, x) -> x
-        (x, _) -> x
 
 symbol :: Parser T.Text
 symbol = notNull "Symbol name cannot be empty" $ takeWhileP isAlphaNum
@@ -58,18 +28,12 @@ stringLiteral = do
   _ <- charP '"'
   return $ TextExpr value
 
-sepBy :: Parser a -> Parser b -> Parser [a]
-sepBy element sep = do
-  arg <- element
-  args <- many (sep >> element)
-  return (arg : args)
-
 funcallarg :: Parser Expr
 funcallarg = funcall <|> var <|> stringLiteral
 
 funcall :: Parser Expr
 funcall = do
-  _ <- charP '%' >> whitespaces
+  _ <- charP '%'
   name <- symbol
   _ <- whitespaces >> charP '(' >> whitespaces
   args <-
@@ -77,33 +41,11 @@ funcall = do
   _ <- whitespaces >> charP ')'
   return $ FunCallExpr name args
 
-charP :: Char -> Parser Char
-charP a =
-  Parser $ \input ->
-    case T.uncons input of
-      Just (b, rest)
-        | a == b -> Right (rest, b)
-      _ -> Left $ SyntaxError ("Expected `" <> T.pack [a] <> "`")
-
-takeWhileP :: (Char -> Bool) -> Parser T.Text
-takeWhileP p = Parser $ \input -> return $ swap $ T.span p input
-
-syntaxError :: T.Text -> Parser a
-syntaxError message = Parser $ \_ -> Left $ SyntaxError message
-
-notNull :: T.Text -> Parser T.Text -> Parser T.Text
-notNull message next =
-  next >>=
-  (\value ->
-     if T.null value
-       then syntaxError message
-       else return value)
-
 whitespaces :: Parser T.Text
 whitespaces = takeWhileP isSpace
 
 var :: Parser Expr
-var = charP '%' >> whitespaces >> (VarExpr <$> symbol)
+var = charP '%' *> (VarExpr <$> symbol) <* charP '%'
 
 textBlock :: Parser Expr
 textBlock =
