@@ -3,9 +3,9 @@
 module Bot.Expr where
 
 import Control.Applicative
-import Data.Tuple
 import Data.Char
 import qualified Data.Text as T
+import Data.Tuple
 
 import HyperNerd.Parser
 

@@ -6,15 +6,15 @@ import Bot.Expr
 import Control.Monad
 import Data.Aeson
 import Data.Aeson.Types
+import qualified Data.ByteString.Lazy as BS
 import Data.Char
+import Data.Foldable
 import Data.List
 import qualified Data.Text as T
+import HyperNerd.Parser
 import System.Environment
 import System.Random
 import Text.Printf
-import qualified Data.ByteString.Lazy as BS
-import HyperNerd.Parser
-import Data.Foldable
 
 data FuzzStat = FuzzStat
   { fsTextCount :: Int
@@ -60,8 +60,7 @@ statOfExpr (TextExpr text) =
     , fsMinTextLen = T.length text
     , fsMaxTextLen = T.length text
     }
-statOfExpr (VarExpr _) =
-  mempty {fsVarCount = 1}
+statOfExpr (VarExpr _) = mempty {fsVarCount = 1}
 statOfExpr (FunCallExpr _ args) =
   mempty
     { fsFunCount = 1
@@ -200,12 +199,12 @@ mainWithArgs :: [String] -> IO ()
 mainWithArgs ("genconf":configFilePath:_) = do
   saveFuzzParams defaultFuzzParams configFilePath
   printf "Generated default configuration at %s" configFilePath
-mainWithArgs ("runconf":fuzzParamsPath:_) = readFuzzParams fuzzParamsPath >>= fuzz
+mainWithArgs ("runconf":fuzzParamsPath:_) =
+  readFuzzParams fuzzParamsPath >>= fuzz
 mainWithArgs ("genexpr":configFilePath:_) = do
   putStrLn "Generating expression:"
   params <- readFuzzParams configFilePath
   randomExprs params >>= print
-
 mainWithArgs _ =
   error
     "Usage: \n\
