@@ -79,8 +79,7 @@ instance IsEntity RoomName where
   fromProperties = fmap RoomName . extractProperty "name"
 
 getRoom :: Effect (Maybe (Entity RoomName))
-getRoom = 
-  listToMaybe <$> selectEntities P.Proxy (Take 1 All)
+getRoom = listToMaybe <$> selectEntities P.Proxy (Take 1 All)
 
 setDubtrackRoom :: Reaction Message T.Text
 setDubtrackRoom =
@@ -88,9 +87,10 @@ setDubtrackRoom =
     (\msg -> do
        mayReply <- getRoom
        case mayReply of
-         Just reply -> void $ updateEntityById $ (\a -> a {unName = msg}) <$> reply
-         Nothing -> void $ createEntity P.Proxy $ RoomName msg
-    ) $ cmapR (const "Updated room for dubtrack") $ Reaction replyMessage
+         Just reply ->
+           void $ updateEntityById $ (\a -> a {unName = msg}) <$> reply
+         Nothing -> void $ createEntity P.Proxy $ RoomName msg) $
+  cmapR (const "Updated room for dubtrack") $ Reaction replyMessage
 
 -- TODO(#221): Dubtrack room is hardcode
 currentSongCommand :: Reaction Message ()
@@ -98,9 +98,11 @@ currentSongCommand =
   Reaction $ \Message {messageSender = sender} -> do
     mayRoom <- getRoom
     case mayRoom of
-      Nothing -> replyToSender sender
-        "Dubtrack room not set, a mod can run '!config room name' to set it"
-      Just mahroom -> do 
+      Nothing ->
+        replyToSender
+          sender
+          "Dubtrack room not set, a mod can run '!config dubtrack $ROOM_NAME' to set it"
+      Just mahroom -> do
         request <-
           parseRequest $
           "https://api.dubtrack.fm/room/" <>
@@ -112,5 +114,5 @@ currentSongCommand =
             maybe
               (replyToSender sender "Nothing is playing right now")
               (\song ->
-                replyToSender sender [qms|❝{songName song}❞: {songLink song}|])
+                 replyToSender sender [qms|❝{songName song}❞: {songLink song}|])
               (roomCurrentSong $ drData dubtrackResponse)
