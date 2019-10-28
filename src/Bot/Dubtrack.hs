@@ -74,7 +74,7 @@ newtype RoomName = RoomName
   }
 
 instance IsEntity RoomName where
-  nameOfEntity _ = "RoomName"
+  nameOfEntity _ = "DubtrackRoomName"
   toProperties reply = Map.fromList [("name", PropertyText $ unName reply)]
   fromProperties = fmap RoomName . extractProperty "name"
 
