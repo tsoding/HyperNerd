@@ -485,7 +485,7 @@ builtinCommands =
                     [ ("link", setNoTrustLinkReplyCommand)
                     , ("command", setNoTrustCommandReplyCommand)
                     ])
-              , ("dubtrack", setDubtrack)
+              , ("dubtrack", setDubtrackRoom)
               ]))
     , ( "version"
       , mkBuiltinCommand

@@ -78,44 +78,39 @@ instance IsEntity RoomName where
   toProperties reply = Map.fromList [("name", PropertyText $ unName reply)]
   fromProperties = fmap RoomName . extractProperty "name"
 
-getRoom :: Effect (Entity RoomName)
-getRoom = do
-  reply <- listToMaybe <$> selectEntities P.Proxy (Take 1 All)
-  case reply of
-    Just reply' -> return reply'
-    Nothing -> createEntity P.Proxy $ RoomName "tsoding"
+getRoom :: Effect (Maybe (Entity RoomName))
+getRoom = 
+  listToMaybe <$> selectEntities P.Proxy (Take 1 All)
 
-setRoomName :: Reaction Message T.Text
-setRoomName =
+setDubtrackRoom :: Reaction Message T.Text
+setDubtrackRoom =
   liftR
     (\msg -> do
-       reply <- getRoom
-       void $ updateEntityById $ (\a -> a {unName = msg}) <$> reply) $
-  cmapR (const "Updated room for dubtrack") $ Reaction replyMessage
+       mayReply <- getRoom
+       case mayReply of
+         Just reply -> void $ updateEntityById $ (\a -> a {unName = msg}) <$> reply
+         Nothing -> void $ createEntity P.Proxy $ RoomName msg
+    ) $ cmapR (const "Updated room for dubtrack") $ Reaction replyMessage
 
 -- TODO(#221): Dubtrack room is hardcode
 currentSongCommand :: Reaction Message ()
 currentSongCommand =
   Reaction $ \Message {messageSender = sender} -> do
-    mahroom <- getRoom
-    request <-
-      parseRequest $
-      "https://api.dubtrack.fm/room/" <>
-      T.unpack (unName $ entityPayload mahroom)
-    response <- eitherDecode . getResponseBody <$> httpRequest request
-    case response of
-      Left message -> errorEff $ T.pack message
-      Right dubtrackResponse ->
-        maybe
-          (replyToSender sender "Nothing is playing right now")
-          (\song ->
-             replyToSender sender [qms|❝{songName song}❞: {songLink song}|])
-          (roomCurrentSong $ drData dubtrackResponse)
-
-setDubtrack :: Reaction Message T.Text
-setDubtrack =
-  liftR
-    (\msg -> do
-       reply <- getRoom
-       void $ updateEntityById $ fmap (\a -> a {unName = msg}) reply) $
-  cmapR (const "Updated the dubtrack") $ Reaction replyMessage
+    mayRoom <- getRoom
+    case mayRoom of
+      Nothing -> replyToSender sender
+        "Dubtrack room not set, a mod can run '!config room name' to set it"
+      Just mahroom -> do 
+        request <-
+          parseRequest $
+          "https://api.dubtrack.fm/room/" <>
+          T.unpack (unName $ entityPayload mahroom)
+        response <- eitherDecode . getResponseBody <$> httpRequest request
+        case response of
+          Left message -> errorEff $ T.pack message
+          Right dubtrackResponse ->
+            maybe
+              (replyToSender sender "Nothing is playing right now")
+              (\song ->
+                replyToSender sender [qms|❝{songName song}❞: {songLink song}|])
+              (roomCurrentSong $ drData dubtrackResponse)
