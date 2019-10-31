@@ -67,7 +67,6 @@ exprs = normalizeExprs <$> many expr
     normalizeExprs (TextExpr t1:TextExpr t2:rest) =
       normalizeExprs (TextExpr (t1 <> t2) : rest)
     normalizeExprs (x:rest) = x : normalizeExprs rest
-
 -- TODO(#600): interpretExprs is not implemented
 -- interpretExprs :: NameTable -> [Expr] -> Effect T.Text
 -- interpretExprs = undefined

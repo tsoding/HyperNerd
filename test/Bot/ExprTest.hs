@@ -1,11 +1,11 @@
 {-# LANGUAGE OverloadedStrings #-}
-{-# LANGUAGE QuasiQuotes #-}
+
 module Bot.ExprTest where
 
-import Test.HUnit
 import Bot.Expr
-import HyperNerd.Parser
 import qualified Data.Text as T
+import HyperNerd.Parser
+import Test.HUnit
 
 spec :: Test
 spec =
