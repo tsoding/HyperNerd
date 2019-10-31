@@ -171,11 +171,14 @@ updateCustomCommand builtinCommands =
       (Nothing, Nothing) ->
         replyToSender sender [qms|Command '{name}' does not exist|]
 
+evalExpr :: M.Map T.Text T.Text -> Expr -> T.Text
+evalExpr _ (TextExpr t) = t
+evalExpr vars (FunCallExpr "or" args) =
+  fromMaybe "" $ listToMaybe $ dropWhile T.null $ map (evalExpr vars) args
+evalExpr vars (FunCallExpr funame _) = fromMaybe "" $ M.lookup funame vars
+
 expandVars :: M.Map T.Text T.Text -> [Expr] -> T.Text
-expandVars _ [] = ""
-expandVars vars (TextExpr t:rest) = t <> expandVars vars rest
-expandVars vars (FunCallExpr funame _:rest) =
-  (fromMaybe "" $ M.lookup funame vars) <> expandVars vars rest
+expandVars vars = T.concat . map (evalExpr vars)
 
 -- TODO(#598): reimplement expandCustomCommandVars with Bot.Expr when it's ready
 expandCustomCommandVars ::
