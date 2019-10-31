@@ -13,7 +13,6 @@ data Expr
   = TextExpr T.Text
   | FunCallExpr T.Text
                 [Expr]
-  | VarExpr T.Text
   deriving (Eq, Show)
 
 type NameTable = ()
@@ -28,38 +27,47 @@ stringLiteral = do
   _ <- charP '"'
   return $ TextExpr value
 
-funcallarg :: Parser Expr
-funcallarg = funcall <|> var <|> stringLiteral
+funCallArg :: Parser Expr
+funCallArg = funCall <|> stringLiteral
 
-funcall :: Parser Expr
-funcall = do
-  _ <- charP '%'
-  name <- symbol
-  _ <- whitespaces >> charP '(' >> whitespaces
+funCallArgList :: Parser [Expr]
+funCallArgList = do
+  _ <- charP '(' <* whitespaces
   args <-
-    sepBy funcallarg (whitespaces >> charP ',' >> whitespaces) <|> return []
+    sepBy funCallArg (whitespaces >> charP ',' >> whitespaces) <|> return []
   _ <- whitespaces >> charP ')'
+  return args
+
+funCall :: Parser Expr
+funCall = do
+  name <- charP '%' *> symbol
+  args <- funCallArgList <|> return []
   return $ FunCallExpr name args
 
 whitespaces :: Parser T.Text
 whitespaces = takeWhileP isSpace
-
-var :: Parser Expr
-var = charP '%' *> (VarExpr <$> symbol) <* charP '%'
 
 textBlock :: Parser Expr
 textBlock =
   Parser $ \input ->
     case T.uncons input of
       Nothing -> Left EOF
-      Just ('%', _) -> Left (SyntaxError "Text block does not start with %")
+      Just ('%', input') ->
+        return $ fmap (TextExpr . T.cons '%') $ swap $ T.span (/= '%') input'
       _ -> return $ fmap TextExpr $ swap $ T.span (/= '%') input
 
 expr :: Parser Expr
-expr = funcall <|> var <|> textBlock
+expr = funCall <|> textBlock
 
 exprs :: Parser [Expr]
-exprs = many expr
+exprs = normalizeExprs <$> many expr
+  where
+    normalizeExprs :: [Expr] -> [Expr]
+    normalizeExprs [] = []
+    normalizeExprs (TextExpr t1:TextExpr t2:rest) =
+      normalizeExprs (TextExpr (t1 <> t2) : rest)
+    normalizeExprs (x:rest) = x : normalizeExprs rest
+
 -- TODO(#600): interpretExprs is not implemented
 -- interpretExprs :: NameTable -> [Expr] -> Effect T.Text
 -- interpretExprs = undefined

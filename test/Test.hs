@@ -14,6 +14,7 @@ import qualified Bot.LinksTest
 import qualified Bot.LogTest
 import qualified Bot.PollTest
 import qualified Bot.TwitchTest
+import qualified Bot.ExprTest
 import qualified CommandTest
 import qualified Data.Time.ExtraTest
 import qualified Sqlite.EntityPersistenceTest
@@ -30,6 +31,7 @@ main = do
       , Bot.PollTest.spec
       , Bot.TwitchTest.spec
       , Bot.FridayTest.spec
+      , Bot.ExprTest.spec
       , CommandTest.spec
       , Sqlite.EntityPersistenceTest.spec
       , Data.Time.ExtraTest.spec
