@@ -1,4 +1,5 @@
 {-# LANGUAGE TupleSections #-}
+
 module Reaction where
 
 import Data.Functor

@@ -10,10 +10,12 @@ module Bot.CustomCommand
   , timesCustomCommand
   ) where
 
+import Bot.Expr
 import Bot.Replies
 import Command
 import Control.Monad
 import Control.Monad.Trans.Maybe
+import Data.Functor.Compose
 import qualified Data.Map as M
 import Data.Maybe
 import Data.Proxy
@@ -21,13 +23,11 @@ import qualified Data.Text as T
 import Data.Time
 import Effect
 import Entity
+import HyperNerd.Parser
 import Property
 import Reaction
 import Text.InterpolatedString.QM
 import Transport
-import Data.Functor.Compose
-import HyperNerd.Parser
-import Bot.Expr
 
 data CustomCommand = CustomCommand
   { customCommandName :: T.Text
@@ -181,7 +181,8 @@ expandVars vars = T.concat . map (evalExpr vars)
 
 -- TODO(#598): reimplement expandCustomCommandVars with Bot.Expr when it's ready
 expandCustomCommandVars ::
-     Message (Command T.Text, Entity CustomCommand) -> Effect (Either String CustomCommand)
+     Message (Command T.Text, Entity CustomCommand)
+  -> Effect (Either String CustomCommand)
 expandCustomCommandVars Message { messageSender = sender
                                 , messageContent = (Command {commandArgs = args}, Entity {entityPayload = customCommand})
                                 } = do
