@@ -12,7 +12,6 @@ module Bot.CustomCommand
   ) where
 
 import Bot.Replies
-import Bot.Variable
 import Command
 import Control.Monad
 import Control.Monad.Trans.Maybe
@@ -28,6 +27,8 @@ import Reaction
 import Text.InterpolatedString.QM
 import Transport
 import Data.Functor.Compose
+import HyperNerd.Parser
+import Bot.Expr
 
 data CustomCommand = CustomCommand
   { customCommandName :: T.Text
@@ -170,29 +171,38 @@ updateCustomCommand builtinCommands =
       (Nothing, Nothing) ->
         replyToSender sender [qms|Command '{name}' does not exist|]
 
+expandVars :: M.Map T.Text T.Text -> [Expr] -> T.Text
+expandVars _ [] = ""
+expandVars vars (TextExpr t:rest) = t <> expandVars vars rest
+expandVars vars (FunCallExpr funame _:rest) =
+  (fromMaybe "" $ M.lookup funame vars) <> expandVars vars rest
+
 -- TODO(#598): reimplement expandCustomCommandVars with Bot.Expr when it's ready
 expandCustomCommandVars ::
-     Message (Command T.Text, Entity CustomCommand) -> Effect CustomCommand
+     Message (Command T.Text, Entity CustomCommand) -> Effect (Either String CustomCommand)
 expandCustomCommandVars Message { messageSender = sender
                                 , messageContent = (Command {commandArgs = args}, Entity {entityPayload = customCommand})
                                 } = do
   timestamp <- now
   let day = utctDay timestamp
   let (yearNum, monthNum, dayNum) = toGregorian day
-  let message = customCommandMessage customCommand
+  let code = runParser exprs $ customCommandMessage customCommand
   let times = customCommandTimes customCommand
   let vars =
-        [ ("%times", [qms|{times}|])
-        , ("%year", [qms|{yearNum}|])
-        , ("%month", [qms|{monthNum}|])
-        , ("%day", [qms|{dayNum}|])
-        , ("%date", [qms|{showGregorian day}|])
-        , ("%sender", mentionSender sender)
-        , ("%1", args)
-        ]
-  expandedMessage <-
-    expandVariables $ foldl (flip $ uncurry T.replace) message vars
-  return $ customCommand {customCommandMessage = expandedMessage}
+        M.fromList
+          [ ("times", [qms|{times}|])
+          , ("year", [qms|{yearNum}|])
+          , ("month", [qms|{monthNum}|])
+          , ("day", [qms|{dayNum}|])
+          , ("date", [qms|{showGregorian day}|])
+          , ("sender", mentionSender sender)
+          , ("1", args)
+          ]
+  case code of
+    Left msg -> return $ Left (show msg)
+    Right (_, code') -> do
+      return $
+        Right customCommand {customCommandMessage = expandVars vars code'}
 
 bumpCustomCommandTimes :: CustomCommand -> CustomCommand
 bumpCustomCommandTimes customCommand =
@@ -211,7 +221,8 @@ dispatchCustomCommand =
   liftR (updateEntityById . fmap bumpCustomCommandTimes) $
   ignoreNothing $
   transR getCompose $
-  dupLiftR expandCustomCommandVars $ cmapR customCommandMessage $ sayMessage
+  dupLiftR expandCustomCommandVars $
+  replyLeft $ cmapR customCommandMessage $ sayMessage
   where
     f :: Functor m => (a, m b) -> m (a, b)
     f = uncurry $ fmap . (,)
