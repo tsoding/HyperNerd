@@ -10,12 +10,12 @@ module Bot.CustomCommand
   , timesCustomCommand
   ) where
 
+import Bot.Expr
 import Bot.Replies
-import Bot.Variable
 import Command
 import Control.Monad
-import Control.Monad.Trans.Class
 import Control.Monad.Trans.Maybe
+import Data.Functor.Compose
 import qualified Data.Map as M
 import Data.Maybe
 import Data.Proxy
@@ -23,6 +23,7 @@ import qualified Data.Text as T
 import Data.Time
 import Effect
 import Entity
+import HyperNerd.Parser
 import Property
 import Reaction
 import Text.InterpolatedString.QM
@@ -169,27 +170,42 @@ updateCustomCommand builtinCommands =
       (Nothing, Nothing) ->
         replyToSender sender [qms|Command '{name}' does not exist|]
 
+evalExpr :: M.Map T.Text T.Text -> Expr -> T.Text
+evalExpr _ (TextExpr t) = t
+evalExpr vars (FunCallExpr "or" args) =
+  fromMaybe "" $ listToMaybe $ dropWhile T.null $ map (evalExpr vars) args
+evalExpr vars (FunCallExpr funame _) = fromMaybe "" $ M.lookup funame vars
+
+expandVars :: M.Map T.Text T.Text -> [Expr] -> T.Text
+expandVars vars = T.concat . map (evalExpr vars)
+
 -- TODO(#598): reimplement expandCustomCommandVars with Bot.Expr when it's ready
 expandCustomCommandVars ::
-     Sender -> T.Text -> CustomCommand -> Effect CustomCommand
-expandCustomCommandVars sender args customCommand = do
+     Message (Command T.Text, Entity CustomCommand)
+  -> Effect (Either String CustomCommand)
+expandCustomCommandVars Message { messageSender = sender
+                                , messageContent = (Command {commandArgs = args}, Entity {entityPayload = customCommand})
+                                } = do
   timestamp <- now
   let day = utctDay timestamp
   let (yearNum, monthNum, dayNum) = toGregorian day
-  let message = customCommandMessage customCommand
+  let code = runParser exprs $ customCommandMessage customCommand
   let times = customCommandTimes customCommand
   let vars =
-        [ ("%times", [qms|{times}|])
-        , ("%year", [qms|{yearNum}|])
-        , ("%month", [qms|{monthNum}|])
-        , ("%day", [qms|{dayNum}|])
-        , ("%date", [qms|{showGregorian day}|])
-        , ("%sender", mentionSender sender)
-        , ("%1", args)
-        ]
-  expandedMessage <-
-    expandVariables $ foldl (flip $ uncurry T.replace) message vars
-  return $ customCommand {customCommandMessage = expandedMessage}
+        M.fromList
+          [ ("times", [qms|{times}|])
+          , ("year", [qms|{yearNum}|])
+          , ("month", [qms|{monthNum}|])
+          , ("day", [qms|{dayNum}|])
+          , ("date", [qms|{showGregorian day}|])
+          , ("sender", mentionSender sender)
+          , ("1", args)
+          ]
+  case code of
+    Left msg -> return $ Left (show msg)
+    Right (_, code') ->
+      return $
+      Right customCommand {customCommandMessage = expandVars vars code'}
 
 bumpCustomCommandTimes :: CustomCommand -> CustomCommand
 bumpCustomCommandTimes customCommand =
@@ -199,19 +215,17 @@ replaceCustomCommandMessage :: T.Text -> CustomCommand -> CustomCommand
 replaceCustomCommandMessage message customCommand =
   customCommand {customCommandMessage = message}
 
-dispatchCustomCommand :: Message (Command T.Text) -> Effect ()
-dispatchCustomCommand Message { messageContent = Command { commandName = cmd
-                                                         , commandArgs = args
-                                                         }
-                              , messageSender = sender
-                              } = do
-  customCommand <-
-    runMaybeT
-      (entityPayload <$>
-       ((fmap bumpCustomCommandTimes <$> customCommandByName cmd) >>=
-        MaybeT . updateEntityById) >>=
-       lift . expandCustomCommandVars sender args)
-  maybe
-    (return ())
-    (say (senderChannel sender) . customCommandMessage)
-    customCommand
+dispatchCustomCommand :: Reaction Message (Command T.Text)
+dispatchCustomCommand =
+  liftFst (runMaybeT . customCommandByName . commandName) $
+  cmapR f $
+  ignoreNothing $
+  transR Compose $
+  liftR (updateEntityById . fmap bumpCustomCommandTimes) $
+  ignoreNothing $
+  transR getCompose $
+  dupLiftR expandCustomCommandVars $
+  replyLeft $ cmapR customCommandMessage sayMessage
+  where
+    f :: Functor m => (a, m b) -> m (a, b)
+    f = uncurry $ fmap . (,)
