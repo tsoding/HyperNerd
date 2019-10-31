@@ -1,3 +1,4 @@
+{-# LANGUAGE TupleSections #-}
 module Reaction where
 
 import Data.Functor
@@ -74,3 +75,9 @@ ifR predicate thenReaction elseReaction =
     if predicate $ extract x
       then runReaction thenReaction x
       else runReaction elseReaction x
+
+liftFst :: Comonad w => (a -> Effect b) -> Reaction w (a, b) -> Reaction w a
+liftFst f r =
+  Reaction $ \m -> do
+    b <- f $ extract m
+    runReaction r ((, b) <$> m)

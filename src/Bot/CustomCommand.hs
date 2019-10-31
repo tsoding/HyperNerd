@@ -1,5 +1,6 @@
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE QuasiQuotes #-}
+{-# LANGUAGE TupleSections #-}
 
 module Bot.CustomCommand
   ( addCustomCommand
@@ -14,7 +15,6 @@ import Bot.Replies
 import Bot.Variable
 import Command
 import Control.Monad
-import Control.Monad.Trans.Class
 import Control.Monad.Trans.Maybe
 import qualified Data.Map as M
 import Data.Maybe
@@ -27,8 +27,7 @@ import Property
 import Reaction
 import Text.InterpolatedString.QM
 import Transport
--- import HyperNerd.Parser
--- import Bot.Expr
+import Data.Functor.Compose
 
 data CustomCommand = CustomCommand
   { customCommandName :: T.Text
@@ -173,8 +172,10 @@ updateCustomCommand builtinCommands =
 
 -- TODO(#598): reimplement expandCustomCommandVars with Bot.Expr when it's ready
 expandCustomCommandVars ::
-     Sender -> T.Text -> CustomCommand -> Effect CustomCommand
-expandCustomCommandVars sender args customCommand = do
+     Message (Command T.Text, Entity CustomCommand) -> Effect CustomCommand
+expandCustomCommandVars Message { messageSender = sender
+                                , messageContent = (Command {commandArgs = args}, Entity {entityPayload = customCommand})
+                                } = do
   timestamp <- now
   let day = utctDay timestamp
   let (yearNum, monthNum, dayNum) = toGregorian day
@@ -202,18 +203,15 @@ replaceCustomCommandMessage message customCommand =
   customCommand {customCommandMessage = message}
 
 dispatchCustomCommand :: Reaction Message (Command T.Text)
-dispatchCustomCommand = Reaction f
+dispatchCustomCommand =
+  liftFst (runMaybeT . customCommandByName . commandName) $
+  cmapR f $
+  ignoreNothing $
+  transR Compose $
+  liftR (updateEntityById . fmap bumpCustomCommandTimes) $
+  ignoreNothing $
+  transR getCompose $
+  dupLiftR expandCustomCommandVars $ cmapR customCommandMessage $ sayMessage
   where
-    f Message { messageContent = Command {commandName = cmd, commandArgs = args}
-              , messageSender = sender
-              } = do
-      customCommand <-
-        runMaybeT
-          (entityPayload <$>
-           ((fmap bumpCustomCommandTimes <$> customCommandByName cmd) >>=
-            MaybeT . updateEntityById) >>=
-           lift . expandCustomCommandVars sender args)
-      maybe
-        (return ())
-        (say (senderChannel sender) . customCommandMessage)
-        customCommand
+    f :: Functor m => (a, m b) -> m (a, b)
+    f = uncurry $ fmap . (,)
