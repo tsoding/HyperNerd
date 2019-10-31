@@ -1,6 +1,5 @@
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE QuasiQuotes #-}
-{-# LANGUAGE TupleSections #-}
 
 module Bot.CustomCommand
   ( addCustomCommand
@@ -203,9 +202,9 @@ expandCustomCommandVars Message { messageSender = sender
           ]
   case code of
     Left msg -> return $ Left (show msg)
-    Right (_, code') -> do
+    Right (_, code') ->
       return $
-        Right customCommand {customCommandMessage = expandVars vars code'}
+      Right customCommand {customCommandMessage = expandVars vars code'}
 
 bumpCustomCommandTimes :: CustomCommand -> CustomCommand
 bumpCustomCommandTimes customCommand =
@@ -225,7 +224,7 @@ dispatchCustomCommand =
   ignoreNothing $
   transR getCompose $
   dupLiftR expandCustomCommandVars $
-  replyLeft $ cmapR customCommandMessage $ sayMessage
+  replyLeft $ cmapR customCommandMessage sayMessage
   where
     f :: Functor m => (a, m b) -> m (a, b)
     f = uncurry $ fmap . (,)

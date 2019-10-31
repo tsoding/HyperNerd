@@ -107,7 +107,7 @@ startPeriodicTimer dispatchCommand channel eid =
       pt'
 
 startPeriodicCommands ::
-     Channel -> (Reaction Message (Command T.Text)) -> Effect ()
+     Channel -> Reaction Message (Command T.Text) -> Effect ()
 startPeriodicCommands channel dispatchCommand = do
   eids <- (entityId <$>) <$> selectEntities (Proxy :: Proxy PeriodicTimer) All
   for_ eids (startPeriodicTimer dispatchCommand channel)
