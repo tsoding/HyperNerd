@@ -1,5 +1,7 @@
 module Main where
 
+import qualified Bot.ExprTest
+
 {- Test Suite Conventions
 ~~~~~~~~~~~~~~~~~~~~~~~~~
 1. If the module we are testing is called `Foo.Bar.Baz`,
@@ -30,6 +32,7 @@ main = do
       , Bot.PollTest.spec
       , Bot.TwitchTest.spec
       , Bot.FridayTest.spec
+      , Bot.ExprTest.spec
       , CommandTest.spec
       , Sqlite.EntityPersistenceTest.spec
       , Data.Time.ExtraTest.spec
