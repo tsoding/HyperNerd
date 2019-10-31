@@ -84,7 +84,7 @@ getPeriodicCommandByName name =
   Take 1 $ Filter (PropertyEquals "name" (PropertyText name)) All
 
 startPeriodicTimer ::
-     (Message (Command T.Text) -> Effect ()) -> Channel -> Int -> Effect ()
+     Reaction Message (Command T.Text) -> Channel -> Int -> Effect ()
 startPeriodicTimer dispatchCommand channel eid =
   periodicEffect' (Just channel) $ do
     pt' <- getEntityById Proxy eid
@@ -99,7 +99,7 @@ startPeriodicTimer dispatchCommand channel eid =
          when (periodicTimerEnabled pt) $
            maybe
              (return ())
-             (dispatchCommand .
+             (runReaction dispatchCommand .
               Message (mrbotka {senderChannel = channel}) False .
               periodicCommand . entityPayload)
              pc'
@@ -107,7 +107,7 @@ startPeriodicTimer dispatchCommand channel eid =
       pt'
 
 startPeriodicCommands ::
-     Channel -> (Message (Command T.Text) -> Effect ()) -> Effect ()
+     Channel -> (Reaction Message (Command T.Text)) -> Effect ()
 startPeriodicCommands channel dispatchCommand = do
   eids <- (entityId <$>) <$> selectEntities (Proxy :: Proxy PeriodicTimer) All
   for_ eids (startPeriodicTimer dispatchCommand channel)
@@ -171,7 +171,7 @@ statusPeriodicTimerCommand =
   Reaction replyMessage
 
 addPeriodicTimerCommand ::
-     (Message (Command T.Text) -> Effect ()) -> Reaction Message Int
+     Reaction Message (Command T.Text) -> Reaction Message Int
 addPeriodicTimerCommand dispatchCommand =
   cmapR (PeriodicTimer False) $
   liftR (createEntity Proxy) $

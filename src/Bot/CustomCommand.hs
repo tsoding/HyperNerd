@@ -27,6 +27,8 @@ import Property
 import Reaction
 import Text.InterpolatedString.QM
 import Transport
+-- import HyperNerd.Parser
+-- import Bot.Expr
 
 data CustomCommand = CustomCommand
   { customCommandName :: T.Text
@@ -199,19 +201,19 @@ replaceCustomCommandMessage :: T.Text -> CustomCommand -> CustomCommand
 replaceCustomCommandMessage message customCommand =
   customCommand {customCommandMessage = message}
 
-dispatchCustomCommand :: Message (Command T.Text) -> Effect ()
-dispatchCustomCommand Message { messageContent = Command { commandName = cmd
-                                                         , commandArgs = args
-                                                         }
-                              , messageSender = sender
-                              } = do
-  customCommand <-
-    runMaybeT
-      (entityPayload <$>
-       ((fmap bumpCustomCommandTimes <$> customCommandByName cmd) >>=
-        MaybeT . updateEntityById) >>=
-       lift . expandCustomCommandVars sender args)
-  maybe
-    (return ())
-    (say (senderChannel sender) . customCommandMessage)
-    customCommand
+dispatchCustomCommand :: Reaction Message (Command T.Text)
+dispatchCustomCommand = Reaction f
+  where
+    f Message { messageContent = Command {commandName = cmd, commandArgs = args}
+              , messageSender = sender
+              } = do
+      customCommand <-
+        runMaybeT
+          (entityPayload <$>
+           ((fmap bumpCustomCommandTimes <$> customCommandByName cmd) >>=
+            MaybeT . updateEntityById) >>=
+           lift . expandCustomCommandVars sender args)
+      maybe
+        (return ())
+        (say (senderChannel sender) . customCommandMessage)
+        customCommand

@@ -668,7 +668,7 @@ dispatchRedirect :: Effect () -> Message (Command T.Text) -> Effect ()
 dispatchRedirect effect cmd = do
   effectOutput <-
     T.strip . T.concat . concatMap (\x -> [" ", x]) <$> listen effect
-  dispatchCommand $
+  runReaction dispatchCommand $
     getCompose ((\x -> T.concat [x, effectOutput]) <$> Compose cmd)
 
 -- TODO(#414): there is not cooldown for pipes
@@ -699,18 +699,18 @@ dispatchPipe = Reaction dispatchPipe'
         pipeLimit = 10
         plebPipeLimit = 2
 
-dispatchCommand :: Message (Command T.Text) -> Effect ()
-dispatchCommand message = do
-  dispatchBuiltinCommand message
-  dispatchCustomCommand message
+dispatchCommand :: Reaction Message (Command T.Text)
+dispatchCommand = dispatchBuiltinCommand <> dispatchCustomCommand
 
-dispatchBuiltinCommand :: Message (Command T.Text) -> Effect ()
-dispatchBuiltinCommand message@Message { messageSender = _
-                                       , messageContent = Command { commandName = name
-                                                                  , commandArgs = args
-                                                                  }
-                                       } =
-  maybe
-    (return ())
-    (\bc -> runReaction (bcReaction bc) $ fmap (const args) message)
-    (M.lookup name builtinCommands)
+dispatchBuiltinCommand :: Reaction Message (Command T.Text)
+dispatchBuiltinCommand = Reaction f
+  where
+    f message@Message { messageSender = _
+                      , messageContent = Command { commandName = name
+                                                 , commandArgs = args
+                                                 }
+                      } =
+      maybe
+        (return ())
+        (\bc -> runReaction (bcReaction bc) $ fmap (const args) message)
+        (M.lookup name builtinCommands)
