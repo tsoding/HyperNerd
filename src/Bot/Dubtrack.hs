@@ -69,16 +69,16 @@ songLink (songType -> SongTypeSoundcloud) =
   "Soundcloud links are not supported yet"
 songLink _ = error "This should never happen Kappa"
 
-newtype RoomName = RoomName
+newtype DubtrackRoom = DubtrackRoom
   { unName :: T.Text
   }
 
-instance IsEntity RoomName where
+instance IsEntity DubtrackRoom where
   nameOfEntity _ = "DubtrackRoom"
   toProperties reply = Map.fromList [("name", PropertyText $ unName reply)]
-  fromProperties = fmap RoomName . extractProperty "name"
+  fromProperties = fmap DubtrackRoom . extractProperty "name"
 
-getRoom :: Effect (Maybe (Entity RoomName))
+getRoom :: Effect (Maybe (Entity DubtrackRoom))
 getRoom = listToMaybe <$> selectEntities P.Proxy (Take 1 All)
 
 setDubtrackRoom :: Reaction Message T.Text
@@ -89,10 +89,11 @@ setDubtrackRoom =
        case mayReply of
          Just reply ->
            void $ updateEntityById $ (\a -> a {unName = msg}) <$> reply
-         Nothing -> void $ createEntity P.Proxy $ RoomName msg) $
+         Nothing -> void $ createEntity P.Proxy $ DubtrackRoom msg) $
   cmapR (const "Updated room for dubtrack") $ Reaction replyMessage
 
 -- TODO(#221): Dubtrack room is hardcode
+-- TODO: Rewrite in the Reaction api
 currentSongCommand :: Reaction Message ()
 currentSongCommand =
   Reaction $ \Message {messageSender = sender} -> do
@@ -101,7 +102,7 @@ currentSongCommand =
       Nothing ->
         replyToSender
           sender
-          "Dubtrack room not set, a mod can run '!config dubtrack $ROOM_NAME' to set it"
+          "Dubtrack room not set, a mod can run '!config dubtrack <room-name>' to set it"
       Just mahroom -> do
         request <-
           parseRequest $
