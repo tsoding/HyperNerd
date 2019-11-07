@@ -5,11 +5,16 @@
 module Bot.Dubtrack where
 
 import Bot.Replies
+import Control.Monad
 import Data.Aeson
 import Data.Aeson.Types
+import qualified Data.Map as Map
+import Data.Maybe
+import qualified Data.Proxy as P
 import qualified Data.Text as T
 import Effect
-import Network.HTTP.Simple
+import Entity
+import Property
 import Reaction
 import Text.InterpolatedString.QM
 import Transport
@@ -63,17 +68,40 @@ songLink (songType -> SongTypeSoundcloud) =
   "Soundcloud links are not supported yet"
 songLink _ = error "This should never happen Kappa"
 
--- TODO(#221): Dubtrack room is hardcode
+newtype DubtrackRoom = DubtrackRoom
+  { unName :: T.Text
+  }
+
+instance IsEntity DubtrackRoom where
+  nameOfEntity _ = "DubtrackRoom"
+  toProperties reply = Map.fromList [("name", PropertyText $ unName reply)]
+  fromProperties = fmap DubtrackRoom . extractProperty "name"
+
+getRoom :: Effect (Maybe (Entity DubtrackRoom))
+getRoom = listToMaybe <$> selectEntities P.Proxy (Take 1 All)
+
+setDubtrackRoom :: Reaction Message T.Text
+setDubtrackRoom =
+  liftR
+    (\msg -> do
+       mayReply <- getRoom
+       case mayReply of
+         Just reply ->
+           void $ updateEntityById $ (\a -> a {unName = msg}) <$> reply
+         Nothing -> void $ createEntity P.Proxy $ DubtrackRoom msg) $
+  cmapR (const "Updated room for dubtrack") $ Reaction replyMessage
+
 currentSongCommand :: Reaction Message ()
 currentSongCommand =
-  Reaction $ \Message {messageSender = sender} -> do
-    request <- parseRequest "https://api.dubtrack.fm/room/tsoding"
-    response <- eitherDecode . getResponseBody <$> httpRequest request
-    case response of
-      Left message -> errorEff $ T.pack message
-      Right dubtrackResponse ->
-        maybe
-          (replyToSender sender "Nothing is playing right now")
-          (\song ->
-             replyToSender sender [qms|❝{songName song}❞: {songLink song}|])
-          (roomCurrentSong $ drData dubtrackResponse)
+  liftR (const getRoom) $
+  replyOnNothing
+    [qms|Dubtrack room not set, a mod can run
+         '!config dubtrack <room-name>' to set it|] $
+  cmapR (T.unpack . urlOfRoom . entityPayload) $
+  jsonHttpRequestReaction $
+  cmapR (roomCurrentSong . drData) $
+  replyOnNothing "Nothing is playing right now" $
+  cmapR (\song -> [qms|❝{songName song}❞: {songLink song}|]) $
+  Reaction replyMessage
+  where
+    urlOfRoom = ("https://api.dubtrack.fm/room/" <>) . unName
