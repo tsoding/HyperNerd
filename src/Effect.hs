@@ -27,7 +27,6 @@ module Effect
   , twitchCommand
   , randomMarkov
   , reloadMarkov
-  , callFun
   , githubApiRequest
   , randomEff
   ) where
@@ -112,11 +111,6 @@ data EffectF s
                   s
   | RandomMarkov (Maybe T.Text -> s)
   | ReloadMarkov (Maybe T.Text -> s)
-  | GetVar T.Text
-           (Maybe T.Text -> s)
-  | CallFun T.Text
-            [T.Text]
-            (Maybe T.Text -> s)
   | RandomEff (Int, Int)
               (Int -> s)
   deriving (Functor)
@@ -203,9 +197,6 @@ randomMarkov = liftF $ RandomMarkov id
 
 reloadMarkov :: Effect (Maybe T.Text)
 reloadMarkov = liftF $ ReloadMarkov id
-
-callFun :: T.Text -> [T.Text] -> Effect (Maybe T.Text)
-callFun name args = liftF $ CallFun name args id
 
 randomEff :: (Int, Int) -> Effect Int
 randomEff range = liftF $ RandomEff range id

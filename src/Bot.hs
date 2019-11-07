@@ -459,11 +459,6 @@ builtinCommands =
             cmapR return $
             liftR (flip (liftM2 utcToLocalTime) now) $
             cmapR (T.pack . show) $ Reaction replyMessage))
-    , ( "urlencode"
-      , mkBuiltinCommand
-          ( "!google URL encode"
-          , $githubLinkLocationStr
-          , liftR (callFun "urlencode" . return) $ ignoreNothing sayMessage))
     , ( "reloadmarkov"
       , mkBuiltinCommand
           ( "Reloads Markov model file"
