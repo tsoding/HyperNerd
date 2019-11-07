@@ -14,7 +14,6 @@ import qualified Data.Proxy as P
 import qualified Data.Text as T
 import Effect
 import Entity
-import Network.HTTP.Simple
 import Property
 import Reaction
 import Text.InterpolatedString.QM
@@ -92,28 +91,17 @@ setDubtrackRoom =
          Nothing -> void $ createEntity P.Proxy $ DubtrackRoom msg) $
   cmapR (const "Updated room for dubtrack") $ Reaction replyMessage
 
--- TODO(#221): Dubtrack room is hardcode
--- TODO: Rewrite in the Reaction api
 currentSongCommand :: Reaction Message ()
 currentSongCommand =
-  Reaction $ \Message {messageSender = sender} -> do
-    mayRoom <- getRoom
-    case mayRoom of
-      Nothing ->
-        replyToSender
-          sender
-          "Dubtrack room not set, a mod can run '!config dubtrack <room-name>' to set it"
-      Just mahroom -> do
-        request <-
-          parseRequest $
-          "https://api.dubtrack.fm/room/" <>
-          T.unpack (unName $ entityPayload mahroom)
-        response <- eitherDecode . getResponseBody <$> httpRequest request
-        case response of
-          Left message -> errorEff $ T.pack message
-          Right dubtrackResponse ->
-            maybe
-              (replyToSender sender "Nothing is playing right now")
-              (\song ->
-                 replyToSender sender [qms|❝{songName song}❞: {songLink song}|])
-              (roomCurrentSong $ drData dubtrackResponse)
+  liftR (const getRoom) $
+  replyOnNothing
+    [qms|Dubtrack room not set, a mod can run
+         '!config dubtrack <room-name>' to set it|] $
+  cmapR (T.unpack . urlOfRoom . entityPayload) $
+  jsonHttpRequestReaction $
+  cmapR (roomCurrentSong . drData) $
+  replyOnNothing "Nothing is playing right now" $
+  cmapR (\song -> [qms|❝{songName song}❞: {songLink song}|]) $
+  Reaction replyMessage
+  where
+    urlOfRoom = ("https://api.dubtrack.fm/room/" <>) . unName
