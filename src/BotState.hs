@@ -29,7 +29,6 @@ import Effect
 import Free
 import Markov
 import Network.HTTP.Simple
-import qualified Network.URI.Encode as URI
 import qualified Sqlite.EntityPersistence as SEP
 import System.IO
 import System.Random
@@ -197,10 +196,6 @@ applyEffect (botState, Free (ReloadMarkov s)) = do
   markov <-
     runMaybeT (MaybeT (return $ bsMarkovPath botState) >>= lift . loadMarkov)
   return (botState {bsMarkov = markov}, s ("Reloaded the model" <$ markov))
-applyEffect (botState, Free (GetVar _ s)) = return (botState, s Nothing)
-applyEffect (botState, Free (CallFun "urlencode" [text] s)) =
-  return (botState, s $ Just $ T.pack $ URI.encode $ T.unpack text)
-applyEffect (botState, Free (CallFun _ _ s)) = return (botState, s Nothing)
 applyEffect (botState, Free (RandomEff range s)) = do
   v <- randomRIO range
   return (botState, s v)
