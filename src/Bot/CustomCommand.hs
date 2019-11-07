@@ -24,11 +24,11 @@ import Data.Time
 import Effect
 import Entity
 import HyperNerd.Parser
+import qualified Network.URI.Encode as URI
 import Property
 import Reaction
 import Text.InterpolatedString.QM
 import Transport
-import qualified Network.URI.Encode as URI
 
 data CustomCommand = CustomCommand
   { customCommandName :: T.Text
