@@ -5,6 +5,7 @@ module Reaction where
 import Data.Functor
 import Effect
 import HyperNerd.Comonad
+import qualified Data.Text as T
 
 newtype Reaction w a = Reaction
   { runReaction :: w a -> Effect ()
@@ -82,3 +83,10 @@ liftFst f r =
   Reaction $ \m -> do
     b <- f $ extract m
     runReaction r ((, b) <$> m)
+
+traceR :: (Comonad w, Show a) => T.Text -> Reaction w a -> Reaction w a
+traceR prefix =
+  liftR
+    (\value -> do
+       logMsg (prefix <> T.pack (show value))
+       return value)

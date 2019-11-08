@@ -5,8 +5,7 @@
 {-# LANGUAGE TupleSections #-}
 
 module Bot.Bttv
-  ( bttvCommand
-  , updateBttvEmotesCommand
+  ( updateBttvEmotesCommand
   , bttvUrlByName
   ) where
 
@@ -14,7 +13,6 @@ import Bot.Replies
 import Control.Monad
 import Data.Aeson
 import Data.Aeson.Types
-import Data.List
 import qualified Data.Map as M
 import Data.Maybe
 import Data.Proxy
@@ -66,11 +64,6 @@ bttvUrl :: T.Text -> String
 bttvUrl channel = [qms|https://api.betterttv.net/2/channels/{encodedChannel}|]
   where
     encodedChannel = URI.encode $ T.unpack channel
-
-bttvCommand :: Reaction Message ()
-bttvCommand =
-  liftR (const $ selectEntities Proxy All) $
-  cmapR (T.concat . intersperse " " . map (bttvName . entityPayload)) sayMessage
 
 bttvUrlByName :: T.Text -> Effect (Maybe String)
 bttvUrlByName name = do

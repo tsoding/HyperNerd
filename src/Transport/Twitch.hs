@@ -114,7 +114,7 @@ receiveLoop conf incoming ircConn = do
                     , toMaybe TwitchBotOwner (name == tcOwner conf)
                     ]
             -- TODO(#468): Twitch does not provide the id of the user
-              , senderId = ""
+              , senderId = fromMaybe "" userId
               }
             (T.toLower (tcNick conf) `T.isInfixOf` T.toLower msgText)
             msgText
@@ -128,6 +128,9 @@ receiveLoop conf incoming ircConn = do
                 maybeToList $
                 fmap (T.splitOn "," . valueOfTag) $
                 find (\(TagEntry ident _) -> ident == "badges") $ _msgTags msg
+              userId =
+                fmap (\(TagEntry _ value) -> value) $
+                find (\(TagEntry ident _) -> ident == "user-id") $ _msgTags msg
       Join {} ->
         atomically $
         writeTQueue incoming $ Joined (TwitchChannel $ tcChannel conf)

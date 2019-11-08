@@ -7,7 +7,6 @@
 
 module Bot.Ffz
   ( ffzUrlByName
-  , ffzCommand
   , updateFfzEmotesCommand
   ) where
 
@@ -93,11 +92,6 @@ ffzUrl :: T.Text -> String
 ffzUrl channel = [qms|https://api.frankerfacez.com/v1/room/{encodedChannel}|]
   where
     encodedChannel = URI.encode $ T.unpack channel
-
-ffzCommand :: Reaction Message ()
-ffzCommand =
-  liftR (const $ selectEntities Proxy All) $
-  cmapR (T.concat . intersperse " " . map (ffzName . entityPayload)) sayMessage
 
 updateFfzGlobalEmotes :: Reaction Message a
 updateFfzGlobalEmotes =

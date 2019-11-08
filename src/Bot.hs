@@ -86,16 +86,6 @@ builtinCommands =
           ( "Get a quote from the quote database"
           , $githubLinkLocationStr
           , cmapR (readMaybe . T.unpack) quoteCommand))
-    , ( "bttv"
-      , mkBuiltinCommand
-          ( "Show all available BTTV emotes"
-          , $githubLinkLocationStr
-          , cmapR (const ()) bttvCommand))
-    , ( "ffz"
-      , mkBuiltinCommand
-          ( "Show all available FFZ emotes"
-          , $githubLinkLocationStr
-          , cmapR (const ()) ffzCommand))
     , ( "updateffz"
       , mkBuiltinCommand
           ( "Update FFZ cache"
@@ -505,6 +495,11 @@ builtinCommands =
           ( "Asciify Twitch, BTTV or FFZ emote"
           , $githubLinkLocationStr
           , nonEmptyRoles asciifyReaction))
+    , ( "mahemotes"
+      , mkBuiltinCommand
+          ( "Retrieve my Twitch emotes"
+          , $githubLinkLocationStr
+          , onlyForMods mahemotesCommand))
     ]
 
 nextStreamCommand :: Reaction Message a

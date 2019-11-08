@@ -182,6 +182,17 @@ jsonHttpRequestReaction =
   cmapR (eitherDecode . getResponseBody) .
   eitherReaction (Reaction (logMsg . T.pack . messageContent))
 
+jsonTwitchApiRequestReaction ::
+     FromJSON a => Reaction Message a -> Reaction Message String
+jsonTwitchApiRequestReaction =
+  cmapR parseRequest .
+  eitherReaction (Reaction (logMsg . T.pack . show . messageContent)) .
+  liftR twitchApiRequest .
+  cmapR getResponseBody .
+  traceR "Twitch API response: " .
+  cmapR eitherDecode .
+  eitherReaction (Reaction (logMsg . T.pack . messageContent))
+
 byteStringHttpRequestReaction ::
      Reaction Message BS.ByteString -> Reaction Message String
 byteStringHttpRequestReaction =

@@ -150,7 +150,11 @@ applyEffect (botState, Free (TwitchApiRequest request s)) =
   case configTwitch $ bsConfig botState of
     Just TwitchConfig {tcTwitchClientId = clientId} -> do
       response <-
-        httpLBS (addRequestHeader "Client-ID" (TE.encodeUtf8 clientId) request)
+        httpLBS
+          (addRequestHeader
+             "Accept"
+             (TE.encodeUtf8 "application/vnd.twitchtv.v5+json") $
+           addRequestHeader "Client-ID" (TE.encodeUtf8 clientId) request)
       return (botState, s response)
     Nothing -> do
       hPutStrLn

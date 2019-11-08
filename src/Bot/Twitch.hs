@@ -1,4 +1,5 @@
 {-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE QuasiQuotes #-}
 
 module Bot.Twitch where
 
@@ -16,6 +17,8 @@ import qualified Network.URI.Encode as URI
 import Reaction
 import Text.Printf
 import Transport
+import Text.InterpolatedString.QM
+import qualified Data.Map as M
 
 newtype TwitchResponse a = TwitchResponse
   { trData :: [a]
@@ -64,3 +67,34 @@ uptimeCommand =
   liftR streamUptime $
   cmapR humanReadableDiffTime $
   cmapR (T.append "Streaming for ") $ Reaction replyMessage
+
+data TwitchEmote = TwitchEmote
+  { twitchEmoteCode :: T.Text
+  } deriving (Show, Eq)
+
+instance FromJSON TwitchEmote where
+  parseJSON (Object v) = TwitchEmote <$> v .: "code"
+  parseJSON invalid = typeMismatch "TwitchEmote" invalid
+
+data EmoticonSets =
+  EmoticonSets (M.Map T.Text [TwitchEmote])
+  deriving (Show, Eq)
+
+instance FromJSON EmoticonSets where
+  parseJSON (Object v) = EmoticonSets <$> v .: "emoticon_sets"
+  parseJSON invalid = typeMismatch "EmoticonSets" invalid
+
+mahemotesCommand :: Reaction Message a
+mahemotesCommand =
+  dupLiftR
+    (\Message {messageSender = Sender { senderId = userId
+                                      , senderChannel = TwitchChannel _
+                                      }} -> do
+       let url = [qms|https://api.twitch.tv/kraken/users/{userId}/emotes|]
+       logMsg url
+       return $ T.unpack url) $
+  jsonTwitchApiRequestReaction $
+  cmapR
+    (\(EmoticonSets sets) ->
+       T.unwords $ map twitchEmoteCode $ concat $ M.elems sets) $
+  Reaction replyMessage
