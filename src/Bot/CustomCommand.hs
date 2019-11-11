@@ -8,6 +8,7 @@ module Bot.CustomCommand
   , updateCustomCommand
   , showCustomCommand
   , timesCustomCommand
+  , CustomCommand(..)
   ) where
 
 import Bot.Expr
