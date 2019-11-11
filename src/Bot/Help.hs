@@ -8,7 +8,6 @@ module Bot.Help
   , startRefreshHelpGistTimer
   ) where
 
-import Data.Proxy
 import Bot.CustomCommand
 import Bot.GitHub
 import Bot.Replies
@@ -17,6 +16,7 @@ import Data.Bool.Extra
 import Data.Functor
 import qualified Data.Map as M
 import Data.Maybe
+import Data.Proxy
 import qualified Data.Text as T
 import Effect
 import Entity
@@ -25,10 +25,11 @@ import Reaction
 import Text.InterpolatedString.QM
 import Transport
 
-data HelpState = HelpState
-  { helpStateGistId :: Maybe GistId
-  , helpStateGistFresh :: Bool
-  }
+data HelpState =
+  HelpState
+    { helpStateGistId :: Maybe GistId
+    , helpStateGistFresh :: Bool
+    }
 
 updateHelpStateGistId :: GistId -> HelpState -> HelpState
 updateHelpStateGistId (GistId "") state = state {helpStateGistId = Nothing}
@@ -81,22 +82,24 @@ gistRenderCustomCommand (CustomCommand name message times) =
   [qms||{name}|{message}|{times}||]
 
 gistRenderCommandTable :: CommandTable -> T.Text
-gistRenderCommandTable = ("* Builtin Commands \n" <>) .
+gistRenderCommandTable =
+  ("* Builtin Commands \n" <>) .
   T.unlines . map gistRenderBuiltinCommand . M.toList
 
 -- TODO(#649): Help Gist Page does not include CustomCommands
 refreshHelpGist :: CommandTable -> GistId -> Effect ()
 refreshHelpGist commandTable gistId = do
   customsList <- getCustomCommands
-  let customCommands = T.unlines $ gistRenderCustomCommand . entityPayload <$> customsList 
+  let customCommands =
+        T.unlines $ gistRenderCustomCommand . entityPayload <$> customsList
   updateGistFile
     helpGistFileName
     (FileContent (gistText <> "\n* Custom commands \n" <> customCommands))
     gistId
-    where
-      gistText = gistRenderCommandTable commandTable
+  where
+    gistText = gistRenderCommandTable commandTable
 
-getCustomCommands :: Effect ([Entity CustomCommand])
+getCustomCommands :: Effect [Entity CustomCommand]
 getCustomCommands = selectEntities Proxy All
 
 startRefreshHelpGistTimer :: CommandTable -> Effect ()
