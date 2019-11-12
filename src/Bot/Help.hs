@@ -25,11 +25,10 @@ import Reaction
 import Text.InterpolatedString.QM
 import Transport
 
-data HelpState =
-  HelpState
-    { helpStateGistId :: Maybe GistId
-    , helpStateGistFresh :: Bool
-    }
+data HelpState = HelpState
+  { helpStateGistId :: Maybe GistId
+  , helpStateGistFresh :: Bool
+  }
 
 updateHelpStateGistId :: GistId -> HelpState -> HelpState
 updateHelpStateGistId (GistId "") state = state {helpStateGistId = Nothing}
