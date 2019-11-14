@@ -12,6 +12,7 @@ module Bot.Friday
   , videoQueueCommand
   , startRefreshFridayGistTimer
   , ytLinkId
+  , fridayCountCommand
   ) where
 
 import Bot.GitHub
@@ -98,15 +99,16 @@ instance IsEntity FridayState where
 containsYtLink :: T.Text -> Bool
 containsYtLink = isJust . ytLinkId
 
+ytLinkRegexp :: T.Text
+ytLinkRegexp =
+  "https?:\\/\\/(www\\.)?youtu(be\\.com\\/watch\\?v=|\\.be\\/)([a-zA-Z0-9_-]+)"
+
 ytLinkId :: T.Text -> Maybe T.Text
 ytLinkId text =
   (\case
      [_, _, ytId] -> return ytId
      _ -> Nothing) =<<
-  rightToMaybe
-    (regexParseArgs
-       "https?:\\/\\/(www\\.)?youtu(be\\.com\\/watch\\?v=|\\.be\\/)([a-zA-Z0-9_-]+)"
-       text)
+  rightToMaybe (regexParseArgs ytLinkRegexp text)
 
 fridayCommand :: Reaction Message T.Text
 fridayCommand =
@@ -116,13 +118,31 @@ fridayCommand =
   liftR
     (\msg -> do
        markGistUnfresh
-       createEntity Proxy .
+       void $
+         createEntity Proxy .
          FridayVideo
            (messageContent msg)
            (senderName $ messageSender msg)
            Nothing =<<
-         now) $
-  cmapR (const "Added to the suggestions") $ Reaction replyMessage
+         now
+       return $ messageContent msg) $
+  cmapR ytLinkId $
+  maybeReaction
+    (Reaction $
+     const $
+     logMsg
+       [qms|Could not check friday video
+            duplicates because there is no YouTube
+            id in the message.|]) $
+  liftR
+    (\ytId ->
+       selectEntities (Proxy :: Proxy FridayVideo) $
+       Filter (PropertyTextLike "name" ("%" <> ytId <> "%")) All) $
+  cmapR
+    (\dups ->
+       [qms|Added to the suggested video.
+            This video was suggested {length dups} times|]) $
+  Reaction replyMessage
 
 unwatchedVideos :: Effect [Entity FridayVideo]
 unwatchedVideos =
@@ -302,3 +322,14 @@ videoQueueCommand =
         liftR updateEntityById $
         cmapR (const "Freshness invalidated 👌") $ Reaction replyMessage)
     ]
+
+fridayCountCommand :: Reaction Message T.Text
+fridayCountCommand =
+  cmapR ytLinkId $
+  replyOnNothing "Please submit a YouTube link" $
+  liftR
+    (\ytId ->
+       selectEntities (Proxy :: Proxy FridayVideo) $
+       Filter (PropertyTextLike "name" ("%" <> ytId <> "%")) All) $
+  cmapR (\dups -> [qms|This video was suggested {length dups} times|]) $
+  Reaction replyMessage
