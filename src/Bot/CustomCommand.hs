@@ -56,7 +56,7 @@ customCommandByName name =
   fmap listToMaybe $
   selectEntities Proxy $ Filter (PropertyEquals "name" $ PropertyText name) All
 
--- TODO: CRUD custom command should update help page now they're listed there as well.
+-- TODO(#815): CRUD custom command should update help page now they're listed there as well.
 addCustomCommand :: CommandTable -> Reaction Message (T.Text, T.Text)
 addCustomCommand builtinCommands =
   Reaction $ \Message {messageSender = sender, messageContent = (name, message)} -> do
