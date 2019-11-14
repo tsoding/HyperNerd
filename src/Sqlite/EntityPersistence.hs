@@ -427,6 +427,19 @@ selectEntityIds conn name (SortBy propertyName1 Asc (Filter (PropertyGreater pro
       ]
   where
     propertyName = propertyName1
+selectEntityIds conn name (Filter (PropertyTextLike propertyName propertyPattern) All) =
+  map fromOnly <$>
+  queryNamed
+    conn
+    [r|select entityId from EntityProperty
+       where entityName = :entityName and
+             propertyName = :propertyName and
+             propertyText like :propertyPattern
+       group by entityId; |]
+    [ ":entityName" := name
+    , ":propertyName" := propertyName
+    , ":propertyPattern" := propertyPattern
+    ]
 selectEntityIds _ _ selector =
   error ("Unsupported selector combination " ++ show selector)
 

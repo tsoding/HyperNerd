@@ -505,6 +505,11 @@ builtinCommands =
           ( "Asciify Twitch, BTTV or FFZ emote"
           , $githubLinkLocationStr
           , nonEmptyRoles asciifyReaction))
+    , ( "fridaycount"
+      , mkBuiltinCommand
+          ( "Check how many times a particular video was submitted"
+          , $githubLinkLocationStr
+          , nonEmptyRoles fridayCountCommand))
     ]
 
 nextStreamCommand :: Reaction Message a

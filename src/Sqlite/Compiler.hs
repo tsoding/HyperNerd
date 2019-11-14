@@ -45,6 +45,7 @@ compileCondition _ (E.ConditionAnd _) = undefined
 compileCondition _ (E.PropertyGreater _ _) = undefined
 -- TODO(#756): E.PropertyMissing is not interpreted in Sqlite.Compiler.compileCondition
 compileCondition _ (E.PropertyMissing _) = undefined
+compileCondition _ (E.PropertyTextLike _ _) = undefined
 
 -- TODO(#253): compileCteChain doesn't optimize common patterns like Sqlite.EntityPersistence.selectEntityIds
 compileCteChain :: T.Text -> E.Selector -> (Int, NamedQuery)
