@@ -8,6 +8,7 @@ module Bot.Help
   , startRefreshHelpGistTimer
   ) where
 
+import Bot.CustomCommand
 import Bot.GitHub
 import Bot.Replies
 import Command
@@ -71,18 +72,39 @@ refreshHelpGistId =
   cmapR (const "Scheduled to refresh the Help Gist Page") $
   Reaction replyMessage
 
-gistRenderBuiltinCommand :: (T.Text, BuiltinCommand) -> T.Text
-gistRenderBuiltinCommand (name, command) =
-  [qms||{name}|{bcDescription command}|{bcGitHubLocation command}||]
-
 gistRenderCommandTable :: CommandTable -> T.Text
-gistRenderCommandTable = T.unlines . map gistRenderBuiltinCommand . M.toList
+gistRenderCommandTable =
+  ([qms|* Builtin Commands\n{header}\n|-\n|] <>) .
+  T.unlines . map renderRow . M.toList
+  where
+    header :: T.Text
+    header = "|Name|Description|Location|"
+    renderRow :: (T.Text, BuiltinCommand) -> T.Text
+    renderRow (name, command) =
+      [qms||{name}|{bcDescription command}|{location}||]
+      where
+        location :: T.Text
+        location = [qms|[[{bcGitHubLocation command}][Source↗]]|]
 
--- TODO(#649): Help Gist Page does not include CustomCommands
+gistRenderCustomCommandsTable :: [Entity CustomCommand] -> T.Text
+gistRenderCustomCommandsTable =
+  ([qms|* Custom commands\n{header}\n|-\n|] <>) .
+  T.unlines . map (renderRow . entityPayload)
+  where
+    header :: T.Text
+    header = "|Name|Definition|%times|"
+    renderRow (CustomCommand name message times) =
+      [qms||{name}|{message}|{times}||]
+
 refreshHelpGist :: CommandTable -> GistId -> Effect ()
 refreshHelpGist commandTable gistId = do
-  let gistText = gistRenderCommandTable commandTable
-  updateGistFile helpGistFileName (FileContent gistText) gistId
+  customsList <- selectEntities Proxy All
+  updateGistFile
+    helpGistFileName
+    (FileContent
+       (gistRenderCommandTable commandTable <> "\n" <>
+        gistRenderCustomCommandsTable customsList))
+    gistId
 
 startRefreshHelpGistTimer :: CommandTable -> Effect ()
 startRefreshHelpGistTimer commandTable =
