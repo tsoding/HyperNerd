@@ -74,15 +74,25 @@ refreshHelpGistId =
 
 gistRenderCommandTable :: CommandTable -> T.Text
 gistRenderCommandTable =
-  ("* Builtin Commands \n" <>) . T.unlines . map renderRow . M.toList
+  ([qms|* Builtin Commands\n{header}\n|-\n|] <>) .
+  T.unlines . map renderRow . M.toList
   where
+    header :: T.Text
+    header = "|Name|Description|Location|"
+    renderRow :: (T.Text, BuiltinCommand) -> T.Text
     renderRow (name, command) =
-      [qms||{name}|{bcDescription command}|{bcGitHubLocation command}||]
+      [qms||{name}|{bcDescription command}|{location}||]
+      where
+        location :: T.Text
+        location = [qms|[[{bcGitHubLocation command}][Source↗]]|]
 
 gistRenderCustomCommandsTable :: [Entity CustomCommand] -> T.Text
 gistRenderCustomCommandsTable =
-  ("* Custom commands \n" <>) . T.unlines . map (renderRow . entityPayload)
+  ([qms|* Custom commands\n{header}\n|-\n|] <>) .
+  T.unlines . map (renderRow . entityPayload)
   where
+    header :: T.Text
+    header = "|Name|Definition|%times|"
     renderRow (CustomCommand name message times) =
       [qms||{name}|{message}|{times}||]
 
