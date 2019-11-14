@@ -72,34 +72,29 @@ refreshHelpGistId =
   cmapR (const "Scheduled to refresh the Help Gist Page") $
   Reaction replyMessage
 
-gistRenderBuiltinCommand :: (T.Text, BuiltinCommand) -> T.Text
-gistRenderBuiltinCommand (name, command) =
-  [qms||{name}|{bcDescription command}|{bcGitHubLocation command}||]
-
-gistRenderCustomCommand :: CustomCommand -> T.Text
-gistRenderCustomCommand (CustomCommand name message times) =
-  [qms||{name}|{message}|{times}||]
-
 gistRenderCommandTable :: CommandTable -> T.Text
 gistRenderCommandTable =
-  ("* Builtin Commands \n" <>) .
-  T.unlines . map gistRenderBuiltinCommand . M.toList
+  ("* Builtin Commands \n" <>) . T.unlines . map renderRow . M.toList
+  where
+    renderRow (name, command) =
+      [qms||{name}|{bcDescription command}|{bcGitHubLocation command}||]
 
--- TODO(#649): Help Gist Page does not include CustomCommands
+gistRenderCustomCommandsTable :: [Entity CustomCommand] -> T.Text
+gistRenderCustomCommandsTable =
+  ("* Custom commands \n" <>) . T.unlines . map (renderRow . entityPayload)
+  where
+    renderRow (CustomCommand name message times) =
+      [qms||{name}|{message}|{times}||]
+
 refreshHelpGist :: CommandTable -> GistId -> Effect ()
 refreshHelpGist commandTable gistId = do
-  customsList <- getCustomCommands
-  let customCommands =
-        T.unlines $ gistRenderCustomCommand . entityPayload <$> customsList
+  customsList <- selectEntities Proxy All
   updateGistFile
     helpGistFileName
-    (FileContent (gistText <> "\n* Custom commands \n" <> customCommands))
+    (FileContent
+       (gistRenderCommandTable commandTable <> "\n" <>
+        gistRenderCustomCommandsTable customsList))
     gistId
-  where
-    gistText = gistRenderCommandTable commandTable
-
-getCustomCommands :: Effect [Entity CustomCommand]
-getCustomCommands = selectEntities Proxy All
 
 startRefreshHelpGistTimer :: CommandTable -> Effect ()
 startRefreshHelpGistTimer commandTable =
