@@ -213,11 +213,13 @@ videoCommand =
   liftR (const currentVideo) $
   replyOnNothing "No videos in the queue" $
   cmapR entityPayload $
+  liftFst (fmap length . fridayVideosByYtId . fridayVideoName) $
   cmapR
-    (\video ->
+    (\(video, times) ->
        [qms|{fridayVideoDate video}
             <{fridayVideoAuthor video}>
-            {fridayVideoName video}|]) $
+            {fridayVideoName video} —
+            This video was suggested {times} times.|]) $
   Reaction replyMessage
 
 currentFridayState :: Effect (Entity FridayState)
