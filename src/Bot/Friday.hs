@@ -134,10 +134,7 @@ fridayCommand =
        [qms|Could not check friday video
             duplicates because there is no YouTube
             id in the message.|]) $
-  liftR
-    (\ytId ->
-       selectEntities (Proxy :: Proxy FridayVideo) $
-       Filter (PropertyTextLike "name" ("%" <> ytId <> "%")) All) $
+  liftR fridayVideosByYtId $
   cmapR
     (\dups ->
        [qms|Added to the suggested video.
@@ -323,13 +320,15 @@ videoQueueCommand =
         cmapR (const "Freshness invalidated 👌") $ Reaction replyMessage)
     ]
 
+fridayVideosByYtId :: T.Text -> Effect [Entity FridayVideo]
+fridayVideosByYtId ytId =
+  selectEntities Proxy $
+  Filter (PropertyTextLike "name" ("%" <> ytId <> "%")) All
+
 fridayCountCommand :: Reaction Message T.Text
 fridayCountCommand =
   cmapR ytLinkId $
   replyOnNothing "Please submit a YouTube link" $
-  liftR
-    (\ytId ->
-       selectEntities (Proxy :: Proxy FridayVideo) $
-       Filter (PropertyTextLike "name" ("%" <> ytId <> "%")) All) $
+  liftR fridayVideosByYtId $
   cmapR (\dups -> [qms|This video was suggested {length dups} times|]) $
   Reaction replyMessage
