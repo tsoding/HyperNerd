@@ -17,9 +17,4 @@ renderTable header rows =
     renderRow columns =
       "|" <> T.concat (intersperse "|" $ map escapeColumn columns) <> "|"
     escapeColumn :: T.Text -> T.Text
-    escapeColumn =
-      T.concatMap
-        (\x ->
-           if x `elem` charEscapeList
-             then T.pack ['\\', x]
-             else T.singleton x)
+    escapeColumn = T.filter $ not . (`elem` charEscapeList)
