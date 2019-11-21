@@ -1,12 +1,11 @@
 module Bot.Flip where
 
 import qualified Data.Map as M
-import qualified Data.Text as T
 import Data.Maybe
+import qualified Data.Text as T
 
 -- https://github.com/doherty/Text-UpsideDown/blob/master/lib/Text/UpsideDown.pm
 -- http://www.fileformat.info/convert/text/upside-down-map.htm
-
 flipText :: T.Text -> T.Text
 flipText = T.map (\x -> fromMaybe x $ M.lookup x table) . T.reverse
 

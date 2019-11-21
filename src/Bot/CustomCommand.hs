@@ -12,6 +12,7 @@ module Bot.CustomCommand
   ) where
 
 import Bot.Expr
+import Bot.Flip
 import Bot.Replies
 import Command
 import Control.Monad
@@ -30,7 +31,6 @@ import Property
 import Reaction
 import Text.InterpolatedString.QM
 import Transport
-import Bot.Flip
 
 data CustomCommand = CustomCommand
   { customCommandName :: T.Text
