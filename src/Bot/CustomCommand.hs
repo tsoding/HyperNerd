@@ -12,6 +12,7 @@ module Bot.CustomCommand
   ) where
 
 import Bot.Expr
+import Bot.Flip
 import Bot.Replies
 import Command
 import Control.Monad
@@ -179,6 +180,8 @@ evalExpr vars (FunCallExpr "or" args) =
   fromMaybe "" $ listToMaybe $ dropWhile T.null $ map (evalExpr vars) args
 evalExpr vars (FunCallExpr "urlencode" args) =
   T.concat $ map (T.pack . URI.encode . T.unpack . evalExpr vars) args
+evalExpr vars (FunCallExpr "flip" args) =
+  T.concat $ map (flipText . evalExpr vars) args
 evalExpr vars (FunCallExpr funame _) = fromMaybe "" $ M.lookup funame vars
 
 expandVars :: M.Map T.Text T.Text -> [Expr] -> T.Text
