@@ -38,6 +38,7 @@ import Regexp
 import Safe
 import Text.InterpolatedString.QM
 import Transport (Message(..), Sender(..), authorityRoles)
+import OrgMode
 
 data FridayVideo = FridayVideo
   { fridayVideoName :: T.Text
@@ -240,20 +241,21 @@ videoCountCommand =
 
 renderQueue :: [FridayVideo] -> T.Text
 renderQueue queue@(FridayVideo {fridayVideoAuthor = user}:_) =
-  T.unlines $
-  ([qmb|** {user}
+  [qmb|** {user}
 
-        Video Count {length queue}
-
-        |] :) $
-  map
-    (\video ->
-       let ytId = fromMaybe "dQw4w9WgXcQ" $ ytLinkId $ fridayVideoName video
-        in [qms||{fridayVideoDate video}
-                |{fridayVideoAuthor video}
-                |{fridayVideoName video}
-                |[[https://img.youtube.com/vi/{ytId}/default.jpg]]||])
-    queue
+        Video Count {length queue}\n\n
+        |] <>
+  renderTable
+    ["Date", "Submitter", "Video", "Thumbnail"]
+    (map
+       (\video ->
+          let ytId = fromMaybe "dQw4w9WgXcQ" $ ytLinkId $ fridayVideoName video
+           in [ [qms|{fridayVideoDate video}|]
+              , [qms|{fridayVideoAuthor video}|]
+              , [qms|{fridayVideoName video}|]
+              , [qms|[[https://img.youtube.com/vi/{ytId}/default.jpg]]|]
+              ])
+       queue)
 renderQueue [] = ""
 
 renderQueues :: Maybe T.Text -> VideoQueues -> T.Text
