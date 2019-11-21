@@ -108,6 +108,7 @@ executable HyperNerd
                      , Bot.Asciify
                      , Free
                      , OrgMode
+                     , Bot.Flip
 
   -- LANGUAGE extensions used by modules in this package.
   other-extensions:    OverloadedStrings
