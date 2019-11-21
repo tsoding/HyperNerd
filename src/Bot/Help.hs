@@ -20,11 +20,11 @@ import Data.Proxy
 import qualified Data.Text as T
 import Effect
 import Entity
+import OrgMode
 import Property
 import Reaction
 import Text.InterpolatedString.QM
 import Transport
-import OrgMode
 
 data HelpState = HelpState
   { helpStateGistId :: Maybe GistId

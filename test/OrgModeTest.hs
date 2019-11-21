@@ -1,5 +1,8 @@
 {-# LANGUAGE OverloadedStrings #-}
-module OrgModeTest (spec) where
+
+module OrgModeTest
+  ( spec
+  ) where
 
 import OrgMode
 import Test.HUnit

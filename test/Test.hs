@@ -16,9 +16,9 @@ import qualified Bot.LinksTest
 import qualified Bot.LogTest
 import qualified Bot.PollTest
 import qualified Bot.TwitchTest
-import qualified OrgModeTest
 import qualified CommandTest
 import qualified Data.Time.ExtraTest
+import qualified OrgModeTest
 import qualified Sqlite.EntityPersistenceTest
 import System.Exit
 import Test.HUnit

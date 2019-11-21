@@ -32,13 +32,13 @@ import Data.Time
 import Effect
 import Entity
 import HyperNerd.Comonad
+import OrgMode
 import Property
 import Reaction
 import Regexp
 import Safe
 import Text.InterpolatedString.QM
 import Transport (Message(..), Sender(..), authorityRoles)
-import OrgMode
 
 data FridayVideo = FridayVideo
   { fridayVideoName :: T.Text

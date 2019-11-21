@@ -1,8 +1,11 @@
 {-# LANGUAGE OverloadedStrings #-}
-module OrgMode (renderTable) where
 
-import qualified Data.Text as T
+module OrgMode
+  ( renderTable
+  ) where
+
 import Data.List
+import qualified Data.Text as T
 
 charEscapeList :: String
 charEscapeList = "|"
