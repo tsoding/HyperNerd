@@ -18,6 +18,7 @@ import qualified Bot.PollTest
 import qualified Bot.TwitchTest
 import qualified CommandTest
 import qualified Data.Time.ExtraTest
+import qualified OrgModeTest
 import qualified Sqlite.EntityPersistenceTest
 import System.Exit
 import Test.HUnit
@@ -36,6 +37,7 @@ main = do
       , CommandTest.spec
       , Sqlite.EntityPersistenceTest.spec
       , Data.Time.ExtraTest.spec
+      , OrgModeTest.spec
       ]
   if errors results + failures results == 0
     then exitSuccess

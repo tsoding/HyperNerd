@@ -107,6 +107,7 @@ executable HyperNerd
                      , Schedule
                      , Bot.Asciify
                      , Free
+                     , OrgMode
 
   -- LANGUAGE extensions used by modules in this package.
   other-extensions:    OverloadedStrings
@@ -224,6 +225,8 @@ test-suite HyperNerdTest
                      , Bot.FridayTest
                      , Bot.ExprTest
                      , Bot.GitHub
+                     , OrgMode
+                     , OrgModeTest
                      , Data.Maybe.Extra
                      , Data.Time.Extra
                      , Data.Time.ExtraTest

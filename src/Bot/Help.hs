@@ -20,6 +20,7 @@ import Data.Proxy
 import qualified Data.Text as T
 import Effect
 import Entity
+import OrgMode
 import Property
 import Reaction
 import Text.InterpolatedString.QM
@@ -73,28 +74,31 @@ refreshHelpGistId =
   Reaction replyMessage
 
 gistRenderCommandTable :: CommandTable -> T.Text
-gistRenderCommandTable =
-  ([qms|* Builtin Commands\n{header}\n|-\n|] <>) .
-  T.unlines . map renderRow . M.toList
+gistRenderCommandTable commandTable = [qms|* Builtin Commands\n{table}\n|]
   where
-    header :: T.Text
-    header = "|Name|Description|Location|"
-    renderRow :: (T.Text, BuiltinCommand) -> T.Text
-    renderRow (name, command) =
-      [qms||{name}|{bcDescription command}|{location}||]
-      where
-        location :: T.Text
-        location = [qms|[[{bcGitHubLocation command}][Source↗]]|]
+    table :: T.Text
+    table =
+      renderTable ["Name", "Description", "Location"] $
+      map
+        (\(name, command) ->
+           [ name
+           , bcDescription command
+           , [qms|[[{bcGitHubLocation command}][Source↗]]|]
+           ]) $
+      M.toList commandTable
 
 gistRenderCustomCommandsTable :: [Entity CustomCommand] -> T.Text
-gistRenderCustomCommandsTable =
-  ([qms|* Custom commands\n{header}\n|-\n|] <>) .
-  T.unlines . map (renderRow . entityPayload)
+gistRenderCustomCommandsTable customCommands =
+  [qms|* Custom commands\n{table}\n|]
   where
-    header :: T.Text
-    header = "|Name|Definition|%times|"
-    renderRow (CustomCommand name message times) =
-      [qms||{name}|{message}|{times}||]
+    table :: T.Text
+    table =
+      renderTable ["Name", "Definition", "%times"] $
+      map
+        ((\(CustomCommand name message times) ->
+            [name, message, T.pack $ show times]) .
+         entityPayload)
+        customCommands
 
 refreshHelpGist :: CommandTable -> GistId -> Effect ()
 refreshHelpGist commandTable gistId = do
