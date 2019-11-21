@@ -10,7 +10,7 @@ spec =
   TestCase $
   assertEqual
     ""
-    ("|hello|world|foo|\n\
+    "|hello|world|foo|\n\
      \|-\n\
      \|1|2|3|\n\
      \|1|2|3|\n\
@@ -18,7 +18,7 @@ spec =
      \|1|||\n\
      \||||\n\
      \|1|2|3|\n\
-     \|~|||\n") $
+     \|~|||\n" $
   renderTable
     ["hello", "world", "foo"]
     [ ["1", "2", "3"]
