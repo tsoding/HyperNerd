@@ -8,7 +8,7 @@ module Bot.Help
   , startRefreshHelpGistTimer
   ) where
 
-import Bot.CustomCommand
+import Bot.CustomCommandType
 import Bot.GitHub
 import Bot.Replies
 import Command

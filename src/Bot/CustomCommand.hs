@@ -8,11 +8,12 @@ module Bot.CustomCommand
   , updateCustomCommand
   , showCustomCommand
   , timesCustomCommand
-  , CustomCommand(..)
   ) where
 
+import Bot.CustomCommandType
 import Bot.Expr
 import Bot.Flip
+import Bot.Help
 import Bot.Replies
 import Command
 import Control.Monad
@@ -32,35 +33,16 @@ import Reaction
 import Text.InterpolatedString.QM
 import Transport
 
-data CustomCommand = CustomCommand
-  { customCommandName :: T.Text
-  , customCommandMessage :: T.Text
-  , customCommandTimes :: Int
-  }
-
-instance IsEntity CustomCommand where
-  nameOfEntity _ = "CustomCommand"
-  toProperties customCommand =
-    M.fromList
-      [ ("name", PropertyText $ customCommandName customCommand)
-      , ("message", PropertyText $ customCommandMessage customCommand)
-      , ("times", PropertyInt $ customCommandTimes customCommand)
-      ]
-  fromProperties properties =
-    CustomCommand <$> extractProperty "name" properties <*>
-    extractProperty "message" properties <*>
-    pure (fromMaybe 0 $ extractProperty "times" properties)
-
 customCommandByName :: T.Text -> MaybeT Effect (Entity CustomCommand)
 customCommandByName name =
   MaybeT $
   fmap listToMaybe $
   selectEntities Proxy $ Filter (PropertyEquals "name" $ PropertyText name) All
 
--- TODO(#815): CRUD custom command should update help page now they're listed there as well.
 addCustomCommand :: CommandTable -> Reaction Message (T.Text, T.Text)
 addCustomCommand builtinCommands =
-  Reaction $ \Message {messageSender = sender, messageContent = (name, message)} -> do
+  Reaction $ \mesg@Message {messageSender = sender, messageContent = (name, message)} -> do
+    runReaction refreshHelpGistId mesg
     customCommand <- runMaybeT $ customCommandByName name
     let builtinCommand = M.lookup name builtinCommands
     case (customCommand, builtinCommand) of
@@ -85,7 +67,8 @@ addCustomCommand builtinCommands =
 
 deleteCustomCommand :: CommandTable -> Reaction Message T.Text
 deleteCustomCommand builtinCommands =
-  Reaction $ \Message {messageSender = sender, messageContent = name} -> do
+  Reaction $ \mesg@Message {messageSender = sender, messageContent = name} -> do
+    runReaction refreshHelpGistId mesg
     customCommand <- runMaybeT $ customCommandByName name
     let builtinCommand = M.lookup name builtinCommands
     case (customCommand, builtinCommand) of
@@ -155,7 +138,8 @@ timesCustomCommand builtinCommands =
 
 updateCustomCommand :: CommandTable -> Reaction Message (T.Text, T.Text)
 updateCustomCommand builtinCommands =
-  Reaction $ \Message {messageSender = sender, messageContent = (name, message)} -> do
+  Reaction $ \mesg@Message {messageSender = sender, messageContent = (name, message)} -> do
+    runReaction refreshHelpGistId mesg
     customCommand <- runMaybeT $ customCommandByName name
     let builtinCommand = M.lookup name builtinCommands
     case (customCommand, builtinCommand) of
