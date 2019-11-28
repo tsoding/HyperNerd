@@ -1,10 +1,10 @@
 module Bot.Flip where
 
+import Control.Applicative
 import qualified Data.Map as M
 import Data.Maybe
 import qualified Data.Text as T
 import Data.Tuple
-import Control.Applicative
 
 -- https://github.com/doherty/Text-UpsideDown/blob/master/lib/Text/UpsideDown.pm
 -- http://www.fileformat.info/convert/text/upside-down-map.htm
