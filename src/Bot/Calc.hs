@@ -138,5 +138,4 @@ calc text = do
   interpretRpn rpn
 
 calcCommand :: Reaction Message T.Text
-calcCommand =
-  cmapR calc $ replyLeft $ cmapR (T.pack . show) $ Reaction replyMessage
+calcCommand = cmapR calc $ replyLeft $ cmapR (T.pack . show) sayMessage
