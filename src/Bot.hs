@@ -86,17 +86,7 @@ builtinCommands =
           ( "Get a quote from the quote database"
           , $githubLinkLocationStr
           , cmapR (readMaybe . T.unpack) quoteCommand))
-    , ( "bttv"
-      , mkBuiltinCommand
-          ( "Show all available BTTV emotes"
-          , $githubLinkLocationStr
-          , cmapR (const ()) bttvCommand))
-    , ( "ffz"
-      , mkBuiltinCommand
-          ( "Show all available FFZ emotes"
-          , $githubLinkLocationStr
-          , cmapR (const ()) ffzCommand))
-    , ( "updateffz"
+   , ( "updateffz"
       , mkBuiltinCommand
           ( "Update FFZ cache"
           , $githubLinkLocationStr
@@ -146,12 +136,7 @@ builtinCommands =
           ( "Show stream uptime"
           , $githubLinkLocationStr
           , cmapR (const ()) uptimeCommand))
-    , ( "rq"
-      , mkBuiltinCommand
-          ( "Get random quote from your log"
-          , $githubLinkLocationStr
-          , randomLogRecordCommand))
-    , ( "addperiodic"
+   , ( "addperiodic"
       , mkBuiltinCommand
           ( "Add periodic command"
           , $githubLinkLocationStr
