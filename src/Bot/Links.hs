@@ -13,7 +13,6 @@ module Bot.Links
   ) where
 
 import Bot.Replies
-import Control.Applicative
 import Control.Monad
 import Control.Monad.Trans.Maybe
 import Data.Either
@@ -56,12 +55,6 @@ findTrustedUser name =
 findTrustedSender :: Sender -> MaybeT Effect (Entity TrustedUser)
 findTrustedSender = findTrustedUser . senderName
 
-autoTrustSender :: Sender -> MaybeT Effect (Entity TrustedUser)
-autoTrustSender sender
-  | senderSubscriber sender || senderAuthority sender =
-    MaybeT $ fmap Just $ createEntity Proxy $ TrustedUser $ senderName sender
-  | otherwise = MaybeT $ return Nothing
-
 textContainsLink :: T.Text -> Bool
 textContainsLink t =
   isRight $ do
@@ -102,8 +95,7 @@ amitrustedCommand :: Reaction Message ()
 amitrustedCommand =
   cmapR (const id) $
   transR (reflect messageSender) $
-  liftR
-    (\sender -> runMaybeT (findTrustedSender sender <|> autoTrustSender sender)) $
+  liftR (runMaybeT . findTrustedSender) $
   cmapR (maybe "no PepeHands" (const "yes Pog")) $ Reaction replyMessage
 
 istrustedCommand :: Reaction Message T.Text

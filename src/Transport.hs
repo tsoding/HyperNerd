@@ -49,21 +49,8 @@ data Sender = Sender
   , senderRoles :: [Role]
   }
 
-senderSubscriber :: Sender -> Bool
-senderSubscriber = elem TwitchSub . senderRoles
-
-senderMod :: Sender -> Bool
-senderMod = elem TwitchMod . senderRoles
-
-senderBroadcaster :: Sender -> Bool
-senderBroadcaster = elem TwitchBroadcaster . senderRoles
-
-senderOwner :: Sender -> Bool
-senderOwner = elem TwitchBotOwner . senderRoles
-
 authorityRoles :: [Role]
-authorityRoles =
-  [TwitchMod, TwitchBroadcaster, TwitchBotOwner, DiscordGuildOwner]
+authorityRoles = [TwitchBroadcaster, TwitchBotOwner, DiscordGuildOwner]
 
 paidRoles :: [Role]
 paidRoles = [tsodingTwitchedDiscordRole, TwitchSub]

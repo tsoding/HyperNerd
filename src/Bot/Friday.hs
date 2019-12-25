@@ -315,9 +315,12 @@ videoQueueCommand =
   subcommand
     [ ("", videoQueueLinkCommand)
     , ( "gist"
-      , onlyForRoles "Only for mods" authorityRoles setVideoQueueGistCommand)
+      , onlyForRoles
+          "Only for mr strimmer :)"
+          authorityRoles
+          setVideoQueueGistCommand)
     , ( "refresh"
-      , onlyForRoles "Only for mods" authorityRoles $
+      , onlyForRoles "Only for mr strimmer :)" authorityRoles $
         liftR (const currentFridayState) $
         cmapR (updateFridayStateGistFresh False <$>) $
         liftR updateEntityById $
