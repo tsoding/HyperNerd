@@ -82,7 +82,7 @@ onlyForRoles reply roles reaction =
     (cmapR (const reply) $ Reaction replyMessage)
 
 onlyForMods :: Reaction Message a -> Reaction Message a
-onlyForMods = onlyForRoles "Only for mods" authorityRoles
+onlyForMods = onlyForRoles "Only for mr strimmer :)" authorityRoles
 
 nonEmptyRoles :: Reaction Message a -> Reaction Message a
 nonEmptyRoles reaction =

@@ -78,7 +78,7 @@ builtinCommands =
       , mkBuiltinCommand
           ( "Delete quote from quote database"
           , $githubLinkLocationStr
-          , onlyForRoles "Only for mods" authorityRoles $
+          , onlyForRoles "Only for mr strimmer :)" authorityRoles $
             cmapR (readMaybe . T.unpack) $
             replyOnNothing "Expected integer as an argument" deleteQuoteCommand))
     , ( "quote"
@@ -91,14 +91,14 @@ builtinCommands =
           ( "Update FFZ cache"
           , $githubLinkLocationStr
           , authorizeSender senderAuthority $
-            replyOnNothing "Only for mods" $
+            replyOnNothing "Only for mr strimmer :)" $
             cmapR (const ()) updateFfzEmotesCommand))
     , ( "updatebttv"
       , mkBuiltinCommand
           ( "Update BTTV cache"
           , $githubLinkLocationStr
           , authorizeSender senderAuthority $
-            replyOnNothing "Only for mods" $
+            replyOnNothing "Only for mr strimmer :)" $
             cmapR (const ()) updateBttvEmotesCommand))
     , ( "help"
       , mkBuiltinCommand
@@ -108,7 +108,7 @@ builtinCommands =
           ( "Starts a poll. !poll <duration:secs> option1; option2; ...; option3"
           , $githubLinkLocationStr
           , authorizeSender senderAuthority $
-            replyOnNothing "Only for mods" $
+            replyOnNothing "Only for mr strimmer :)" $
           -- TODO(#362): !poll command does not parse negative numbers
             regexArgs "([0-9]+) (.*)" $
             replyLeft $
@@ -141,7 +141,7 @@ builtinCommands =
           ( "Add periodic command"
           , $githubLinkLocationStr
           , authorizeSender senderAuthority $
-            replyOnNothing "Only for mods" $
+            replyOnNothing "Only for mr strimmer :)" $
             regexArgs "([0-9]+) (.*)" $
             replyLeft $
             pairArgs $
@@ -161,7 +161,7 @@ builtinCommands =
           ( "Delete periodic command"
           , $githubLinkLocationStr
           , authorizeSender senderAuthority $
-            replyOnNothing "Only for mods" removePeriodicCommand))
+            replyOnNothing "Only for mr strimmer :)" removePeriodicCommand))
     , ( "addtimer"
       , mkBuiltinCommand
           ( "Add Periodic Timer"
@@ -190,13 +190,13 @@ builtinCommands =
           ( "Enable periodic timer"
           , $githubLinkLocationStr
           , authorizeSender senderAuthority $
-            replyOnNothing "Only for mods" enablePeriodicTimerCommand))
+            replyOnNothing "Only for mr strimmer :)" enablePeriodicTimerCommand))
     , ( "periodicoff"
       , mkBuiltinCommand
           ( "Disable periodic timer"
           , $githubLinkLocationStr
           , authorizeSender senderAuthority $
-            replyOnNothing "Only for mods" disablePeriodicTimerCommand))
+            replyOnNothing "Only for mr strimmer :)" disablePeriodicTimerCommand))
     , ( "periodicstat"
       , mkBuiltinCommand
           ( "Status of Periodic Timer"
@@ -207,7 +207,7 @@ builtinCommands =
           ( "Add custom command"
           , $githubLinkLocationStr
           , authorizeSender senderAuthority $
-            replyOnNothing "Only for mods" $
+            replyOnNothing "Only for mr strimmer :)" $
             regexArgs "([a-zA-Z0-9]+) ?(.*)" $
             replyLeft $ pairArgs $ replyLeft $ addCustomCommand builtinCommands))
     , ( "delcmd"
@@ -215,13 +215,13 @@ builtinCommands =
           ( "Delete custom command"
           , $githubLinkLocationStr
           , authorizeSender senderAuthority $
-            replyOnNothing "Only for mods" $ deleteCustomCommand builtinCommands))
+            replyOnNothing "Only for mr strimmer :)" $ deleteCustomCommand builtinCommands))
     , ( "updcmd"
       , mkBuiltinCommand
           ( "Update custom command"
           , $githubLinkLocationStr
           , authorizeSender senderAuthority $
-            replyOnNothing "Only for mods" $
+            replyOnNothing "Only for mr strimmer :)" $
             regexArgs "([a-zA-Z0-9]+) ?(.*)" $
             replyLeft $
             pairArgs $ replyLeft $ updateCustomCommand builtinCommands))
@@ -254,7 +254,7 @@ builtinCommands =
           ( "Add command alias"
           , $githubLinkLocationStr
           , authorizeSender senderAuthority $
-            replyOnNothing "Only for mods" $
+            replyOnNothing "Only for mr strimmer :)" $
             regexArgs "([a-zA-Z0-9]+) ([a-zA-Z0-9]+)" $
             replyLeft $ pairArgs $ replyLeft addAliasCommand))
     , ( "delalias"
@@ -262,19 +262,19 @@ builtinCommands =
           ( "Remove command alias"
           , $githubLinkLocationStr
           , authorizeSender senderAuthority $
-            replyOnNothing "Only for mods" removeAliasCommand))
+            replyOnNothing "Only for mr strimmer :)" removeAliasCommand))
     , ( "addvar"
       , mkBuiltinCommand
           ( "Add variable"
           , $githubLinkLocationStr
           , authorizeSender senderAuthority $
-            replyOnNothing "Only for mods" addVariable))
+            replyOnNothing "Only for mr strimmer :)" addVariable))
     , ( "updvar"
       , mkBuiltinCommand
           ( "Update variable"
           , $githubLinkLocationStr
           , authorizeSender senderAuthority $
-            replyOnNothing "Only for mods" $
+            replyOnNothing "Only for mr strimmer :)" $
             regexArgs "([a-zA-Z0-9]+) ?(.*)" $
             replyLeft $ pairArgs $ replyLeft updateVariable))
     , ( "delvar"
@@ -282,14 +282,14 @@ builtinCommands =
           ( "Delete variable"
           , $githubLinkLocationStr
           , authorizeSender senderAuthority $
-            replyOnNothing "Only for mods" deleteVariable))
+            replyOnNothing "Only for mr strimmer :)" deleteVariable))
     , ( "nuke"
       , mkBuiltinCommand
           ( [qms|Looks at N previous messages and bans all of
                the users whose messages match provided regex|]
           , $githubLinkLocationStr
           , authorizeSender senderAuthority $
-            replyOnNothing "Only for mods" $
+            replyOnNothing "Only for mr strimmer :)" $
             regexArgs "([0-9]+) (.*)" $
             replyLeft $
             pairArgs $
@@ -324,7 +324,7 @@ builtinCommands =
           ( "Makes the user trusted"
           , $githubLinkLocationStr
           , authorizeSender senderAuthority $
-            replyOnNothing "Only for mods" $
+            replyOnNothing "Only for mr strimmer :)" $
             regexArgs "(.+)" $
             replyLeft $
             cmapR headMay $ replyOnNothing "Not enough arguments" trustCommand))
@@ -333,7 +333,7 @@ builtinCommands =
           ( "Untrusts the user"
           , $githubLinkLocationStr
           , authorizeSender senderAuthority $
-            replyOnNothing "Only for mods" $
+            replyOnNothing "Only for mr strimmer :)" $
             regexArgs "(.+)" $
             replyLeft $
             cmapR headMay $ replyOnNothing "Not enough arguments" untrustCommand))
@@ -379,7 +379,7 @@ builtinCommands =
           ( "Start the raffle"
           , $githubLinkLocationStr
           , authorizeSender senderAuthority $
-            replyOnNothing "Only for mods" $ cmapR (const 5) raffleCommand))
+            replyOnNothing "Only for mr strimmer :)" $ cmapR (const 5) raffleCommand))
     , ( "join"
       , mkBuiltinCommand
           ("Join the raffle", $githubLinkLocationStr, joinCommand))
@@ -407,7 +407,7 @@ builtinCommands =
       , mkBuiltinCommand
           ( "Get the next video for Smart Stream"
           , $githubLinkLocationStr
-          , onlyForRoles "Only for mods" authorityRoles $
+          , onlyForRoles "Only for mr strimmer :)" authorityRoles $
             transR void nextVideoCommand))
     , ( "video"
       , mkBuiltinCommand
@@ -448,14 +448,14 @@ builtinCommands =
       , mkBuiltinCommand
           ( "Reloads Markov model file"
           , $githubLinkLocationStr
-          , onlyForRoles "Only for mods" authorityRoles $
+          , onlyForRoles "Only for mr strimmer :)" authorityRoles $
             liftR (const reloadMarkov) $
             replyOnNothing "Nothing to reload" $ Reaction replyMessage))
     , ( "config"
       , mkBuiltinCommand
           ( "Bot configuration command"
           , $githubLinkLocationStr
-          , onlyForRoles "Only for mods" authorityRoles $
+          , onlyForRoles "Only for mr strimmer :)" authorityRoles $
             subcommand
               [ ( "help"
                 , subcommand
