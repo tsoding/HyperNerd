@@ -315,7 +315,10 @@ videoQueueCommand =
   subcommand
     [ ("", videoQueueLinkCommand)
     , ( "gist"
-      , onlyForRoles "Only for mr strimmer :)" authorityRoles setVideoQueueGistCommand)
+      , onlyForRoles
+          "Only for mr strimmer :)"
+          authorityRoles
+          setVideoQueueGistCommand)
     , ( "refresh"
       , onlyForRoles "Only for mr strimmer :)" authorityRoles $
         liftR (const currentFridayState) $

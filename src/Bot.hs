@@ -215,7 +215,8 @@ builtinCommands =
           ( "Delete custom command"
           , $githubLinkLocationStr
           , authorizeSender senderAuthority $
-            replyOnNothing "Only for mr strimmer :)" $ deleteCustomCommand builtinCommands))
+            replyOnNothing "Only for mr strimmer :)" $
+            deleteCustomCommand builtinCommands))
     , ( "updcmd"
       , mkBuiltinCommand
           ( "Update custom command"
@@ -379,7 +380,8 @@ builtinCommands =
           ( "Start the raffle"
           , $githubLinkLocationStr
           , authorizeSender senderAuthority $
-            replyOnNothing "Only for mr strimmer :)" $ cmapR (const 5) raffleCommand))
+            replyOnNothing "Only for mr strimmer :)" $
+            cmapR (const 5) raffleCommand))
     , ( "join"
       , mkBuiltinCommand
           ("Join the raffle", $githubLinkLocationStr, joinCommand))

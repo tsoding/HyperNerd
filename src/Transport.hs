@@ -50,8 +50,7 @@ data Sender = Sender
   }
 
 authorityRoles :: [Role]
-authorityRoles =
-  [TwitchBroadcaster, TwitchBotOwner, DiscordGuildOwner]
+authorityRoles = [TwitchBroadcaster, TwitchBotOwner, DiscordGuildOwner]
 
 paidRoles :: [Role]
 paidRoles = [tsodingTwitchedDiscordRole, TwitchSub]
