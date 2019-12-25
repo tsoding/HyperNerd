@@ -49,9 +49,6 @@ data Sender = Sender
   , senderRoles :: [Role]
   }
 
-senderSubscriber :: Sender -> Bool
-senderSubscriber = elem TwitchSub . senderRoles
-
 authorityRoles :: [Role]
 authorityRoles =
   [TwitchMod, TwitchBroadcaster, TwitchBotOwner, DiscordGuildOwner]
