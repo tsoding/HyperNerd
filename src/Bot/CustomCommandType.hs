@@ -13,12 +13,11 @@ import qualified Data.Text as T
 import Entity
 import Property
 
-data CustomCommand =
-  CustomCommand
-    { customCommandName :: T.Text
-    , customCommandMessage :: T.Text
-    , customCommandTimes :: Int
-    }
+data CustomCommand = CustomCommand
+  { customCommandName :: T.Text
+  , customCommandMessage :: T.Text
+  , customCommandTimes :: Int
+  }
 
 instance IsEntity CustomCommand where
   nameOfEntity _ = "CustomCommand"

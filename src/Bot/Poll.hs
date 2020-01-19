@@ -33,28 +33,25 @@ import Text.InterpolatedString.QM
 import Text.Read
 import Transport
 
-data PollOption =
-  PollOption
-    { poPollId :: Int
-    , poName :: T.Text
-    }
+data PollOption = PollOption
+  { poPollId :: Int
+  , poName :: T.Text
+  }
 
-data Poll =
-  Poll
-    { pollAuthor :: T.Text
-    , pollStartedAt :: UTCTime
-    , pollDuration :: Int
+data Poll = Poll
+  { pollAuthor :: T.Text
+  , pollStartedAt :: UTCTime
+  , pollDuration :: Int
   -- TODO(#299): Entity doesn't support boolean types
-    , pollCancelled :: Bool
-    , pollChannel :: Maybe Channel
-    }
+  , pollCancelled :: Bool
+  , pollChannel :: Maybe Channel
+  }
 
-data Vote =
-  Vote
-    { voteUser :: T.Text
-    , voteOptionId :: Int
-    , votePoints :: Int
-    }
+data Vote = Vote
+  { voteUser :: T.Text
+  , voteOptionId :: Int
+  , votePoints :: Int
+  }
 
 instance IsEntity Poll where
   nameOfEntity _ = "Poll"

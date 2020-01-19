@@ -50,29 +50,25 @@ newtype ScheduleTimeZone =
   ScheduleTimeZone TimeZone
   deriving (Show)
 
-data Project =
-  Project
-    { projectName :: T.Text
-    , projectDescription :: T.Text
-    , projectUrl :: T.Text
-    , projectDays :: [DayOfWeek]
-    , projectTime :: TimeOfDay
-    , projectChannel :: T.Text
-    , projectStarts :: Maybe Day
-    , projectEnds :: Maybe Day
-    }
-  deriving (Show)
+data Project = Project
+  { projectName :: T.Text
+  , projectDescription :: T.Text
+  , projectUrl :: T.Text
+  , projectDays :: [DayOfWeek]
+  , projectTime :: TimeOfDay
+  , projectChannel :: T.Text
+  , projectStarts :: Maybe Day
+  , projectEnds :: Maybe Day
+  } deriving (Show)
 
-data Event =
-  Event
-    { eventDate :: Day
-    , eventTime :: TimeOfDay
-    , eventTitle :: T.Text
-    , eventDescription :: T.Text
-    , eventUrl :: T.Text
-    , eventChannel :: T.Text
-    }
-  deriving (Show)
+data Event = Event
+  { eventDate :: Day
+  , eventTime :: TimeOfDay
+  , eventTitle :: T.Text
+  , eventDescription :: T.Text
+  , eventUrl :: T.Text
+  , eventChannel :: T.Text
+  } deriving (Show)
 
 eventId :: ScheduleTimeZone -> Event -> EventId
 eventId timeZone event =
@@ -102,24 +98,20 @@ newtype EventId =
   EventId Int
   deriving (Eq, Ord, Show)
 
-data EventPatch =
-  EventPatch
-    { eventPatchTitle :: Maybe T.Text
-    , eventPatchDescription :: Maybe T.Text
-    , eventPatchUrl :: Maybe T.Text
-    , eventPatchChannel :: Maybe T.Text
-    }
-  deriving (Show)
+data EventPatch = EventPatch
+  { eventPatchTitle :: Maybe T.Text
+  , eventPatchDescription :: Maybe T.Text
+  , eventPatchUrl :: Maybe T.Text
+  , eventPatchChannel :: Maybe T.Text
+  } deriving (Show)
 
-data Schedule =
-  Schedule
-    { scheduleProject :: [Project]
-    , scheduleExtraEvents :: [Event]
-    , scheduleCancelledEvents :: [EventId]
-    , scheduleTimezone :: ScheduleTimeZone
-    , schedulePatches :: M.Map EventId EventPatch
-    }
-  deriving (Show)
+data Schedule = Schedule
+  { scheduleProject :: [Project]
+  , scheduleExtraEvents :: [Event]
+  , scheduleCancelledEvents :: [EventId]
+  , scheduleTimezone :: ScheduleTimeZone
+  , schedulePatches :: M.Map EventId EventPatch
+  } deriving (Show)
 
 instance FromJSON Schedule where
   parseJSON (Object v) =
