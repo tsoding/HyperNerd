@@ -1,5 +1,5 @@
 {-# LANGUAGE OverloadedStrings #-}
-{-# LANGUAGE QuasiQuotes       #-}
+{-# LANGUAGE QuasiQuotes #-}
 
 module Bot.Poll
   ( cancelPollCommand
@@ -11,48 +11,50 @@ module Bot.Poll
   , announceRunningPoll
   ) where
 
-import           Bot.Log                    (LogRecord (..), Seconds,
-                                             getRecentLogs)
-import           Bot.Replies
-import           Control.Monad
-import           Data.Bool.Extra
-import           Data.Foldable
-import           Data.Function
-import           Data.Functor.Compose
-import           Data.List
-import qualified Data.Map                   as M
-import           Data.Maybe
-import           Data.Proxy
-import qualified Data.Text                  as T
-import           Data.Time
-import           Effect
-import           Entity
-import           Property
-import           Reaction
-import           Safe
-import           Text.InterpolatedString.QM
-import           Text.Read
-import           Transport
+import Bot.Log (LogRecord(..), Seconds, getRecentLogs)
+import Bot.Replies
+import Control.Monad
+import Data.Bool.Extra
+import Data.Foldable
+import Data.Function
+import Data.Functor.Compose
+import Data.List
+import qualified Data.Map as M
+import Data.Maybe
+import Data.Proxy
+import qualified Data.Text as T
+import Data.Time
+import Effect
+import Entity
+import Property
+import Reaction
+import Safe
+import Text.InterpolatedString.QM
+import Text.Read
+import Transport
 
-data PollOption = PollOption
-  { poPollId :: Int
-  , poName   :: T.Text
-  }
+data PollOption =
+  PollOption
+    { poPollId :: Int
+    , poName :: T.Text
+    }
 
-data Poll = Poll
-  { pollAuthor    :: T.Text
-  , pollStartedAt :: UTCTime
-  , pollDuration  :: Int
+data Poll =
+  Poll
+    { pollAuthor :: T.Text
+    , pollStartedAt :: UTCTime
+    , pollDuration :: Int
   -- TODO(#299): Entity doesn't support boolean types
-  , pollCancelled :: Bool
-  , pollChannel   :: Maybe Channel
-  }
+    , pollCancelled :: Bool
+    , pollChannel :: Maybe Channel
+    }
 
-data Vote = Vote
-  { voteUser     :: T.Text
-  , voteOptionId :: Int
-  , votePoints   :: Int
-  }
+data Vote =
+  Vote
+    { voteUser :: T.Text
+    , voteOptionId :: Int
+    , votePoints :: Int
+    }
 
 instance IsEntity Poll where
   nameOfEntity _ = "Poll"
@@ -119,7 +121,7 @@ rank =
   sortBy (flip compare `on` length) . group . sort
   where
     safeHead (x:_) = x
-    safeHead _     = error "Empty list"
+    safeHead _ = error "Empty list"
 
 -- TODO(#360): showRanks should format results exactly like announcePollResults to make Twitch emotes visible
 showRanks :: (Show a) => [(Int, a)] -> String
