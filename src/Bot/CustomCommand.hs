@@ -1,5 +1,5 @@
 {-# LANGUAGE OverloadedStrings #-}
-{-# LANGUAGE QuasiQuotes #-}
+{-# LANGUAGE QuasiQuotes       #-}
 
 module Bot.CustomCommand
   ( addCustomCommand
@@ -10,28 +10,28 @@ module Bot.CustomCommand
   , timesCustomCommand
   ) where
 
-import Bot.CustomCommandType
-import Bot.Expr
-import Bot.Flip
-import Bot.Help
-import Bot.Replies
-import Command
-import Control.Monad
-import Control.Monad.Trans.Maybe
-import Data.Functor.Compose
-import qualified Data.Map as M
-import Data.Maybe
-import Data.Proxy
-import qualified Data.Text as T
-import Data.Time
-import Effect
-import Entity
-import HyperNerd.Parser
-import qualified Network.URI.Encode as URI
-import Property
-import Reaction
-import Text.InterpolatedString.QM
-import Transport
+import           Bot.CustomCommandType
+import           Bot.Expr
+import           Bot.Flip
+import           Bot.Help
+import           Bot.Replies
+import           Command
+import           Control.Monad
+import           Control.Monad.Trans.Maybe
+import           Data.Functor.Compose
+import qualified Data.Map                   as M
+import           Data.Maybe
+import           Data.Proxy
+import qualified Data.Text                  as T
+import           Data.Time
+import           Effect
+import           Entity
+import           HyperNerd.Parser
+import qualified Network.URI.Encode         as URI
+import           Property
+import           Reaction
+import           Text.InterpolatedString.QM
+import           Transport
 
 customCommandByName :: T.Text -> MaybeT Effect (Entity CustomCommand)
 customCommandByName name =
@@ -42,10 +42,8 @@ customCommandByName name =
 addCustomCommand :: CommandTable -> Reaction Message (T.Text, T.Text)
 addCustomCommand builtinCommands =
   Reaction $ \mesg@Message {messageSender = sender, messageContent = (name, message)} -> do
-    runReaction refreshHelpGistId mesg
-    customCommand <- runMaybeT $ customCommandByName name
-    let builtinCommand = M.lookup name builtinCommands
-    case (customCommand, builtinCommand) of
+    res <- refreshHelpAndUnpack builtinCommands (fst <$> mesg)
+    case res of
       (Just _, Nothing) ->
         replyToSender sender [qms|Command '{name}' already exists|]
       (Nothing, Just _) ->
@@ -65,13 +63,18 @@ addCustomCommand builtinCommands =
               }
         replyToSender sender [qms|Added command '{name}'|]
 
-deleteCustomCommand :: CommandTable -> Reaction Message T.Text
-deleteCustomCommand builtinCommands =
-  Reaction $ \mesg@Message {messageSender = sender, messageContent = name} -> do
+refreshHelpAndUnpack :: CommandTable -> Message T.Text -> Effect (Maybe (Entity CustomCommand), Maybe BuiltinCommand)
+refreshHelpAndUnpack builtinCommands mesg @Message{messageContent = name} = do
     runReaction refreshHelpGistId mesg
     customCommand <- runMaybeT $ customCommandByName name
     let builtinCommand = M.lookup name builtinCommands
-    case (customCommand, builtinCommand) of
+    pure (customCommand, builtinCommand)
+
+deleteCustomCommand :: CommandTable -> Reaction Message T.Text
+deleteCustomCommand builtinCommands =
+  Reaction $ \mesg@Message {messageSender = sender, messageContent = name} -> do
+    res <- refreshHelpAndUnpack builtinCommands mesg
+    case res of
       (Just _, Nothing) -> do
         void $
           deleteEntities (Proxy :: Proxy CustomCommand) $
@@ -139,10 +142,8 @@ timesCustomCommand builtinCommands =
 updateCustomCommand :: CommandTable -> Reaction Message (T.Text, T.Text)
 updateCustomCommand builtinCommands =
   Reaction $ \mesg@Message {messageSender = sender, messageContent = (name, message)} -> do
-    runReaction refreshHelpGistId mesg
-    customCommand <- runMaybeT $ customCommandByName name
-    let builtinCommand = M.lookup name builtinCommands
-    case (customCommand, builtinCommand) of
+    res <- refreshHelpAndUnpack builtinCommands (fst <$> mesg)
+    case res of
       (Just cmd, Nothing) -> do
         void $ updateEntityById (replaceCustomCommandMessage message <$> cmd)
         replyToSender sender [qms|Command '{name}' has been updated|]
