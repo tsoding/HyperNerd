@@ -4,20 +4,21 @@
 --   Help depends on this type, but custom commands needs
 --   to refresh Help and therefore also this type.
 module Bot.CustomCommandType
-  (CustomCommand(..)
+  ( CustomCommand(..)
   ) where
 
-import qualified Data.Map   as M
-import           Data.Maybe
-import qualified Data.Text  as T
-import           Entity
-import           Property
+import qualified Data.Map as M
+import Data.Maybe
+import qualified Data.Text as T
+import Entity
+import Property
 
-data CustomCommand = CustomCommand
-  { customCommandName    :: T.Text
-  , customCommandMessage :: T.Text
-  , customCommandTimes   :: Int
-  }
+data CustomCommand =
+  CustomCommand
+    { customCommandName :: T.Text
+    , customCommandMessage :: T.Text
+    , customCommandTimes :: Int
+    }
 
 instance IsEntity CustomCommand where
   nameOfEntity _ = "CustomCommand"
