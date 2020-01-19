@@ -1,5 +1,5 @@
 {-# LANGUAGE OverloadedStrings #-}
-{-# LANGUAGE QuasiQuotes #-}
+{-# LANGUAGE QuasiQuotes       #-}
 
 module Schedule
   ( nextEvent
@@ -8,24 +8,24 @@ module Schedule
   , Schedule(..)
   ) where
 
-import Control.Monad
-import Data.Aeson
-import Data.Aeson.Types
-import Data.Either.Extra
-import Data.Function
-import Data.List
-import qualified Data.Map as M
-import Data.Maybe
-import Data.Maybe.Extra
-import Data.Monoid
-import qualified Data.Text as T
-import Data.Time
-import Data.Time.Calendar.WeekDate
-import Data.Time.Clock.POSIX
-import Data.Time.Extra
-import Data.Time.LocalTime (TimeZone)
-import Safe
-import Text.InterpolatedString.QM
+import           Control.Monad
+import           Data.Aeson
+import           Data.Aeson.Types
+import           Data.Either.Extra
+import           Data.Function
+import           Data.List
+import qualified Data.Map                    as M
+import           Data.Maybe
+import           Data.Maybe.Extra
+import           Data.Monoid
+import qualified Data.Text                   as T
+import           Data.Time
+import           Data.Time.Calendar.WeekDate
+import           Data.Time.Clock.POSIX
+import           Data.Time.Extra
+import           Data.Time.LocalTime         (TimeZone)
+import           Safe
+import           Text.InterpolatedString.QM
 
 data DayOfWeek
   = Monday
@@ -51,23 +51,23 @@ newtype ScheduleTimeZone =
   deriving (Show)
 
 data Project = Project
-  { projectName :: T.Text
+  { projectName        :: T.Text
   , projectDescription :: T.Text
-  , projectUrl :: T.Text
-  , projectDays :: [DayOfWeek]
-  , projectTime :: TimeOfDay
-  , projectChannel :: T.Text
-  , projectStarts :: Maybe Day
-  , projectEnds :: Maybe Day
+  , projectUrl         :: T.Text
+  , projectDays        :: [DayOfWeek]
+  , projectTime        :: TimeOfDay
+  , projectChannel     :: T.Text
+  , projectStarts      :: Maybe Day
+  , projectEnds        :: Maybe Day
   } deriving (Show)
 
 data Event = Event
-  { eventDate :: Day
-  , eventTime :: TimeOfDay
-  , eventTitle :: T.Text
+  { eventDate        :: Day
+  , eventTime        :: TimeOfDay
+  , eventTitle       :: T.Text
   , eventDescription :: T.Text
-  , eventUrl :: T.Text
-  , eventChannel :: T.Text
+  , eventUrl         :: T.Text
+  , eventChannel     :: T.Text
   } deriving (Show)
 
 eventId :: ScheduleTimeZone -> Event -> EventId
@@ -99,18 +99,18 @@ newtype EventId =
   deriving (Eq, Ord, Show)
 
 data EventPatch = EventPatch
-  { eventPatchTitle :: Maybe T.Text
+  { eventPatchTitle       :: Maybe T.Text
   , eventPatchDescription :: Maybe T.Text
-  , eventPatchUrl :: Maybe T.Text
-  , eventPatchChannel :: Maybe T.Text
+  , eventPatchUrl         :: Maybe T.Text
+  , eventPatchChannel     :: Maybe T.Text
   } deriving (Show)
 
 data Schedule = Schedule
-  { scheduleProject :: [Project]
-  , scheduleExtraEvents :: [Event]
+  { scheduleProject         :: [Project]
+  , scheduleExtraEvents     :: [Event]
   , scheduleCancelledEvents :: [EventId]
-  , scheduleTimezone :: ScheduleTimeZone
-  , schedulePatches :: M.Map EventId EventPatch
+  , scheduleTimezone        :: ScheduleTimeZone
+  , schedulePatches         :: M.Map EventId EventPatch
   } deriving (Show)
 
 instance FromJSON Schedule where
@@ -147,11 +147,11 @@ instance FromJSONKey EventId where
 
 parseTimeZone :: T.Text -> Parser TimeZone
 parseTimeZone "Asia/Novosibirsk" = return $ minutesToTimeZone 420
-parseTimeZone s = fail ("Unknown timezone: " ++ T.unpack s)
+parseTimeZone s                  = fail ("Unknown timezone: " ++ T.unpack s)
 
 instance FromJSON ScheduleTimeZone where
   parseJSON (String s) = ScheduleTimeZone <$> parseTimeZone s
-  parseJSON invalid = typeMismatch "ScheduleTimeZone" invalid
+  parseJSON invalid    = typeMismatch "ScheduleTimeZone" invalid
 
 instance FromJSON EventPatch where
   parseJSON (Object v) =
@@ -230,6 +230,5 @@ eventsFrom day schedule@Schedule { scheduleTimezone = timezone
 nextEvent :: Schedule -> UTCTime -> Either String Event
 nextEvent schedule timePoint =
   maybeToEither "No events found" $
-  listToMaybe $
-  filter ((> timePoint) . eventUTCTime (scheduleTimezone schedule)) $
+  find ((> timePoint) . eventUTCTime (scheduleTimezone schedule)) $
   eventsFrom (utctDay timePoint) schedule

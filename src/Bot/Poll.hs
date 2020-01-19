@@ -1,5 +1,5 @@
 {-# LANGUAGE OverloadedStrings #-}
-{-# LANGUAGE QuasiQuotes #-}
+{-# LANGUAGE QuasiQuotes       #-}
 
 module Bot.Poll
   ( cancelPollCommand
@@ -11,46 +11,47 @@ module Bot.Poll
   , announceRunningPoll
   ) where
 
-import Bot.Log (LogRecord(..), Seconds, getRecentLogs)
-import Bot.Replies
-import Control.Monad
-import Data.Bool.Extra
-import Data.Foldable
-import Data.Function
-import Data.Functor.Compose
-import Data.List
-import qualified Data.Map as M
-import Data.Maybe
-import Data.Proxy
-import qualified Data.Text as T
-import Data.Time
-import Effect
-import Entity
-import Property
-import Reaction
-import Safe
-import Text.InterpolatedString.QM
-import Text.Read
-import Transport
+import           Bot.Log                    (LogRecord (..), Seconds,
+                                             getRecentLogs)
+import           Bot.Replies
+import           Control.Monad
+import           Data.Bool.Extra
+import           Data.Foldable
+import           Data.Function
+import           Data.Functor.Compose
+import           Data.List
+import qualified Data.Map                   as M
+import           Data.Maybe
+import           Data.Proxy
+import qualified Data.Text                  as T
+import           Data.Time
+import           Effect
+import           Entity
+import           Property
+import           Reaction
+import           Safe
+import           Text.InterpolatedString.QM
+import           Text.Read
+import           Transport
 
 data PollOption = PollOption
   { poPollId :: Int
-  , poName :: T.Text
+  , poName   :: T.Text
   }
 
 data Poll = Poll
-  { pollAuthor :: T.Text
+  { pollAuthor    :: T.Text
   , pollStartedAt :: UTCTime
-  , pollDuration :: Int
+  , pollDuration  :: Int
   -- TODO(#299): Entity doesn't support boolean types
   , pollCancelled :: Bool
-  , pollChannel :: Maybe Channel
+  , pollChannel   :: Maybe Channel
   }
 
 data Vote = Vote
-  { voteUser :: T.Text
+  { voteUser     :: T.Text
   , voteOptionId :: Int
-  , votePoints :: Int
+  , votePoints   :: Int
   }
 
 instance IsEntity Poll where
@@ -118,7 +119,7 @@ rank =
   sortBy (flip compare `on` length) . group . sort
   where
     safeHead (x:_) = x
-    safeHead _ = error "Empty list"
+    safeHead _     = error "Empty list"
 
 -- TODO(#360): showRanks should format results exactly like announcePollResults to make Twitch emotes visible
 showRanks :: (Show a) => [(Int, a)] -> String
@@ -204,7 +205,7 @@ currentPollCommand =
 currentPoll :: Effect (Maybe (Entity Poll))
 currentPoll = do
   currentTime <- now
-  fmap (listToMaybe . filter (isPollAlive currentTime)) $
+  fmap (find (isPollAlive currentTime)) $
     selectEntities Proxy $ Take 1 $ SortBy "startedAt" Desc All
 
 startPoll :: Sender -> [T.Text] -> Int -> Effect Int
