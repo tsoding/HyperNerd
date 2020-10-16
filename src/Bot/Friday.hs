@@ -93,9 +93,11 @@ instance IsEntity FridayState where
       , (,) "currentUser" . PropertyText <$> fridayStateCurrentUser state
       ]
   fromProperties properties =
-    FridayState <$> return (GistId <$> extractProperty "gistId" properties) <*>
-    pure (intAsBool $ fromMaybe 0 $ extractProperty "gistFresh" properties) <*>
-    pure (extractProperty "currentUser" properties)
+    pure $
+    FridayState
+      (GistId <$> extractProperty "gistId" properties)
+      (intAsBool $ fromMaybe 0 $ extractProperty "gistFresh" properties)
+      (extractProperty "currentUser" properties)
 
 containsYtLink :: T.Text -> Bool
 containsYtLink = isJust . ytLinkId

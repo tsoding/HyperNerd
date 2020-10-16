@@ -241,7 +241,7 @@ deleteEntityById conn name ident =
 selectEntities :: Connection -> T.Text -> Selector -> IO [Entity Properties]
 selectEntities conn name selector = do
   ids <- selectEntityIds conn name selector
-  fromMaybe [] . traverse id <$> traverse (getEntityById conn name) ids
+  fromMaybe [] . sequenceA <$> traverse (getEntityById conn name) ids
 
 selectEntityIds :: Connection -> T.Text -> Selector -> IO [Int]
 selectEntityIds conn name All =

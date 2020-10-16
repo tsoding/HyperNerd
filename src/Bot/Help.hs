@@ -47,8 +47,10 @@ instance IsEntity HelpState where
        maybeToList
          ((,) "gistId" . PropertyText . gistIdAsText <$> helpStateGistId state))
   fromProperties properties =
-    HelpState <$> pure (GistId <$> extractProperty "gistId" properties) <*>
-    pure (maybe False intAsBool $ extractProperty "gistFresh" properties)
+    pure $
+    HelpState
+      (GistId <$> extractProperty "gistId" properties)
+      (maybe False intAsBool $ extractProperty "gistFresh" properties)
 
 currentHelpState :: Effect (Entity HelpState)
 currentHelpState = do
