@@ -42,7 +42,7 @@ currentAsciifyState = do
   maybeState <- listToMaybe <$> selectEntities Proxy All
   case maybeState of
     Just state -> return state
-    Nothing -> createEntity Proxy =<< AsciifyState <$> now
+    Nothing -> createEntity Proxy . AsciifyState =<< now
 
 asciifyCooldown :: NominalDiffTime -> Reaction Message a -> Reaction Message a
 asciifyCooldown cooldown next =

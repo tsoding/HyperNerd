@@ -230,6 +230,5 @@ eventsFrom day schedule@Schedule { scheduleTimezone = timezone
 nextEvent :: Schedule -> UTCTime -> Either String Event
 nextEvent schedule timePoint =
   maybeToEither "No events found" $
-  listToMaybe $
-  filter ((> timePoint) . eventUTCTime (scheduleTimezone schedule)) $
+  find ((> timePoint) . eventUTCTime (scheduleTimezone schedule)) $
   eventsFrom (utctDay timePoint) schedule

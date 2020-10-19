@@ -204,7 +204,7 @@ currentPollCommand =
 currentPoll :: Effect (Maybe (Entity Poll))
 currentPoll = do
   currentTime <- now
-  fmap (listToMaybe . filter (isPollAlive currentTime)) $
+  fmap (find (isPollAlive currentTime)) $
     selectEntities Proxy $ Take 1 $ SortBy "startedAt" Desc All
 
 startPoll :: Sender -> [T.Text] -> Int -> Effect Int
@@ -251,13 +251,13 @@ announcePollResults pollId = do
   unless (maybe True (pollCancelled . entityPayload) poll) $ do
     fromMaybe
       (return ())
-      (say <$> (pollChannel =<< entityPayload <$> poll) <*>
+      (say <$> (pollChannel . entityPayload =<< poll) <*>
        return [qms|TwitchVotes Poll has finished:|])
     traverse_
       (\(option, points) ->
          fromMaybe
            (return ())
-           (say <$> (pollChannel =<< entityPayload <$> poll) <*>
+           (say <$> (pollChannel . entityPayload =<< poll) <*>
             return [qms|{poName $ entityPayload $ option} : {points}|])) $
       sortBy (flip compare `on` snd) $
       zip

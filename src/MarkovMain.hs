@@ -43,8 +43,7 @@ trainDatabaseMain :: [String] -> IO ()
 trainDatabaseMain (databasePath:output:_) =
   SQLite.withConnection databasePath $ \sqliteConn -> do
     markov <-
-      fold .
-      map text2Markov .
+      foldMap text2Markov .
       commandsFilter .
       mentionsFilter .
       asteriskCorrectionFilter .
